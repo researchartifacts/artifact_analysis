@@ -123,3 +123,7 @@ Analyzes the similarity of AEC members across pairs of matching conferences and 
 *--analyze_by_country*
 
 Analyzes the country location of each AEC member and prints the number of involved AEC members per country for each matching conference
+
+### Parse DBLP XML file
+
+Parses and extracts all papers from DBLP XML file. Download XML zip from https://dblp.org/xml/dblp.xml.gz.
