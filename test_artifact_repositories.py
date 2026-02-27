@@ -1,51 +1,73 @@
 import requests
 import argparse
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from sys_sec_artifacts_results_scrape import get_ae_results
+from sys_sec_scrape import check_url_cached
+
+MAX_URL_WORKERS = 16  # parallel URL checks
 
 
 def check_url_existence(url):
-    try:
-        response = requests.head(url, allow_redirects=True)
-        url = ""
-        if response.status_code == 429:
-            print("Too many requests detected, sleep 10 seconds and retry")
-            # sleep and redo
-            time.sleep(10)
-            response = requests.head(url, allow_redirects=True)
-        return response.status_code == 200, url
-    except requests.RequestException as e:
-        return False
+    """Check URL existence using the shared cached checker."""
+    return check_url_cached(url)
+
+
+def _normalise_url(val):
+    """Normalise a raw URL value from artifact data."""
+    if isinstance(val, list):
+        val = val[0] if val else ''
+    if not isinstance(val, str) or not val:
+        return None
+    if val.startswith('10.'):
+        val = 'https://doi.org/' + val
+    return val
+
 
 def check_artifact_exists(results, url_keys):
 
     counts = {}
     failed = []
+
     for url_key in url_keys:
         counts[url_key] = {}
+        # Build a flat list of (name, artifact_index, url) to check in parallel
+        jobs = []
         for name, artifacts in results.items():
-            counts[url_key][name] = {}
-            counts[url_key][name]['exists'] = 0
-            counts[url_key][name]['total'] = 0
-            print(f'testing {len(artifacts)} artifacts urls for {url_key}')
-            for artifact in artifacts:
+            counts[url_key][name] = {'exists': 0, 'total': 0}
+            for idx, artifact in enumerate(artifacts):
                 if url_key in artifact:
-                    # exception since, some urls are just the doi
-                    if artifact[url_key].startswith('10.'):
-                        artifact[url_key] = 'https://doi.org/' + artifact[url_key]
-
-                    exists = check_url_existence(artifact[url_key])
-                    if exists:
-                        counts[url_key][name]['exists'] = counts[url_key][name]['exists'] + 1
-                        counts[url_key][name]['total'] = counts[url_key][name]['total'] + 1
-                        artifact[url_key+"_exists"] = True
-                    else:
-                        counts[url_key][name]['total'] = counts[url_key][name]['total'] + 1
-                        failed.append(artifact[url_key])
-                        artifact[url_key+"_exists"] = False
+                    val = _normalise_url(artifact[url_key])
+                    if val is None:
+                        continue
+                    artifact[url_key] = val
+                    jobs.append((name, idx, val))
+                    counts[url_key][name]['total'] += 1
                 else:
-                    counts[url_key][name]['total'] = counts[url_key][name]['total'] + 1
-                    #failed.append(artifact['title'])
+                    counts[url_key][name]['total'] += 1
+
+        print(f'testing {len(jobs)} artifact urls for {url_key} ({len(results)} conferences, {MAX_URL_WORKERS} workers)')
+
+        # Check all URLs in parallel
+        url_results = {}  # url -> bool
+        with ThreadPoolExecutor(max_workers=MAX_URL_WORKERS) as pool:
+            future_map = {pool.submit(check_url_existence, url): url
+                          for _, _, url in jobs}
+            for future in as_completed(future_map):
+                url = future_map[future]
+                try:
+                    url_results[url] = future.result()
+                except Exception:
+                    url_results[url] = False
+
+        # Apply results back to artifacts
+        for name, idx, url in jobs:
+            exists = url_results.get(url, False)
+            results[name][idx][url_key + '_exists'] = exists
+            if exists:
+                counts[url_key][name]['exists'] += 1
+            else:
+                failed.append(url)
 
     return results, counts, failed
 

@@ -1,77 +1,22 @@
 import argparse
+import os
+import time
 import requests
 from sys_sec_artifacts_results_scrape import get_ae_results
 from test_artifact_repositories import check_artifact_exists
+from sys_sec_scrape import (cached_github_stats, cached_zenodo_stats,
+                            cached_figshare_stats)
+
+# Keep thin wrappers so existing callers still work
+def github_stats(url):
+    return cached_github_stats(url)
 
 def zenodo_stats(url):
-    if '/records/' in url:
-        # url format zenodo.org/record/123456
-        rec = url.split('/records/')[-1]
-    elif 'zenodo.' in url:
-        # format 10.5281/zenodo.13827000
-        rec = url.split('zenodo.')[-1]
-    else:
-        print(f'Could not work with zenodo url {url}')
-    response = requests.get(f'https://zenodo.org/api/records/{rec}')
-    if response.status_code == 200:
-        record = response.json()
-        return {'zenodo_views': record['stats']['unique_views'],'zenodo_downloads': record['stats']['unique_downloads'], 'updated_at': record['updated'], 'created_at': record['created']}
-    else:
-        print(f'Could not collect stats for {url}')
-        return
+    return cached_zenodo_stats(url)
 
 def figshare_stats(url):
-    if url.endswith(('.v1', '.v2', '.v3', '.v4', '.v5', '.v6', '.v7', '.v8', '.v9')):
-        url = url[:-3]
+    return cached_figshare_stats(url)
 
-    article_id = url.split('figshare.')[-1]
-    # views
-    response = requests.get('https://stats.figshare.com/total/views/article/'+article_id)
-    if response.status_code == 200:
-        record = response.json()
-        views = record['totals']
-    else:
-        views = -1
-    # downloads
-    response = requests.get('https://stats.figshare.com/total/downloads/article/'+article_id)
-    if response.status_code == 200:
-        record = response.json()
-        downloads = record['totals']
-    else:
-        downloads = -1
-
-    response = requests.get(f'https://api.figshare.com/v2/articles/{article_id}')
-    if response.status_code == 200:
-        record = response.json()
-        updated = record['modified_date']
-        created = record['created_date']
-    else:
-        updated = 'NA'
-
-    return {'figshare_views':views, 'figshare_downloads': downloads, 'updated_at': updated, 'created_at': created}
-
-def github_stats(url):
-    repo = url.split('github.com/')[1]
-    if '/tree/' in repo:
-        # remove any specific tree entities of a repository to get the main repo
-        repo = repo.split('/tree/')[0]
-    if '/blob/' in repo:
-        # remove any specific pointers to files in a repository to get the main repo
-        repo = repo.split('/blob/')[0]
-    if '/pkgs/' in repo:
-        # remove any specific pointers to packages in a repository to get the main repo
-        repo = repo.split('/pkgs/')[0]
-    if repo.endswith('/'):
-        repo = repo[:-1]
-    if repo.endswith('.git'):
-        repo = repo.replace('.git', '')
-    response = requests.get(f'https://api.github.com/repos/{repo}')
-    if response.status_code == 200:
-        repo_record = response.json()
-        return {'github_forks': repo_record.get('forks_count', 0),'github_stars': repo_record.get('stargazers_count', 0), 'updated_at': repo_record.get('updated_at', 'NA'), 'created_at': repo_record.get('created_at', 'NA'),'pushed_at': repo_record.get('pushed_at', 'NA'), 'name': repo_record.get('full_name', 'NA')}
-    else:
-        print(f'Could not collect stats for {url}')
-        return
 
 def get_all_artifact_stats(results, url_keys):
     for name, artifacts in results.items():

@@ -1,3 +1,8 @@
+# temp files
+dblp.xml.gz
+.last_pipeline_args
+.last_pipeline.log
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

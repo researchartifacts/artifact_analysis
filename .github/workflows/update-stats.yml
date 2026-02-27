@@ -1,0 +1,144 @@
+name: Update Research Artifacts Statistics
+
+on:
+  # Run monthly on the 1st at 00:00 UTC
+  schedule:
+    - cron: '0 0 1 * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      skip_dblp:
+        description: 'Skip DBLP author analysis (faster for testing)'
+        required: false
+        default: 'false'
+
+jobs:
+  update-statistics:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout artifact_analysis repository
+        uses: actions/checkout@v4
+        with:
+          path: artifact_analysis
+      
+      - name: Checkout researchartifacts.github.io repository
+        uses: actions/checkout@v4
+        with:
+          repository: researchartifacts/researchartifacts.github.io
+          path: website
+          token: ${{ secrets.WEBSITE_UPDATE_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          cd artifact_analysis
+          pip install -r requirements.txt
+      
+      - name: Create output directories
+        run: |
+          mkdir -p website/_data
+          mkdir -p website/assets/data
+          mkdir -p website/assets/charts
+      
+      - name: Generate statistics
+        run: |
+          cd artifact_analysis
+          python generate_statistics.py \
+            --conf_regex '.*20[12][0-9]' \
+            --output_dir ../website
+
+      - name: Generate repository statistics
+        run: |
+          cd artifact_analysis
+          python generate_repo_stats.py \
+            --conf_regex '.*20[12][0-9]' \
+            --output_dir ../website || echo "⚠️ Repository stats failed (may need API access)"
+      
+      - name: Generate visualizations
+        run: |
+          cd artifact_analysis
+          python generate_visualizations.py --data_dir ../website
+      
+      - name: Verify generated files
+        run: |
+          echo "Checking generated files..."
+          ls -lh website/_data/
+          ls -lh website/assets/data/
+          ls -lh website/assets/charts/
+          echo "Files generated successfully!"
+      
+      - name: Cache DBLP database
+        if: github.event.inputs.skip_dblp != 'true'
+        uses: actions/cache@v4
+        with:
+          path: artifact_analysis/dblp.xml.gz
+          key: dblp-${{ hashFiles('artifact_analysis/cache-version.txt') }}
+          restore-keys: |
+            dblp-
+      
+      - name: Download DBLP if not cached
+        if: github.event.inputs.skip_dblp != 'true'
+        run: |
+          cd artifact_analysis
+          if [ ! -f dblp.xml.gz ]; then
+            echo "Downloading DBLP database..."
+            wget -q https://dblp.org/xml/dblp.xml.gz
+            echo "Download complete"
+          else
+            echo "Using cached DBLP database"
+          fi
+      
+      - name: Generate author statistics
+        if: github.event.inputs.skip_dblp != 'true'
+        run: |
+          cd artifact_analysis
+          python generate_author_stats.py \
+            --dblp_file dblp.xml.gz \
+            --data_dir ../website \
+            --output_dir ../website
+
+      - name: Generate per-area author data
+        run: |
+          cd artifact_analysis
+          python generate_area_authors.py --data_dir ../website
+      
+      - name: Commit and push changes
+        run: |
+          cd website
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          
+          # Add all generated files
+          git add _data/ assets/
+          
+          # Check if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update statistics (automated)"
+            git push
+            echo "Changes pushed successfully"
+          fi
+      
+      - name: Summary
+        run: |
+          echo "## Statistics Update Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Statistics generated" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Repository statistics collected" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Visualizations created" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event.inputs.skip_dblp }}" != "true" ]; then
+            echo "✅ Author statistics updated" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ Author statistics skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "✅ Per-area author data generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 Website will rebuild automatically via GitHub Pages" >> $GITHUB_STEP_SUMMARY

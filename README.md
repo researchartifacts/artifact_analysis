@@ -1,129 +1,103 @@
-# Archived repository
+# Research Artifacts Analysis
 
-Future updates to this repository will be done in a new repository: https://github.com/researchartifacts/artifact_analysis
+Scrapes artifact evaluation data from [sysartifacts](https://sysartifacts.github.io), [secartifacts](https://secartifacts.github.io), and [USENIX](https://www.usenix.org) conference pages, then generates statistics, visualizations, and author rankings for [researchartifacts.github.io](https://researchartifacts.github.io).
 
-# Artifact Analysis Scripts
+## Quick Start
 
-Analyzing artifact websites like sec/sysartifacts.github.io using simple python scripts.
-
-### Artifact Results Scrapping
-
-Returns a dictionary of conference name + year as the key and the artifacts entry yaml found in the results.md header. Prints the artifacts found per conference + year.
-
-```
-python sys-sec-artifacts-results-scrape.py
+```bash
+pip install -r requirements.txt
+./run_pipeline.sh
 ```
 
-#### Arguments
+The pipeline runs six steps:
+1. Checks DBLP freshness and downloads if needed
+2. Scrapes artifact data from sysartifacts, secartifacts, and USENIX conference pages
+3. Generates repository statistics (stars, forks, languages)
+4. Creates per-category and total SVG visualizations
+5. Matches authors via DBLP and computes author metrics (skipped if `dblp.xml.gz` is absent)
+6. Splits author data into per-area (systems/security) files
 
-*--conf_regex*
+### Options
 
-Regular expression to match the conference name assuming conference names have the format <name+year>. Default='.20[1|2][0-9]' Open Issue: Currently goes through all links in the page and as a result '.' matches every link.
-
-*--prefix*
-
-Select between sec or sysartifacts and possibly other artifact websites matching the same format. Default='sys'
-
-### Testing repository and DOI existence
-
-Downloads artifact results and URL info using the result scraping script and tests the existence of the repository or artifact URL. Keep in mind that Zenodo and similar services have rate limiting implemented and may fault.
-
-```
-python test_artifact_repositories.py
+```bash
+./run_pipeline.sh --output_dir ../researchartifacts.github.io  # default
+./run_pipeline.sh --conf_regex 'osdi202[3-4]'                  # filter conferences
+./run_pipeline.sh --http_proxy http://proxy:8080                # use proxy
 ```
 
-#### Arguments
+## Scripts
 
-*--conf_regex*
+### Pipeline scripts
 
-Regular expression to match the conference name assuming conference names have the format <name+year>. Default='.20[1|2][0-9]' Open Issue: Currently goes through all links in the page and as a result '.' matches every link.
+| Script | Purpose |
+|--------|---------|
+| `run_pipeline.sh` | Orchestrates the full pipeline (6 steps) |
+| `download_dblp.sh` | Downloads/refreshes DBLP XML (auto-checks Last-Modified) |
+| `generate_statistics.py` | Scrapes sysartifacts + secartifacts + USENIX, writes YAML/JSON |
+| `generate_repo_stats.py` | Collects GitHub repo metadata (stars, forks, languages) |
+| `generate_visualizations.py` | Creates SVG charts (per-category, total, badges, trends) |
+| `generate_author_stats.py` | Ranks authors by artifact count via DBLP matching, computes rates |
+| `generate_area_authors.py` | Splits author data into systems and security area files |
 
-*--prefix*
+### Standalone tools
 
-Select between sec or sysartifacts and possibly other artifact websites matching the same format. Default='sys'
+| Script | Purpose |
+|--------|---------|
+| `usenix_scrape.py` | Scrapes USENIX conference pages for artifact badges (FAST, OSDI, ATC, etc.) |
+| `generate_sysartifacts_results.py` | Generates sysartifacts-compatible `results.md` for any USENIX conference |
 
-*--url_key*
+### Supporting modules
 
-Selects which url_key to use in the artifacts results structure. 'artifact_url' or 'repository_url' are common values, but may differ by conference result page. Default: 'repository_url'
+| Module | Purpose |
+|--------|---------|
+| `sys_sec_scrape.py` | GitHub API fetching with caching |
+| `sys_sec_scrape_no_api.py` | GitHub fetching without API (raw HTML) |
+| `sys_sec_artifacts_results_scrape.py` | YAML front-matter parsing for artifact results |
+| `parse_dlbp.py` | DBLP XML parsing |
 
-*--print_failed*
+### Legacy scripts (from upstream)
 
-Prints failed entries at the end of the script.
+| Script | Purpose |
+|--------|---------|
+| `collect_artifact_stats.py` | Original artifact stats collector |
+| `committee_statistics.py` | Committee membership analysis |
+| `eurosys_plot.py` | EuroSys-specific plotting |
+| `sys_sec_committee_scrape.py` | Committee scraping |
+| `test_artifact_repositories.py` | Tests artifact repository accessibility |
 
-### Collecting Statistics about Artifacts
+## Output
 
-Collect stars, forks, views, downloads, and last update date of artifacts depending on the artifact storage. Currently supported storages: Github, Zenodo, Figshare. If -1 or NA is printed, the view/download count or last date of update is not available.
+Statistics and data go to `_data/` and `assets/` in the output directory:
 
-```
-python collect_artifact_stats.py
-```
+- `_data/summary.yml` — overall totals and per-area counts
+- `_data/artifacts_by_conference.yml` — per-conference artifact counts and badges
+- `_data/artifacts_by_year.yml` — yearly trends
+- `_data/authors.yml`, `author_summary.yml` — top authors with rates
+- `_data/systems_authors.yml`, `security_authors.yml` — per-area author rankings
+- `_data/repo_stats.yml` — GitHub repository metadata
+- `_data/navigation.yml` — site navigation structure
+- `assets/data/artifacts.json`, `authors.json`, `summary.json` — JSON exports
+- `assets/charts/*.svg` — generated visualizations
 
-#### Arguments
+## Caching
 
-*--conf_regex*
+- **GitHub responses** are cached in `.cache/` with a 1-hour TTL
+- **DBLP XML** freshness is checked via HTTP `Last-Modified` header at each run
 
-Regular expression to match the conference name assuming conference names have the format <name+year>. Default='.20[1|2][0-9]' Open Issue: Currently goes through all links in the page and as a result '.' matches every link.
+## Conferences Tracked
 
-*--prefix*
+Conferences from sysartifacts/secartifacts are auto-discovered from their repositories.
+USENIX conferences are configured in `generate_statistics.py` via the `USENIX_CONFERENCES` list.
 
-Select between sec or sysartifacts and possibly other artifact websites matching the same format. Default='sys'
+**Systems (sysartifacts):** EuroSys, SOSP, SC (+ OSDI, ATC when present)
+**Systems (USENIX direct):** FAST
+**Security (secartifacts):** ACSAC, CHES, NDSS, PETS, USENIX Security
+**Workshops:** WOOT, SysTEX
 
-*--url_key*
+## Automation
 
-Selects which url_key to use in the artifacts results structure. 'artifact_url' or 'repository_url' are common values, but may differ by conference result page. Default: 'repository_url'
+A GitHub Actions workflow (`.github/workflows/update-stats.yml`) runs monthly. Requires a `WEBSITE_UPDATE_TOKEN` secret with `repo` scope. Can also be triggered manually from the Actions tab.
 
-### Artifact Evaluation Committee Scrapping
+## License
 
-Returns a dictionary of conference name + year as the key and the artifacts evaluation committee as a list of ```{'name': name, 'affiliation': affiliation}```. Prints the AEC members found per conference + year.
-
-```
-python sys-sec-committee-scrape.py
-```
-
-#### Arguments
-
-*--conf_regex*
-
-Regular expression to match the conference name assuming conference names have the format <name+year>. Default='.20[1|2][0-9]' Open Issue: Currently goes through all links in the page and as a result '.' matches every link.
-
-*--prefix*
-
-Select between sec or sysartifacts and possibly other artifact websites matching the same format. Default='sys'
-
-*--print*
-
-Print the list of each artifact evaluation committee per year.
-
-### Artifact Evaluation Committee Statistics
-
-Calculates various statistics about the AEC
-
-```
-python committee_statistics.py
-```
-
-#### Arguments
-
-*--conf_regex*
-
-Regular expression to match the conference name assuming conference names have the format <name+year>. Default='.20[1|2][0-9]' Open Issue: Currently goes through all links in the page and as a result '.' matches every link.
-
-*--prefix*
-
-Select between sec or sysartifacts and possibly other artifact websites matching the same format. Default='sys'
-
-*--analyze_affiliation*
-
-Calculates how many times members of an affiliation have participated in matching conferences and prints a sorted list of counts.
-
-*--analyze_affiliation_per_conference*
-
-Calculates how many times members of an affiliation have participated in matching conferences and prints the number for each matching conference.
-
-*--analyze_aec_retention*
-
-Analyzes the similarity of AEC members across pairs of matching conferences and prints a table with each pairs count.
-
-*--analyze_by_country*
-
-Analyzes the country location of each AEC member and prints the number of involved AEC members per country for each matching conference
+MIT
