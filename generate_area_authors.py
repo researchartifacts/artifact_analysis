@@ -135,6 +135,7 @@ def generate_area_authors():
 
             entry = {
                 'name': author['name'],
+                'affiliation': author.get('affiliation', ''),
                 'artifact_score': artifact_score,
                 'total': total,
                 'total_papers': area_total_papers,

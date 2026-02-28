@@ -105,11 +105,12 @@ def parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact):
           - List of papers with author information (artifact papers)
           - Dict mapping (author, conference) -> set of normalized titles
             for ALL papers at tracked venues (venue_papers)
+          - Dict mapping author_name -> affiliation string (from DBLP <www> entries)
     """
     if not os.path.exists(dblp_file):
         print(f"Error: DBLP file not found: {dblp_file}")
         print("Please download from: https://dblp.org/xml/dblp.xml.gz")
-        return [], {}
+        return [], {}, {}
     
     print("Parsing DBLP XML file (this may take several minutes)...")
     
@@ -117,6 +118,8 @@ def parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact):
     titles_to_find = paper_titles.copy()
     # (author_name, conference) -> {year: set of normalized_title}
     venue_papers = defaultdict(lambda: defaultdict(set))
+    # author_name -> affiliation (extracted from DBLP <www> person records)
+    affiliations = {}
     
     try:
         dblp_stream = GzipFile(filename=dblp_file)
@@ -125,9 +128,31 @@ def parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact):
         for event, elem in ET.iterparse(
             dblp_stream,
             events=('end',),
-            tag=('inproceedings', 'article'),
-            load_dtd=True
+            tag=('inproceedings', 'article', 'www'),
+            load_dtd=True,
+            recover=True,
+            huge_tree=True
         ):
+            # --- Extract affiliations from <www> person records ---
+            if elem.tag == 'www':
+                authors_elems = elem.findall('author')
+                if authors_elems:
+                    # Extract affiliation from <note type="affiliation">
+                    affil = None
+                    for note in elem.findall('note'):
+                        if note.get('type') == 'affiliation' and note.text:
+                            affil = note.text.strip()
+                            break
+                    if affil:
+                        # Store affiliation under ALL name variants (aliases)
+                        # DBLP <www> entries list canonical name first, then aliases
+                        for author_elem in authors_elems:
+                            name = author_elem.text
+                            if name and name not in affiliations:
+                                affiliations[name] = affil
+                elem.clear()
+                continue
+
             title = elem.findtext('title')
             if title:
                 # Remove trailing period from DBLP titles
@@ -176,7 +201,7 @@ def parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact):
         
     except Exception as e:
         print(f"Error parsing DBLP: {e}")
-        return papers_found, venue_papers
+        return papers_found, venue_papers, affiliations
     
     if titles_to_find:
         print(f"Warning: {len(titles_to_find)} papers not found in DBLP")
@@ -184,18 +209,22 @@ def parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact):
     total_venue = sum(len(t) for ydict in venue_papers.values() for t in ydict.values())
     print(f"Total artifact papers matched: {len(papers_found)}")
     print(f"Total papers tracked at conference venues: {total_venue} (author-paper pairs)")
-    return papers_found, venue_papers
+    print(f"Total DBLP affiliations extracted: {len(affiliations)}")
+    return papers_found, venue_papers, affiliations
 
-def aggregate_author_statistics(papers, venue_papers=None):
+def aggregate_author_statistics(papers, venue_papers=None, affiliations=None):
     """Calculate statistics per author.
     
     Args:
         papers: list of artifact papers with author info
         venue_papers: optional dict (author, conference)->set(titles)
                       of ALL papers at tracked conferences
+        affiliations: optional dict author_name -> affiliation string
     """
     if venue_papers is None:
         venue_papers = {}
+    if affiliations is None:
+        affiliations = {}
     
     author_stats = defaultdict(lambda: {
         'name': '',
@@ -310,8 +339,12 @@ def aggregate_author_statistics(papers, venue_papers=None):
         # Functional rate: % of artifact papers with a "functional" badge
         functional_rate = round(func / art_count * 100, 1) if art_count > 0 else 0.0
         
+        # Look up affiliation from DBLP
+        affiliation = affiliations.get(stats['name'], '')
+
         author_entry = {
             'name': stats['name'],
+            'affiliation': affiliation,
             'artifact_count': art_count,
             'total_papers': total_papers,
             'total_papers_by_conf': total_papers_by_conf,
@@ -358,14 +391,18 @@ def generate_author_stats(dblp_file, data_dir, output_dir):
     paper_titles, title_to_artifact = extract_paper_titles(artifacts)
     
     # Parse DBLP
-    papers_with_authors, venue_papers = parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact)
+    papers_with_authors, venue_papers, affiliations = parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact)
     
     if not papers_with_authors:
         print("No papers matched in DBLP")
         return None
     
     # Aggregate statistics (pass venue_papers for total-paper counts)
-    authors_list, category_breakdown = aggregate_author_statistics(papers_with_authors, venue_papers)
+    authors_list, category_breakdown = aggregate_author_statistics(papers_with_authors, venue_papers, affiliations)
+    
+    # Count affiliation coverage
+    with_affil = sum(1 for a in authors_list if a.get('affiliation'))
+    print(f"Authors with DBLP affiliation: {with_affil}/{len(authors_list)} ({round(with_affil/len(authors_list)*100, 1) if authors_list else 0}%)")
     
     # Generate summary
     author_summary = {
