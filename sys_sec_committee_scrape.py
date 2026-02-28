@@ -48,6 +48,10 @@ def _parse_member_line(line):
         name = line
         affiliation = ''
 
+    # Strip residual markdown bold/italic markers from name and affiliation
+    name = name.strip('*_').strip()
+    affiliation = affiliation.strip('*_').strip()
+
     # Skip placeholder entries
     if name.lower() in ('you?', 'you', 'tba', 'tbd', ''):
         return None, None

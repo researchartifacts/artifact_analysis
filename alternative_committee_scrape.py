@@ -79,8 +79,8 @@ def _parse_usenix_views_rows(heading):
                     text = str(child) if not hasattr(child, 'name') else child.get_text()
                     name_parts.append(text)
                 name = ''.join(name_parts).strip().rstrip(',').strip()
-                name = re.sub(r'\s+', ' ', name)
-                affiliation = re.sub(r'\s+', ' ', affiliation)
+                name = re.sub(r'\s+', ' ', name).strip('*_').strip()
+                affiliation = re.sub(r'\s+', ' ', affiliation).strip('*_').strip()
                 if name and len(name) > 1:
                     members.append({'name': name, 'affiliation': affiliation, 'role': 'member'})
     return members
@@ -181,8 +181,8 @@ def _parse_usenix_committee_html(soup):
             affiliation = ''
 
         # Clean up
-        name = re.sub(r'\s+', ' ', name).strip()
-        affiliation = re.sub(r'\s+', ' ', affiliation).strip()
+        name = re.sub(r'\s+', ' ', name).strip().strip('*_').strip()
+        affiliation = re.sub(r'\s+', ' ', affiliation).strip().strip('*_').strip()
 
         if name and len(name) > 1:
             members.append({'name': name, 'affiliation': affiliation, 'role': 'member'})
@@ -236,8 +236,8 @@ def _parse_usenix_cochairs_html(soup):
                     else:
                         name = line
                         affiliation = ''
-                    name = re.sub(r'\s+', ' ', name).strip()
-                    affiliation = re.sub(r'\s+', ' ', affiliation).strip()
+                    name = re.sub(r'\s+', ' ', name).strip().strip('*_').strip()
+                    affiliation = re.sub(r'\s+', ' ', affiliation).strip().strip('*_').strip()
                     if name and len(name) > 1:
                         members.append({'name': name, 'affiliation': affiliation, 'role': 'chair'})
             break  # only process first co-chair heading
@@ -514,8 +514,8 @@ def scrape_pets_committee(year, session=None):
             else:
                 name = text
                 affiliation = ''
-            name = re.sub(r'\s+', ' ', name).strip()
-            affiliation = re.sub(r'\s+', ' ', affiliation).strip()
+            name = re.sub(r'\s+', ' ', name).strip().strip('*_').strip()
+            affiliation = re.sub(r'\s+', ' ', affiliation).strip().strip('*_').strip()
             if name and len(name) > 2:
                 members.append({'name': name, 'affiliation': affiliation, 'role': 'member'})
 

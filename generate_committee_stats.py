@@ -463,7 +463,7 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
                 continue
             norm = _normalize_name(name_raw)
             role = m.get('role', 'member')
-            affiliation = m.get('affiliation', '')
+            affiliation = m.get('affiliation', '').strip('*_ \t')
 
             if norm not in member_map:
                 member_map[norm] = {
@@ -695,6 +695,7 @@ def _clean_committee(members):
             continue
         affiliation = m.get('affiliation', '').strip()
         affiliation = re.sub(r'<br\s*/?>$', '', affiliation).strip()
+        affiliation = affiliation.strip('*_').strip()  # remove markdown bold/italic markers
         entry = {'name': name, 'affiliation': affiliation}
         if 'role' in m:
             entry['role'] = m['role']
