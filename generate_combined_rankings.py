@@ -210,11 +210,12 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
 
 
 # ── Scoring weights ───────────────────────────────────────────────────────────
-# Artifact badges:  Available-only = 1,  Functional-only = 2,  Reproducible = 3
-# AE service:       Each membership = 3,  Each chair role = +2  (on top of membership)
-W_AVAILABLE   = 1
-W_FUNCTIONAL  = 2
-W_REPRODUCIBLE = 3
+# Artifact badges (additive – each level adds 1 pt, max 3 per artifact):
+#   Available = 1 pt,  +Functional = +1 pt (total 2),  +Reproducible = +1 pt (total 3)
+# AE service:  Each membership = 3,  Each chair role = +2  (on top of membership)
+W_AVAILABLE    = 1
+W_FUNCTIONAL   = 1   # additional point for functional badge
+W_REPRODUCIBLE = 1   # additional point for reproducible badge
 W_AE_MEMBERSHIP = 3
 W_AE_CHAIR      = 2   # bonus on top of membership
 
@@ -224,18 +225,15 @@ def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
                  badges_available, badges_functional, badges_reproducible) -> dict:
     """Build a single combined-ranking entry dict with weighted scoring.
 
-    Scoring:
-      artifact_score = reproducible*3 + (functional-reproducible)*2 + remainder*1
+    Scoring (additive – each badge level adds 1 pt, max 3 per artifact):
+      artifact_score = available*1 + functional*1 + reproducible*1
       ae_score       = memberships*3  + chairs*2
       combined_score = artifact_score + ae_score
     """
-    # Compute weighted artifact score
-    repro    = badges_reproducible
-    func_only = max(0, badges_functional - badges_reproducible)
-    remainder = max(0, artifacts - badges_functional)
-    artifact_score = (repro * W_REPRODUCIBLE
-                      + func_only * W_FUNCTIONAL
-                      + remainder * W_AVAILABLE)
+    # Compute weighted artifact score (additive: each badge level adds 1 pt)
+    artifact_score = (artifacts * W_AVAILABLE
+                      + badges_functional * W_FUNCTIONAL
+                      + badges_reproducible * W_REPRODUCIBLE)
 
     # Compute weighted AE score
     ae_score = ae_memberships * W_AE_MEMBERSHIP + chair_count * W_AE_CHAIR
@@ -294,7 +292,7 @@ def generate_combined_rankings(data_dir: str):
     combined_sec = _merge_rankings(sec_authors, sec_members)
 
     # Filter: only include people with combined_score >= 3
-    # With weighted scoring (Available=1, Functional=2, Reproducible=3,
+    # With additive scoring (each badge level=+1, max 3 per artifact,
     # AE membership=3, AE chair=+2), a score of 3 means at least one
     # reproducible artifact, or one AE membership, or meaningful contribution.
     combined_all = [c for c in combined_all if c['combined_score'] >= 3]
