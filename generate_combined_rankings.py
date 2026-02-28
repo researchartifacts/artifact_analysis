@@ -211,12 +211,12 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
 
 # ── Scoring weights ───────────────────────────────────────────────────────────
 # Artifact badges:  Available-only = 1,  Functional-only = 2,  Reproducible = 3
-# AE service:       Each membership = 3,  Each chair role = +3  (on top of membership)
+# AE service:       Each membership = 3,  Each chair role = +2  (on top of membership)
 W_AVAILABLE   = 1
 W_FUNCTIONAL  = 2
 W_REPRODUCIBLE = 3
 W_AE_MEMBERSHIP = 3
-W_AE_CHAIR      = 3   # bonus on top of membership
+W_AE_CHAIR      = 2   # bonus on top of membership
 
 
 def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
@@ -226,7 +226,7 @@ def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
 
     Scoring:
       artifact_score = reproducible*3 + (functional-reproducible)*2 + remainder*1
-      ae_score       = memberships*3  + chairs*3
+      ae_score       = memberships*3  + chairs*2
       combined_score = artifact_score + ae_score
     """
     # Compute weighted artifact score
@@ -295,7 +295,7 @@ def generate_combined_rankings(data_dir: str):
 
     # Filter: only include people with combined_score >= 3
     # With weighted scoring (Available=1, Functional=2, Reproducible=3,
-    # AE membership=3, AE chair=+3), a score of 3 means at least one
+    # AE membership=3, AE chair=+2), a score of 3 means at least one
     # reproducible artifact, or one AE membership, or meaningful contribution.
     combined_all = [c for c in combined_all if c['combined_score'] >= 3]
     combined_sys = [c for c in combined_sys if c['combined_score'] >= 3]
