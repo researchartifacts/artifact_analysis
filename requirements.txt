@@ -10,7 +10,7 @@ blinker==1.4
 certifi==2020.6.20
 chardet==4.0.0
 charset-normalizer==3.4.1
-cliapp==1.20180812.1
+cliapp==1.0.9
 click==8.0.3
 cloud-init==24.4.1
 cmdtest==0.32+git
