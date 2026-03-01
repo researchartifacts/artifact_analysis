@@ -11,27 +11,44 @@ import urllib.request
 import urllib.error
 from typing import Optional, List, Tuple
 from urllib.parse import quote
+import os
 
 class AffiliationFinder:
     """Find researcher affiliations from various sources."""
     
-    def __init__(self, verbose: bool = False):
+    def __init__(self, verbose: bool = False, proxy_url: Optional[str] = None):
         self.verbose = verbose
         self.session_count = 0
+        self.proxy_url = proxy_url or os.environ.get('HTTP_PROXY', '')
+        if self.proxy_url:
+            self.log(f"Using proxy: {self.proxy_url}")
         
     def log(self, msg: str):
         if self.verbose:
             print(f"[AFFIL] {msg}")
     
+    def _get_opener(self):
+        """Create URL opener with optional proxy support."""
+        if not self.proxy_url:
+            return urllib.request.build_opener()
+        
+        proxy_handler = urllib.request.ProxyHandler({'http': self.proxy_url, 'https': self.proxy_url})
+        return urllib.request.build_opener(proxy_handler)
+    
     def find_affiliation(self, name: str, max_attempts: int = 3) -> Optional[str]:
         """Try multiple sources to find researcher affiliation."""
         
-        # Try DBLP first (most reliable)
+        # Try CrossRef first (most reliable for papers)
+        affil = self._try_crossref(name)
+        if affil:
+            return affil
+        
+        # Try DBLP next
         affil = self._try_dblp(name)
         if affil:
             return affil
         
-        # Try ORCID (reliable but requires explicit data)
+        # Try ORCID (slower but comprehensive)
         affil = self._try_orcid(name)
         if affil:
             return affil
@@ -40,6 +57,53 @@ class AffiliationFinder:
         affil = self._try_homepage_heuristics(name)
         if affil:
             return affil
+        
+        return None
+    
+    def _try_crossref(self, name: str) -> Optional[str]:
+        """Query CrossRef API for author affiliation from papers."""
+        self.log(f"Querying CrossRef for: {name}")
+        
+        try:
+            # Use CrossRef works query
+            # Format: https://api.crossref.org/works?query=<query>&rows=<rows>
+            safe_name = quote(name)
+            url = f"https://api.crossref.org/works?query={safe_name}&rows=10"
+            
+            req = urllib.request.Request(url)
+            req.add_header('User-Agent', 'ResearchArtifacts-Affiliation-Enricher/1.0')
+            
+            opener = self._get_opener()
+            with opener.open(req, timeout=10) as response:
+                if response.status != 200:
+                    return None
+                
+                data = json.loads(response.read().decode())
+                
+                # Extract affiliations from works
+                if 'message' in data and 'items' in data['message']:
+                    for item in data['message']['items']:
+                        if 'author' in item:
+                            for author in item['author']:
+                                # Check if this is our author
+                                author_name = f"{author.get('given', '')} {author.get('family', '')}".strip().lower()
+                                name_lower = name.lower()
+                                # Fuzzy match: at least last name should match
+                                family = author.get('family', '').lower()
+                                if family and (family in name_lower):
+                                    # Found potential matching author
+                                    if 'affiliation' in author and author['affiliation']:
+                                        # Take first affiliation
+                                        aff = author['affiliation'][0]
+                                        if isinstance(aff, dict):
+                                            org = aff.get('name', '')
+                                        else:
+                                            org = str(aff)
+                                        if org:
+                                            return org.strip()
+        
+        except Exception as e:
+            self.log(f"CrossRef lookup failed for {name}: {e}")
         
         return None
     
@@ -52,7 +116,8 @@ class AffiliationFinder:
             safe_name = quote(name)
             url = f"https://dblp.org/search/publ/api?q={safe_name}&format=json"
             
-            with urllib.request.urlopen(url, timeout=5) as response:
+            opener = self._get_opener()
+            with opener.open(url, timeout=10) as response:
                 if response.status != 200:
                     return None
                 
@@ -64,10 +129,11 @@ class AffiliationFinder:
                         info = hit.get('info', {})
                         if 'authors' in info:
                             for author in info['authors'].get('author', []):
-                                if isinstance(author, dict) and author.get('text', '').lower() == name.lower():
-                                    # Found matching author
-                                    if 'affiliation' in author:
-                                        return author['affiliation']
+                                if isinstance(author, dict) and 'text' in author:
+                                    if author.get('text', '').lower() == name.lower():
+                                        # Found matching author
+                                        if 'affiliation' in author:
+                                            return author['affiliation']
                 
                 # Try to parse author pages
                 if 'result' in data and 'hits' in data['result']:
@@ -88,7 +154,8 @@ class AffiliationFinder:
         try:
             self.log(f"Scraping DBLP page: {dblp_url}")
             
-            with urllib.request.urlopen(dblp_url, timeout=5) as response:
+            opener = self._get_opener()
+            with opener.open(dblp_url, timeout=10) as response:
                 html = response.read().decode()
                 
                 # Look for affiliation patterns in HTML
@@ -114,7 +181,8 @@ class AffiliationFinder:
             safe_name = quote(name)
             url = f"https://pub.orcid.org/v3.0/search?q=family-name+AND+given-name+{safe_name}&rows=5"
             
-            with urllib.request.urlopen(url, timeout=5) as response:
+            opener = self._get_opener()
+            with opener.open(url, timeout=10) as response:
                 if response.status != 200:
                     return None
                 
@@ -191,13 +259,14 @@ if __name__ == '__main__':
     parser.add_argument('--output', default='combined_rankings_enriched.json',
                         help='Output file with enriched affiliations')
     parser.add_argument('--limit', type=int, default=None,
-                        help='Limit number of entries to process (for testing)')
+                        help='Limit number of entries to process (for testing; default: all)')
     parser.add_argument('--name', help='Lookup single researcher by name')
     parser.add_argument('--verbose', action='store_true', help='Verbose output')
+    parser.add_argument('--proxy', help='HTTP proxy URL (can also use HTTP_PROXY env var)')
     
     args = parser.parse_args()
     
-    finder = AffiliationFinder(verbose=args.verbose)
+    finder = AffiliationFinder(verbose=args.verbose, proxy_url=args.proxy)
     
     if args.name:
         # Single lookup
