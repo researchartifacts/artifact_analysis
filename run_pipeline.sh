@@ -85,22 +85,22 @@ export PYTHONUNBUFFERED=1
 LOGFILE="$SCRIPT_DIR/.last_pipeline.log"
 exec > >(tee "$LOGFILE") 2>&1
 
-echo "[1/9] Checking DBLP freshness..."
+echo "[1/10] Checking DBLP freshness..."
 "$SCRIPT_DIR/download_dblp.sh" --auto
 
-echo "[2/9] Generating statistics (sysartifacts + secartifacts + USENIX)..."
+echo "[2/10] Generating statistics (sysartifacts + secartifacts + USENIX)..."
 $PYTHON generate_statistics.py --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "❌ Statistics failed"; exit 1; }
 
-echo "[3/9] Generating repository statistics (stars, forks, etc.)..."
+echo "[3/10] Generating repository statistics (stars, forks, etc.)..."
 $PYTHON generate_repo_stats.py --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Repository stats failed (may need API access)"; }
 
-echo "[4/9] Generating visualizations..."
+echo "[4/10] Generating visualizations..."
 $PYTHON generate_visualizations.py --data_dir "$OUTPUT_DIR" \
     || { echo "❌ Visualizations failed"; exit 1; }
 
-echo "[5/9] Generating author statistics..."
+echo "[5/10] Generating author statistics..."
 if [ -f "dblp.xml.gz" ]; then
     $PYTHON generate_author_stats.py \
         --dblp_file dblp.xml.gz --data_dir "$OUTPUT_DIR" --output_dir "$OUTPUT_DIR" \
@@ -109,19 +109,23 @@ else
     echo "⚠️  Skipped (dblp.xml.gz not found)"
 fi
 
-echo "[6/9] Generating per-area author data..."
+echo "[6/10] Generating per-area author data..."
 $PYTHON generate_area_authors.py --data_dir "$OUTPUT_DIR" \
     || { echo "❌ Area author generation failed"; exit 1; }
 
-echo "[7/9] Generating committee statistics..."
+echo "[7/10] Generating committee statistics..."
 $PYTHON generate_committee_stats.py --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Committee statistics failed (may need network access)"; }
 
-echo "[8/9] Generating combined rankings..."
+echo "[8/10] Generating combined rankings..."
 $PYTHON generate_combined_rankings.py --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Combined rankings failed"; }
 
-echo "[9/9] Generating author profiles..."
+echo "[9/10] Generating institution rankings..."
+$PYTHON generate_institution_rankings.py \
+    || { echo "⚠️  Institution rankings failed"; }
+
+echo "[10/10] Generating author profiles..."
 $PYTHON generate_author_profiles.py --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Author profiles failed"; }
 
@@ -130,7 +134,7 @@ echo "✅ Pipeline complete! Output in $OUTPUT_DIR"
 # ── Save results snapshot ─────────────────────────────────────────────────────
 if [ "$SAVE_RESULTS" = true ]; then
     echo ""
-    echo "[10/10] Saving results snapshot..."
+    echo "[11/11] Saving results snapshot..."
     SAVE_ARGS="--results_dir $RESULTS_DIR --output_dir $OUTPUT_DIR"
     if [ -n "$https_proxy" ]; then
         SAVE_ARGS="$SAVE_ARGS --https_proxy $https_proxy"
