@@ -156,7 +156,7 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
 
         entry = _build_entry(
             name=a['name'],
-            affiliation=(m.get('affiliation', '') or a.get('affiliation', '')) if m else a.get('affiliation', ''),
+            affiliation=(a.get('affiliation', '') or m.get('affiliation', '')) if m else a.get('affiliation', ''),
             artifacts=artifacts,
             total_papers=a.get('total_papers', 0) or 0,
             artifact_rate=a.get('artifact_rate', 0) or 0,
