@@ -30,6 +30,24 @@ _INITIALS    = re.compile(r'\b[A-Z]\.\s*')      # e.g. "J. Doe"
 _MULTI_SPACE = re.compile(r'\s+')
 
 
+def _normalize_affiliation(affiliation: str) -> str:
+    """Normalize affiliation string to a canonical form."""
+    if not affiliation:
+        return ''
+    aff = affiliation.strip()
+    
+    # Normalize VU Amsterdam variants
+    if re.search(r'\bVU\s+Amsterdam\b', aff, re.IGNORECASE):
+        return 'Vrije Universiteit Amsterdam, The Netherlands'
+    if re.search(r'\bVrije\s+Universiteit\b', aff, re.IGNORECASE):
+        # Already Vrije Universiteit, make sure it's standardized
+        return 'Vrije Universiteit Amsterdam, The Netherlands'
+    
+    # Normalize other common institutional variants (can be extended)
+    # For now, just return the stripped affiliation
+    return aff
+
+
 def _normalize_name(name: str) -> str:
     """Normalise a name for cross-dataset matching.
 
@@ -156,7 +174,7 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
 
         entry = _build_entry(
             name=a['name'],
-            affiliation=(a.get('affiliation', '') or m.get('affiliation', '')) if m else a.get('affiliation', ''),
+            affiliation=_normalize_affiliation((a.get('affiliation', '') or m.get('affiliation', '')) if m else a.get('affiliation', '')),
             artifacts=artifacts,
             total_papers=a.get('total_papers', 0) or 0,
             artifact_rate=a.get('artifact_rate', 0) or 0,
@@ -182,7 +200,7 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
 
         entry = _build_entry(
             name=m['name'],
-            affiliation=m.get('affiliation', ''),
+            affiliation=_normalize_affiliation(m.get('affiliation', '')),
             artifacts=0,
             total_papers=0,
             artifact_rate=0,
