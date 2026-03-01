@@ -5,6 +5,7 @@ Creates JSON files for overall, systems, and security institution rankings.
 """
 
 import json
+import re
 from pathlib import Path
 from collections import defaultdict
 
@@ -12,6 +13,82 @@ def load_combined_ranking(path):
     """Load combined ranking JSON."""
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
+
+def normalize_affiliation(affiliation):
+    """Normalize affiliation to a canonical base institution name."""
+    if not affiliation:
+        return ''
+    aff = affiliation.strip()
+    
+    # Special case: CISPA - normalize all variants to a canonical form
+    if 'CISPA' in aff:
+        return 'CISPA Helmholtz Center for Information Security'
+    
+    # Split by comma or period to get base institution (before location)
+    parts = re.split(r'[,.]', aff)
+    if not parts:
+        return ''
+    base = parts[0].strip()
+    
+    # Remove trailing abbreviations in parentheses (e.g., "(SJTU)", "(HKUST)")
+    base = re.sub(r'\s*\([^)]*\)\s*$', '', base).strip()
+    
+    # Keep UC campuses distinct when present
+    if base.lower() == 'university of california' and len(parts) > 1:
+        campus = parts[1].strip()
+        if campus and campus.lower() not in ['usa', 'ca', 'california']:
+            return base + ', ' + campus
+    
+    # Apply additional normalization to the base name
+    # Remove leading "The" 
+    if base.lower().startswith('the '):
+        base = base[4:].strip()
+    
+    # Remove trailing location suffixes like "Shanghai, China" → "Shanghai"
+    # This handles "Shanghai Jiao Tong University Shanghai" case
+    base_words = base.split()
+    if len(base_words) > 1:
+        # Check if last word looks like a location (city name repeated or geographic area)
+        last_word = base_words[-1]
+        # Remove if it's a short word that looks like a location abbreviation or repeated location
+        if len(last_word) <= 3 or last_word in ['Shanghai', 'China', 'USA', 'UK', 'Germany', 'France', 'Japan']:
+            if last_word in base[:-len(last_word)]:  # If this word appears earlier in the string
+                base = ' '.join(base_words[:-1]).strip()
+    
+    # Normalize common typos and fixes
+    # Fix "University of Pennsylvani" → "University of Pennsylvania"
+    if 'pennsylvani' in base.lower() and 'pennsylvania' not in base.lower():
+        base = re.sub(r'pennsylvani', 'Pennsylvania', base, flags=re.IGNORECASE)
+    
+    # Fix "hanghai" → "Shanghai" (missing S)
+    if 'hanghai' in base.lower():
+        base = re.sub(r'[Ss]?hanghai', 'Shanghai', base, flags=re.IGNORECASE)
+    
+    # Fix "Jiaotong" → "Jiao Tong" (missing space)
+    if 'jiaotong' in base.lower() and 'jiao tong' not in base.lower():
+        base = re.sub(r'jiaotong', 'Jiao Tong', base, flags=re.IGNORECASE)
+    
+    # Remove common corporate suffixes
+    if base.lower().endswith(' ltd'):
+        base = base[:-4].strip()
+    elif base.lower().endswith(' co.') or base.lower().endswith(' co'):
+        base = base.rsplit(None, 1)[0].strip() if ' ' in base else base
+    elif base.lower().endswith(' inc.') or base.lower().endswith(' inc'):
+        base = base.rsplit(None, 1)[0].strip() if ' ' in base else base
+    
+    # Fix case inconsistencies in known institutions
+    if 'sun yat' in base.lower():
+        if 'university' in base.lower():
+            base = 'Sun Yat-sen University'
+    
+    if 'oregon state' in base.lower():
+        base = 'Oregon State University'
+    
+    if 'universit' in base.lower() and 'catholique' in base.lower() and 'louvain' in base.lower():
+        base = 'Universit Catholique de Louvain'
+    
+    return base
+
 
 def aggregate_by_institution(combined_data):
     """Aggregate individual rankings by institution affiliation."""
@@ -30,7 +107,7 @@ def aggregate_by_institution(combined_data):
     })
     
     for person in combined_data:
-        affiliation = person.get('affiliation', '').strip()
+        affiliation = normalize_affiliation(person.get('affiliation', '').strip())
         
         # Skip entries with no affiliation or placeholder affiliations
         if not affiliation or affiliation == 'Unknown' or affiliation.startswith('_'):
@@ -75,8 +152,8 @@ def aggregate_by_institution(combined_data):
         # Sort authors by combined_score descending and keep top 20
         authors_sorted = sorted(data['authors'], key=lambda x: x['combined_score'], reverse=True)[:20]
         
-        # Only include institutions with meaningful contributions
-        if data['combined_score'] >= 3:
+        # Only include institutions with meaningful contributions, excluding incomplete affiliations
+        if data['combined_score'] >= 3 and affiliation.strip() not in ('Univ', 'University', 'Unknown', '_'):
             institutions.append({
                 'affiliation': data['affiliation'],
                 'combined_score': data['combined_score'],
