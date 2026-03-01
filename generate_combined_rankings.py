@@ -241,6 +241,12 @@ def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
     combined_score = artifact_score + ae_score
 
     yr_keys = [int(y) for y in years.keys()] if years else []
+    
+    # Calculate reproducibility rate
+    repro_rate = 0
+    if badges_available > 0:
+        repro_rate = int(round((badges_reproducible / badges_available) * 100))
+    
     return {
         'name': name,
         'affiliation': affiliation,
@@ -248,6 +254,7 @@ def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
         'artifact_score': artifact_score,
         'total_papers': total_papers,
         'artifact_rate': artifact_rate,
+        'repro_rate': repro_rate,
         'ae_memberships': ae_memberships,
         'chair_count': chair_count,
         'ae_score': ae_score,
