@@ -96,7 +96,7 @@ def generate_area_authors():
                         badges_available += 1
                     if 'functional' in bl:
                         badges_functional += 1
-                    if 'reproduc' in bl or 'reproduced' in bl:
+                    if 'reproduc' in bl or 'reusable' in bl:
                         badges_reproducible += 1
 
             # --- Compute total papers at area conferences (AE years only) ---

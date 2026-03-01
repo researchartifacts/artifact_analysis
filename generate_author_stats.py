@@ -263,7 +263,7 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None):
                     stats['badges']['available'] += 1
                 elif 'functional' in badge_lower:
                     stats['badges']['functional'] += 1
-                elif 'reproduc' in badge_lower:
+                elif 'reproduc' in badge_lower or 'reusable' in badge_lower:
                     stats['badges']['reproducible'] += 1
     
     # Convert to list and add computed fields

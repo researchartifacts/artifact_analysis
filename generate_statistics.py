@@ -63,7 +63,7 @@ def count_badges(artifacts):
                     badges['available'] += 1
                 if 'functional' in badge_lower:
                     badges['functional'] += 1
-                if 'reproduc' in badge_lower or 'replicated' in badge_lower:
+                if 'reproduc' in badge_lower or 'replicated' in badge_lower or 'reusable' in badge_lower:
                     badges['reproducible'] += 1
                 if 'reusable' in badge_lower:
                     badges['reusable'] += 1
