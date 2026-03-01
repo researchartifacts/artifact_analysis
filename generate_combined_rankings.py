@@ -110,6 +110,10 @@ _AFFILIATION_RULES: list[tuple[re.Pattern, str]] = [
     (re.compile(r'\bTU\s+Delft\b|\bDelft\s+University\s+of\s+Technology\b', re.I),
      'TU Delft'),
 
+    # ── University of Texas at Austin ────────────────────────────────────
+    (re.compile(r'\bUT\s+Austin\b|University\s+of\s+Texas\s+at\s+Austin', re.I),
+     'University of Texas at Austin'),
+
     # ── KIT ───────────────────────────────────────────────────────────────
     (re.compile(r'Karlsruhe\s+Institute\s+of\s+Technology|\bKIT\b', re.I),
      'Karlsruhe Institute of Technology'),
