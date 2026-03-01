@@ -35,15 +35,15 @@ _MULTI_SPACE = re.compile(r'\s+')
 _AFFILIATION_RULES: list[tuple[re.Pattern, str]] = [
     # ── Short-form abbreviations → full canonical names ─────────────────────
     # MIT
-    (re.compile(r'^MIT\b|\bMIT\b.*\b(Cambridge|CSAIL|Lincoln)\b|\bMassachusetts\s+Institute\s+of\s+Technology\b', re.I),
+    (re.compile(r'^MIT\b|\bMIT\b.*\b(Cambridge|CSAIL|Lincoln)\b|\bMassachusetts\s+Institute\s+of\s+Technology\b|\bMassachusetts\s+Inst\.?\s+of\s+Technology\b', re.I),
      'Massachusetts Institute of Technology'),
 
     # EPFL
-    (re.compile(r'^EPFL\b|\bEPFL\b|\bSwiss\s+Federal\s+Institute\s+of\s+Technology\s+in\s+Lausanne\b', re.I),
+    (re.compile(r'^EPFL\b|\bEPFL\b|\bSwiss\s+Federal\s+Institute\s+of\s+Technology\s+in\s+Lausanne\b|\bEcole\s+Polytechnique\s+Federale\s+de\s+Lausanne\b|\bÉcole\s+Polytechnique\s+Fédérale\s+de\s+Lausanne\b', re.I),
      'EPFL'),
 
     # ETH Zurich  (careful not to match "Netherlands", "Eindhoven" etc.)
-    (re.compile(r'^ETH\s+Z|\bETH\s+Zurich\b|\bETH\s+Zrich\b|\bETH\s+Zürich\b|^Department\s+of\s+Computer\s+Science,\s+ETH', re.I),
+    (re.compile(r'^ETH\b|^ETH\s+Z|\bETH\s+Zurich\b|\bETH\s+Zrich\b|\bETH\s+Zürich\b|\bETHZ\b|^Department\s+of\s+Computer\s+Science,\s+ETH', re.I),
      'ETH Zurich'),
 
     # ── Max Planck institutes ──────────────────────────────────────────────
@@ -59,7 +59,7 @@ _AFFILIATION_RULES: list[tuple[re.Pattern, str]] = [
      'CISPA Helmholtz Center for Information Security'),
 
     # ── UC campuses ────────────────────────────────────────────────────────
-    (re.compile(r'UC\s+Berkeley|University\s+of\s+California,?\s+Berkeley', re.I),
+    (re.compile(r'UC\s+Berkeley|University\s+of\s+California,?\s+Berkeley|University\s+of\s+California\s+at\s+Berkeley', re.I),
      'University of California, Berkeley'),
     (re.compile(r'UC\s+San\s+Diego|UCSD|University\s+of\s+California,?\s+San\s+Diego', re.I),
      'University of California, San Diego'),
@@ -69,7 +69,7 @@ _AFFILIATION_RULES: list[tuple[re.Pattern, str]] = [
      'University of California, Santa Cruz'),
     (re.compile(r'UC\s+Davis|University\s+of\s+California,?\s+Davis', re.I),
      'University of California, Davis'),
-    (re.compile(r'UC\s+Irvine|University\s+of\s+California,?\s+Irvine', re.I),
+    (re.compile(r'UC\s+Irvine|University\s+of\s+California,?\s+Irvine|University\s+of\s+California\s+Irvine', re.I),
      'University of California, Irvine'),
     (re.compile(r'UC\s+Riverside|University\s+of\s+California,?\s+Riverside', re.I),
      'University of California, Riverside'),
@@ -77,6 +77,10 @@ _AFFILIATION_RULES: list[tuple[re.Pattern, str]] = [
      'University of California, Los Angeles'),
     (re.compile(r'UC\s+Merced|University\s+of\s+California,?\s+Merced', re.I),
      'University of California, Merced'),
+
+    # ── Lawrence Berkeley National Laboratory ─────────────────────────────
+    (re.compile(r'Lawrence\s+Berkeley\s+National\s+Laboratory|\bLBNL\b', re.I),
+     'Lawrence Berkeley National Laboratory'),
 
     # ── UIUC / Illinois ───────────────────────────────────────────────────
     (re.compile(r'\bUIUC\b|Univ\.?\s+of\s+Illinois\s+at\s+Urbana|University\s+of\s+Illinois\s+at\s+Urbana|University\s+of\s+Illinois\s+Urbana|University\s+of\s+Illinois,\s+Urbana', re.I),
@@ -95,8 +99,12 @@ _AFFILIATION_RULES: list[tuple[re.Pattern, str]] = [
      'Ruhr University Bochum'),
 
     # ── University of Wisconsin-Madison ───────────────────────────────────
-    (re.compile(r'University\s+of\s+Wisconsin[\s–—-]+Madison', re.I),
+    (re.compile(r'University\s+of\s+Wisconsin[\s–—-]+Madison|\bUW\s*[-–—]?\s*Madison\b|\bUW\s*[-–—]?\s*Mad\b', re.I),
      'University of Wisconsin-Madison'),
+
+    # ── University of Michigan ───────────────────────────────────────────
+    (re.compile(r'\bU\s+Michigan\b|\bUMich\b|\bUMichigan\b|University\s+of\s+Michigan', re.I),
+     'University of Michigan'),
 
     # ── TU Delft / Delft University ───────────────────────────────────────
     (re.compile(r'\bTU\s+Delft\b|\bDelft\s+University\s+of\s+Technology\b', re.I),
@@ -105,6 +113,10 @@ _AFFILIATION_RULES: list[tuple[re.Pattern, str]] = [
     # ── KIT ───────────────────────────────────────────────────────────────
     (re.compile(r'Karlsruhe\s+Institute\s+of\s+Technology|\bKIT\b', re.I),
      'Karlsruhe Institute of Technology'),
+
+    # ── Graz University of Technology (TU Graz) ───────────────────────────
+    (re.compile(r'\bTU\s+Graz\b|Graz\s+University\s+of\s+Technology', re.I),
+     'Graz University of Technology'),
 
     # ── KAIST ─────────────────────────────────────────────────────────────
     (re.compile(r'^KAIST\b|\bKAIST\b|Korea\s+Advanced\s+Institute\s+of\s+Science', re.I),
@@ -135,12 +147,20 @@ _AFFILIATION_RULES: list[tuple[re.Pattern, str]] = [
      'Oregon State University'),
 
     # ── Georgia Tech ──────────────────────────────────────────────────────
-    (re.compile(r'Georgia\s+Institute\s+of\s+Technology|Georgia\s+Tech', re.I),
+    (re.compile(r'Georgia\s+Institute\s+of\s+Technology|Georgia\s+Tech|\bGaTech\b', re.I),
      'Georgia Institute of Technology'),
+
+    # ── Purdue University ────────────────────────────────────────────────
+    (re.compile(r'\bPurdue\b|Purdue\s+University', re.I),
+     'Purdue University'),
 
     # ── CMU ───────────────────────────────────────────────────────────────
     (re.compile(r'Carnegie\s+Mellon\s+University|\bCMU\b', re.I),
      'Carnegie Mellon University'),
+
+    # ── Microsoft Research ───────────────────────────────────────────────
+    (re.compile(r'Microsoft\s+Research(\s+Asia|\s+Cambridge|\s+Redmond|\s+India)?|\bMSR\b', re.I),
+     'Microsoft Research'),
 
     # ── USTC ──────────────────────────────────────────────────────────────
     (re.compile(r'University\s+of\s+Science\s+and\s+Technology\s+of\s+China|\bUSTC\b', re.I),
