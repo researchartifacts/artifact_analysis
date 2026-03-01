@@ -126,6 +126,7 @@ def aggregate_by_institution(combined_data):
         # Store author details for expandable view
         inst['authors'].append({
             'name': person.get('name', ''),
+            'affiliation': person.get('affiliation', ''),
             'combined_score': person.get('combined_score', 0),
             'artifacts': person.get('artifacts', 0),
             'ae_memberships': person.get('ae_memberships', 0),
