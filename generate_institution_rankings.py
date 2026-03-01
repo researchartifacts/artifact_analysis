@@ -24,7 +24,7 @@ def aggregate_by_institution(combined_data):
         'ae_memberships': 0,
         'chair_count': 0,
         'total_papers': 0,
-        'authors': set(),
+        'authors': [],
         'conferences': set(),
         'years': defaultdict(int)
     })
@@ -45,7 +45,15 @@ def aggregate_by_institution(combined_data):
         inst['ae_memberships'] += person.get('ae_memberships', 0)
         inst['chair_count'] += person.get('chair_count', 0)
         inst['total_papers'] += person.get('total_papers', 0)
-        inst['authors'].add(person.get('name', ''))
+        
+        # Store author details for expandable view
+        inst['authors'].append({
+            'name': person.get('name', ''),
+            'combined_score': person.get('combined_score', 0),
+            'artifacts': person.get('artifacts', 0),
+            'ae_memberships': person.get('ae_memberships', 0),
+            'total_papers': person.get('total_papers', 0)
+        })
         
         # Aggregate conferences
         if person.get('conferences'):
@@ -64,6 +72,9 @@ def aggregate_by_institution(combined_data):
         if data['total_papers'] > 0:
             artifact_rate = round((data['artifacts'] / data['total_papers']) * 100, 1)
         
+        # Sort authors by combined_score descending and keep top 20
+        authors_sorted = sorted(data['authors'], key=lambda x: x['combined_score'], reverse=True)[:20]
+        
         # Only include institutions with meaningful contributions
         if data['combined_score'] >= 3:
             institutions.append({
@@ -77,6 +88,7 @@ def aggregate_by_institution(combined_data):
                 'total_papers': data['total_papers'],
                 'artifact_rate': artifact_rate,
                 'num_authors': len(data['authors']),
+                'top_authors': authors_sorted,
                 'conferences': sorted(list(data['conferences'])),
                 'years': dict(data['years'])
             })
