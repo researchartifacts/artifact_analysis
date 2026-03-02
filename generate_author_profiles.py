@@ -70,6 +70,14 @@ def generate_profiles(data_dir: str) -> None:
             profile['artifact_score'] = cr.get('artifact_score', 0)
             profile['ae_score'] = cr.get('ae_score', 0)
             profile['rank'] = cr.get('rank', 0)
+            # Keep artifact metrics consistent with combined ranking views.
+            # This avoids stale/legacy denominator differences in AR%.
+            profile['artifact_count'] = cr.get('artifacts', profile['artifact_count'])
+            profile['total_papers'] = cr.get('total_papers', profile['total_papers'])
+            profile['artifact_rate'] = cr.get('artifact_rate', profile['artifact_rate'])
+            profile['badges_available'] = cr.get('badges_available', profile['badges_available'])
+            profile['badges_functional'] = cr.get('badges_functional', profile['badges_functional'])
+            profile['badges_reproducible'] = cr.get('badges_reproducible', profile['badges_reproducible'])
 
         if ae:
             profile['ae_memberships'] = ae.get('total_memberships', 0)
