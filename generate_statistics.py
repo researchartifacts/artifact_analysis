@@ -82,6 +82,8 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
         Dictionary with all generated data
     """
     
+    skip_usenix = os.getenv('SKIP_USENIX_SCRAPE', '').strip().lower() in {'1', 'true', 'yes'}
+
     # Collecting artifact data from both sources
     sys_results = get_ae_results(conf_regex, 'sys')
     sec_results = get_ae_results(conf_regex, 'sec')
@@ -111,6 +113,9 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
             continue
         usenix_short, category = USENIX_CONF_MAP[conf_lower]
         if not re.search(conf_regex, dir_name):
+            continue
+        if skip_usenix:
+            print(f"Skipping USENIX {conf_name.upper()} {year} (SKIP_USENIX_SCRAPE set)")
             continue
         print(f"Scraping USENIX {conf_name.upper()} {year} (fallback for missing sysartifacts results)...")
         try:

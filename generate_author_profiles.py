@@ -54,6 +54,7 @@ def generate_profiles(data_dir: str) -> None:
                             a.get('affiliation') or
                             (ae.get('affiliation', '') if ae else '')),
             'papers': a.get('papers', []),
+            'papers_without_artifacts': a.get('papers_without_artifacts', []),
             'conferences': a.get('conferences', []),
             'years': a.get('years', []),
             'artifact_count': a.get('artifact_count', 0),

@@ -283,6 +283,8 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None, co
         'name': '',
         'artifact_count': 0,
         'papers': [],
+        'papers_without_artifacts': [],
+        'artifact_titles': set(),  # Track which titles have artifacts
         'conferences': set(),
         'years': set(),
         'badges': {
@@ -304,6 +306,8 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None, co
                 'badges': paper['badges'],
                 'category': paper.get('category', 'unknown')
             })
+            # Track normalized title to identify papers WITHOUT artifacts later
+            stats['artifact_titles'].add(paper['normalized_title'])
             stats['conferences'].add(paper['conference'])
             stats['years'].add(paper['year'])
             
@@ -398,6 +402,38 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None, co
                 total_papers_by_conf_year[c] = conf_year_counts
         total_papers = len(total_papers_set) if total_papers_set else 0
         
+        # --- Compute papers WITHOUT artifacts ---
+        # Collect all papers from venue_papers, then subtract artifact papers
+        all_venue_papers = []  # List of (conf, year, title) for papers at venues
+        for (a, c), year_dict in venue_papers.items():
+            if a == author:
+                active_years = conference_active_years.get(c, set())
+                for yr, titles in year_dict.items():
+                    if not active_years or yr in active_years:
+                        for title in titles:
+                            all_venue_papers.append((c, yr, title))
+        
+        # Find papers without artifacts
+        papers_without = []
+        for conf, yr, title in all_venue_papers:
+            if title not in stats['artifact_titles']:  # Not an artifact paper
+                papers_without.append({
+                    'title': title,
+                    'conference': conf,
+                    'year': yr
+                })
+        
+        # Remove duplicates and sort by year desc, then conference
+        papers_without_dedup = {}
+        for p in papers_without:
+            # Use title+year+conf as key to deduplicate
+            key = (p['title'], p['year'], p['conference'])
+            if key not in papers_without_dedup:
+                papers_without_dedup[key] = p
+        
+        papers_without_list = list(papers_without_dedup.values())
+        papers_without_list.sort(key=lambda x: (-x['year'], x['conference']))
+        
         art_count = stats['artifact_count']
         avail = stats['badges']['available']
         func = stats['badges']['functional']
@@ -435,7 +471,8 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None, co
             'badges_available': avail,
             'badges_functional': func,
             'badges_reproducible': repro,
-            'papers': stats['papers']
+            'papers': stats['papers'],
+            'papers_without_artifacts': papers_without_list
         }
         authors_list.append(author_entry)
     
