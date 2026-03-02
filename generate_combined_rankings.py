@@ -146,6 +146,10 @@ _AFFILIATION_RULES: list[tuple[re.Pattern, str]] = [
     (re.compile(r'Chinese\s+University\s+of\s+Hong\s+Kong|\bCUHK\b', re.I),
      'Chinese University of Hong Kong'),
 
+    # ── KU Leuven / DistriNet ─────────────────────────────────────────────
+    (re.compile(r'\bKU\s+Leuven\b|Katholieke\s+Universiteit\s+Leuven|DistriNet|imec\s*-?\s*DistriNet', re.I),
+     'KU Leuven'),
+
     # ── Oregon State (case fix) ───────────────────────────────────────────
     (re.compile(r'Oregon\s+State\s+[Uu]niversity', re.I),
      'Oregon State University'),
@@ -496,10 +500,61 @@ def generate_combined_rankings(data_dir: str):
     sys_members   = _load_json('systems_ae_members.json')
     sec_members   = _load_json('security_ae_members.json')
 
-    # Generate combined rankings
-    combined_all = _merge_rankings(all_authors, all_members)
+    # Generate combined rankings for systems and security
     combined_sys = _merge_rankings(sys_authors, sys_members)
     combined_sec = _merge_rankings(sec_authors, sec_members)
+    
+    # Create combined_all as the union of systems and security to enforce
+    # monotonic totals (all >= systems, all >= security)
+    print("Merging systems and security rankings into combined all...")
+    combined_all_dict = {}
+    
+    # Add all people from systems
+    for person in combined_sys:
+        norm_name = _normalize_name(person['name'])
+        combined_all_dict[norm_name] = person.copy()
+    
+    # Merge in people from security
+    for person in combined_sec:
+        norm_name = _normalize_name(person['name'])
+        if norm_name in combined_all_dict:
+            # Person is in both - merge their data by taking max scores
+            existing = combined_all_dict[norm_name]
+            
+            # For scores, take maximum to ensure superset behavior
+            existing['artifacts'] = max(existing['artifacts'], person['artifacts'])
+            existing['artifact_score'] = max(existing['artifact_score'], person['artifact_score'])
+            existing['ae_memberships'] = max(existing['ae_memberships'], person['ae_memberships'])
+            existing['chair_count'] = max(existing['chair_count'], person['chair_count'])
+            existing['ae_score'] = max(existing['ae_score'], person['ae_score'])
+            existing['combined_score'] = max(existing['combined_score'], person['combined_score'])
+            existing['total_papers'] = max(existing['total_papers'], person['total_papers'])
+            
+            # Merge conferences and years
+            existing_confs = set(existing.get('conferences', []))
+            person_confs = set(person.get('conferences', []))
+            existing['conferences'] = sorted(existing_confs | person_confs)
+            
+            existing_years = existing.get('years', {})
+            person_years = person.get('years', {})
+            merged_years = existing_years.copy()
+            for yr, cnt in person_years.items():
+                merged_years[yr] = max(merged_years.get(yr, 0), cnt)
+            existing['years'] = merged_years
+            
+            # Update year range
+            all_years = list(merged_years.keys())
+            if all_years:
+                existing['first_year'] = min(all_years)
+                existing['last_year'] = max(all_years)
+        else:
+            # Person only in security - add them
+            combined_all_dict[norm_name] = person.copy()
+    
+    # Convert back to list and sort by combined_score descending
+    combined_all = sorted(combined_all_dict.values(), 
+                         key=lambda x: x['combined_score'], 
+                         reverse=True)
 
     # Filter: only include people with combined_score >= 3
     # With additive scoring (each badge level=+1, max 3 per artifact,
