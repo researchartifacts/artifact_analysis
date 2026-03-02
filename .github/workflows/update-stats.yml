@@ -8,6 +8,10 @@ on:
   # Allow manual trigger
   workflow_dispatch:
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   update-statistics:
     runs-on: ubuntu-latest
@@ -25,7 +29,7 @@ jobs:
           repository: researchartifacts/researchartifacts.github.io
           path: website
           ref: debug
-          token: ${{ secrets.WEBSITE_UPDATE_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Checkout artifact_analysis_results repository
         uses: actions/checkout@v4
