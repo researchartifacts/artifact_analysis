@@ -28,7 +28,7 @@ jobs:
         with:
           repository: researchartifacts/researchartifacts.github.io
           path: website
-          ref: debug
+          ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Checkout artifact_analysis_results repository
@@ -172,7 +172,7 @@ jobs:
             echo "Archive pushed successfully"
           fi
       
-      - name: Commit and push to debug branch
+      - name: Commit and push to main branch
         run: |
           cd website
           git config user.name "GitHub Actions Bot"
@@ -186,8 +186,8 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "Update statistics from pipeline run ${{ env.RUN_TIMESTAMP }}"
-            git push origin debug
-            echo "Changes pushed to debug branch successfully"
+            git push origin main
+            echo "Changes pushed to main branch successfully"
           fi
       
       - name: Summary
