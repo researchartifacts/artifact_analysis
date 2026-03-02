@@ -19,6 +19,14 @@ def normalize_affiliation(affiliation):
     if not affiliation:
         return ''
     aff = affiliation.strip()
+
+    # Technical University of Munich (TUM) aliases
+    if re.search(r'\b(TU\s*Munich|TUM)\b|Technical\s+University\s+(of\s+)?Munich', aff, re.IGNORECASE):
+        return 'Technical University of Munich'
+
+    # KU Leuven / DistriNet aliases
+    if re.search(r'distrinet|imec\s*-?\s*distrinet|\bku\s*leuven\b|katholieke\s+universiteit\s+leuven', aff, re.IGNORECASE):
+        return 'KU Leuven'
     
     # Special case: CISPA - normalize all variants to a canonical form
     if 'CISPA' in aff:
@@ -147,8 +155,9 @@ def aggregate_by_institution(combined_data):
     for affiliation, data in inst_data.items():
         # Calculate artifact rate
         artifact_rate = 0
-        if data['total_papers'] > 0:
-            artifact_rate = round((data['artifacts'] / data['total_papers']) * 100, 1)
+        denom = max(data['total_papers'], data['artifacts'])
+        if denom > 0:
+            artifact_rate = round((data['artifacts'] / denom) * 100, 1)
         
         # Sort authors by combined_score descending and keep top 20
         authors_sorted = sorted(data['authors'], key=lambda x: x['combined_score'], reverse=True)[:20]

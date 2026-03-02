@@ -332,8 +332,10 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None):
         func = stats['badges']['functional']
         repro = stats['badges']['reproducible']
         
-        # Artifact rate: % of tracked-conference papers that have an artifact
-        artifact_rate = round(art_count / total_papers * 100, 1) if total_papers > 0 else 0.0
+        # Artifact rate: % of tracked-conference papers that have an artifact.
+        # Use max(total_papers, art_count) to avoid >100% when DBLP undercounts papers.
+        denom = max(total_papers, art_count)
+        artifact_rate = round(art_count / denom * 100, 1) if denom > 0 else 0.0
         # Reproducibility rate: % of artifact papers with a "reproduced" badge
         repro_rate = round(repro / art_count * 100, 1) if art_count > 0 else 0.0
         # Functional rate: % of artifact papers with a "functional" badge
