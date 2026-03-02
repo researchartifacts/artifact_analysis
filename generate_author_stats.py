@@ -71,6 +71,40 @@ def load_artifacts(data_dir):
     
     return artifacts
 
+def load_conference_active_years(data_dir):
+    """Load artifacts_by_conference data and extract active years per conference.
+    
+    Returns dict: conference_name -> set of years when that conference had artifact evaluation.
+    """
+    conf_path = os.path.join(data_dir, '_data/artifacts_by_conference.yml')
+    if not os.path.exists(conf_path):
+        print(f"Warning: {conf_path} not found, will count all years")
+        return {}
+    
+    with open(conf_path, 'r') as f:
+        conf_data = yaml.safe_load(f)
+    
+    active_years = {}
+    for conf in conf_data:
+        conf_name = conf.get('name', '').upper()
+        if not conf_name:
+            continue
+        
+        years = conf.get('years', [])
+        # Include any year that had at least one artifact
+        active_years[conf_name] = set(
+            year_entry['year'] for year_entry in years 
+            if year_entry.get('total', 0) > 0
+        )
+    
+    print(f"Loaded active years for {len(active_years)} conferences")
+    for conf, years in sorted(active_years.items()):
+        if years:
+            year_list = sorted(years)
+            print(f"  {conf}: {min(year_list)}-{max(year_list)} ({len(year_list)} years)")
+    
+    return active_years
+
 def extract_paper_titles(artifacts):
     """Extract unique paper titles from artifacts"""
     titles = set()
@@ -212,19 +246,23 @@ def parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact):
     print(f"Total DBLP affiliations extracted: {len(affiliations)}")
     return papers_found, venue_papers, affiliations
 
-def aggregate_author_statistics(papers, venue_papers=None, affiliations=None):
+def aggregate_author_statistics(papers, venue_papers=None, affiliations=None, conference_active_years=None):
     """Calculate statistics per author.
     
     Args:
         papers: list of artifact papers with author info
-        venue_papers: optional dict (author, conference)->set(titles)
+        venue_papers: optional dict (author, conference)->year_dict->set(titles)
                       of ALL papers at tracked conferences
         affiliations: optional dict author_name -> affiliation string
+        conference_active_years: optional dict conference_name -> set of active years
+                      Only papers from these years will be counted in total_papers
     """
     if venue_papers is None:
         venue_papers = {}
     if affiliations is None:
         affiliations = {}
+    if conference_active_years is None:
+        conference_active_years = {}
     
     author_stats = defaultdict(lambda: {
         'name': '',
@@ -257,14 +295,19 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None):
             badge_list = paper['badges']
             if isinstance(badge_list, str):
                 badge_list = [b.strip() for b in badge_list.split(',')]
-            for badge in badge_list:
-                badge_lower = badge.lower()
-                if 'available' in badge_lower:
-                    stats['badges']['available'] += 1
-                elif 'functional' in badge_lower:
-                    stats['badges']['functional'] += 1
-                elif 'reproduc' in badge_lower or 'reusable' in badge_lower:
-                    stats['badges']['reproducible'] += 1
+            
+            # If artifact was evaluated but has no formal badges recorded, treat as "available"
+            if not badge_list or len(badge_list) == 0:
+                stats['badges']['available'] += 1
+            else:
+                for badge in badge_list:
+                    badge_lower = badge.lower()
+                    if 'available' in badge_lower:
+                        stats['badges']['available'] += 1
+                    elif 'functional' in badge_lower:
+                        stats['badges']['functional'] += 1
+                    elif 'reproduc' in badge_lower or 'reusable' in badge_lower:
+                        stats['badges']['reproducible'] += 1
     
     # Convert to list and add computed fields
     authors_list = []
@@ -300,6 +343,7 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None):
             category = 'unknown'
         
         # --- Compute total papers at tracked conferences (per-conf per-year) ---
+        # Only count papers from years when the conference was actively doing AE
         total_papers_set = set()
         total_papers_by_conf = {}
         total_papers_by_conf_year = {}
@@ -307,21 +351,33 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None):
             year_dict = venue_papers.get((author, conf), {})
             conf_titles = set()
             conf_year_counts = {}
+            active_years = conference_active_years.get(conf, set())
+            
             for yr, titles in year_dict.items():
-                conf_titles |= titles
-                conf_year_counts[yr] = len(titles)
+                # Only count papers from years when this conference had AE
+                # If no active_years data available, count all years (backward compat)
+                if not active_years or yr in active_years:
+                    conf_titles |= titles
+                    conf_year_counts[yr] = len(titles)
+            
             total_papers_set |= conf_titles
             total_papers_by_conf[conf] = len(conf_titles)
             total_papers_by_conf_year[conf] = conf_year_counts
+        
         # Also check conferences the author didn't have artifacts at but
         # did publish at (from DBLP venue scan)
         for (a, c), year_dict in venue_papers.items():
             if a == author and c not in total_papers_by_conf:
                 conf_titles = set()
                 conf_year_counts = {}
+                active_years = conference_active_years.get(c, set())
+                
                 for yr, titles in year_dict.items():
-                    conf_titles |= titles
-                    conf_year_counts[yr] = len(titles)
+                    # Only count papers from years when this conference had AE
+                    if not active_years or yr in active_years:
+                        conf_titles |= titles
+                        conf_year_counts[yr] = len(titles)
+                
                 total_papers_set |= conf_titles
                 total_papers_by_conf[c] = len(conf_titles)
                 total_papers_by_conf_year[c] = conf_year_counts
@@ -387,6 +443,9 @@ def generate_author_stats(dblp_file, data_dir, output_dir):
     if not artifacts:
         return None
     
+    # Load conference active years (years when each conference had AE)
+    conference_active_years = load_conference_active_years(data_dir)
+    
     # Total artifacts: {len(artifacts)}
     
     # Extract titles
@@ -399,8 +458,10 @@ def generate_author_stats(dblp_file, data_dir, output_dir):
         print("No papers matched in DBLP")
         return None
     
-    # Aggregate statistics (pass venue_papers for total-paper counts)
-    authors_list, category_breakdown = aggregate_author_statistics(papers_with_authors, venue_papers, affiliations)
+    # Aggregate statistics (pass venue_papers and conference_active_years for total-paper counts)
+    authors_list, category_breakdown = aggregate_author_statistics(
+        papers_with_authors, venue_papers, affiliations, conference_active_years
+    )
     
     # Count affiliation coverage
     with_affil = sum(1 for a in authors_list if a.get('affiliation'))

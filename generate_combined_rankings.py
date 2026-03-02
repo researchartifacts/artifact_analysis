@@ -518,19 +518,24 @@ def generate_combined_rankings(data_dir: str):
     for person in combined_sec:
         norm_name = _normalize_name(person['name'])
         if norm_name in combined_all_dict:
-            # Person is in both - merge their data by taking max scores
+            # Person is in both - merge their data by SUMMING contributions
+            # Systems and security track different conferences, so artifacts,
+            # papers, and AE memberships should be additive
             existing = combined_all_dict[norm_name]
             
-            # For scores, take maximum to ensure superset behavior
-            existing['artifacts'] = max(existing['artifacts'], person['artifacts'])
-            existing['artifact_score'] = max(existing['artifact_score'], person['artifact_score'])
-            existing['ae_memberships'] = max(existing['ae_memberships'], person['ae_memberships'])
-            existing['chair_count'] = max(existing['chair_count'], person['chair_count'])
-            existing['ae_score'] = max(existing['ae_score'], person['ae_score'])
-            existing['combined_score'] = max(existing['combined_score'], person['combined_score'])
-            existing['total_papers'] = max(existing['total_papers'], person['total_papers'])
+            # Sum all contribution metrics
+            existing['artifacts'] += person['artifacts']
+            existing['artifact_score'] += person['artifact_score']
+            existing['badges_available'] += person.get('badges_available', 0)
+            existing['badges_functional'] += person.get('badges_functional', 0)
+            existing['badges_reproducible'] += person.get('badges_reproducible', 0)
+            existing['ae_memberships'] += person['ae_memberships']
+            existing['chair_count'] += person['chair_count']
+            existing['ae_score'] += person['ae_score']
+            existing['combined_score'] += person['combined_score']
+            existing['total_papers'] += person['total_papers']
             
-            # Merge conferences and years
+            # Merge conferences and years (union)
             existing_confs = set(existing.get('conferences', []))
             person_confs = set(person.get('conferences', []))
             existing['conferences'] = sorted(existing_confs | person_confs)
@@ -539,7 +544,8 @@ def generate_combined_rankings(data_dir: str):
             person_years = person.get('years', {})
             merged_years = existing_years.copy()
             for yr, cnt in person_years.items():
-                merged_years[yr] = max(merged_years.get(yr, 0), cnt)
+                # For years, sum the activity counts
+                merged_years[yr] = merged_years.get(yr, 0) + cnt
             existing['years'] = merged_years
             
             # Update year range
@@ -547,6 +553,12 @@ def generate_combined_rankings(data_dir: str):
             if all_years:
                 existing['first_year'] = min(all_years)
                 existing['last_year'] = max(all_years)
+                
+            # Recalculate rates based on summed totals
+            if existing['total_papers'] > 0:
+                existing['artifact_rate'] = int(round((existing['artifacts'] / existing['total_papers']) * 100))
+            if existing['badges_available'] > 0:
+                existing['repro_rate'] = int(round((existing['badges_reproducible'] / existing['badges_available']) * 100))
         else:
             # Person only in security - add them
             combined_all_dict[norm_name] = person.copy()
