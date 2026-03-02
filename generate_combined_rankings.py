@@ -450,13 +450,19 @@ def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
     if badges_available > 0:
         repro_rate = int(round((badges_reproducible / badges_available) * 100))
     
-    # Sanitise display name: replace tabs/newlines with spaces, collapse runs
+    # Sanitise raw name for storage/matching stability
     name = re.sub(r'[\t\n\r]+', ' ', name)
     name = re.sub(r'  +', ' ', name).strip()
 
+    # Canonical display fields used by website tables
+    display_name = re.sub(r'\s+\d{4}$', '', name).strip()
+    display_affiliation = _normalize_affiliation(affiliation)
+
     return {
         'name': name,
+        'display_name': display_name,
         'affiliation': affiliation,
+        'display_affiliation': display_affiliation,
         'artifacts': artifacts,
         'artifact_score': artifact_score,
         'total_papers': total_papers,

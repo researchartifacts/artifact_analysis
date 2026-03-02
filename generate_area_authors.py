@@ -13,7 +13,9 @@ import yaml
 import json
 import os
 import argparse
+import re
 from collections import defaultdict
+from generate_combined_rankings import _normalize_affiliation
 
 DATA_DIR = None  # Set via CLI
 
@@ -28,9 +30,36 @@ def save_yaml(filename, data):
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
 
+def _normalize_name_key(name):
+    if not name:
+        return ''
+    key = re.sub(r'[\t\n\r]+', ' ', name).strip().lower()
+    key = re.sub(r'\s+\d{4}$', '', key)
+    key = re.sub(r'\s+', ' ', key).strip()
+    return key
+
+
+def _load_ae_affiliation_fallback():
+    """Load AE affiliation fallback map by normalized name, if available."""
+    ae_path = os.path.join(DATA_DIR, '..', 'assets', 'data', 'ae_members.json')
+    if not os.path.exists(ae_path):
+        return {}
+    with open(ae_path, 'r') as f:
+        ae_members = json.load(f)
+
+    fallback = {}
+    for member in ae_members:
+        key = _normalize_name_key(member.get('name', ''))
+        aff = _normalize_affiliation(member.get('affiliation', '') or '')
+        if key and aff and key not in fallback:
+            fallback[key] = aff
+    return fallback
+
+
 def generate_area_authors():
     summary = load_yaml('summary.yml')
     authors = load_yaml('authors.yml')
+    ae_aff_fallback = _load_ae_affiliation_fallback()
 
     systems_confs = set(summary.get('systems_conferences', []))
     security_confs = set(summary.get('security_conferences', []))
@@ -130,9 +159,15 @@ def generate_area_authors():
             #   Each badge level adds 1 pt: Available=1, +Functional=2, +Reproducible=3 max
             artifact_score = total * 1 + badges_functional * 1 + badges_reproducible * 1
 
+            author_name = author['name']
+            norm_key = _normalize_name_key(author_name)
+            base_aff = _normalize_affiliation(author.get('affiliation', '') or '')
+            aff = base_aff or ae_aff_fallback.get(norm_key, '')
+
             entry = {
-                'name': author['name'],
-                'affiliation': author.get('affiliation', ''),
+                'name': author_name,
+                'display_name': author.get('display_name', author_name),
+                'affiliation': aff,
                 'artifact_score': artifact_score,
                 'total': total,
                 'total_papers': area_total_papers,

@@ -14,6 +14,7 @@ from datetime import datetime
 import lxml.etree as ET
 from gzip import GzipFile
 import re
+from generate_combined_rankings import _normalize_affiliation
 
 # Conference categorization is derived from the source (sys vs sec artifacts)
 # and stored in the 'category' field of each artifact by generate_statistics.py
@@ -57,6 +58,20 @@ def normalize_title(title):
     # Remove extra whitespace
     normalized = ' '.join(normalized.split())
     return normalized
+
+
+def clean_display_name(name):
+    """Normalize display name while preserving raw DBLP name elsewhere.
+
+    Removes DBLP disambiguation suffixes (e.g. " 0001") and collapses
+    whitespace/tabs/newlines.
+    """
+    if not name:
+        return ''
+    cleaned = re.sub(r'[\t\n\r]+', ' ', name)
+    cleaned = re.sub(r'\s+\d{4}$', '', cleaned)
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    return cleaned
 
 def load_artifacts(data_dir):
     """Load artifacts from generated data file"""
@@ -398,10 +413,12 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None, co
         functional_rate = round(func / art_count * 100, 1) if art_count > 0 else 0.0
         
         # Look up affiliation from DBLP
-        affiliation = affiliations.get(stats['name'], '')
+        affiliation_raw = affiliations.get(stats['name'], '')
+        affiliation = _normalize_affiliation(affiliation_raw)
 
         author_entry = {
             'name': stats['name'],
+            'display_name': clean_display_name(stats['name']),
             'affiliation': affiliation,
             'artifact_count': art_count,
             'total_papers': total_papers,

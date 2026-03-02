@@ -30,6 +30,7 @@ from alternative_committee_scrape import (
     CHES_KNOWN_YEARS,
     PETS_KNOWN_YEARS,
 )
+from generate_combined_rankings import _normalize_affiliation
 
 # ── Country → Continent mapping ──────────────────────────────────────────────
 
@@ -424,6 +425,16 @@ def _normalize_name(name):
     return name
 
 
+def _display_name(name):
+    """Normalize member name for display while keeping matching robust."""
+    if not name:
+        return ''
+    name = re.sub(r'[\t\n\r]+', ' ', name)
+    name = re.sub(r'\s+\d{4}$', '', name)
+    name = re.sub(r'\s+', ' ', name).strip()
+    return name
+
+
 def _compute_recurring_members(all_results, conf_to_area, classified):
     """Compute statistics for recurring AE committee members.
 
@@ -463,11 +474,12 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
                 continue
             norm = _normalize_name(name_raw)
             role = m.get('role', 'member')
-            affiliation = m.get('affiliation', '').strip('*_ \t')
+            affiliation = _normalize_affiliation(m.get('affiliation', '').strip('*_ \t'))
 
             if norm not in member_map:
                 member_map[norm] = {
                     'name': name_raw,
+                    'display_name': _display_name(name_raw),
                     'affiliation': affiliation,
                     'total_memberships': 0,
                     'chair_count': 0,
@@ -506,6 +518,7 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
             if affiliation and (not rec['affiliation'] or (year and max(rec['years']) == year)):
                 rec['affiliation'] = affiliation
                 rec['name'] = name_raw  # prefer most recent spelling
+                rec['display_name'] = _display_name(name_raw)
 
             # Per-area accumulation
             if area == 'systems':
@@ -545,6 +558,7 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
     for rec in all_members:
         entry = {
             'name': rec['name'],
+            'display_name': rec.get('display_name', _display_name(rec['name'])),
             'affiliation': rec['affiliation'],
             'total_memberships': rec['total_memberships'],
             'chair_count': rec['chair_count'],
@@ -566,6 +580,7 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
             continue  # no systems participation
         entry = {
             'name': rec['name'],
+            'display_name': rec.get('display_name', _display_name(rec['name'])),
             'affiliation': rec['affiliation'],
             'total_memberships': rec['sys_memberships'],
             'chair_count': rec['sys_chair_count'],
@@ -584,6 +599,7 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
             continue  # no security participation
         entry = {
             'name': rec['name'],
+            'display_name': rec.get('display_name', _display_name(rec['name'])),
             'affiliation': rec['affiliation'],
             'total_memberships': rec['sec_memberships'],
             'chair_count': rec['sec_chair_count'],
@@ -694,10 +710,12 @@ def _clean_committee(members):
         # Skip lines that look like contact info rather than people
         if 'contact' in name.lower() or 'reach' in name.lower() or 'mailto:' in name.lower():
             continue
+        name = _display_name(name)
         affiliation = m.get('affiliation', '').strip()
         affiliation = re.sub(r'<br\s*/?>$', '', affiliation).strip()
         affiliation = affiliation.strip('*_').strip()  # remove markdown bold/italic markers
-        entry = {'name': name, 'affiliation': affiliation}
+        affiliation = _normalize_affiliation(affiliation)
+        entry = {'name': name, 'display_name': _display_name(name), 'affiliation': affiliation}
         if 'role' in m:
             entry['role'] = m['role']
         cleaned.append(entry)
