@@ -53,20 +53,29 @@ jobs:
             --data_dir . \
             --output_dir .
       
-      - name: Incremental DBLP affiliation enrichment
+      - name: DBLP affiliation enrichment (optional)
+        continue-on-error: true
         run: |
-          # First run enrichment to get affiliations from DBLP person pages
+          echo "Attempting DBLP affiliation enrichment..."
+          # This step is optional and may not complete in GitHub Actions
+          # due to rate limiting and network constraints
           python enrich_affiliations_dblp_incremental.py \
             --data_dir . \
-            --max_searches 200 \
-            --verbose || echo "⚠️ DBLP enrichment completed with notes (may timeout on slow connections)"
+            --max_searches 100 \
+            --verbose \
+            --timeout 30 || {
+            echo "⚠️ Affiliation enrichment did not complete (rate limited or timed out)"
+            echo "Continuing with existing affiliations..."
+          }
           
-          # Regenerate author stats with enriched data
-          echo "Regenerating author stats with enriched affiliations..."
-          python generate_author_stats.py \
-            --dblp_file dblp.xml.gz \
-            --data_dir . \
-            --output_dir .
+          # Regenerate stats with any enriched data
+          if [ -f "authors.json" ]; then
+            echo "Regenerating author stats with enriched data..."
+            python generate_author_stats.py \
+              --dblp_file dblp.xml.gz \
+              --data_dir . \
+              --output_dir . || echo "Stats regeneration skipped"
+          fi
       
       - name: Generate per-area author data
         run: |
@@ -92,14 +101,14 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ DBLP database processed" >> $GITHUB_STEP_SUMMARY
           echo "✅ Author statistics generated" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Incremental affiliation enrichment (skips already found, uses exponential backoff)" >> $GITHUB_STEP_SUMMARY
           echo "✅ Per-area author data created" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Affiliation enrichment features:" >> $GITHUB_STEP_SUMMARY
+          echo "### Affiliation Enrichment" >> $GITHUB_STEP_SUMMARY
+          echo "Affiliation enrichment is attempted but may be rate-limited in GitHub Actions:" >> $GITHUB_STEP_SUMMARY
           echo "- Skips authors that already have affiliations" >> $GITHUB_STEP_SUMMARY
           echo "- Prioritizes new authors (searches immediately)" >> $GITHUB_STEP_SUMMARY
           echo "- Uses exponential backoff for unsuccessful searches (1d → 2d → 4d → ... → 30d max)" >> $GITHUB_STEP_SUMMARY
           echo "- Maintains search history to resume without re-searching" >> $GITHUB_STEP_SUMMARY
-          echo "- Max 200 searches per run (respects rate limits)" >> $GITHUB_STEP_SUMMARY
+          echo "- Max 100 searches per run to respect rate limits" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Files uploaded as artifact and will be used by next statistics update" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Results uploaded as artifact and will be merged by statistics update" >> $GITHUB_STEP_SUMMARY
