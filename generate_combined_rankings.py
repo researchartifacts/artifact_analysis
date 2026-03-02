@@ -91,7 +91,7 @@ _AFFILIATION_RULES: list[tuple[re.Pattern, str]] = [
      'University College London'),
 
     # ── VU Amsterdam ──────────────────────────────────────────────────────
-    (re.compile(r'\bVU\s+Amsterdam\b|\bVrije\s+Universiteit\b', re.I),
+    (re.compile(r'\bVU\s+Amsterdam\b|\bVrije\s+Universiteit\b|\bVUSec\b', re.I),
      'Vrije Universiteit Amsterdam'),
 
     # ── Ruhr University Bochum ────────────────────────────────────────────

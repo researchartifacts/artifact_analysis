@@ -38,9 +38,18 @@ def _parse_member_line(line):
     # Strip bold/italic markers
     line = line.strip('*_').strip()
 
+    # Handle "Name, Details (Affiliation)" pattern first
+    # Example: "Salvatore Signorello, INESC-ID/IST (University of Lisbon)"
     if '(' in line and ')' in line:
-        name = line[:line.find('(')].strip()
+        # Extract affiliation from parentheses
         affiliation = line[line.find('(')+1:line.find(')')].strip()
+        # Get name part (everything before parentheses)
+        name_part = line[:line.find('(')].strip()
+        # If there's a comma in the name part, the real name is before the first comma
+        if ',' in name_part:
+            name = name_part.split(',')[0].strip()
+        else:
+            name = name_part
     elif ',' in line:
         name = line.split(',')[0].strip()
         affiliation = line.split(',', 1)[1].strip()
