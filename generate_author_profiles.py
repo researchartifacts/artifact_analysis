@@ -50,8 +50,8 @@ def generate_profiles(data_dir: str) -> None:
 
         profile: dict = {
             'name': name,
-            'affiliation': clean(a.get('affiliation') or
-                            (cr.get('affiliation', '') if cr else '') or
+            'affiliation': clean((cr.get('affiliation', '') if cr else '') or
+                            a.get('affiliation') or
                             (ae.get('affiliation', '') if ae else '')),
             'papers': a.get('papers', []),
             'conferences': a.get('conferences', []),
@@ -87,8 +87,8 @@ def generate_profiles(data_dir: str) -> None:
         cr = cr_by_name.get(cname)
         profile = {
             'name': cname,
-            'affiliation': clean(m.get('affiliation', '') or
-                            (cr.get('affiliation', '') if cr else '')),
+            'affiliation': clean((cr.get('affiliation', '') if cr else '') or
+                            m.get('affiliation', '')),
             'papers': [],
             'conferences': m.get('conferences', []),
             'years': sorted(int(y) for y in m.get('years', {}).keys()),

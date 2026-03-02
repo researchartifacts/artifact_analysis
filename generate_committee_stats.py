@@ -525,11 +525,12 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
                     rec['sec_years'].add(year)
                     rec['sec_years_count'][year] = rec['sec_years_count'].get(year, 0) + 1
 
-    # Filter: at least 2 memberships, but always keep chairs
-    recurring = [rec for rec in member_map.values() if rec['total_memberships'] >= 2 or rec['chair_count'] > 0]
+    # Include all members (≥1 membership) for complete statistics
+    # Previously filtered to ≥2, but this excluded single-term members from analysis
+    all_members = list(member_map.values())
 
     # Classify area
-    for rec in recurring:
+    for rec in all_members:
         if 'systems' in rec['areas'] and 'security' in rec['areas']:
             rec['area'] = 'both'
         elif 'systems' in rec['areas']:
@@ -541,7 +542,7 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
 
     # Build output list (JSON-serializable) — combined (all areas)
     members_list = []
-    for rec in recurring:
+    for rec in all_members:
         entry = {
             'name': rec['name'],
             'affiliation': rec['affiliation'],
@@ -560,9 +561,9 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
 
     # Build area-specific lists with area-only counts
     systems_members = []
-    for rec in recurring:
-        if rec['sys_memberships'] < 2 and rec['sys_chair_count'] == 0:
-            continue  # not enough systems participation
+    for rec in all_members:
+        if rec['sys_memberships'] < 1:
+            continue  # no systems participation
         entry = {
             'name': rec['name'],
             'affiliation': rec['affiliation'],
@@ -578,9 +579,9 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
     systems_members.sort(key=lambda x: (-x['total_memberships'], -x['chair_count'], x['name']))
 
     security_members = []
-    for rec in recurring:
-        if rec['sec_memberships'] < 2 and rec['sec_chair_count'] == 0:
-            continue  # not enough security participation
+    for rec in all_members:
+        if rec['sec_memberships'] < 1:
+            continue  # no security participation
         entry = {
             'name': rec['name'],
             'affiliation': rec['affiliation'],

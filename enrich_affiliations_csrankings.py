@@ -11,6 +11,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -103,6 +104,7 @@ def load_csrankings(csv_path: Path, verbose: bool = False) -> Dict[str, List[Dic
 
 def normalize_name(name: str) -> str:
     """Normalize name for matching: lowercase, remove punctuation."""
+    name = re.sub(r'\s*\[[^\]]+\]\s*', ' ', name)
     return ''.join(c.lower() for c in name if c.isalnum() or c.isspace()).strip()
 
 def fuzzy_name_match(author_name: str, csrankings_name: str) -> bool:
@@ -199,23 +201,22 @@ def enrich_affiliations(
         'enriched': 0
     }
     
-    # Find authors missing affiliations
-    missing_affiliation = [
-        author for author in authors 
-        if not author.get('affiliation') or author['affiliation'] == 'Unknown'
-    ]
-    
-    stats['already_has_affiliation'] = stats['total'] - len(missing_affiliation)
-    
+    # Track overwrites when CSRankings supersedes existing affiliations
+    stats['overwritten'] = 0
+
     if max_authors:
-        missing_affiliation = missing_affiliation[:max_authors]
-    
-    print(f"Processing {len(missing_affiliation)} authors with missing affiliations...")
-    
-    # Enrich affiliations
+        authors = authors[:max_authors]
+
+    print(f"Processing {len(authors)} authors for CSRankings matches...")
+
+    # Enrich affiliations (CSRankings takes precedence if available)
     enriched_count = 0
-    for i, author in enumerate(missing_affiliation, 1):
+    for i, author in enumerate(authors, 1):
         name = author.get('name', '')
+        current_affil = author.get('affiliation', '')
+        has_affil = bool(current_affil and current_affil != 'Unknown')
+        if has_affil:
+            stats['already_has_affiliation'] += 1
         
         if verbose:
             print(f"  [{i}/{len(missing_affiliation)}] Looking up: {name}")
@@ -223,21 +224,28 @@ def enrich_affiliations(
         affiliation = match_author_to_csrankings(name, name_index, verbose)
         
         if affiliation:
-            author['affiliation'] = affiliation
-            enriched_count += 1
+            if affiliation != current_affil:
+                author['affiliation'] = affiliation
+                if has_affil:
+                    stats['overwritten'] += 1
+                else:
+                    enriched_count += 1
             stats['csrankings_match'] += 1
             if verbose:
                 print(f"    ✓ Found: {affiliation}")
             
             # Progress update every 100 authors
             if not verbose and i % 100 == 0:
-                print(f"  Processed {i}/{len(missing_affiliation)}... (found {enriched_count} so far)")
+                print(f"  Processed {i}/{len(authors)}... (found {enriched_count} so far)")
         else:
             stats['no_match'] += 1
             if verbose:
                 print(f"    ✗ No match in CSRankings")
     
     stats['enriched'] = enriched_count
+    stats['remaining'] = sum(1 for a in authors
+                             if not a.get('affiliation') or a.get('affiliation') == 'Unknown')
+    stats['final_coverage'] = 100 * (stats['total'] - stats['remaining']) / stats['total']
     
     # Save results
     if not dry_run:
@@ -317,15 +325,14 @@ def main():
     print(f"CSRankings matches:         {stats['csrankings_match']:,}")
     print(f"No match found:             {stats['no_match']:,}")
     print(f"Total enriched:             {stats['enriched']:,}")
+    print(f"Overwritten affiliations:   {stats['overwritten']:,}")
     
-    if stats['total'] - stats['already_has_affiliation'] > 0:
-        match_rate = 100 * stats['csrankings_match'] / (stats['total'] - stats['already_has_affiliation'])
+    if stats['total'] > 0:
+        match_rate = 100 * stats['csrankings_match'] / stats['total']
         print(f"Match rate:                 {match_rate:.1f}%")
-    
-    remaining = stats['total'] - stats['already_has_affiliation'] - stats['enriched']
-    final_coverage = 100 * (stats['already_has_affiliation'] + stats['enriched']) / stats['total']
-    print(f"Final coverage:             {final_coverage:.1f}%")
-    print(f"Still missing:              {remaining:,} ({100*remaining/stats['total']:.1f}%)")
+
+    print(f"Final coverage:             {stats['final_coverage']:.1f}%")
+    print(f"Still missing:              {stats['remaining']:,} ({100*stats['remaining']/stats['total']:.1f}%)")
     print("="*60)
 
 if __name__ == '__main__':
