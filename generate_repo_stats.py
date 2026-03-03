@@ -36,17 +36,45 @@ def collect_stats_for_results(results, url_keys=None):
         url_keys = ['repository_url', 'artifact_url', 'github_url',
                      'second_repository_url', 'bitbucket_url']
 
-    # Flatten list-valued URL fields (e.g. artifact_urls) into the first
-    # single-value key so existing logic can handle them.
-    for artifacts in results.values():
+    # First pass: extract ALL URLs from list-valued fields and create expanded artifact entries
+    # This ensures we collect stats for every artifact location, not just the first
+    expanded_artifacts = {}
+    for conf_year, artifacts in results.items():
+        expanded_artifacts[conf_year] = []
         for artifact in artifacts:
+            # Collect all URLs from this artifact (including multi-valued fields)
+            all_urls_by_key = {}
+            
+            # Add single-valued URL fields
+            for url_key in url_keys:
+                if url_key in artifact and artifact[url_key]:
+                    all_urls_by_key[url_key] = [artifact[url_key]]
+            
+            # Add URLs from list-valued fields (artifact_urls, additional_urls, etc.)
             for list_key in ['artifact_urls', 'additional_urls']:
                 if list_key in artifact and isinstance(artifact[list_key], list):
-                    for i, url in enumerate(artifact[list_key]):
+                    for url in artifact[list_key]:
                         if isinstance(url, str) and url:
-                            flat_key = list_key.rstrip('s')  # artifact_urls -> artifact_url
-                            if flat_key not in artifact or not artifact[flat_key]:
-                                artifact[flat_key] = url
+                            # Map back to single key: artifact_urls -> artifact_url
+                            flat_key = list_key.rstrip('s')
+                            if flat_key not in all_urls_by_key:
+                                all_urls_by_key[flat_key] = []
+                            if url not in all_urls_by_key[flat_key]:
+                                all_urls_by_key[flat_key].append(url)
+            
+            # Create separate artifact entry for each URL to process
+            if all_urls_by_key:
+                for url_key, urls in all_urls_by_key.items():
+                    for url in urls:
+                        artifact_copy = {k: v for k, v in artifact.items() 
+                                        if k not in ['artifact_urls', 'additional_urls']}
+                        artifact_copy[url_key] = url
+                        expanded_artifacts[conf_year].append(artifact_copy)
+            else:
+                # No URLs found, keep original artifact
+                expanded_artifacts[conf_year].append(artifact)
+    
+    results = expanded_artifacts
 
     # Filter url_keys to only those that actually appear in the data
     present_keys = set()
@@ -61,7 +89,7 @@ def collect_stats_for_results(results, url_keys=None):
         return []
     print(f"  Scanning URL fields: {', '.join(url_keys)}")
 
-    # First check which URLs exist
+    # Check which URLs exist
     results, _, _ = check_artifact_exists(results, url_keys)
 
     all_stats = []

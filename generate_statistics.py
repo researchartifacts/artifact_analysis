@@ -248,10 +248,14 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
                             or artifact.get('github_url', '')
                             or artifact.get('second_repository_url', '')
                             or artifact.get('bitbucket_url', ''))
-                # Resolve artifact URL, including list-valued fields
-                art_url = artifact.get('artifact_url', '')
-                if not art_url and isinstance(artifact.get('artifact_urls'), list):
-                    art_url = artifact['artifact_urls'][0] if artifact['artifact_urls'] else ''
+                # Collect ALL artifact URLs (both single and list-valued fields)
+                art_urls = []
+                if artifact.get('artifact_url'):
+                    art_urls.append(artifact['artifact_url'])
+                if isinstance(artifact.get('artifact_urls'), list):
+                    art_urls.extend([u for u in artifact['artifact_urls'] if u])
+                # For backward compatibility, use first URL if available, else empty
+                art_url = art_urls[0] if art_urls else ''
                 artifact_entry = {
                     'conference': conf_name.upper(),
                     'category': category,
@@ -261,6 +265,9 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
                     'repository_url': repo_url,
                     'artifact_url': art_url,
                 }
+                # Store all URLs for downstream processing (e.g., repo stats)
+                if len(art_urls) > 1:
+                    artifact_entry['artifact_urls'] = art_urls
                 all_artifacts.append(artifact_entry)
     
     # Sort years for each conference
