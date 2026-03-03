@@ -60,6 +60,7 @@ def generate_profiles(data_dir: str) -> None:
             'artifact_count': a.get('artifact_count', 0),
             'total_papers': a.get('total_papers', 0),
             'artifact_rate': a.get('artifact_rate', 0),
+            'artifact_citations': a.get('artifact_citations', 0),
             'badges_available': a.get('badges_available', 0),
             'badges_functional': a.get('badges_functional', 0),
             'badges_reproducible': a.get('badges_reproducible', 0),
@@ -69,6 +70,7 @@ def generate_profiles(data_dir: str) -> None:
         if cr:
             profile['combined_score'] = cr.get('combined_score', 0)
             profile['artifact_score'] = cr.get('artifact_score', 0)
+            profile['citation_score'] = cr.get('citation_score', 0)
             profile['ae_score'] = cr.get('ae_score', 0)
             profile['rank'] = cr.get('rank', 0)
             # Keep artifact metrics consistent with combined ranking views.
@@ -76,6 +78,7 @@ def generate_profiles(data_dir: str) -> None:
             profile['artifact_count'] = cr.get('artifacts', profile['artifact_count'])
             profile['total_papers'] = cr.get('total_papers', profile['total_papers'])
             profile['artifact_rate'] = cr.get('artifact_rate', profile['artifact_rate'])
+            profile['artifact_citations'] = cr.get('artifact_citations', profile['artifact_citations'])
             profile['badges_available'] = cr.get('badges_available', profile['badges_available'])
             profile['badges_functional'] = cr.get('badges_functional', profile['badges_functional'])
             profile['badges_reproducible'] = cr.get('badges_reproducible', profile['badges_reproducible'])
@@ -104,6 +107,7 @@ def generate_profiles(data_dir: str) -> None:
             'artifact_count': 0,
             'total_papers': 0,
             'artifact_rate': 0,
+            'artifact_citations': 0,
             'badges_available': 0,
             'badges_functional': 0,
             'badges_reproducible': 0,
@@ -116,8 +120,10 @@ def generate_profiles(data_dir: str) -> None:
         if cr:
             profile['combined_score'] = cr.get('combined_score', 0)
             profile['artifact_score'] = cr.get('artifact_score', 0)
+            profile['citation_score'] = cr.get('citation_score', 0)
             profile['ae_score'] = cr.get('ae_score', 0)
             profile['rank'] = cr.get('rank', 0)
+            profile['artifact_citations'] = cr.get('artifact_citations', 0)
         profiles[m['name']] = profile
 
     # Sort by combined_score desc, then artifact_count desc, then name asc

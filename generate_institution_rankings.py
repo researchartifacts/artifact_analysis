@@ -104,6 +104,8 @@ def aggregate_by_institution(combined_data):
         'affiliation': '',
         'combined_score': 0,
         'artifact_score': 0,
+        'artifact_citations': 0,
+        'citation_score': 0,
         'ae_score': 0,
         'artifacts': 0,
         'badges_functional': 0,
@@ -127,6 +129,8 @@ def aggregate_by_institution(combined_data):
         inst['affiliation'] = affiliation
         inst['combined_score'] += person.get('combined_score', 0)
         inst['artifact_score'] += person.get('artifact_score', 0)
+        inst['artifact_citations'] += person.get('artifact_citations', 0)
+        inst['citation_score'] += person.get('citation_score', 0)
         inst['ae_score'] += person.get('ae_score', 0)
         inst['artifacts'] += person.get('artifacts', 0)
         inst['badges_functional'] += person.get('badges_functional', 0)
@@ -141,6 +145,7 @@ def aggregate_by_institution(combined_data):
             'affiliation': person.get('affiliation', ''),
             'combined_score': person.get('combined_score', 0),
             'artifacts': person.get('artifacts', 0),
+            'artifact_citations': person.get('artifact_citations', 0),
             'ae_memberships': person.get('ae_memberships', 0),
             'total_papers': person.get('total_papers', 0)
         })
@@ -203,6 +208,8 @@ def aggregate_by_institution(combined_data):
                 'affiliation': data['affiliation'],
                 'combined_score': data['combined_score'],
                 'artifact_score': data['artifact_score'],
+                'artifact_citations': data['artifact_citations'],
+                'citation_score': data['citation_score'],
                 'ae_score': data['ae_score'],
                 'ae_ratio': ae_ratio,
                 'role': role,

@@ -92,15 +92,19 @@ echo "[2/10] Generating statistics (sysartifacts + secartifacts + USENIX)..."
 $PYTHON generate_statistics.py --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "❌ Statistics failed"; exit 1; }
 
-echo "[3/10] Generating repository statistics (stars, forks, etc.)..."
+echo "[3/11] Generating repository statistics (stars, forks, etc.)..."
 $PYTHON generate_repo_stats.py --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Repository stats failed (may need API access)"; }
 
-echo "[4/10] Generating visualizations..."
+echo "[4/11] Generating artifact citation stats (OpenAlex)..."
+$PYTHON generate_artifact_citations.py --data_dir "$OUTPUT_DIR" \
+    || { echo "⚠️  Artifact citations failed (may need network access)"; }
+
+echo "[5/11] Generating visualizations..."
 $PYTHON generate_visualizations.py --data_dir "$OUTPUT_DIR" \
     || { echo "❌ Visualizations failed"; exit 1; }
 
-echo "[5/10] Generating author statistics..."
+echo "[6/11] Generating author statistics..."
 if [ -f "dblp.xml.gz" ]; then
     $PYTHON generate_author_stats.py \
         --dblp_file dblp.xml.gz --data_dir "$OUTPUT_DIR" --output_dir "$OUTPUT_DIR" \
@@ -109,23 +113,23 @@ else
     echo "⚠️  Skipped (dblp.xml.gz not found)"
 fi
 
-echo "[6/10] Generating per-area author data..."
+echo "[7/11] Generating per-area author data..."
 $PYTHON generate_area_authors.py --data_dir "$OUTPUT_DIR" \
     || { echo "❌ Area author generation failed"; exit 1; }
 
-echo "[7/10] Generating committee statistics..."
+echo "[8/11] Generating committee statistics..."
 $PYTHON generate_committee_stats.py --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Committee statistics failed (may need network access)"; }
 
-echo "[8/10] Generating combined rankings..."
+echo "[9/11] Generating combined rankings..."
 $PYTHON generate_combined_rankings.py --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Combined rankings failed"; }
 
-echo "[9/10] Generating institution rankings..."
+echo "[10/11] Generating institution rankings..."
 $PYTHON generate_institution_rankings.py \
     || { echo "⚠️  Institution rankings failed"; }
 
-echo "[10/10] Generating author profiles..."
+echo "[11/11] Generating author profiles..."
 $PYTHON generate_author_profiles.py --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Author profiles failed"; }
 

@@ -119,14 +119,31 @@ def generate_area_authors():
             badges_functional = 0
             badges_reproducible = 0
             for p in area_papers:
-                for b in p.get('badges', []):
-                    bl = b.lower() if isinstance(b, str) else ''
-                    if 'available' in bl:
-                        badges_available += 1
-                    if 'functional' in bl:
-                        badges_functional += 1
-                    if 'reproduc' in bl or 'reusable' in bl:
-                        badges_reproducible += 1
+                badge_list = p.get('badges', [])
+                if isinstance(badge_list, str):
+                    badge_list = [b.strip() for b in badge_list.split(',')]
+
+                has_available = False
+                has_functional = False
+                has_repro = False
+                if not badge_list or len(badge_list) == 0:
+                    has_available = True
+                else:
+                    for b in badge_list:
+                        bl = b.lower() if isinstance(b, str) else ''
+                        if 'reproduc' in bl or 'reusable' in bl:
+                            has_repro = True
+                        elif 'functional' in bl:
+                            has_functional = True
+                        elif 'available' in bl:
+                            has_available = True
+
+                if has_available:
+                    badges_available += 1
+                if has_functional:
+                    badges_functional += 1
+                if has_repro:
+                    badges_reproducible += 1
 
             # --- Compute total papers at area conferences (AE years only) ---
             # Only count papers published in years where AE existed for that conference.

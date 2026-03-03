@@ -367,6 +367,7 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
             chair_count=chair_count,
             conferences=sorted(a_confs | m_confs),
             years=years,
+            artifact_citations=a.get('artifact_citations', 0) or 0,
             badges_available=a.get('badges_available', 0) or 0,
             badges_functional=a.get('badges_functional', 0) or 0,
             badges_reproducible=a.get('badges_reproducible', 0) or 0,
@@ -393,6 +394,7 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
             chair_count=m.get('chair_count', 0),
             conferences=sorted(m.get('conferences', [])),
             years=years,
+            artifact_citations=0,
             badges_available=0,
             badges_functional=0,
             badges_reproducible=0,
@@ -421,27 +423,32 @@ W_FUNCTIONAL   = 1   # additional point for functional badge
 W_REPRODUCIBLE = 1   # additional point for reproducible badge
 W_AE_MEMBERSHIP = 3
 W_AE_CHAIR      = 2   # bonus on top of membership
+W_CITATION      = 1   # per-citation point (artifact DOI citations)
 
 
 def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
                  ae_memberships, chair_count, conferences, years,
+                 artifact_citations,
                  badges_available, badges_functional, badges_reproducible) -> dict:
     """Build a single combined-ranking entry dict with weighted scoring.
 
     Scoring (additive – each badge level adds 1 pt, max 3 per artifact):
       artifact_score = available*1 + functional*1 + reproducible*1
       ae_score       = memberships*3  + chairs*2
-      combined_score = artifact_score + ae_score
+            combined_score = artifact_score + citation_score + ae_score
     """
     # Compute weighted artifact score (additive: each badge level adds 1 pt)
     artifact_score = (artifacts * W_AVAILABLE
                       + badges_functional * W_FUNCTIONAL
                       + badges_reproducible * W_REPRODUCIBLE)
 
+    # Citation score (per-citation)
+    citation_score = (artifact_citations or 0) * W_CITATION
+
     # Compute weighted AE score
     ae_score = ae_memberships * W_AE_MEMBERSHIP + chair_count * W_AE_CHAIR
 
-    combined_score = artifact_score + ae_score
+    combined_score = artifact_score + citation_score + ae_score
     
     # Compute artifact to evaluation ratio
     ae_ratio = None
@@ -483,6 +490,8 @@ def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
         'display_affiliation': display_affiliation,
         'artifacts': artifacts,
         'artifact_score': artifact_score,
+        'artifact_citations': artifact_citations or 0,
+        'citation_score': citation_score,
         'total_papers': total_papers,
         'artifact_rate': artifact_rate,
         'repro_rate': repro_rate,
@@ -551,6 +560,8 @@ def generate_combined_rankings(data_dir: str):
             # Sum all contribution metrics
             existing['artifacts'] += person['artifacts']
             existing['artifact_score'] += person['artifact_score']
+            existing['artifact_citations'] += person.get('artifact_citations', 0)
+            existing['citation_score'] += person.get('citation_score', 0)
             existing['badges_available'] += person.get('badges_available', 0)
             existing['badges_functional'] += person.get('badges_functional', 0)
             existing['badges_reproducible'] += person.get('badges_reproducible', 0)
