@@ -450,10 +450,23 @@ def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
 
     yr_keys = [int(y) for y in years.keys()] if years else []
     
-    # Calculate reproducibility rate (% of artifacts that are reproducible), capped at 100
+    if artifacts > total_papers:
+        raise ValueError(
+            f"Invariant violation for '{name}': artifacts ({artifacts}) > total_papers ({total_papers})"
+        )
+    if badges_reproducible > artifacts:
+        raise ValueError(
+            f"Invariant violation for '{name}': reproduced_badges ({badges_reproducible}) > artifacts ({artifacts})"
+        )
+    if badges_functional > artifacts:
+        raise ValueError(
+            f"Invariant violation for '{name}': functional_badges ({badges_functional}) > artifacts ({artifacts})"
+        )
+
+    # Calculate reproducibility rate (% of artifacts that are reproducible)
     repro_rate = 0
     if artifacts > 0:
-        repro_rate = int(round(min((badges_reproducible / artifacts) * 100, 100.0)))
+        repro_rate = int(round((badges_reproducible / artifacts) * 100))
     
     # Sanitise raw name for storage/matching stability
     name = re.sub(r'[\t\n\r]+', ' ', name)
@@ -566,11 +579,24 @@ def generate_combined_rankings(data_dir: str):
                 existing['first_year'] = min(all_years)
                 existing['last_year'] = max(all_years)
                 
+            if existing['artifacts'] > existing['total_papers']:
+                raise ValueError(
+                    f"Invariant violation after systems+security merge for '{existing['name']}': artifacts ({existing['artifacts']}) > total_papers ({existing['total_papers']})"
+                )
+            if existing['badges_reproducible'] > existing['artifacts']:
+                raise ValueError(
+                    f"Invariant violation after systems+security merge for '{existing['name']}': reproduced_badges ({existing['badges_reproducible']}) > artifacts ({existing['artifacts']})"
+                )
+            if existing['badges_functional'] > existing['artifacts']:
+                raise ValueError(
+                    f"Invariant violation after systems+security merge for '{existing['name']}': functional_badges ({existing['badges_functional']}) > artifacts ({existing['artifacts']})"
+                )
+
             # Recalculate rates based on summed totals
             if existing['total_papers'] > 0:
                 existing['artifact_rate'] = int(round((existing['artifacts'] / existing['total_papers']) * 100))
             if existing['artifacts'] > 0:
-                existing['repro_rate'] = int(round(min((existing['badges_reproducible'] / existing['artifacts']) * 100, 100.0)))
+                existing['repro_rate'] = int(round((existing['badges_reproducible'] / existing['artifacts']) * 100))
             # Recalculate ae_ratio based on merged scores
             if existing['ae_score'] > 0:
                 existing['ae_ratio'] = round(existing['artifact_score'] / existing['ae_score'], 2)

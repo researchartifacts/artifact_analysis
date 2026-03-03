@@ -157,11 +157,23 @@ def aggregate_by_institution(combined_data):
     # Convert to list and calculate derived fields
     institutions = []
     for affiliation, data in inst_data.items():
+        if data['artifacts'] > data['total_papers']:
+            raise ValueError(
+                f"Invariant violation for institution '{affiliation}': artifacts ({data['artifacts']}) > total_papers ({data['total_papers']})"
+            )
+        if data['badges_reproducible'] > data['artifacts']:
+            raise ValueError(
+                f"Invariant violation for institution '{affiliation}': reproduced_badges ({data['badges_reproducible']}) > artifacts ({data['artifacts']})"
+            )
+        if data['badges_functional'] > data['artifacts']:
+            raise ValueError(
+                f"Invariant violation for institution '{affiliation}': functional_badges ({data['badges_functional']}) > artifacts ({data['artifacts']})"
+            )
+
         # Calculate artifact rate
         artifact_rate = 0
-        denom = max(data['total_papers'], data['artifacts'])
-        if denom > 0:
-            artifact_rate = round((data['artifacts'] / denom) * 100, 1)
+        if data['total_papers'] > 0:
+            artifact_rate = round((data['artifacts'] / data['total_papers']) * 100, 1)
         
         # Calculate A:E ratio
         ae_ratio = None

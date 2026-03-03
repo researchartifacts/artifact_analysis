@@ -149,11 +149,23 @@ def generate_area_authors():
                     # No AE years known, use full count
                     area_total_papers += per_conf_totals.get(conf, 0)
 
-            # Rates — cap artifact_rate at 100% (can exceed if DBLP title
-            # matching misses some venue papers but artifact matching finds them)
-            artifact_rate = round(min(total / area_total_papers * 100, 100.0), 1) if area_total_papers > 0 else 0.0
-            repro_rate = round(min(badges_reproducible / total * 100, 100.0), 1) if total > 0 else 0.0
-            functional_rate = round(min(badges_functional / total * 100, 100.0), 1) if total > 0 else 0.0
+            if total > area_total_papers:
+                raise ValueError(
+                    f"Invariant violation for '{author['name']}' in {area_name}: artifacts ({total}) > total_papers ({area_total_papers})"
+                )
+            if badges_reproducible > total:
+                raise ValueError(
+                    f"Invariant violation for '{author['name']}' in {area_name}: reproduced_badges ({badges_reproducible}) > artifacts ({total})"
+                )
+            if badges_functional > total:
+                raise ValueError(
+                    f"Invariant violation for '{author['name']}' in {area_name}: functional_badges ({badges_functional}) > artifacts ({total})"
+                )
+
+            # Rates
+            artifact_rate = round(total / area_total_papers * 100, 1) if area_total_papers > 0 else 0.0
+            repro_rate = round(badges_reproducible / total * 100, 1) if total > 0 else 0.0
+            functional_rate = round(badges_functional / total * 100, 1) if total > 0 else 0.0
 
             # Additive artifact score (same as combined rankings):
             #   Each badge level adds 1 pt: Available=1, +Functional=2, +Reproducible=3 max

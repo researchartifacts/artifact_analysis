@@ -439,10 +439,21 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None, co
         func = stats['badges']['functional']
         repro = stats['badges']['reproducible']
         
+        if art_count > total_papers:
+            raise ValueError(
+                f"Invariant violation for '{stats['name']}': artifacts ({art_count}) > total_papers ({total_papers})"
+            )
+        if repro > art_count:
+            raise ValueError(
+                f"Invariant violation for '{stats['name']}': reproduced_badges ({repro}) > artifacts ({art_count})"
+            )
+        if func > art_count:
+            raise ValueError(
+                f"Invariant violation for '{stats['name']}': functional_badges ({func}) > artifacts ({art_count})"
+            )
+
         # Artifact rate: % of tracked-conference papers that have an artifact.
-        # Use max(total_papers, art_count) to avoid >100% when DBLP undercounts papers.
-        denom = max(total_papers, art_count)
-        artifact_rate = round(art_count / denom * 100, 1) if denom > 0 else 0.0
+        artifact_rate = round(art_count / total_papers * 100, 1) if total_papers > 0 else 0.0
         # Reproducibility rate: % of artifact papers with a "reproduced" badge
         repro_rate = round(repro / art_count * 100, 1) if art_count > 0 else 0.0
         # Functional rate: % of artifact papers with a "functional" badge
