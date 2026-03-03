@@ -313,35 +313,6 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None,
     if citations_by_title is None:
         citations_by_title = {}
     
-    # Pre-populate venue_papers with artifact papers for ALL authors.
-    # This ensures that when we compute total_papers later, we guarantee
-    # that artifacts <= total_papers by construction.
-    for paper in papers:
-        conf = paper.get('conference', '')
-        if not conf:
-            continue
-        
-        yr = paper.get('year')
-        if yr is None:
-            yr = 0
-        
-        # Check if this paper is in an active year for this conference
-        active_years = conference_active_years.get(conf, set())
-        if active_years and yr not in active_years:
-            continue
-        
-        title_norm = normalize_title((paper.get('title') or '').rstrip('.'))
-        if not title_norm:
-            continue
-        
-        # Add this paper to venue_papers for EVERY author
-        for author in paper.get('authors', []):
-            if not author:
-                continue
-            if (author, conf) not in venue_papers:
-                venue_papers[(author, conf)] = defaultdict(set)
-            venue_papers[(author, conf)][yr].add(title_norm)
-    
     author_stats = defaultdict(lambda: {
         'name': '',
         'artifact_count': 0,
@@ -486,9 +457,8 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None,
                 total_papers_by_conf_year[c] = conf_year_counts
 
         # Ensure every artifact paper is included in denominator paper counts.
-        # Artifact papers have already been pre-populated in venue_papers above,
-        # so we just need to verify they're in conf_title_sets (they should be).
-        # This section can remain for defensive programming but should be redundant.
+        # This guarantees artifacts are a subset of total papers for AE-active years,
+        # even when DBLP venue mapping misses a conference alias.
         for p in stats['papers']:
             conf = p.get('conference')
             if not conf:
@@ -558,14 +528,6 @@ def aggregate_author_statistics(papers, venue_papers=None, affiliations=None,
         repro = stats['badges']['reproducible']
         
         if art_count > total_papers:
-            # Debug output
-            print(f"\nDEBUG: Invariant violation for '{stats['name']}'")
-            print(f"  artifact_count={art_count}, total_papers={total_papers}")
-            print(f"  Artifact papers:")
-            for p in stats['papers'][:3]:
-                print(f"    - {p['title'][:60]} ({p.get('conference')})")
-            print(f"  conf_title_sets: {[(c, len(t)) for c, t in conf_title_sets.items()]}")
-            print(f"  total_papers_by_conf: {total_papers_by_conf}")
             raise ValueError(
                 f"Invariant violation for '{stats['name']}': artifacts ({art_count}) > total_papers ({total_papers})"
             )
@@ -689,21 +651,6 @@ def generate_author_stats(dblp_file, data_dir, output_dir):
     # JSON for download
     with open(os.path.join(output_dir, 'assets/data/authors.json'), 'w') as f:
         json.dump(authors_list, f, indent=2, ensure_ascii=False)
-    
-    # Paper-to-authors mapping for linking artifacts to creators
-    paper_authors_map = []
-    for paper in papers_with_authors:
-        paper_authors_map.append({
-            'title': paper.get('title', ''),
-            'conference': paper.get('conference', ''),
-            'year': paper.get('year'),
-            'category': paper.get('category', ''),
-            'authors': paper.get('authors', []),
-            'badges': paper.get('badges', []),
-        })
-    
-    with open(os.path.join(output_dir, 'assets/data/paper_authors_map.json'), 'w') as f:
-        json.dump(paper_authors_map, f, indent=2, ensure_ascii=False)
     
     print(f"Author data written to {output_dir} ({len(authors_list)} authors, {len(papers_with_authors)} papers)")
     

@@ -93,8 +93,6 @@ def generate(data_dir: str) -> None:
     artifacts_path = os.path.join(data_dir, "assets", "data", "artifacts.json")
     out_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
     summary_path = os.path.join(data_dir, "assets", "data", "artifact_citations_summary.json")
-    authors_path = os.path.join(data_dir, "assets", "data", "combined_rankings.json")
-    cited_artifacts_path = os.path.join(data_dir, "assets", "data", "cited_artifacts_by_author.json")
 
     if not os.path.exists(artifacts_path):
         print(f"Error: {artifacts_path} not found. Run generate_statistics.py first.")
@@ -102,23 +100,6 @@ def generate(data_dir: str) -> None:
 
     with open(artifacts_path, "r") as f:
         artifacts = json.load(f)
-
-    # Load author/institution data to map artifacts to their creators
-    authors_by_paper = {}
-    institutions_by_artifact = defaultdict(list)
-    if os.path.exists(authors_path):
-        with open(authors_path, "r") as f:
-            rankings = json.load(f)
-            for author in rankings:
-                # Create a key for easy lookup
-                normalized_author = author.get("name", "").lower().strip()
-                if normalized_author and author.get("artifacts", 0) > 0:
-                    authors_by_paper[normalized_author] = {
-                        "name": author.get("name", ""),
-                        "affiliation": author.get("affiliation", ""),
-                        "display_name": author.get("display_name", ""),
-                        "display_affiliation": author.get("display_affiliation", ""),
-                    }
 
     zenodo_cache = {}
     openalex_cache = {}
