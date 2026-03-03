@@ -533,6 +533,41 @@ def generate_combined_rankings(data_dir: str):
     all_members   = _load_json('ae_members.json')
     sys_members   = _load_json('systems_ae_members.json')
     sec_members   = _load_json('security_ae_members.json')
+    
+    # Load citation data and merge into authors
+    cited_by_author = _load_json('cited_artifacts_by_author.json')
+    
+    # Create a mapping of normalized author names to citation counts
+    def _normalize_for_citation(name):
+        """Match names to citation data (uses same normalization as our name matching)."""
+        norm = _normalize_name(name)
+        return norm
+    
+    citation_by_norm = {}
+    if cited_by_author:
+        for author_name, author_data in cited_by_author.items():
+            # author_data is either the old format (list) or new format (dict with cited_artifacts)
+            if isinstance(author_data, dict):
+                total_citations = author_data.get('total_citations', 0)
+            elif isinstance(author_data, list):
+                # Old format: just a list of artifacts
+                total_citations = sum(int(a.get('citations', 0)) for a in author_data)
+            else:
+                total_citations = 0
+            
+            norm = _normalize_for_citation(author_name)
+            citation_by_norm[norm] = total_citations
+    
+    # Merge citation data into author lists
+    def _add_citations_to_authors(authors_list):
+        """Add artifact_citations field to each author from citation data."""
+        for author in authors_list:
+            norm = _normalize_for_citation(author.get('name', ''))
+            author['artifact_citations'] = citation_by_norm.get(norm, 0)
+    
+    _add_citations_to_authors(all_authors)
+    _add_citations_to_authors(sys_authors)
+    _add_citations_to_authors(sec_authors)
 
     # Generate combined rankings for systems and security
     combined_sys = _merge_rankings(sys_authors, sys_members)
