@@ -22,6 +22,29 @@ from sys_sec_artifacts_results_scrape import get_ae_results
 from test_artifact_repositories import _normalise_url
 
 
+def _resolve_doi_prefix(url):
+    """Resolve DOI prefix to actual repository. Returns repository name or None."""
+    doi_match = re.search(r"(?:doi\.org/)?(?:https?://doi\.org/)?(10\.\d+(?:[/\.][\w.\-]+)*)", url)
+    if not doi_match:
+        return None
+    
+    doi_prefix = doi_match.group(1).split("/")[0].split(".")[0:2]
+    doi_prefix_str = ".".join(doi_prefix)
+    
+    # Map DOI prefixes to repositories
+    doi_to_repo = {
+        "10.5281": "Zenodo",      # Zenodo
+        "10.6084": "Figshare",    # Figshare
+        "10.17605": "OSF",        # Open Science Framework
+        "10.4121": "Dataverse",   # Royal Data Repository
+        "10.60517": "Zenodo",     # Zenodo (alternative prefix)
+        "10.7278": "Figshare",    # Figshare (alternative)
+        "10.25835": "NIST",       # NIST Data
+    }
+    
+    return doi_to_repo.get(doi_prefix_str)
+
+
 def extract_source(url):
     """Determine the source of an artifact from its URL."""
     if not url:
@@ -46,7 +69,9 @@ def extract_source(url):
     elif 'dataverse' in url_lower:
         return 'Dataverse'
     elif 'doi.org' in url_lower:
-        return 'DOI'
+        # Try to resolve DOI to actual repository
+        resolved = _resolve_doi_prefix(url_lower)
+        return resolved if resolved else 'DOI'
     else:
         return 'Other'
 

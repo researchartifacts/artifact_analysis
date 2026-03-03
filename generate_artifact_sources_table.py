@@ -21,6 +21,29 @@ from sys_sec_artifacts_results_scrape import get_ae_results
 from test_artifact_repositories import _normalise_url
 
 
+def _resolve_doi_prefix(url):
+    """Resolve DOI prefix to actual repository. Returns repository name or None."""
+    doi_match = re.search(r"(?:doi\.org/)?(?:https?://doi\.org/)?(10\.\d+(?:[/\.][\w.\-]+)*)", url)
+    if not doi_match:
+        return None
+    
+    doi_prefix = doi_match.group(1).split("/")[0].split(".")[0:2]
+    doi_prefix_str = ".".join(doi_prefix)
+    
+    # Map DOI prefixes to repositories
+    doi_to_repo = {
+        "10.5281": "Zenodo",      # Zenodo
+        "10.6084": "Figshare",    # Figshare
+        "10.17605": "OSF",        # Open Science Framework
+        "10.4121": "Dataverse",   # Royal Data Repository
+        "10.60517": "Zenodo",     # Zenodo (alternative prefix)
+        "10.7278": "Figshare",    # Figshare (alternative)
+        "10.25835": "NIST",       # NIST Data
+    }
+    
+    return doi_to_repo.get(doi_prefix_str)
+
+
 def extract_source(url):
     """Determine the source of an artifact from its URL."""
     if not url:
@@ -47,7 +70,9 @@ def extract_source(url):
     elif 'archive' in url_lower:
         return 'Archive site'
     elif 'doi.org' in url_lower:
-        return 'DOI'
+        # Try to resolve DOI to actual repository
+        resolved = _resolve_doi_prefix(url_lower)
+        return resolved if resolved else 'DOI'
     else:
         return 'Other'
 
@@ -68,6 +93,33 @@ def get_artifact_url(artifact):
     return None
 
 
+def get_artifact_urls(artifact):
+    """Extract all normalized URLs from an artifact across known URL keys."""
+    url_keys = ['repository_url', 'artifact_url', 'github_url',
+                'second_repository_url', 'bitbucket_url', 'artifact_urls']
+
+    urls = []
+    for key in url_keys:
+        val = artifact.get(key, '')
+        if isinstance(val, list):
+            candidates = val
+        else:
+            candidates = [val]
+
+        for candidate in candidates:
+            norm = _normalise_url(candidate)
+            if norm:
+                urls.append(norm)
+
+    deduped = []
+    seen = set()
+    for url in urls:
+        if url not in seen:
+            seen.add(url)
+            deduped.append(url)
+    return deduped
+
+
 def count_sources_by_conference(all_results):
     """Count artifacts by source for each conference."""
     stats = defaultdict(lambda: defaultdict(int))
@@ -85,11 +137,12 @@ def count_sources_by_conference(all_results):
         area = 'unknown'
         
         for artifact in artifacts:
-            url = get_artifact_url(artifact)
-            source = extract_source(url)
-            stats[conf_name][source] += 1
-            stats['overall'][source] += 1
-            if url:
+            urls = get_artifact_urls(artifact)
+            sources = {extract_source(url) for url in urls} if urls else {'unknown'}
+            for source in sources:
+                stats[conf_name][source] += 1
+                stats['overall'][source] += 1
+            if urls:
                 stats[conf_name]['total'] += 1
                 stats['overall']['total'] += 1
     
@@ -100,6 +153,8 @@ def count_sources_by_area(all_results):
     """Count artifacts by source for systems vs security."""
     sys_sources = defaultdict(int)
     sec_sources = defaultdict(int)
+    sys_no_source = 0
+    sec_no_source = 0
     
     for conf_year, artifacts in all_results.items():
         # Determine if this is a systems or security conference
@@ -114,28 +169,42 @@ def count_sources_by_area(all_results):
         security_confs = {'ACSAC', 'CHES', 'NDSS', 'PETS', 'SYSTEX', 'USENIX', 'WOOT'}
         
         target_dict = None
+        is_systems = False
         if conf_name in systems_confs:
             target_dict = sys_sources
+            is_systems = True
         elif conf_name in security_confs:
             target_dict = sec_sources
+            is_systems = False
         
         if target_dict is None:
             # Try to infer: check for "Security" in second part of conf_year
             if 'security' in conf_year.lower():
                 target_dict = sec_sources
+                is_systems = False
             else:
                 target_dict = sys_sources
+                is_systems = True
         
         for artifact in artifacts:
-            url = get_artifact_url(artifact)
-            source = extract_source(url)
-            target_dict[source] += 1
-            if url:
+            urls = get_artifact_urls(artifact)
+            if urls:
+                sources = {extract_source(url) for url in urls}
+                for source in sources:
+                    target_dict[source] += 1
                 target_dict['total'] += 1
+            else:
+                # Count artifacts without URLs separately
+                if is_systems:
+                    sys_no_source += 1
+                else:
+                    sec_no_source += 1
     
     return {
         'systems': dict(sys_sources),
         'security': dict(sec_sources),
+        'systems_no_source': sys_no_source,
+        'security_no_source': sec_no_source,
     }
 
 
@@ -145,10 +214,11 @@ def count_sources_overall(all_results):
     
     for conf_year, artifacts in all_results.items():
         for artifact in artifacts:
-            url = get_artifact_url(artifact)
-            source = extract_source(url)
-            sources[source] += 1
-            if url:
+            urls = get_artifact_urls(artifact)
+            source_set = {extract_source(url) for url in urls} if urls else {'unknown'}
+            for source in source_set:
+                sources[source] += 1
+            if urls:
                 sources['total'] += 1
     
     return dict(sources)
@@ -248,7 +318,7 @@ def main():
             writer.writeheader()
             all_sources = set(by_area['systems'].keys()) | set(by_area['security'].keys())
             for source in sorted(all_sources):
-                if source != 'total':
+                if source != 'total' and source != 'unknown':
                     sys_count = by_area['systems'].get(source, 0)
                     sec_count = by_area['security'].get(source, 0)
                     total_count = sys_count + sec_count
@@ -258,6 +328,15 @@ def main():
                         'Security': sec_count,
                         'Total': total_count
                     })
+            # Add "Without Source" row
+            sys_no_source = by_area.get('systems_no_source', 0)
+            sec_no_source = by_area.get('security_no_source', 0)
+            writer.writerow({
+                'Source': 'Without Source',
+                'Systems': sys_no_source,
+                'Security': sec_no_source,
+                'Total': sys_no_source + sec_no_source
+            })
             # Add total row
             sys_total = by_area['systems'].get('total', 0)
             sec_total = by_area['security'].get('total', 0)

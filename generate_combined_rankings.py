@@ -442,6 +442,11 @@ def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
     ae_score = ae_memberships * W_AE_MEMBERSHIP + chair_count * W_AE_CHAIR
 
     combined_score = artifact_score + ae_score
+    
+    # Compute artifact to evaluation ratio
+    ae_ratio = None
+    if ae_score > 0:
+        ae_ratio = round(artifact_score / ae_score, 2)
 
     yr_keys = [int(y) for y in years.keys()] if years else []
     
@@ -471,6 +476,7 @@ def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
         'ae_memberships': ae_memberships,
         'chair_count': chair_count,
         'ae_score': ae_score,
+        'ae_ratio': ae_ratio,
         'combined_score': combined_score,
         'badges_available': badges_available,
         'badges_functional': badges_functional,
@@ -565,6 +571,11 @@ def generate_combined_rankings(data_dir: str):
                 existing['artifact_rate'] = int(round((existing['artifacts'] / existing['total_papers']) * 100))
             if existing['badges_available'] > 0:
                 existing['repro_rate'] = int(round((existing['badges_reproducible'] / existing['badges_available']) * 100))
+            # Recalculate ae_ratio based on merged scores
+            if existing['ae_score'] > 0:
+                existing['ae_ratio'] = round(existing['artifact_score'] / existing['ae_score'], 2)
+            else:
+                existing['ae_ratio'] = None
         else:
             # Person only in security - add them
             combined_all_dict[norm_name] = person.copy()
