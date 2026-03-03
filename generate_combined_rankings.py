@@ -450,10 +450,10 @@ def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
 
     yr_keys = [int(y) for y in years.keys()] if years else []
     
-    # Calculate reproducibility rate
+    # Calculate reproducibility rate (% of artifacts that are reproducible), capped at 100
     repro_rate = 0
-    if badges_available > 0:
-        repro_rate = int(round((badges_reproducible / badges_available) * 100))
+    if artifacts > 0:
+        repro_rate = int(round(min((badges_reproducible / artifacts) * 100, 100.0)))
     
     # Sanitise raw name for storage/matching stability
     name = re.sub(r'[\t\n\r]+', ' ', name)
@@ -569,8 +569,8 @@ def generate_combined_rankings(data_dir: str):
             # Recalculate rates based on summed totals
             if existing['total_papers'] > 0:
                 existing['artifact_rate'] = int(round((existing['artifacts'] / existing['total_papers']) * 100))
-            if existing['badges_available'] > 0:
-                existing['repro_rate'] = int(round((existing['badges_reproducible'] / existing['badges_available']) * 100))
+            if existing['artifacts'] > 0:
+                existing['repro_rate'] = int(round(min((existing['badges_reproducible'] / existing['artifacts']) * 100, 100.0)))
             # Recalculate ae_ratio based on merged scores
             if existing['ae_score'] > 0:
                 existing['ae_ratio'] = round(existing['artifact_score'] / existing['ae_score'], 2)

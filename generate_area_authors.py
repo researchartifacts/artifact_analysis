@@ -152,8 +152,8 @@ def generate_area_authors():
             # Rates — cap artifact_rate at 100% (can exceed if DBLP title
             # matching misses some venue papers but artifact matching finds them)
             artifact_rate = round(min(total / area_total_papers * 100, 100.0), 1) if area_total_papers > 0 else 0.0
-            repro_rate = round(badges_reproducible / total * 100, 1) if total > 0 else 0.0
-            functional_rate = round(badges_functional / total * 100, 1) if total > 0 else 0.0
+            repro_rate = round(min(badges_reproducible / total * 100, 100.0), 1) if total > 0 else 0.0
+            functional_rate = round(min(badges_functional / total * 100, 100.0), 1) if total > 0 else 0.0
 
             # Additive artifact score (same as combined rankings):
             #   Each badge level adds 1 pt: Available=1, +Functional=2, +Reproducible=3 max
