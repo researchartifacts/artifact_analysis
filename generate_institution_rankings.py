@@ -163,6 +163,25 @@ def aggregate_by_institution(combined_data):
         if denom > 0:
             artifact_rate = round((data['artifacts'] / denom) * 100, 1)
         
+        # Calculate A:E ratio
+        ae_ratio = None
+        if data['ae_score'] > 0:
+            ae_ratio = round(data['artifact_score'] / data['ae_score'], 2)
+        elif data['artifact_score'] > 0:
+            ae_ratio = None  # Artifact-only, will display as ∞
+        else:
+            ae_ratio = 0.0  # Neither artifacts nor AE service
+        
+        # Classify institution role based on A:E ratio
+        role = None
+        if ae_ratio is not None and ae_ratio > 0:
+            if ae_ratio > 2.0:
+                role = 'Producer'
+            elif ae_ratio < 0.5:
+                role = 'Consumer'
+            else:
+                role = 'Balanced'
+        
         # Sort authors by combined_score descending and keep top 20
         authors_sorted = sorted(data['authors'], key=lambda x: x['combined_score'], reverse=True)[:20]
         
@@ -173,6 +192,8 @@ def aggregate_by_institution(combined_data):
                 'combined_score': data['combined_score'],
                 'artifact_score': data['artifact_score'],
                 'ae_score': data['ae_score'],
+                'ae_ratio': ae_ratio,
+                'role': role,
                 'artifacts': data['artifacts'],
                 'badges_functional': data['badges_functional'],
                 'badges_reproducible': data['badges_reproducible'],
