@@ -33,9 +33,10 @@ import argparse
 import os
 import sys
 
-# Add parent directory to path so we can import usenix_scrape
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from usenix_scrape import scrape_conference_year
+
+# Import from sibling module in the same package
+from . import usenix_scrape
+from .usenix_scrape import scrape_conference_year
 
 
 def generate_results_md(conference, year, papers_with_badges):

@@ -247,7 +247,9 @@ def main():
     if args.output_dir:
         cache_path = os.path.join(args.output_dir, '_data', 'all_results_cache.yml')
     if not cache_path or not os.path.exists(cache_path):
-        cache_path = os.path.join(os.path.dirname(__file__) or '.', '.cache', 'all_results_cache.yml')
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        repo_root = os.path.dirname(script_dir)
+        cache_path = os.path.join(repo_root, '.cache', 'all_results_cache.yml')
 
     if os.path.exists(cache_path):
         print(f"Loading cached results from {cache_path}...")

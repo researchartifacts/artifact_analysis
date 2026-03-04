@@ -14,7 +14,7 @@ The pipeline runs six steps:
 2. Scrapes artifact data from sysartifacts, secartifacts, and USENIX conference pages
 3. Generates repository statistics (stars, forks, languages)
 4. Creates per-category and total SVG visualizations
-5. Matches authors via DBLP and computes author metrics (skipped if `dblp.xml.gz` is absent)
+5. Matches authors via DBLP and computes author metrics (skipped if `data/dblp/dblp.xml.gz` is absent)
 6. Splits author data into per-area (systems/security) files
 
 ### Options
@@ -27,43 +27,59 @@ The pipeline runs six steps:
 
 ## Scripts
 
-### Pipeline scripts
+Scripts are organized into functional categories:
+
+### Generators (statistics, visualizations, output)
 
 | Script | Purpose |
 |--------|---------|
-| `run_pipeline.sh` | Orchestrates the full pipeline (6 steps) |
-| `download_dblp.sh` | Downloads/refreshes DBLP XML (auto-checks Last-Modified) |
-| `generate_statistics.py` | Scrapes sysartifacts + secartifacts + USENIX, writes YAML/JSON |
-| `generate_repo_stats.py` | Collects GitHub repo metadata (stars, forks, languages) |
-| `generate_visualizations.py` | Creates SVG charts (per-category, total, badges, trends) |
-| `generate_author_stats.py` | Ranks authors by artifact count via DBLP matching, computes rates |
-| `generate_area_authors.py` | Splits author data into systems and security area files |
+| `src/generators/generate_statistics.py` | Scrapes sysartifacts + secartifacts + USENIX, writes YAML/JSON |
+| `src/generators/generate_repo_stats.py` | Collects GitHub repo metadata (stars, forks, languages) |
+| `src/generators/generate_artifact_citations.py` | Generates artifact citation statistics (OpenAlex) |
+| `src/generators/generate_visualizations.py` | Creates SVG charts (per-category, total, badges, trends) |
+| `src/generators/generate_author_stats.py` | Ranks authors by artifact count via DBLP matching |
+| `src/generators/generate_area_authors.py` | Splits author data into systems/security areas |
+| `src/generators/generate_committee_stats.py` | Committee statistics and analysis |
+| `src/generators/generate_combined_rankings.py` | Combined multi-source rankings |
+| `src/generators/generate_institution_rankings.py` | Per-institution rankings |
+| `src/generators/generate_author_profiles.py` | Detailed author profile data |
+| `src/generators/generate_geographic_statistics.py` | Geographic distribution analysis |
+| `src/generators/generate_artifact_sources_table.py` | Artifact source tables |
+| `src/generators/generate_artifact_sources_timeline.py` | Artifact source timelines |
+| `src/generators/generate_cited_artifacts_list.py` | Lists of cited artifacts |
 
-### Standalone tools
-
-| Script | Purpose |
-|--------|---------|
-| `usenix_scrape.py` | Scrapes USENIX conference pages for artifact badges (FAST, OSDI, ATC, etc.) |
-| `generate_sysartifacts_results.py` | Generates sysartifacts-compatible `results.md` for any USENIX conference |
-
-### Supporting modules
-
-| Module | Purpose |
-|--------|---------|
-| `sys_sec_scrape.py` | GitHub API fetching with caching |
-| `sys_sec_scrape_no_api.py` | GitHub fetching without API (raw HTML) |
-| `sys_sec_artifacts_results_scrape.py` | YAML front-matter parsing for artifact results |
-| `parse_dlbp.py` | DBLP XML parsing |
-
-### Legacy scripts (from upstream)
+### Scrapers (data collection)
 
 | Script | Purpose |
 |--------|---------|
-| `collect_artifact_stats.py` | Original artifact stats collector |
-| `committee_statistics.py` | Committee membership analysis |
-| `eurosys_plot.py` | EuroSys-specific plotting |
-| `sys_sec_committee_scrape.py` | Committee scraping |
-| `test_artifact_repositories.py` | Tests artifact repository accessibility |
+| `src/scrapers/acm_scrape.py` | Scrapes ACM Digital Library |
+| `src/scrapers/usenix_scrape.py` | Scrapes USENIX conference pages for badges |
+| `src/scrapers/generate_sysartifacts_results.py` | Generates sysartifacts-compatible results.md |
+| `src/scrapers/sys_sec_scrape.py` | GitHub API fetching with caching |
+| `src/scrapers/sys_sec_scrape_no_api.py` | GitHub fetching without API (raw HTML) |
+| `src/scrapers/sys_sec_artifacts_results_scrape.py` | Parses artifact YAML front-matter |
+| `src/scrapers/sys_sec_committee_scrape.py` | Committee member scraping |
+| `src/scrapers/alternative_committee_scrape.py` | Alternative committee scraping |
+
+### Enrichers (data enhancement)
+
+| Script | Purpose |
+|--------|---------|
+| `src/enrichers/enrich_affiliations.py` | Generic affiliation enrichment |
+| `src/enrichers/enrich_affiliations_dblp.py` | DBLP-based affiliation enrichment |
+| `src/enrichers/enrich_affiliations_dblp_incremental.py` | Incremental DBLP enrichment with caching |
+| `src/enrichers/enrich_affiliations_csrankings.py` | CSRankings-based enrichment |
+| `src/enrichers/add_top_repos.py` | Adds top repositories to profiles |
+
+### Utilities
+
+| Script | Purpose |
+|--------|---------|
+| `src/utils/parse_dlbp.py` | DBLP XML parsing |
+| `src/utils/collect_artifact_stats.py` | Artifact stats collector |
+| `src/utils/committee_statistics.py` | Committee analysis utilities |
+| `src/utils/test_artifact_repositories.py` | Repository accessibility testing |
+| `src/utils/get_conferences_by_year.py` | Conference discovery utilities |
 
 ## Output
 
@@ -78,6 +94,33 @@ Statistics and data go to `_data/` and `assets/` in the output directory:
 - `_data/navigation.yml` — site navigation structure
 - `assets/data/artifacts.json`, `authors.json`, `summary.json` — JSON exports
 - `assets/charts/*.svg` — generated visualizations
+
+## Repository Layout
+
+```
+artifact_analysis/
+├── src/
+│   ├── scrapers/          — Data collection (GitHub, ACM, USENIX, etc.)
+│   ├── enrichers/         — Data enhancement (affiliations, repositories)
+│   ├── generators/        — Output generation (statistics, visualizations)
+│   └── utils/             — Utilities and helpers
+├── scripts/               — Shell scripts (downloader)
+├── data/
+│   ├── dblp/              — DBLP XML database (downloaded, ~3GB)
+│   └── inputs/            — Input CSV files (affiliations, etc.)
+├── logs/                  — Pipeline logs and argument history
+├── config/                — Configuration (cache version, etc.)
+├── run_pipeline.sh        — Main orchestration script
+├── save_results.sh        — Results snapshot and push script
+└── .github/workflows/     — CI/CD automation
+```
+
+### src/ organization by functionality
+
+- **scrapers/** — Data collection from external sources (GitHub, conferences, APIs)
+- **enrichers/** — Data enhancement and augmentation (affiliations, repositories)
+- **generators/** — Output generation (statistics tables, visualizations, profiles)
+- **utils/** — Parsing, testing, analysis utilities
 
 ## Caching
 

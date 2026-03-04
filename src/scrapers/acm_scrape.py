@@ -32,7 +32,7 @@ import requests
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from sys_sec_scrape import (
+from .sys_sec_scrape import (
     _read_cache, _write_cache, _session_with_retries,
     CACHE_TTL, CACHE_TTL_URL,
 )

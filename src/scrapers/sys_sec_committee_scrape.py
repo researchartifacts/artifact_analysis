@@ -2,7 +2,7 @@ import requests
 import re
 import yaml
 import argparse
-from sys_sec_scrape import get_conferences_from_prefix, github_urls, download_file
+from .sys_sec_scrape import get_conferences_from_prefix, github_urls, download_file
 
 def _parse_member_line(line):
     """Parse a single line from a committee markdown file into name + affiliation.

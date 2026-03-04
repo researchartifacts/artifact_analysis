@@ -13,9 +13,10 @@ import re
 import yaml
 from collections import defaultdict
 
-CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.cache')
-WEBSITE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           '..', 'researchartifacts.github.io')
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(SCRIPT_DIR)
+CACHE_DIR = os.path.join(REPO_ROOT, '.cache')
+WEBSITE_DIR = os.path.join(REPO_ROOT, 'researchartifacts.github.io')
 
 
 def extract_conference_name(conf_year_str):

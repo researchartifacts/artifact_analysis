@@ -3,7 +3,7 @@ import re
 import yaml
 import argparse
 from bs4 import BeautifulSoup
-from sys_sec_scrape import get_conferences_from_prefix, github_urls, download_file
+from .sys_sec_scrape import get_conferences_from_prefix, github_urls, download_file
 
 # Alternative results file names used by different conferences
 RESULTS_FILENAMES = ['results.md', 'result.md']

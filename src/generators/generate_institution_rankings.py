@@ -4,6 +4,7 @@ Generate institution rankings by aggregating combined ranking data by affiliatio
 Creates JSON files for overall, systems, and security institution rankings.
 """
 
+import argparse
 import json
 import re
 from pathlib import Path
@@ -233,8 +234,16 @@ def aggregate_by_institution(combined_data):
 
 def main():
     """Generate institution ranking JSON files."""
-    base_path = Path(__file__).parent
-    website_path = base_path.parent / 'researchartifacts.github.io'
+    parser = argparse.ArgumentParser(description='Generate institution rankings')
+    parser.add_argument('--data_dir', type=str, default=None,
+                        help='Path to website root (researchartifacts.github.io)')
+    args = parser.parse_args()
+
+    if args.data_dir:
+        website_path = Path(args.data_dir)
+    else:
+        base_path = Path(__file__).parent
+        website_path = base_path.parent.parent.parent / 'researchartifacts.github.io'
     data_dir = website_path / 'assets' / 'data'
     
     # Process overall combined ranking

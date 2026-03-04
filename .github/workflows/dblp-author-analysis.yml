@@ -39,16 +39,17 @@ jobs:
       - name: Cache DBLP database
         uses: actions/cache@v4
         with:
-          path: dblp.xml.gz
-          key: dblp-${{ hashFiles('cache-version.txt') }}
+          path: data/dblp/dblp.xml.gz
+          key: dblp-${{ hashFiles('config/cache-version.txt') }}
           restore-keys: |
             dblp-
       
       - name: Download DBLP if not cached
         run: |
-          if [ ! -f dblp.xml.gz ]; then
+          if [ ! -f data/dblp/dblp.xml.gz ]; then
             echo "Downloading DBLP database (~3GB)..."
-            wget -q https://dblp.org/xml/dblp.xml.gz
+            mkdir -p data/dblp
+            wget -q -O data/dblp/dblp.xml.gz https://dblp.org/xml/dblp.xml.gz
             echo "Download complete"
           else
             echo "Using cached DBLP database"
@@ -56,8 +57,8 @@ jobs:
       
       - name: Generate author statistics
         run: |
-          python generate_author_stats.py \
-            --dblp_file dblp.xml.gz \
+          python -m src.generators.generate_author_stats \
+            --dblp_file data/dblp/dblp.xml.gz \
             --data_dir website \
             --output_dir website
       
@@ -67,7 +68,7 @@ jobs:
           echo "Attempting DBLP affiliation enrichment..."
           # This step is optional and may not complete in GitHub Actions
           # due to rate limiting and network constraints
-          python enrich_affiliations_dblp_incremental.py \
+          python -m src.enrichers.enrich_affiliations_dblp_incremental \
             --data_dir . \
             --max_searches 100 \
             --verbose \
@@ -79,15 +80,15 @@ jobs:
           # Regenerate stats with any enriched data
           if [ -f "authors.json" ]; then
             echo "Regenerating author stats with enriched data..."
-            python generate_author_stats.py \
-              --dblp_file dblp.xml.gz \
+            python -m src.generators.generate_author_stats \
+              --dblp_file data/dblp/dblp.xml.gz \
               --data_dir website \
               --output_dir website || echo "Stats regeneration skipped"
           fi
       
       - name: Generate per-area author data
         run: |
-          python generate_area_authors.py --data_dir website
+          python -m src.generators.generate_area_authors --data_dir website
       
       - name: Upload DBLP analysis results
         uses: actions/upload-artifact@v4

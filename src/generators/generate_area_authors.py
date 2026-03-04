@@ -15,7 +15,7 @@ import os
 import argparse
 import re
 from collections import defaultdict
-from generate_combined_rankings import _normalize_affiliation
+from .generate_combined_rankings import _normalize_affiliation
 
 DATA_DIR = None  # Set via CLI
 
@@ -145,6 +145,11 @@ def generate_area_authors():
                 if has_repro:
                     badges_reproducible += 1
 
+            # Sum citations for artifacts in this area
+            artifact_citations = 0
+            for p in area_papers:
+                artifact_citations += int(p.get('artifact_citations', 0) or 0)
+
             # --- Compute total papers at area conferences (AE years only) ---
             # Only count papers published in years where AE existed for that conference.
             area_total_papers = 0
@@ -198,12 +203,14 @@ def generate_area_authors():
                 'display_name': author.get('display_name', author_name),
                 'affiliation': aff,
                 'artifact_score': artifact_score,
+                'artifacts': total,
                 'total': total,
                 'total_papers': area_total_papers,
                 'artifact_rate': artifact_rate,
                 'repro_rate': repro_rate,
                 'functional_rate': functional_rate,
                 'last_5_years': last_5,
+                'artifact_citations': artifact_citations,
                 'badges_available': badges_available,
                 'badges_functional': badges_functional,
                 'badges_reproducible': badges_reproducible,

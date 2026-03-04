@@ -35,7 +35,7 @@ from bs4 import BeautifulSoup
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from sys_sec_scrape import _read_cache, _write_cache, CACHE_TTL
+from .sys_sec_scrape import _read_cache, _write_cache, CACHE_TTL
 
 BASE_URL = "https://www.usenix.org"
 

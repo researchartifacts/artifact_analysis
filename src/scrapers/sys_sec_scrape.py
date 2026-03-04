@@ -6,7 +6,9 @@ import time
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.cache')
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(SCRIPT_DIR)
+CACHE_DIR = os.path.join(REPO_ROOT, '.cache')
 CACHE_TTL = 86400 * 30           # 30 days – conference listings & raw file downloads
 CACHE_TTL_URL = 86400 * 90       # 90 days – URL existence checks (positive)
 CACHE_TTL_URL_NEG = 86400 * 7    # 7 days  – URL non-existence checks (re-check weekly)

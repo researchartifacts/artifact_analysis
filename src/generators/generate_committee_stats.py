@@ -30,7 +30,7 @@ from alternative_committee_scrape import (
     CHES_KNOWN_YEARS,
     PETS_KNOWN_YEARS,
 )
-from generate_combined_rankings import _normalize_affiliation
+from .generate_combined_rankings import _normalize_affiliation
 
 # ── Country → Continent mapping ──────────────────────────────────────────────
 

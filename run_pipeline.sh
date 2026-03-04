@@ -7,6 +7,13 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SRC_DIR="$SCRIPT_DIR/src"
+SCRIPTS_DIR="$SCRIPT_DIR/scripts"
+DATA_DIR="$SCRIPT_DIR/data"
+LOG_DIR="$SCRIPT_DIR/logs"
+DBLP_FILE="$DATA_DIR/dblp/dblp.xml.gz"
+
+mkdir -p "$LOG_DIR"
 cd "$SCRIPT_DIR"
 
 OUTPUT_DIR="../researchartifacts.github.io"
@@ -39,7 +46,7 @@ done
     echo "results_dir: $RESULTS_DIR"
     echo "push: $DO_PUSH"
     echo "timestamp: $(date '+%Y-%m-%d %H:%M:%S %Z')"
-} > "$SCRIPT_DIR/.last_pipeline_args"
+} > "$LOG_DIR/last_pipeline_args"
 
 # Auto-detect HTTPS proxy from HTTP proxy if not set
 if [ -z "$https_proxy" ] && [ -n "$http_proxy" ]; then
@@ -82,59 +89,59 @@ PYTHON=".venv/bin/python"
 export PYTHONUNBUFFERED=1
 
 # Start capturing pipeline log
-LOGFILE="$SCRIPT_DIR/.last_pipeline.log"
+LOGFILE="$LOG_DIR/last_pipeline.log"
 exec > >(tee "$LOGFILE") 2>&1
 
 echo "[1/10] Checking DBLP freshness..."
-"$SCRIPT_DIR/download_dblp.sh" --auto
+"$SCRIPTS_DIR/download_dblp.sh" --auto
 
 echo "[2/10] Generating statistics (sysartifacts + secartifacts + USENIX)..."
-$PYTHON generate_statistics.py --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
+$PYTHON -m src.generators.generate_statistics --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "❌ Statistics failed"; exit 1; }
 
 echo "[3/11] Generating repository statistics (stars, forks, etc.)..."
-$PYTHON generate_repo_stats.py --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
+$PYTHON -m src.generators.generate_repo_stats --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Repository stats failed (may need API access)"; }
 
 echo "[4/12] Generating artifact citation stats (OpenAlex)..."
-$PYTHON generate_artifact_citations.py --data_dir "$OUTPUT_DIR" \
+$PYTHON -m src.generators.generate_artifact_citations --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Artifact citations failed (may need network access)"; }
 
 echo "[5/12] Generating cited artifacts lists (author/institution mappings)..."
-$PYTHON generate_cited_artifacts_list.py --data_dir "$OUTPUT_DIR" \
+$PYTHON -m src.generators.generate_cited_artifacts_list --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Cited artifacts list generation failed"; }
 
 echo "[6/12] Generating visualizations..."
-$PYTHON generate_visualizations.py --data_dir "$OUTPUT_DIR" \
+$PYTHON -m src.generators.generate_visualizations --data_dir "$OUTPUT_DIR" \
     || { echo "❌ Visualizations failed"; exit 1; }
 
 echo "[7/12] Generating author statistics..."
-if [ -f "dblp.xml.gz" ]; then
-    $PYTHON generate_author_stats.py \
-        --dblp_file dblp.xml.gz --data_dir "$OUTPUT_DIR" --output_dir "$OUTPUT_DIR" \
+if [ -f "$DBLP_FILE" ]; then
+    $PYTHON -m src.generators.generate_author_stats \
+        --dblp_file "$DBLP_FILE" --data_dir "$OUTPUT_DIR" --output_dir "$OUTPUT_DIR" \
         || { echo "❌ Author statistics failed"; exit 1; }
 else
-    echo "⚠️  Skipped (dblp.xml.gz not found)"
+    echo "⚠️  Skipped ($DBLP_FILE not found)"
 fi
 
 echo "[8/12] Generating per-area author data..."
-$PYTHON generate_area_authors.py --data_dir "$OUTPUT_DIR" \
+$PYTHON -m src.generators.generate_area_authors --data_dir "$OUTPUT_DIR" \
     || { echo "❌ Area author generation failed"; exit 1; }
 
 echo "[9/12] Generating committee statistics..."
-$PYTHON generate_committee_stats.py --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
+$PYTHON -m src.generators.generate_committee_stats --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Committee statistics failed (may need network access)"; }
 
 echo "[10/12] Generating combined rankings..."
-$PYTHON generate_combined_rankings.py --data_dir "$OUTPUT_DIR" \
+$PYTHON -m src.generators.generate_combined_rankings --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Combined rankings failed"; }
 
 echo "[11/12] Generating institution rankings..."
-$PYTHON generate_institution_rankings.py \
+$PYTHON -m src.generators.generate_institution_rankings --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Institution rankings failed"; }
 
 echo "[12/12] Generating author profiles..."
-$PYTHON generate_author_profiles.py --data_dir "$OUTPUT_DIR" \
+$PYTHON -m src.generators.generate_author_profiles --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Author profiles failed"; }
 
 echo "✅ Pipeline complete! Output in $OUTPUT_DIR"

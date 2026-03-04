@@ -15,10 +15,10 @@ import yaml
 from collections import defaultdict
 from datetime import datetime
 
-from sys_sec_artifacts_results_scrape import get_ae_results
-from sys_sec_scrape import get_conferences_from_prefix
-from collect_artifact_stats import github_stats, zenodo_stats, figshare_stats
-from test_artifact_repositories import check_artifact_exists
+from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
+from ..scrapers.sys_sec_scrape import get_conferences_from_prefix
+from ..utils.collect_artifact_stats import github_stats, zenodo_stats, figshare_stats
+from ..utils.test_artifact_repositories import check_artifact_exists
 
 import re
 
@@ -298,8 +298,10 @@ def main():
     if args.output_dir:
         cache_path = os.path.join(args.output_dir, '_data', 'all_results_cache.yml')
     if not cache_path or not os.path.exists(cache_path):
-        # Fallback: local .cache directory
-        cache_path = os.path.join(os.path.dirname(__file__) or '.', '.cache', 'all_results_cache.yml')
+        # Fallback: repo root .cache directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        repo_root = os.path.dirname(script_dir)
+        cache_path = os.path.join(repo_root, '.cache', 'all_results_cache.yml')
 
     if os.path.exists(cache_path):
         print(f"Loading cached results from {cache_path}...")

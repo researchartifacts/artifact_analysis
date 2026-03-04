@@ -2,9 +2,9 @@ import argparse
 import os
 import time
 import requests
-from sys_sec_artifacts_results_scrape import get_ae_results
-from test_artifact_repositories import check_artifact_exists
-from sys_sec_scrape import (cached_github_stats, cached_zenodo_stats,
+from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
+from .test_artifact_repositories import check_artifact_exists
+from ..scrapers.sys_sec_scrape import (cached_github_stats, cached_zenodo_stats,
                             cached_figshare_stats)
 
 # Keep thin wrappers so existing callers still work

@@ -12,10 +12,10 @@ import argparse
 from datetime import datetime
 from collections import defaultdict
 import re
-from sys_sec_artifacts_results_scrape import get_ae_results
-from sys_sec_scrape import get_conferences_from_prefix
-from usenix_scrape import scrape_conference_year, to_pipeline_format
-from acm_scrape import (
+from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
+from ..scrapers.sys_sec_scrape import get_conferences_from_prefix
+from ..scrapers.usenix_scrape import scrape_conference_year, to_pipeline_format
+from ..scrapers.acm_scrape import (
     scrape_conference_year as acm_scrape_conference_year,
     to_pipeline_format as acm_to_pipeline_format,
     get_acm_conferences,

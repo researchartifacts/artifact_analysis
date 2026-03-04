@@ -11,6 +11,10 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
+DATA_DIR="$SCRIPT_DIR/data"
+LOG_DIR="$SCRIPT_DIR/logs"
+DBLP_FILE="$DATA_DIR/dblp/dblp.xml.gz"
+CACHE_VERSION_FILE="$SCRIPT_DIR/config/cache-version.txt"
 
 RESULTS_DIR="../artifact_analysis_results"
 OUTPUT_DIR="../researchartifacts.github.io"
@@ -84,22 +88,22 @@ echo "  [3/4] Recording input metadata..."
 mkdir -p "$RESULTS_DIR/input"
 
 # DBLP checksum (the file is ~1GB, so store checksum not the file)
-if [ -f "$SCRIPT_DIR/dblp.xml.gz" ]; then
-    sha256sum "$SCRIPT_DIR/dblp.xml.gz" | awk '{print $1}' > "$RESULTS_DIR/input/dblp_checksum.txt"
-    stat --format='%s bytes, modified %y' "$SCRIPT_DIR/dblp.xml.gz" 2>/dev/null \
+if [ -f "$DBLP_FILE" ]; then
+    sha256sum "$DBLP_FILE" | awk '{print $1}' > "$RESULTS_DIR/input/dblp_checksum.txt"
+    stat --format='%s bytes, modified %y' "$DBLP_FILE" 2>/dev/null \
         >> "$RESULTS_DIR/input/dblp_checksum.txt" || true
 else
     echo "not available" > "$RESULTS_DIR/input/dblp_checksum.txt"
 fi
 
 # Record pipeline arguments if available
-if [ -f "$SCRIPT_DIR/.last_pipeline_args" ]; then
-    cp "$SCRIPT_DIR/.last_pipeline_args" "$RESULTS_DIR/input/pipeline_args.txt"
+if [ -f "$LOG_DIR/last_pipeline_args" ]; then
+    cp "$LOG_DIR/last_pipeline_args" "$RESULTS_DIR/input/pipeline_args.txt"
 fi
 
 # Record pipeline log if available
-if [ -f "$SCRIPT_DIR/.last_pipeline.log" ]; then
-    cp "$SCRIPT_DIR/.last_pipeline.log" "$RESULTS_DIR/input/pipeline.log"
+if [ -f "$LOG_DIR/last_pipeline.log" ]; then
+    cp "$LOG_DIR/last_pipeline.log" "$RESULTS_DIR/input/pipeline.log"
 fi
 
 # Record git revisions of the source repos
@@ -115,7 +119,7 @@ fi
     echo "  commit: $(cd "$OUTPUT_DIR" && git rev-parse HEAD 2>/dev/null || echo 'unknown')"
     echo "  branch: $(cd "$OUTPUT_DIR" && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')"
     echo ""
-    echo "cache_version: $(cat "$SCRIPT_DIR/cache-version.txt" 2>/dev/null || echo 'unknown')"
+    echo "cache_version: $(cat "$CACHE_VERSION_FILE" 2>/dev/null || echo 'unknown')"
 } > "$RESULTS_DIR/input/run_metadata.txt"
 
 # ── 4. Commit ─────────────────────────────────────────────────────────────────

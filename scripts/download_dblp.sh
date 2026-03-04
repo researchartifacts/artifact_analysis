@@ -1,7 +1,8 @@
 #!/bin/bash
 # Download DBLP XML database (~3GB compressed) for author matching
-# Usage: ./download_dblp.sh [--auto] [http_proxy] [https_proxy]
+# Usage: scripts/download_dblp.sh [--auto] [http_proxy] [https_proxy]
 # --auto: non-interactive mode, downloads if missing or outdated
+# Output: data/dblp/dblp.xml.gz
 
 AUTO=false
 if [ "$1" = "--auto" ]; then
@@ -13,10 +14,12 @@ fi
 [ -n "$2" ] && export https_proxy="$2"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$ROOT_DIR"
 
 DBLP_URL="https://dblp.org/xml/dblp.xml.gz"
-DBLP_FILE="dblp.xml.gz"
+DBLP_FILE="$ROOT_DIR/data/dblp/dblp.xml.gz"
+mkdir -p "$(dirname "$DBLP_FILE")"
 
 [ -n "$http_proxy" ] && echo "http_proxy: $http_proxy"
 [ -n "$https_proxy" ] && echo "https_proxy: $https_proxy"

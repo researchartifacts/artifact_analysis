@@ -20,7 +20,9 @@ import requests
 from collections import defaultdict
 
 CSRANKINGS_URL = "https://raw.githubusercontent.com/emeryberger/CSrankings/gh-pages/csrankings.csv"
-CACHE_DIR = Path(".cache/csrankings")
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent
+CACHE_DIR = REPO_ROOT / ".cache" / "csrankings"
 CACHE_FILE = CACHE_DIR / "csrankings.csv"
 CACHE_TTL_DAYS = 30  # CSRankings data changes monthly
 
