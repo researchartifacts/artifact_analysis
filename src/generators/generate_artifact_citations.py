@@ -21,6 +21,18 @@ from collections import defaultdict
 
 
 DOI_REGEX = re.compile(r"10\.[0-9]{4,9}/[-._;()/:A-Za-z0-9]+")
+# Only accept DOIs from artifact repositories (Zenodo, Figshare)
+# Reject paper DOIs from publishers (ACM, IEEE, Springer, etc.)
+ALLOWED_ARTIFACT_DOI_PREFIXES = (
+    "10.5281/zenodo.",  # Zenodo
+    "10.6084/m9.figshare.",  # Figshare
+)
+
+def is_artifact_doi(doi: str) -> bool:
+    """Check if DOI is from an artifact repository (not a paper publisher)."""
+    if not doi:
+        return False
+    return doi.lower().startswith(ALLOWED_ARTIFACT_DOI_PREFIXES)
 
 
 def normalize_title(title: str) -> str:
@@ -276,6 +288,11 @@ def generate(data_dir: str) -> None:
                 if doi:
                     source = "url"
                     break
+        
+        # Filter: Only keep artifact DOIs (Zenodo, Figshare), drop paper DOIs (ACM, IEEE, etc.)
+        if doi and not is_artifact_doi(doi):
+            doi = ""
+            source = ""
 
         cited_by = None
         openalex_err = ""
