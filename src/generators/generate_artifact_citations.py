@@ -176,11 +176,16 @@ def fetch_openalex_citations(doi: str, cache: dict, citing_doi_limit: int) -> di
             citing_dois = []
             truncated = False
 
-            cited_by_api_url = payload.get("cited_by_api_url", "")
-            if citing_doi_limit > 0 and cited_by_api_url:
-                citing_dois, truncated = fetch_openalex_citing_dois(
-                    cited_by_api_url, citing_doi_limit
-                )
+            # Construct citing works URL from OpenAlex ID if we need citing DOIs
+            if citing_doi_limit > 0 and cited_val and cited_val > 0:
+                openalex_id = payload.get("id", "")
+                if openalex_id:
+                    # Extract work ID from full URL (e.g., https://openalex.org/W12345 -> W12345)
+                    work_id = openalex_id.split("/")[-1] if "/" in openalex_id else openalex_id
+                    citing_works_url = f"https://api.openalex.org/works?filter=cites:{work_id}"
+                    citing_dois, truncated = fetch_openalex_citing_dois(
+                        citing_works_url, citing_doi_limit
+                    )
 
             cache[doi] = {
                 "count": cited_val,
@@ -199,12 +204,16 @@ def fetch_openalex_citations(doi: str, cache: dict, citing_doi_limit: int) -> di
     return cache[doi]
 
 
-def fetch_openalex_citing_dois(cited_by_api_url: str, limit: int) -> tuple[list[str], bool]:
+def fetch_openalex_citing_dois(base_url: str, limit: int) -> tuple[list[str], bool]:
+    """
+    Fetch citing DOIs from OpenAlex using the filter API.
+    base_url should be like: https://api.openalex.org/works?filter=cites:W12345
+    """
     citing_dois = set()
     truncated = False
     cursor = "*"
     while True:
-        url = f"{cited_by_api_url}&per_page=200&cursor={urllib.parse.quote(cursor, safe='')}"
+        url = f"{base_url}&per_page=200&cursor={urllib.parse.quote(cursor, safe='')}"
         payload = fetch_json(url, timeout=25)
         for work in payload.get("results", []) or []:
             doi_val = work.get("doi") or (work.get("ids", {}) or {}).get("doi") or ""
