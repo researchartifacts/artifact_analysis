@@ -85,18 +85,29 @@ def fetch_json_with_headers(url: str, timeout: int = 20, headers: dict | None = 
 
 
 def fetch_zenodo_doi(record_id: str, cache: dict) -> str:
+    """
+    Get DOI for a Zenodo record.
+    Always returns the Zenodo DOI (10.5281/zenodo.{record_id}) to ensure we get
+    artifact citations, not paper citations from DOIs that authors may have linked.
+    """
     if record_id in cache:
         return cache[record_id]
+    
+    # Construct Zenodo DOI directly from record ID
+    # This ensures we always get artifact citations, not paper citations
+    doi = f"10.5281/zenodo.{record_id}".lower()
+    
+    # Verify the record exists by checking the API
     url = f"https://zenodo.org/api/records/{record_id}"
-    doi = ""
     try:
-        payload = fetch_json(url, timeout=30)
-        doi = (payload.get("metadata", {}) or {}).get("doi", "") or ""
-        doi = doi.lower().strip()
+        fetch_json(url, timeout=30)
+        # Record exists, use the constructed Zenodo DOI
+        cache[record_id] = doi
+        return doi
     except Exception:
-        doi = ""
-    cache[record_id] = doi
-    return doi
+        # Record doesn't exist or API error
+        cache[record_id] = ""
+        return ""
 
 
 def normalize_doi(value: str) -> str:
