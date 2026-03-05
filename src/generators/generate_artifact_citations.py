@@ -516,7 +516,29 @@ def generate(data_dir: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate artifact citation stats via OpenAlex and Semantic Scholar")
     parser.add_argument("--data_dir", type=str, required=True, help="Path to researchartifacts.github.io")
+    parser.add_argument("--enable-citations", action="store_true", default=False,
+                        help="Actually run citation collection. Without this flag, the script exits immediately.")
     args = parser.parse_args()
+
+    if not args.enable_citations:
+        print("=" * 78, flush=True)
+        print("WARNING: Citation collection is DISABLED by default.", flush=True)
+        print("", flush=True)
+        print("OpenAlex citation counts for artifact DOIs are UNRELIABLE.", flush=True)
+        print("Verification (March 2026) found that ALL 43 reported citing DOIs", flush=True)
+        print("were false positives (paper DOI cited instead of artifact DOI),", flush=True)
+        print("self-citations, or unresolvable. Zero genuine third-party artifact", flush=True)
+        print("citations exist in the current dataset.", flush=True)
+        print("", flush=True)
+        print("If you still want to run citation collection (e.g., for research", flush=True)
+        print("or to check whether the situation has improved), pass:", flush=True)
+        print("  --enable-citations", flush=True)
+        print("", flush=True)
+        print("After collection, run verify_artifact_citations.py to validate", flush=True)
+        print("whether any reported citations are genuine.", flush=True)
+        print("=" * 78, flush=True)
+        return
+
     generate(args.data_dir)
 
 

@@ -103,13 +103,16 @@ echo "[3/11] Generating repository statistics (stars, forks, etc.)..."
 $PYTHON -m src.generators.generate_repo_stats --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Repository stats failed (may need API access)"; }
 
-echo "[4/12] Generating artifact citation stats (OpenAlex)..."
-$PYTHON -m src.generators.generate_artifact_citations --data_dir "$OUTPUT_DIR" \
-    || { echo "⚠️  Artifact citations failed (may need network access)"; }
+echo "[4/12] Artifact citation stats — SKIPPED (disabled by default)."
+echo "       OpenAlex citation counts for artifact DOIs are unreliable."
+echo "       All reported citations were false positives or self-citations."
+echo "       To re-enable: pass --enable-citations to generate_artifact_citations."
+# $PYTHON -m src.generators.generate_artifact_citations --data_dir "$OUTPUT_DIR" --enable-citations \
+#     || { echo "⚠️  Artifact citations failed (may need network access)"; }
 
-echo "[5/12] Generating cited artifacts lists (author/institution mappings)..."
-$PYTHON -m src.generators.generate_cited_artifacts_list --data_dir "$OUTPUT_DIR" \
-    || { echo "⚠️  Cited artifacts list generation failed"; }
+echo "[5/12] Cited artifacts lists — SKIPPED (no citation data)."
+# $PYTHON -m src.generators.generate_cited_artifacts_list --data_dir "$OUTPUT_DIR" \
+#     || { echo "⚠️  Cited artifacts list generation failed"; }
 
 echo "[6/12] Generating visualizations..."
 $PYTHON -m src.generators.generate_visualizations --data_dir "$OUTPUT_DIR" \

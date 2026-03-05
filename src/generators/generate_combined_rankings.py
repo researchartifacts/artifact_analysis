@@ -423,7 +423,9 @@ W_FUNCTIONAL   = 1   # additional point for functional badge
 W_REPRODUCIBLE = 1   # additional point for reproducible badge
 W_AE_MEMBERSHIP = 3
 W_AE_CHAIR      = 2   # bonus on top of membership
-W_CITATION      = 1   # per-citation point (artifact DOI citations)
+W_CITATION      = 0   # DISABLED: OpenAlex citations unreliable for artifact DOIs
+                       # (all 43 reported citations in March 2026 were false positives
+                       # or self-citations; see verify_artifact_citations.py)
 
 
 def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
