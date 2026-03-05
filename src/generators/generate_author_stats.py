@@ -260,7 +260,21 @@ def parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact):
                     venue = booktitle
                     
                     artifact_meta = title_to_artifact.get(normalized, {})
-                    
+
+                    # Extract DOI URL from <ee> elements (prefer doi.org, fall back to any ee)
+                    doi_url = ''
+                    any_ee = ''
+                    for ee in elem.findall('ee'):
+                        if ee.text:
+                            url = ee.text.strip()
+                            if not any_ee:
+                                any_ee = url
+                            if 'doi.org' in url:
+                                doi_url = url
+                                break
+                    if not doi_url:
+                        doi_url = any_ee
+
                     paper_info = {
                         'title': title,
                         'normalized_title': normalized,
@@ -270,7 +284,8 @@ def parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact):
                         'venue': venue,
                         'conference': artifact_meta.get('conference', ''),
                         'category': artifact_meta.get('category', 'unknown'),
-                        'badges': artifact_meta.get('badges', [])
+                        'badges': artifact_meta.get('badges', []),
+                        'doi_url': doi_url
                     }
                     
                     papers_found.append(paper_info)

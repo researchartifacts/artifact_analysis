@@ -55,6 +55,8 @@ def generate_search_data(data_dir: str) -> list:
             if author_affiliation.get(a)
         })
 
+        doi_url = pa.get('doi_url', '')
+
         entry = {
             'title': art['title'].strip(),
             'conference': art['conference'],
@@ -63,6 +65,7 @@ def generate_search_data(data_dir: str) -> list:
             'badges': art['badges'],
             'repository_url': art.get('repository_url', ''),
             'artifact_url': art.get('artifact_url', ''),
+            'doi_url': doi_url,
             'authors': clean_authors,
             'affiliations': affiliations,
         }
