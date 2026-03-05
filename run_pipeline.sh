@@ -147,6 +147,10 @@ echo "[12/12] Generating author profiles..."
 $PYTHON -m src.generators.generate_author_profiles --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Author profiles failed"; }
 
+echo "[13/13] Generating search data..."
+$PYTHON -m src.generators.generate_search_data --data_dir "$OUTPUT_DIR" \
+    || { echo "⚠️  Search data generation failed"; }
+
 echo "✅ Pipeline complete! Output in $OUTPUT_DIR"
 
 # ── Save results snapshot ─────────────────────────────────────────────────────
