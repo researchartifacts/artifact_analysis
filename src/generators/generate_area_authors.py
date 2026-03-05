@@ -190,7 +190,7 @@ def generate_area_authors():
             functional_rate = round(badges_functional / total * 100, 1) if total > 0 else 0.0
 
             # Additive artifact score (same as combined rankings):
-            #   Each badge level adds 1 pt: Available=1, +Functional=2, +Reproducible=3 max
+            #   Each badge level adds 1 pt: Available=1, Functional=1, Reproducible=1 (max 3 per artifact)
             artifact_score = total * 1 + badges_functional * 1 + badges_reproducible * 1
 
             author_name = author['name']
