@@ -18,9 +18,9 @@ from datetime import datetime
 from pytrie import Trie
 from thefuzz import fuzz
 
-from sys_sec_committee_scrape import get_committees
-from sys_sec_scrape import download_file
-from alternative_committee_scrape import (
+from src.scrapers.sys_sec_committee_scrape import get_committees
+from src.scrapers.sys_sec_scrape import download_file
+from src.scrapers.alternative_committee_scrape import (
     get_alternative_committees,
     get_all_usenix_committees,
     scrape_ches_committee,
@@ -493,11 +493,13 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
                     'sys_memberships': 0,
                     'sys_chair_count': 0,
                     'sys_conferences': set(),
+                    'sys_conference_years': [],
                     'sys_years': set(),
                     'sys_years_count': {},
                     'sec_memberships': 0,
                     'sec_chair_count': 0,
                     'sec_conferences': set(),
+                    'sec_conference_years': [],
                     'sec_years': set(),
                     'sec_years_count': {},
                 }
@@ -526,6 +528,7 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
                 if role == 'chair':
                     rec['sys_chair_count'] += 1
                 rec['sys_conferences'].add(conf_name)
+                rec['sys_conference_years'].append(conf_year)
                 if year:
                     rec['sys_years'].add(year)
                     rec['sys_years_count'][year] = rec['sys_years_count'].get(year, 0) + 1
@@ -534,6 +537,7 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
                 if role == 'chair':
                     rec['sec_chair_count'] += 1
                 rec['sec_conferences'].add(conf_name)
+                rec['sec_conference_years'].append(conf_year)
                 if year:
                     rec['sec_years'].add(year)
                     rec['sec_years_count'][year] = rec['sec_years_count'].get(year, 0) + 1
@@ -562,7 +566,7 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
             'affiliation': rec['affiliation'],
             'total_memberships': rec['total_memberships'],
             'chair_count': rec['chair_count'],
-            'conferences': sorted(list(rec['conferences'])),
+            'conferences': sorted([[c, y] for c, y in ((_extract_conf_year(cy)) for cy in rec['conference_years'])], key=lambda x: (x[0], x[1] or 0)),
             'area': rec['area'],
             'years': {y: rec['years_count'][y] for y in sorted(rec['years'])},
             'first_year': min(rec['years']) if rec['years'] else None,
@@ -584,7 +588,7 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
             'affiliation': rec['affiliation'],
             'total_memberships': rec['sys_memberships'],
             'chair_count': rec['sys_chair_count'],
-            'conferences': sorted(list(rec['sys_conferences'])),
+            'conferences': sorted([[c, y] for c, y in ((_extract_conf_year(cy)) for cy in rec['sys_conference_years'])], key=lambda x: (x[0], x[1] or 0)),
             'area': rec['area'],
             'years': {y: rec['sys_years_count'][y] for y in sorted(rec['sys_years'])},
             'first_year': min(rec['sys_years']) if rec['sys_years'] else None,
@@ -603,7 +607,7 @@ def _compute_recurring_members(all_results, conf_to_area, classified):
             'affiliation': rec['affiliation'],
             'total_memberships': rec['sec_memberships'],
             'chair_count': rec['sec_chair_count'],
-            'conferences': sorted(list(rec['sec_conferences'])),
+            'conferences': sorted([[c, y] for c, y in ((_extract_conf_year(cy)) for cy in rec['sec_conference_years'])], key=lambda x: (x[0], x[1] or 0)),
             'area': rec['area'],
             'years': {y: rec['sec_years_count'][y] for y in sorted(rec['sec_years'])},
             'first_year': min(rec['sec_years']) if rec['sec_years'] else None,

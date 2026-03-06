@@ -1,8 +1,9 @@
 """
-Generate aggregate repository statistics (stars, forks, etc.) for the website.
+Generate repository statistics (stars, forks, etc.) for the website.
 
-Collects stats from GitHub/Zenodo/Figshare for all scraped artifacts and
-writes per-conference and per-year aggregate data to YAML.
+Collects stats from GitHub/Zenodo/Figshare for all scraped artifacts and writes:
+  - _data/repo_stats.yml              — per-conference/year aggregates (for website)
+  - assets/data/repo_stats_detail.json — per-repo detail (for analysis/figures)
 
 Usage:
   python generate_repo_stats.py --conf_regex '.*20[12][0-9]' --output_dir ../researchartifacts.github.io
@@ -21,6 +22,19 @@ from ..utils.collect_artifact_stats import github_stats, zenodo_stats, figshare_
 from ..utils.test_artifact_repositories import check_artifact_exists
 
 import re
+
+SYSTEMS_CONFS = {"ATC", "EUROSYS", "OSDI", "SOSP", "SYSTEX"}
+SECURITY_CONFS = {"ACSAC", "NDSS", "PETS", "USENIXSEC", "WOOT"}
+
+
+def _conf_area(conf_name):
+    """Classify a conference as 'systems' or 'security'."""
+    c = conf_name.upper()
+    if c in SYSTEMS_CONFS:
+        return "systems"
+    if c in SECURITY_CONFS:
+        return "security"
+    return "unknown"
 
 
 def extract_conference_name(conf_year_str):
@@ -186,7 +200,9 @@ def aggregate_stats(all_stats):
             by_conf[conf]['all_github_entries'].append({
                 'title': s.get('title', 'Unknown'),
                 'url': s.get('url', ''),
+                'conference': conf,
                 'year': year,
+                'area': _conf_area(conf),
                 'stars': stars,
                 'forks': forks,
                 'description': (s.get('description', '') or '')[:120],
@@ -277,10 +293,16 @@ def aggregate_stats(all_stats):
 
     overall['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')
 
+    # Per-repo detail: all GitHub entries with individual star/fork counts
+    all_github_detail = []
+    for conf_name in sorted(by_conf.keys()):
+        all_github_detail.extend(by_conf[conf_name]['all_github_entries'])
+
     return {
         'overall': overall,
         'by_conference': conf_stats,
         'by_year': year_stats,
+        'all_github_repos': all_github_detail,
     }
 
 
@@ -330,11 +352,20 @@ def main():
 
     if args.output_dir:
         data_dir = os.path.join(args.output_dir, '_data')
+        assets_dir = os.path.join(args.output_dir, 'assets', 'data')
         os.makedirs(data_dir, exist_ok=True)
+        os.makedirs(assets_dir, exist_ok=True)
         out_path = os.path.join(data_dir, 'repo_stats.yml')
         with open(out_path, 'w') as f:
-            yaml.dump(aggregated, f, default_flow_style=False, sort_keys=False)
+            yaml.dump({k: v for k, v in aggregated.items() if k != 'all_github_repos'},
+                      f, default_flow_style=False, sort_keys=False)
         print(f"Written to {out_path}")
+
+        # Write per-repo detail JSON for CDF generation
+        detail_path = os.path.join(assets_dir, 'repo_stats_detail.json')
+        with open(detail_path, 'w') as f:
+            json.dump(aggregated.get('all_github_repos', []), f, indent=2)
+        print(f"Written per-repo detail ({len(aggregated.get('all_github_repos', []))} repos) to {detail_path}")
 
     return aggregated
 
