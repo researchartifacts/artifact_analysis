@@ -480,24 +480,42 @@ def _update_authors_yml(path: str, updates: Dict[str, str]) -> int:
     """
     Rewrite authors.yml, replacing affiliation for names in *updates*.
     Returns count of replacements made.
+
+    Because 'affiliation:' appears *before* 'name:' in each YAML entry,
+    we do two passes:
+      1. Scan to build a map: author_name → line index of their affiliation line.
+      2. Rewrite affiliation lines for names present in *updates*.
     """
     lines = Path(path).read_text(encoding="utf-8").splitlines(keepends=True)
-    current_name = None
-    replaced = 0
+
+    # Pass 1: collect (affiliation_line_idx, name) pairs per entry
+    #   Each entry starts with "- affiliation: ..."
+    entry_affil_idx: Optional[int] = None
+    entry_affil_empty = False
+    name_to_affil_line: Dict[str, int] = {}
 
     for i, line in enumerate(lines):
         stripped = line.strip()
-        if stripped.startswith("name:"):
+        # Detect entry boundary: "- affiliation: ..."
+        if line.startswith("- affiliation:"):
+            val = stripped.split(":", 1)[1].strip()
+            entry_affil_empty = val in ("''", '""', "")
+            entry_affil_idx = i if entry_affil_empty else None
+        elif stripped.startswith("name:") and entry_affil_idx is not None:
             val = stripped.split(":", 1)[1].strip().strip("'\"")
-            current_name = val
-        elif stripped.startswith("affiliation:") and current_name in updates:
-            old_val = stripped.split(":", 1)[1].strip()
-            if old_val in ("''", '""', ""):
-                indent = line[: len(line) - len(line.lstrip())]
-                new_affil = updates[current_name].replace("'", "''")
-                lines[i] = f"{indent}affiliation: '{new_affil}'\n"
-                replaced += 1
-                current_name = None
+            if val:
+                name_to_affil_line[val] = entry_affil_idx
+            entry_affil_idx = None
+
+    # Pass 2: rewrite the affiliation lines for matching authors
+    replaced = 0
+    for name, affiliation in updates.items():
+        idx = name_to_affil_line.get(name)
+        if idx is None:
+            continue
+        new_affil = affiliation.replace("'", "''")
+        lines[idx] = f"- affiliation: '{new_affil}'\n"
+        replaced += 1
 
     Path(path).write_text("".join(lines), encoding="utf-8")
     return replaced
