@@ -128,10 +128,12 @@ def check_url_cached(url, ttl=CACHE_TTL_URL):
         if resp.status_code == 429:
             time.sleep(10)
             resp = _session.head(url, allow_redirects=True, timeout=10)
-        exists = resp.status_code == 200
+        exists = 200 <= resp.status_code < 300
     except requests.RequestException as e:
         print(f"  Request error for {url}: {e}")
-        exists = False
+        # Network errors (timeouts, DNS failures, connection refused) are
+        # transient — do NOT cache them as negative results.
+        return False
 
     _write_cache(url, exists, namespace='url_exists')
     return exists

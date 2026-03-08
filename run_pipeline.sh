@@ -99,11 +99,15 @@ echo "[2/10] Generating statistics (sysartifacts + secartifacts + USENIX)..."
 $PYTHON -m src.generators.generate_statistics --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "❌ Statistics failed"; exit 1; }
 
-echo "[3/11] Generating repository statistics (stars, forks, etc.)..."
+echo "[3/13] Generating repository statistics (stars, forks, etc.)..."
 $PYTHON -m src.generators.generate_repo_stats --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Repository stats failed (may need API access)"; }
 
-echo "[4/12] Artifact citation stats — SKIPPED (disabled by default)."
+echo "[3b/13] Generating artifact availability (URL liveness)..."
+$PYTHON -m src.generators.generate_artifact_availability --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
+    || { echo "⚠️  Artifact availability check failed (may need network access)"; }
+
+echo "[4/13] Artifact citation stats — SKIPPED (disabled by default)."
 echo "       OpenAlex citation counts for artifact DOIs are unreliable."
 echo "       All reported citations were false positives or self-citations."
 echo "       To re-enable: pass --enable-citations to generate_artifact_citations."
