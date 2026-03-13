@@ -268,6 +268,22 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
                 # Store all URLs for downstream processing (e.g., repo stats)
                 if len(art_urls) > 1:
                     artifact_entry['artifact_urls'] = art_urls
+                # Propagate additional URL fields when present
+                paper_url = artifact.get('paper_url', '')
+                if paper_url:
+                    artifact_entry['paper_url'] = paper_url
+                appendix_url = artifact.get('appendix_url', '')
+                if appendix_url:
+                    # Convert relative appendix paths to absolute URLs
+                    if not appendix_url.startswith('http'):
+                        if conf_year in sec_results:
+                            appendix_url = f'https://secartifacts.github.io/{conf_year}/{appendix_url}'
+                        elif conf_year in sys_results:
+                            appendix_url = f'https://sysartifacts.github.io/{conf_year}/{appendix_url}'
+                    artifact_entry['appendix_url'] = appendix_url
+                github_url = artifact.get('github_url', '')
+                if github_url:
+                    artifact_entry['github_url'] = github_url
                 all_artifacts.append(artifact_entry)
     
     # Sort years for each conference

@@ -71,6 +71,9 @@ def generate_search_data(data_dir: str) -> list:
         }
         if 'artifact_urls' in art:
             entry['artifact_urls'] = art['artifact_urls']
+        for optional_key in ('paper_url', 'appendix_url', 'github_url'):
+            if art.get(optional_key):
+                entry[optional_key] = art[optional_key]
         merged.append(entry)
 
     merged.sort(key=lambda x: (-x['year'], x['conference'], x['title']))
