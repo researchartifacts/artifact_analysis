@@ -254,6 +254,29 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
                     art_urls.append(artifact['artifact_url'])
                 if isinstance(artifact.get('artifact_urls'), list):
                     art_urls.extend([u for u in artifact['artifact_urls'] if u])
+                if isinstance(artifact.get('additional_urls'), list):
+                    art_urls.extend([u for u in artifact['additional_urls'] if u])
+                # Normalize artifact_doi → DOI URL and add to artifact URLs
+                artifact_doi = artifact.get('artifact_doi', '')
+                if artifact_doi:
+                    if not artifact_doi.startswith('http'):
+                        artifact_doi = f'https://doi.org/{artifact_doi}'
+                    if artifact_doi not in art_urls:
+                        art_urls.append(artifact_doi)
+                # Collect miscellaneous URL fields into artifact_urls
+                for url_key in ('cloudlab_url', 'web_url', 'scripts_url',
+                                'jupyter_url', 'vm_url', 'proof_url', 'data_url'):
+                    extra_url = artifact.get(url_key, '')
+                    if extra_url and extra_url not in art_urls:
+                        art_urls.append(extra_url)
+                # Deduplicate while preserving order (filter non-string values)
+                seen_urls = set()
+                deduped = []
+                for u in art_urls:
+                    if isinstance(u, str) and u and u not in seen_urls:
+                        seen_urls.add(u)
+                        deduped.append(u)
+                art_urls = deduped
                 # For backward compatibility, use first URL if available, else empty
                 art_url = art_urls[0] if art_urls else ''
                 artifact_entry = {
@@ -268,8 +291,16 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
                 # Store all URLs for downstream processing (e.g., repo stats)
                 if len(art_urls) > 1:
                     artifact_entry['artifact_urls'] = art_urls
-                # Propagate additional URL fields when present
+                # Normalize paper_url: merge doi and paper_doi fields
                 paper_url = artifact.get('paper_url', '')
+                if not paper_url:
+                    raw_doi = artifact.get('doi', '')
+                    if raw_doi:
+                        paper_url = f'https://doi.org/{raw_doi}' if not raw_doi.startswith('http') else raw_doi
+                if not paper_url:
+                    raw_paper_doi = artifact.get('paper_doi', '')
+                    if raw_paper_doi:
+                        paper_url = f'https://doi.org/10.1145/{raw_paper_doi}' if not raw_paper_doi.startswith('10.') else f'https://doi.org/{raw_paper_doi}'
                 if paper_url:
                     artifact_entry['paper_url'] = paper_url
                 appendix_url = artifact.get('appendix_url', '')
@@ -284,6 +315,9 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
                 github_url = artifact.get('github_url', '')
                 if github_url:
                     artifact_entry['github_url'] = github_url
+                award = artifact.get('award', '')
+                if award:
+                    artifact_entry['award'] = award
                 all_artifacts.append(artifact_entry)
     
     # Sort years for each conference
