@@ -43,21 +43,22 @@ def _snapshot_date() -> str:
     return datetime.now().strftime('%Y-%m')
 
 
+def _has_snapshot(history: list, date: str) -> bool:
+    """Check if a snapshot for the given date already exists."""
+    return any(snap['date'] == date for snap in history)
+
+
 def _update_history(history: list, current_entries: dict, date: str) -> list:
     """Add or replace a snapshot for the given date."""
-    # Check if a snapshot for this date already exists — replace it
-    for i, snap in enumerate(history):
-        if snap['date'] == date:
-            history[i] = {'date': date, 'entries': current_entries}
-            return history
-    # Append new snapshot
+    # Remove existing snapshot for this date if present (for --force)
+    history = [snap for snap in history if snap['date'] != date]
     history.append({'date': date, 'entries': current_entries})
     # Sort chronologically
     history.sort(key=lambda s: s['date'])
     return history
 
 
-def generate_ranking_history(data_dir: str) -> None:
+def generate_ranking_history(data_dir: str, force: bool = False) -> None:
     """Generate/update author and institution ranking history."""
     date = _snapshot_date()
 
@@ -68,31 +69,34 @@ def generate_ranking_history(data_dir: str) -> None:
     rankings = _load_json(cr_path)
     author_history: list = _load_json(author_hist_path)  # type: ignore[assignment]
 
-    author_entries = {}
-    for r in rankings:
-        name = r.get('name', '')
-        if not name:
-            continue
-        author_entries[name] = {
-            'rank': r.get('rank', 0),
-            'score': r.get('combined_score', 0),
-            'as': r.get('artifact_score', 0),
-            'aes': r.get('ae_score', 0),
-            'tp': r.get('total_papers', 0),
-            'ta': r.get('artifacts', 0),
-            'ar': r.get('artifact_rate', 0),
-            'rr': r.get('repro_rate', 0),
-        }
+    if _has_snapshot(author_history, date) and not force:
+        print(f"  Author ranking history: snapshot for {date} already exists, skipping (use --force to overwrite)")
+    else:
+        author_entries = {}
+        for r in rankings:
+            name = r.get('name', '')
+            if not name:
+                continue
+            author_entries[name] = {
+                'rank': r.get('rank', 0),
+                'score': r.get('combined_score', 0),
+                'as': r.get('artifact_score', 0),
+                'aes': r.get('ae_score', 0),
+                'tp': r.get('total_papers', 0),
+                'ta': r.get('artifacts', 0),
+                'ar': r.get('artifact_rate', 0),
+                'rr': r.get('repro_rate', 0),
+            }
 
-    author_history = _update_history(author_history, author_entries, date)
+        author_history = _update_history(author_history, author_entries, date)
 
-    with open(author_hist_path, 'w') as f:
-        json.dump(author_history, f, ensure_ascii=False, separators=(',', ':'))
+        with open(author_hist_path, 'w') as f:
+            json.dump(author_history, f, ensure_ascii=False, separators=(',', ':'))
 
-    print(f"  Author ranking history: {len(author_history)} snapshots, "
-          f"{len(author_entries)} entries for {date}")
-    print(f"  Wrote {author_hist_path} "
-          f"({os.path.getsize(author_hist_path) / 1024:.0f}KB)")
+        print(f"  Author ranking history: {len(author_history)} snapshots, "
+              f"{len(author_entries)} entries for {date}")
+        print(f"  Wrote {author_hist_path} "
+              f"({os.path.getsize(author_hist_path) / 1024:.0f}KB)")
 
     # ── Institution rankings ─────────────────────────────────────────────
     ir_path = os.path.join(data_dir, 'assets/data/institution_rankings.json')
@@ -101,36 +105,39 @@ def generate_ranking_history(data_dir: str) -> None:
     inst_rankings = _load_json(ir_path)
     inst_history: list = _load_json(inst_hist_path)  # type: ignore[assignment]
 
-    inst_entries = {}
-    for idx, r in enumerate(inst_rankings):
-        name = r.get('affiliation', '')
-        if not name:
-            continue
-        # Calculate repro rate for institution
-        inst_rr = 0
-        if r.get('artifacts', 0) > 0:
-            inst_rr = round((r.get('badges_reproducible', 0) / r['artifacts']) * 100, 1)
-        inst_entries[name] = {
-            'rank': idx + 1,
-            'score': r.get('combined_score', 0),
-            'as': r.get('artifact_score', 0),
-            'aes': r.get('ae_score', 0),
-            'tp': r.get('total_papers', 0),
-            'ta': r.get('artifacts', 0),
-            'ar': r.get('artifact_rate', 0),
-            'rr': inst_rr,
-            'r': r.get('num_authors', 0),
-        }
+    if _has_snapshot(inst_history, date) and not force:
+        print(f"  Institution ranking history: snapshot for {date} already exists, skipping (use --force to overwrite)")
+    else:
+        inst_entries = {}
+        for idx, r in enumerate(inst_rankings):
+            name = r.get('affiliation', '')
+            if not name:
+                continue
+            # Calculate repro rate for institution
+            inst_rr = 0
+            if r.get('artifacts', 0) > 0:
+                inst_rr = round((r.get('badges_reproducible', 0) / r['artifacts']) * 100, 1)
+            inst_entries[name] = {
+                'rank': idx + 1,
+                'score': r.get('combined_score', 0),
+                'as': r.get('artifact_score', 0),
+                'aes': r.get('ae_score', 0),
+                'tp': r.get('total_papers', 0),
+                'ta': r.get('artifacts', 0),
+                'ar': r.get('artifact_rate', 0),
+                'rr': inst_rr,
+                'r': r.get('num_authors', 0),
+            }
 
-    inst_history = _update_history(inst_history, inst_entries, date)
+        inst_history = _update_history(inst_history, inst_entries, date)
 
-    with open(inst_hist_path, 'w') as f:
-        json.dump(inst_history, f, ensure_ascii=False, separators=(',', ':'))
+        with open(inst_hist_path, 'w') as f:
+            json.dump(inst_history, f, ensure_ascii=False, separators=(',', ':'))
 
-    print(f"  Institution ranking history: {len(inst_history)} snapshots, "
-          f"{len(inst_entries)} entries for {date}")
-    print(f"  Wrote {inst_hist_path} "
-          f"({os.path.getsize(inst_hist_path) / 1024:.0f}KB)")
+        print(f"  Institution ranking history: {len(inst_history)} snapshots, "
+              f"{len(inst_entries)} entries for {date}")
+        print(f"  Wrote {inst_hist_path} "
+              f"({os.path.getsize(inst_hist_path) / 1024:.0f}KB)")
 
 
 def main():
@@ -139,8 +146,11 @@ def main():
     parser.add_argument(
         '--data_dir', type=str, required=True,
         help='Path to the researchartifacts.github.io directory')
+    parser.add_argument(
+        '--force', action='store_true',
+        help='Overwrite existing snapshot for the current month')
     args = parser.parse_args()
-    generate_ranking_history(args.data_dir)
+    generate_ranking_history(args.data_dir, force=args.force)
 
 
 if __name__ == '__main__':
