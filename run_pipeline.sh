@@ -155,6 +155,10 @@ echo "[13/13] Generating search data..."
 $PYTHON -m src.generators.generate_search_data --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Search data generation failed"; }
 
+echo "[14/14] Updating ranking history snapshots..."
+$PYTHON -m src.generators.generate_ranking_history --data_dir "$OUTPUT_DIR" \
+    || { echo "⚠️  Ranking history update failed"; }
+
 echo "✅ Pipeline complete! Output in $OUTPUT_DIR"
 
 # ── Save results snapshot ─────────────────────────────────────────────────────
