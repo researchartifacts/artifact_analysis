@@ -298,7 +298,8 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
             continue
 
         # Multiple DBLP authors share this normalised name — disambiguate
-        ae_confs = set(member_by_norm[norm].get('conferences', []))
+        raw_ae_confs = member_by_norm[norm].get('conferences', [])
+        ae_confs = set(c[0] if isinstance(c, list) else c for c in raw_ae_confs)
         scored = []
         for a in group:
             overlap = len(set(a.get('conferences', [])) & ae_confs)
@@ -355,7 +356,8 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
 
         # Merge conferences
         a_confs = set(a.get('conferences', []))
-        m_confs = set(m.get('conferences', [])) if m else set()
+        raw_m_confs = m.get('conferences', []) if m else []
+        m_confs = set(c[0] if isinstance(c, list) else c for c in raw_m_confs)
 
         entry = _build_entry(
             name=a['name'],
@@ -392,7 +394,7 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
             artifact_rate=0,
             ae_memberships=m.get('total_memberships', 0),
             chair_count=m.get('chair_count', 0),
-            conferences=sorted(m.get('conferences', [])),
+            conferences=sorted(set(c[0] if isinstance(c, list) else c for c in m.get('conferences', []))),
             years=years,
             artifact_citations=0,
             badges_available=0,

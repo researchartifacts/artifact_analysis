@@ -107,6 +107,11 @@ def get_committee_for_conference(conference, prefix):
            (stripped.startswith('**member') and stripped.endswith('**:')):
             current_section = 'member'
             continue
+        # Any other heading (e.g. "Best Reproducibility Advancement Award")
+        # ends the current section to avoid bleeding unrelated members in.
+        if re.match(r'^#{1,4}\s', stripped):
+            current_section = None
+            continue
         if current_section == 'chair':
             chair_lines.append(line)
         elif current_section == 'member':
