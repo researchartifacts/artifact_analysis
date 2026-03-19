@@ -36,7 +36,7 @@ import sys
 
 # Import from sibling module in the same package
 from . import usenix_scrape
-from .usenix_scrape import scrape_conference_year
+from .usenix_scrape import scrape_conference_year, scrape_organizers
 
 
 def generate_results_md(conference, year, papers_with_badges):
@@ -135,6 +135,47 @@ artifacts:
     return md
 
 
+def generate_organizers_md(organizers):
+    """
+    Generate a sysartifacts-compatible organizers.md from scraped organizer data.
+
+    Args:
+        organizers: Dict with 'chairs' and 'members' lists,
+                    each containing {'name': ..., 'affiliation': ...} dicts.
+
+    Returns:
+        String content of the organizers.md file, or None if no data.
+    """
+    if not organizers or (not organizers.get('chairs') and not organizers.get('members')):
+        return None
+
+    lines = [
+        '---',
+        'title: Organizers',
+        'order: 20',
+        '---',
+        '',
+        '## Artifact Evaluation Committee Co-Chairs',
+        '',
+    ]
+
+    for chair in organizers.get('chairs', []):
+        aff = f", {chair['affiliation']}" if chair['affiliation'] else ''
+        lines.append(f"{chair['name']}{aff} <br>")
+
+    lines.append('')
+    lines.append('## Artifact Evaluation Committee')
+    lines.append('')
+
+    members = organizers.get('members', [])
+    for i, member in enumerate(members):
+        aff = f", {member['affiliation']}" if member['affiliation'] else ''
+        suffix = '<br>' if i < len(members) - 1 else ''
+        lines.append(f"{member['name']}{aff}{suffix}")
+
+    return '\n'.join(lines) + '\n'
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Generate sysartifacts results.md for USENIX conferences'
@@ -201,9 +242,18 @@ def main():
         # Generate the results.md content
         content = generate_results_md(conference, year, papers_with_badges)
 
+        # Scrape AE committee organizers
+        organizers = scrape_organizers(conference, year)
+        organizers_content = generate_organizers_md(organizers)
+
         if args.dry_run:
             print(f"\n--- {dir_prefix}{yy}/results.md ---")
             print(content)
+            if organizers_content:
+                print(f"\n--- {dir_prefix}{yy}/organizers.md ---")
+                print(organizers_content)
+            else:
+                print(f"\n  (no organizers found for {conf_label})", file=sys.stderr)
         else:
             out_dir = args.output_dir or '.'
             conf_dir = os.path.join(out_dir, f'{dir_prefix}{yy}')
@@ -212,6 +262,15 @@ def main():
             with open(out_path, 'w') as f:
                 f.write(content)
             print(f"Written: {out_path}", file=sys.stderr)
+
+            if organizers_content:
+                org_path = os.path.join(conf_dir, 'organizers.md')
+                with open(org_path, 'w') as f:
+                    f.write(organizers_content)
+                print(f"Written: {org_path}", file=sys.stderr)
+            else:
+                print(f"  Skipped organizers.md (no data) for {conf_label}",
+                      file=sys.stderr)
 
     print("\nDone!", file=sys.stderr)
 

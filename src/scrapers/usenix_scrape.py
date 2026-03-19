@@ -217,6 +217,148 @@ def scrape_conference_year(conference, year, session=None, max_workers=4, delay=
     return artifacts
 
 
+def scrape_organizers(conference, year, session=None):
+    """
+    Scrape the AE committee chairs and members from the USENIX call-for-artifacts page.
+
+    USENIX pages use two HTML structures for the AEC list:
+      1. Structured <h3 class="grouping-field-heading"> sections (e.g. FAST 25, OSDI 25)
+      2. Inline <h2>/<p> with <br>-separated entries (e.g. FAST 24)
+
+    Args:
+        conference: Conference short name (e.g. 'fast', 'osdi')
+        year: Conference year (int)
+        session: Optional requests.Session
+
+    Returns:
+        dict with 'chairs' (list of {'name': ..., 'affiliation': ...})
+        and 'members' (list of {'name': ..., 'affiliation': ...}),
+        or None if the page cannot be fetched or parsed.
+    """
+    sess = get_session(session)
+    suffix = _year_suffix(year)
+    url = f"{BASE_URL}/conference/{conference}{suffix}/call-for-artifacts"
+
+    cache_key = f"{url}#organizers"
+    cached = _read_cache(cache_key, ttl=CACHE_TTL, namespace='usenix_organizers')
+    if cached is not None:
+        return cached
+
+    print(f"  Fetching organizers: {url}", file=sys.stderr)
+    try:
+        resp = sess.get(url, timeout=30)
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"  Warning: Could not fetch organizers page: {e}", file=sys.stderr)
+        return None
+
+    soup = BeautifulSoup(resp.text, 'html.parser')
+
+    def _clean_text(html_str):
+        """Remove HTML tags and clean up whitespace/entities."""
+        text = re.sub(r'&nbsp;', ' ', html_str)
+        text = re.sub(r'&quot;', '"', text)
+        text = re.sub(r'<em>', '', text)
+        text = re.sub(r'</em>', '', text)
+        text = re.sub(r'<[^>]+>', '', text)
+        return text.strip()
+
+    def _parse_name_affiliation(text):
+        """Parse 'Name, Affiliation' into a dict."""
+        text = text.strip()
+        if not text:
+            return None
+        # Split on first comma
+        if ', ' in text:
+            name, affiliation = text.split(', ', 1)
+        else:
+            name, affiliation = text, ''
+        return {'name': name.strip(), 'affiliation': affiliation.strip()}
+
+    def _extract_from_structured(heading_text, exact=False):
+        """Extract entries from structured <h3 class='grouping-field-heading'> sections."""
+        entries = []
+        heading = None
+
+        # Search via <span> child for reliable matching
+        for h3 in soup.find_all('h3', class_='grouping-field-heading'):
+            span = h3.find('span')
+            if span:
+                span_text = span.get_text().strip()
+                if exact and span_text == heading_text:
+                    heading = h3
+                    break
+                elif not exact and heading_text in span_text:
+                    heading = h3
+                    break
+
+        if heading:
+            # Collect all sibling divs until next h3
+            for sibling in heading.find_next_siblings():
+                if sibling.name == 'h3':
+                    break
+                for div in sibling.find_all('div', class_=re.compile(r'field-content')):
+                    text = _clean_text(str(div))
+                    entry = _parse_name_affiliation(text)
+                    if entry:
+                        entries.append(entry)
+        return entries
+
+    def _extract_from_inline(section_html):
+        """Extract entries from inline <p> with <br>-separated text."""
+        entries = []
+        # Split on <br> tags
+        lines = re.split(r'<br\s*/?>', section_html)
+        for line in lines:
+            text = _clean_text(line)
+            entry = _parse_name_affiliation(text)
+            if entry:
+                entries.append(entry)
+        return entries
+
+    chairs = []
+    members = []
+
+    # Try structured format first (FAST 25, OSDI 25 style)
+    chairs = _extract_from_structured('Artifact Evaluation Committee Co-Chairs')
+    members = _extract_from_structured('Artifact Evaluation Committee', exact=True)
+
+    # Fall back to inline format (FAST 24 style: <h2> then <p> with <br>)
+    if not chairs:
+        h2_chairs = soup.find('h2', string=re.compile(r'Artifact Evaluation Committee Co-Chairs'))
+        if h2_chairs:
+            p_tag = h2_chairs.find_next('p')
+            if p_tag:
+                chairs = _extract_from_inline(str(p_tag))
+
+    if not members:
+        # Find the <h2>Artifact Evaluation Committee</h2> (not Co-Chairs)
+        for h2 in soup.find_all('h2'):
+            h2_text = h2.get_text(strip=True)
+            if h2_text == 'Artifact Evaluation Committee':
+                # Skip comment blocks, find the actual <p> with members
+                for sibling in h2.find_next_siblings():
+                    if sibling.name in ('h2', 'h3'):
+                        break
+                    if sibling.name == 'p' and '<br' in str(sibling):
+                        members = _extract_from_inline(str(sibling))
+                        if members:
+                            break
+                break
+
+    if not chairs and not members:
+        print(f"  Warning: No organizer data found for {conference.upper()} {year}",
+              file=sys.stderr)
+        _write_cache(cache_key, None, namespace='usenix_organizers')
+        return None
+
+    result = {'chairs': chairs, 'members': members}
+    print(f"  Found {len(chairs)} chairs and {len(members)} committee members",
+          file=sys.stderr)
+    _write_cache(cache_key, result, namespace='usenix_organizers')
+    return result
+
+
 def to_pipeline_format(artifacts):
     """
     Convert scraped artifacts to the format used by the existing pipeline
