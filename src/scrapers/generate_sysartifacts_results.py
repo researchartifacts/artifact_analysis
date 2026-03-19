@@ -26,7 +26,7 @@ Requirements:
   pip install requests beautifulsoup4 pyyaml lxml
 
 The generated results.md files can be dropped into the sysartifacts repo:
-  _conferences/<conf><YY>/results.md
+  _conferences/<conf><YYYY>/results.md
 """
 
 import argparse
@@ -190,13 +190,13 @@ def main():
     )
     parser.add_argument(
         '--output_dir', '-o', type=str, default=None,
-        help='Output directory (results written to <output_dir>/<conf><YY>/results.md). '
+        help='Output directory (results written to <output_dir>/<conf><YYYY>/results.md). '
              'If not specified and --dry-run is not set, writes to current directory.'
     )
     parser.add_argument(
         '--dir-prefix', type=str, default=None,
         help='Override directory prefix (default: conference name). '
-             'E.g. --dir-prefix usenixatc to get usenixatc24/ instead of atc24/'
+             'E.g. --dir-prefix usenixatc to get usenixatc2024/ instead of atc2024/'
     )
     parser.add_argument(
         '--dry-run', action='store_true',
@@ -217,7 +217,6 @@ def main():
     years = [int(y.strip()) for y in args.years.split(',')]
 
     for year in years:
-        yy = str(year)[2:]
         conf_label = f"{conference.upper()} {year}"
         print(f"\n{'='*60}", file=sys.stderr)
         print(f"Scraping {conf_label} from USENIX...", file=sys.stderr)
@@ -247,16 +246,16 @@ def main():
         organizers_content = generate_organizers_md(organizers)
 
         if args.dry_run:
-            print(f"\n--- {dir_prefix}{yy}/results.md ---")
+            print(f"\n--- {dir_prefix}{year}/results.md ---")
             print(content)
             if organizers_content:
-                print(f"\n--- {dir_prefix}{yy}/organizers.md ---")
+                print(f"\n--- {dir_prefix}{year}/organizers.md ---")
                 print(organizers_content)
             else:
                 print(f"\n  (no organizers found for {conf_label})", file=sys.stderr)
         else:
             out_dir = args.output_dir or '.'
-            conf_dir = os.path.join(out_dir, f'{dir_prefix}{yy}')
+            conf_dir = os.path.join(out_dir, f'{dir_prefix}{year}')
             os.makedirs(conf_dir, exist_ok=True)
             out_path = os.path.join(conf_dir, 'results.md')
             with open(out_path, 'w') as f:
