@@ -35,6 +35,7 @@ Scripts are organized into functional categories:
 |--------|---------|
 | `src/generators/generate_statistics.py` | Scrapes sysartifacts + secartifacts + USENIX, writes YAML/JSON |
 | `src/generators/generate_repo_stats.py` | Collects GitHub repo metadata (stars, forks, languages) |
+| `src/generators/generate_participation_stats.py` | AE participation rates and badge % of all papers (DBLP) |
 | `src/generators/generate_artifact_citations.py` | Generates artifact citation statistics (OpenAlex) |
 | `src/generators/generate_visualizations.py` | Creates SVG charts (per-category, total, badges, trends) |
 | `src/generators/generate_author_stats.py` | Ranks authors by artifact count via DBLP matching |
@@ -91,8 +92,10 @@ Statistics and data go to `_data/` and `assets/` in the output directory:
 - `_data/authors.yml`, `author_summary.yml` — top authors with rates
 - `_data/systems_authors.yml`, `security_authors.yml` — per-area author rankings
 - `_data/repo_stats.yml` — GitHub repository metadata
+- `_data/participation_stats.yml` — AE participation rates and badge % of all papers
 - `_data/navigation.yml` — site navigation structure
 - `assets/data/artifacts.json`, `authors.json`, `summary.json` — JSON exports
+- `assets/data/participation_stats.json` — participation stats (JSON)
 - `assets/charts/*.svg` — generated visualizations
 
 ## Repository Layout

@@ -107,6 +107,10 @@ echo "[3b/13] Generating artifact availability (URL liveness)..."
 $PYTHON -m src.generators.generate_artifact_availability --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Artifact availability check failed (may need network access)"; }
 
+echo "[3c/13] Generating AE participation statistics (DBLP paper counts)..."
+$PYTHON -m src.generators.generate_participation_stats --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
+    || { echo "⚠️  Participation stats failed (may need DBLP access)"; }
+
 echo "[4/13] Artifact citation stats — SKIPPED (disabled by default)."
 echo "       OpenAlex citation counts for artifact DOIs are unreliable."
 echo "       All reported citations were false positives or self-citations."
