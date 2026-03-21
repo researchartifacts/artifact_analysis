@@ -108,8 +108,13 @@ $PYTHON -m src.generators.generate_artifact_availability --conf_regex "$CONF_REG
     || { echo "⚠️  Artifact availability check failed (may need network access)"; }
 
 echo "[3c/13] Generating AE participation statistics (DBLP paper counts)..."
-$PYTHON -m src.generators.generate_participation_stats --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
-    || { echo "⚠️  Participation stats failed (may need DBLP access)"; }
+if [ -f "$DBLP_FILE" ]; then
+    $PYTHON -m src.generators.generate_participation_stats \
+        --dblp_file "$DBLP_FILE" --output_dir "$OUTPUT_DIR" \
+        || { echo "⚠️  Participation stats failed"; }
+else
+    echo "⚠️  Skipped ($DBLP_FILE not found)"
+fi
 
 echo "[4/13] Artifact citation stats — SKIPPED (disabled by default)."
 echo "       OpenAlex citation counts for artifact DOIs are unreliable."

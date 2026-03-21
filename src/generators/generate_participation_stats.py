@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-Generate AE participation statistics by querying DBLP for total paper counts.
+Generate AE participation statistics using the local DBLP XML file.
 
 For each conference/year in the pipeline's artifacts data, this script:
-1. Queries DBLP to get the total number of papers for that venue/year.
+1. Parses the DBLP XML to count ALL papers published at that venue/year.
 2. Computes AE participation rate (ae_papers / total_papers).
 3. Computes badge rates as % of all papers (not just AE papers).
+
+Requires: data/dblp/dblp.xml.gz (downloaded by scripts/download_dblp.sh)
 
 Writes:
   _data/participation_stats.yml     — per-conference/year participation data
@@ -13,43 +15,21 @@ Writes:
 
 Usage:
   python -m src.generators.generate_participation_stats \
-      --conf_regex '.*20[12][0-9]' --output_dir ../researchartifacts.github.io
+      --dblp_file data/dblp/dblp.xml.gz \
+      --output_dir ../researchartifacts.github.io
 """
 
 import argparse
 import json
 import os
 import re
-import time
-import urllib.error
-import urllib.request
 import yaml
 from collections import defaultdict
-from urllib.parse import quote
+from gzip import GzipFile
 
-from ..scrapers.sys_sec_scrape import _read_cache, _write_cache
+import lxml.etree as ET
 
-# ── DBLP conference key mapping ──────────────────────────────────────
-# Two strategies:
-#   "toc" — use DBLP TOC endpoint (precise proceedings match)
-#   "venue" — use DBLP venue search (broader, for conferences with
-#             non-standard keys)
-
-DBLP_MAP = {
-    "USENIXSEC": ("toc", "uss", "conf"),
-    "OSDI":      ("toc", "osdi", "conf"),
-    "ACSAC":     ("toc", "acsac", "conf"),
-    "SOSP":      ("toc", "sosp", "conf"),
-    "NDSS":      ("toc", "ndss", "conf"),
-    "ATC":       ("toc", "usenix", "conf"),
-    "WOOT":      ("toc", "woot", "conf"),
-    "PETS":      ("toc", "popets", "journals"),
-    "CHES":      ("toc", "tches", "journals"),
-    "EUROSYS":   ("venue", "EuroSys", None),
-    "FAST":      ("venue", "FAST", None),
-    "SC":        ("venue", "SC", None),
-    # SYSTEX: tiny workshop, not reliably indexed in DBLP
-}
+from .generate_author_stats import venue_to_conference
 
 AREA_MAP = {
     "USENIXSEC": "security", "NDSS": "security", "ACSAC": "security",
@@ -59,97 +39,72 @@ AREA_MAP = {
     "SYSTEX": "security",
 }
 
-CACHE_NAMESPACE = "dblp_paper_counts"
-CACHE_TTL = 86400 * 30  # 30 days
+
+def _count_papers_from_dblp(dblp_file, target_conf_years):
+    """Parse DBLP XML and count papers per (conference, year).
+
+    Args:
+        dblp_file: Path to dblp.xml.gz
+        target_conf_years: set of (conf_upper, year_int) tuples to count
+
+    Returns:
+        dict: (conf, year) -> paper_count
+    """
+    # Build set of conferences we care about for early filtering
+    target_confs = {cy[0] for cy in target_conf_years}
+
+    counts = defaultdict(int)  # (conf, year) -> count
+    print(f"Parsing DBLP XML for paper counts ({len(target_conf_years)} conference/year targets)...")
+
+    dblp_stream = GzipFile(filename=dblp_file)
+    iteration = 0
+
+    for _, elem in ET.iterparse(
+        dblp_stream,
+        events=("end",),
+        tag=("inproceedings", "article"),
+        load_dtd=True,
+        recover=True,
+        huge_tree=True,
+    ):
+        booktitle = elem.findtext("booktitle") or elem.findtext("journal") or ""
+        mapped_conf = venue_to_conference(booktitle)
+        if mapped_conf and mapped_conf in target_confs:
+            year_str = elem.findtext("year")
+            if year_str:
+                year = int(year_str)
+                if (mapped_conf, year) in target_conf_years:
+                    counts[(mapped_conf, year)] += 1
+
+        iteration += 1
+        if iteration % 2_000_000 == 0:
+            print(f"  ... {iteration // 1_000_000}M elements processed")
+        elem.clear()
+
+    dblp_stream.close()
+    print(f"  Done — {iteration} elements, found counts for {len(counts)} conference/years")
+    return dict(counts)
 
 
-def _normalize_title(t):
-    """Lowercase, strip punctuation/whitespace for fuzzy matching."""
-    return re.sub(r"[^\w\s]", "", t.lower()).strip()
-
-
-def _dblp_request(url):
-    """Make a DBLP API request with retries and caching."""
-    cached = _read_cache(url, ttl=CACHE_TTL, namespace=CACHE_NAMESPACE)
-    if cached is not None:
-        return cached
-
-    for attempt in range(3):
-        try:
-            req = urllib.request.Request(
-                url, headers={"User-Agent": "ResearchArtifacts/1.0"}
-            )
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                data = json.loads(resp.read().decode())
-            _write_cache(url, data, namespace=CACHE_NAMESPACE)
-            return data
-        except (urllib.error.HTTPError, urllib.error.URLError, ConnectionError) as e:
-            if attempt < 2:
-                wait = 3 * (attempt + 1)
-                print(f"  ⚠ DBLP error ({e}), retrying in {wait}s...")
-                time.sleep(wait)
-            else:
-                print(f"  ✗ DBLP failed after 3 attempts: {e}")
-                return None
-
-
-def _fetch_dblp_paper_count(conf, year):
-    """Fetch total paper count for a conference/year from DBLP."""
-    if conf not in DBLP_MAP:
-        return None
-
-    strategy, key, key_type = DBLP_MAP[conf]
-
-    if strategy == "toc":
-        if key_type == "journals":
-            path = f"db/journals/{key}/{key}{year}"
-        else:
-            path = f"db/conf/{key}/{key}{year}"
-        q = f"toc:{path}.bht:"
-    else:
-        q = f"venue:{key}: year:{year}: type:Conference_and_Workshop_Papers:"
-
-    url = f"https://dblp.org/search/publ/api?q={quote(q)}&format=json&h=1000"
-    data = _dblp_request(url)
-    if not data:
-        return None
-
-    hits = data.get("result", {}).get("hits", {})
-    total = int(hits.get("@total", 0))
-    return total
-
-
-def _extract_conf_year(conf_year_str):
-    """Extract conference name and year from 'confYYYY' string."""
-    m = re.match(r"^([a-zA-Z]+)(\d{4})$", conf_year_str)
-    if m:
-        return m.group(1).upper(), int(m.group(2))
-    return conf_year_str.upper(), None
-
-
-def generate_participation_stats(conf_regex=".*20[12][0-9]", output_dir=None):
+def generate_participation_stats(dblp_file, output_dir):
     """Generate AE participation and badge-rate statistics."""
 
-    if not output_dir:
-        print("Error: --output_dir is required")
+    if not os.path.exists(dblp_file):
+        print(f"Error: DBLP file not found: {dblp_file}")
+        print("  Run scripts/download_dblp.sh first.")
         return
-
-    # Load artifacts data produced by generate_statistics
-    artifacts_path = os.path.join(output_dir, "assets/data/artifacts.json")
-    if not os.path.exists(artifacts_path):
-        print(f"Error: {artifacts_path} not found — run generate_statistics first")
-        return
-
-    with open(artifacts_path) as f:
-        artifacts = json.load(f)
 
     # Load artifacts_by_conference for per-conference badge counts
     abc_path = os.path.join(output_dir, "_data/artifacts_by_conference.yml")
+    if not os.path.exists(abc_path):
+        print(f"Error: {abc_path} not found — run generate_statistics first")
+        return
+
     with open(abc_path) as f:
         by_conference = yaml.safe_load(f)
 
     # Build per-conference/year AE counts and badge counts from pipeline data
-    ae_data = {}  # (conf, year) -> {total, available, functional, reproduced}
+    ae_data = {}  # (conf, year) -> {ae_papers, available, functional, ...}
     for conf in by_conference:
         name = conf["name"]
         for yd in conf["years"]:
@@ -163,19 +118,14 @@ def generate_participation_stats(conf_regex=".*20[12][0-9]", output_dir=None):
                 "venue_type": conf.get("venue_type", "conference"),
             }
 
-    # Query DBLP for total paper counts
-    print(f"Fetching DBLP paper counts for {len(ae_data)} conference/year entries...")
+    # Parse DBLP XML for total paper counts
+    dblp_counts = _count_papers_from_dblp(dblp_file, set(ae_data.keys()))
+
+    # Build stats entries
     stats = []
     for (conf, year), info in sorted(ae_data.items()):
-        if not re.search(conf_regex, f"{conf.lower()}{year}"):
-            continue
-        if conf not in DBLP_MAP:
-            print(f"  ⚠ Skipping {conf} {year} (no DBLP mapping)")
-            continue
-
-        time.sleep(0.5)  # rate limiting
-        total_papers = _fetch_dblp_paper_count(conf, year)
-        if total_papers is None or total_papers == 0:
+        total_papers = dblp_counts.get((conf, year))
+        if not total_papers:
             print(f"  ⚠ {conf} {year}: no DBLP data")
             continue
 
@@ -268,13 +218,13 @@ def generate_participation_stats(conf_regex=".*20[12][0-9]", output_dir=None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate AE participation statistics from DBLP paper counts"
+        description="Generate AE participation statistics from DBLP XML paper counts"
     )
     parser.add_argument(
-        "--conf_regex",
+        "--dblp_file",
         type=str,
-        default=".*20[12][0-9]",
-        help="Regular expression for conference names/years",
+        default="data/dblp/dblp.xml.gz",
+        help="Path to dblp.xml.gz",
     )
     parser.add_argument(
         "--output_dir",
@@ -283,7 +233,7 @@ def main():
         help="Output directory (same as generate_statistics output_dir)",
     )
     args = parser.parse_args()
-    generate_participation_stats(args.conf_regex, args.output_dir)
+    generate_participation_stats(args.dblp_file, args.output_dir)
 
 
 if __name__ == "__main__":

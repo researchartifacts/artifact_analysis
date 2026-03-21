@@ -33,6 +33,7 @@ DBLP_VENUE_MAP = {
     'Privacy Enhancing': 'PETS',
     'Priv. Enhancing Technol': 'PETS',   # DBLP journal abbreviation
     'CHES': 'CHES',
+    'IACR Trans. Cryptogr. Hardw. Embed. Syst': 'CHES',  # DBLP journal form (post-2017)
     'NDSS': 'NDSS',
     'WOOT': 'WOOT',
     'SysTEX': 'SYSTEX',
