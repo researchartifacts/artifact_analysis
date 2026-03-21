@@ -103,81 +103,24 @@ def _normalise_badge(text):
 def _dblp_papers(dblp_key, year, session=None):
     """
     Get the list of papers for a proceedings volume from the pre-extracted
-    DBLP data (JSON).  Falls back to the DBLP API if the extraction cache
-    does not exist (e.g. standalone CLI usage without dblp.xml.gz).
+    DBLP data (JSON produced by ``src.utils.dblp_extract``).
 
     Returns a list of dicts with keys: title, doi, authors, dblp_url.
     """
-    # --- Try pre-extracted JSON first (no network needed) ---
-    try:
-        from ..utils.dblp_extract import papers_for_venue_year
-        # Map our dblp_key to the conference name used in the extraction
-        # (e.g. 'sosp' -> 'SOSP').
-        conf_upper = dblp_key.upper()
-        extracted = papers_for_venue_year(conf_upper, year)
-        if extracted:
-            papers = []
-            for p in extracted:
-                authors_list = p.get('authors', [])
-                papers.append({
-                    'title': p['title'],
-                    'doi': p.get('doi', ''),
-                    'authors': ', '.join(authors_list) if isinstance(authors_list, list) else authors_list,
-                    'dblp_url': '',
-                })
-            print(f"  Got {len(papers)} papers from DBLP extraction cache", file=sys.stderr)
-            return papers
-    except (ImportError, Exception):
-        pass  # Fall through to API
+    from ..utils.dblp_extract import papers_for_venue_year
 
-    # --- Fallback: DBLP API (only when extraction cache is unavailable) ---
-    cache_key = f'dblp:{dblp_key}:{year}'
-    cached = _read_cache(cache_key, ttl=CACHE_TTL, namespace='acm_dblp')
-    if cached is not None:
-        return cached
-
-    sess = session or _session_with_retries()
-    # DBLP search API – query for venue + year (venue key must be uppercase)
-    venue_key = dblp_key.upper()
-    url = f'https://dblp.org/search/publ/api?q=venue%3A{venue_key}%3A+year%3A{year}&format=json&h=1000'
-    print(f"  Fetching DBLP paper list for {venue_key} {year} …", file=sys.stderr)
-    try:
-        resp = sess.get(url, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-    except Exception as e:
-        print(f"  DBLP API error: {e}", file=sys.stderr)
-        _write_cache(cache_key, [], namespace='acm_dblp')
-        return []
-
-    hits = data.get('result', {}).get('hits', {}).get('hit', [])
+    conf_upper = dblp_key.upper()
+    extracted = papers_for_venue_year(conf_upper, year)
     papers = []
-    for h in hits:
-        info = h.get('info', {})
-        doi = info.get('doi', '')
-        title = info.get('title', '')
-        if isinstance(title, dict):
-            title = title.get('text', '')
-        # Clean trailing period from DBLP titles
-        title = title.rstrip('.')
-        authors_raw = info.get('authors', {}).get('author', [])
-        if isinstance(authors_raw, dict):
-            authors_raw = [authors_raw]
-        author_names = []
-        for a in authors_raw:
-            if isinstance(a, dict):
-                author_names.append(a.get('text', a.get('@pid', '')))
-            else:
-                author_names.append(str(a))
+    for p in extracted:
+        authors_list = p.get('authors', [])
         papers.append({
-            'title': title,
-            'doi': doi,
-            'authors': ', '.join(author_names),
-            'dblp_url': info.get('url', ''),
+            'title': p['title'],
+            'doi': p.get('doi', ''),
+            'authors': ', '.join(authors_list) if isinstance(authors_list, list) else authors_list,
+            'dblp_url': '',
         })
-
-    print(f"  Got {len(papers)} papers from DBLP", file=sys.stderr)
-    _write_cache(cache_key, papers, namespace='acm_dblp')
+    print(f"  Got {len(papers)} papers from DBLP extraction cache", file=sys.stderr)
     return papers
 
 

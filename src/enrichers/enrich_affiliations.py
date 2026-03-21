@@ -110,28 +110,12 @@ class AffiliationFinder:
     def _try_dblp(self, name: str) -> Optional[str]:
         """Look up author affiliation from pre-extracted DBLP XML data."""
         self.log(f"Looking up DBLP affiliation for: {name}")
-
         try:
-            from ..utils.dblp_extract import load_affiliations
-            affiliations = load_affiliations()
-            if not affiliations:
-                self.log("No DBLP extraction cache available")
-                return None
-
-            # Exact match first
-            if name in affiliations:
-                return affiliations[name]
-
-            # Case-insensitive match
-            name_lower = name.lower()
-            for aname, affil in affiliations.items():
-                if aname.lower() == name_lower:
-                    return affil
-
+            from ..utils.dblp_extract import find_affiliation
+            return find_affiliation(name)
         except (ImportError, Exception) as e:
             self.log(f"DBLP local lookup failed for {name}: {e}")
-
-        return None
+            return None
     
     def _try_orcid(self, name: str) -> Optional[str]:
         """Try to find affiliation via ORCID."""

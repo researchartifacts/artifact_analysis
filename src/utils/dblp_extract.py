@@ -207,6 +207,26 @@ def load_affiliations(repo_root=None):
         return json.load(f)
 
 
+def find_affiliation(name, repo_root=None):
+    """Look up an author's affiliation from the pre-extracted DBLP data.
+
+    Tries exact match, then case-insensitive.  Returns the affiliation
+    string or *None*.
+    """
+    affiliations = load_affiliations(repo_root)
+    if not affiliations:
+        return None
+    # Exact match
+    if name in affiliations:
+        return affiliations[name]
+    # Case-insensitive fallback
+    lower = name.lower()
+    for aname, affil in affiliations.items():
+        if aname.lower() == lower:
+            return affil
+    return None
+
+
 def papers_for_venue_year(conf, year, repo_root=None):
     """Convenience: return list of paper dicts for a conference/year.
 

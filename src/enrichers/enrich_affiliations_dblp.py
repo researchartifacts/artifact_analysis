@@ -1,245 +1,40 @@
 #!/usr/bin/env python3
 """
-Enrich author affiliations by fetching data from DBLP person pages.
-Uses the DBLP API to search for authors and scrape affiliation from their person pages.
+Enrich author affiliations using pre-extracted DBLP XML data.
+
+Uses the JSON lookup files produced by ``src.utils.dblp_extract`` instead
+of hitting the DBLP web API.
 """
 
 import json
-import requests
-import time
 import re
-import hashlib
 import os
 from pathlib import Path
-from bs4 import BeautifulSoup
-from collections import defaultdict
 
-# Cache configuration
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT = os.path.dirname(SCRIPT_DIR)
-CACHE_DIR = os.path.join(REPO_ROOT, '.cache')
-CACHE_TTL = 86400 * 90  # 90 days - DBLP affiliations don't change often
 
-# Rate limiting
-REQUEST_DELAY = 0.2  # seconds between requests
+def search_dblp_author(author_name, session=None, verbose=False):
+    """Return a key for the author if found in pre-extracted DBLP data.
 
-def _cache_path(key, namespace='default'):
-    """Return path to cache file for a given key and namespace."""
-    ns_dir = os.path.join(CACHE_DIR, namespace)
-    os.makedirs(ns_dir, exist_ok=True)
-    hashed = hashlib.sha256(key.encode()).hexdigest()
-    return os.path.join(ns_dir, hashed)
-
-def _read_cache(key, ttl=CACHE_TTL, namespace='default'):
-    """Return cached value if fresh, else None."""
-    path = _cache_path(key, namespace)
-    if not os.path.exists(path):
-        return None
+    Kept as a thin wrapper so callers that do the two-step
+    ``search → fetch_affiliation`` dance still work unchanged.
+    """
+    clean_name = re.sub(r'\s+\d{4}$', '', author_name).strip()
     try:
-        with open(path, 'r', encoding='utf-8') as f:
-            entry = json.load(f)
-        if time.time() - entry['ts'] < ttl:
-            return entry['body']
-    except (json.JSONDecodeError, KeyError, OSError):
+        from ..utils.dblp_extract import find_affiliation
+        if find_affiliation(clean_name) is not None:
+            return clean_name
+    except (ImportError, Exception):
         pass
     return None
 
-def _write_cache(key, body, namespace='default'):
-    """Write value to cache."""
-    path = _cache_path(key, namespace)
-    entry = {'ts': time.time(), 'body': body}
-    with open(path, 'w', encoding='utf-8') as f:
-        json.dump(entry, f)
 
-def search_dblp_author(author_name, session, verbose=False):
-    """
-    Look up an author in the pre-extracted DBLP affiliations.
-
-    Returns a synthetic 'PID' string (the author name) when a match is found,
-    so that the caller's control flow (pid → affiliation) still works.
-    Falls back to the DBLP API only when the extraction cache does not exist.
-    """
-    # Clean up author name (remove DBLP suffixes like "0003")
-    clean_name = re.sub(r'\s+\d{4}$', '', author_name).strip()
-
-    # Check disk cache first (preserves old caching behaviour)
-    cache_key = f"search:{clean_name}"
-    cached = _read_cache(cache_key, ttl=CACHE_TTL, namespace='dblp_author')
-    if cached is not None:
-        if verbose:
-            print(f"      Cached PID: {cached if cached else 'not found'}")
-        return cached if cached else None
-
-    # --- Try pre-extracted data (no network) ---
+def fetch_affiliation_from_dblp_page(pid, session=None, verbose=False):
+    """Return the affiliation for *pid* (which is the author name)."""
     try:
-        from ..utils.dblp_extract import load_affiliations
-        affiliations = load_affiliations()
-        if affiliations:
-            # Exact match
-            if clean_name in affiliations:
-                _write_cache(cache_key, clean_name, namespace='dblp_author')
-                return clean_name
-            # Case-insensitive match
-            lower = clean_name.lower()
-            for aname in affiliations:
-                if aname.lower() == lower:
-                    _write_cache(cache_key, aname, namespace='dblp_author')
-                    return aname
-            # No match
-            _write_cache(cache_key, '', namespace='dblp_author')
-            return None
+        from ..utils.dblp_extract import find_affiliation
+        return find_affiliation(pid)
     except (ImportError, Exception):
-        pass  # extraction cache unavailable, fall through to API
-
-    if verbose:
-        print(f"      Searching DBLP API for: {clean_name}")
-
-    try:
-        time.sleep(REQUEST_DELAY)
-        api_url = f"https://dblp.org/search/author/api?q={clean_name}&format=json&h=5"
-        response = session.get(api_url, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        
-        hits = data.get('result', {}).get('hits', {}).get('hit', [])
-        if not hits:
-            _write_cache(cache_key, '', namespace='dblp_author')  # Cache negative result
-            return None
-        
-        # Return the first hit's PID (usually the most relevant)
-        for hit in hits:
-            info = hit.get('info', {})
-            author_name_dblp = info.get('author', '')
-            url = info.get('url', '')
-            
-            # Extract PID from URL (e.g., https://dblp.org/pid/91/800)
-            match = re.search(r'/pid/([\w/\-]+)', url)
-            if match:
-                pid = match.group(1)
-                # Check if names roughly match
-                if fuzzy_name_match(clean_name, author_name_dblp):
-                    _write_cache(cache_key, pid, namespace='dblp_author')
-                    return pid
-        
-        # If no fuzzy match, return first result's PID
-        if hits:
-            url = hits[0].get('info', {}).get('url', '')
-            match = re.search(r'/pid/([\w/\-]+)', url)
-            if match:
-                pid = match.group(1)
-                _write_cache(cache_key, pid, namespace='dblp_author')
-                return match.group(1)
-    
-    except Exception as e:
-        print(f"  Error searching for {author_name}: {e}")
-    
-    _write_cache(cache_key, '', namespace='dblp_author')  # Cache negative result
-    return None
-
-def fuzzy_name_match(name1, name2):
-    """Simple fuzzy name matching (case-insensitive, ignoring punctuation)."""
-    clean1 = re.sub(r'[^\w\s]', '', name1.lower()).strip()
-    clean2 = re.sub(r'[^\w\s]', '', name2.lower()).strip()
-    
-    # Check if one is contained in the other or vice versa
-    if clean1 in clean2 or clean2 in clean1:
-        return True
-    
-    # Check if last names match
-    parts1 = clean1.split()
-    parts2 = clean2.split()
-    if parts1 and parts2 and parts1[-1] == parts2[-1]:
-        return True
-    
-    return False
-
-def fetch_affiliation_from_dblp_page(pid, session, verbose=False):
-    """
-    Fetch affiliation for an author.
-
-    When the pre-extracted DBLP data is available the *pid* is actually the
-    author name (as returned by the modified ``search_dblp_author``).  We look
-    it up directly.  Falls back to scraping the DBLP person page otherwise.
-    """
-    # Check disk cache first
-    cache_key = f"affiliation:{pid}"
-    cached = _read_cache(cache_key, ttl=CACHE_TTL, namespace='dblp_affiliation')
-    if cached is not None:
-        if verbose:
-            print(f"        Cached affiliation: {cached if cached else 'not found'}")
-        return cached if cached else None
-
-    # --- Try pre-extracted data (no network) ---
-    try:
-        from ..utils.dblp_extract import load_affiliations
-        affiliations = load_affiliations()
-        if affiliations:
-            affil = affiliations.get(pid)
-            if not affil:
-                lower = pid.lower()
-                for aname, a in affiliations.items():
-                    if aname.lower() == lower:
-                        affil = a
-                        break
-            if affil:
-                _write_cache(cache_key, affil, namespace='dblp_affiliation')
-                return affil
-            _write_cache(cache_key, '', namespace='dblp_affiliation')
-            return None
-    except (ImportError, Exception):
-        pass  # fall through to web scraping
-
-    url = f"https://dblp.org/pid/{pid}.html"
-    
-    if verbose:
-        print(f"        Fetching: {url}")
-    
-    try:
-        time.sleep(REQUEST_DELAY)
-        response = session.get(url, timeout=10)
-        response.raise_for_status()
-        
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # Look for <li itemprop="affiliation"> containing <span itemprop="name">
-        # Example: <li itemprop="affiliation" itemscope itemtype="http://schema.org/Organization">
-        #            <em>affiliation:</em> <span itemprop="name">Vrije Universiteit Amsterdam, The Netherlands</span>
-        #          </li>
-        affiliation_li = soup.find('li', itemprop='affiliation')
-        if affiliation_li:
-            name_span = affiliation_li.find('span', itemprop='name')
-            if name_span and name_span.text:
-                affiliation = name_span.text.strip()
-                _write_cache(cache_key, affiliation, namespace='dblp_affiliation')
-                return affiliation
-        
-        # Alternative: older format with just <span itemprop="affiliation">
-        affiliation_span = soup.find('span', itemprop='affiliation')
-        if affiliation_span and affiliation_span.text:
-            affiliation = affiliation_span.text.strip()
-            _write_cache(cache_key, affiliation, namespace='dblp_affiliation')
-            return affiliation
-        
-        # Alternative: look for affiliation in header section
-        header = soup.find('header', id='headline')
-        if header:
-            affil_div = header.find('div', class_='affiliation')
-            if affil_div and affil_div.text:
-                affiliation = affil_div.text.strip()
-                _write_cache(cache_key, affiliation, namespace='dblp_affiliation')
-                return affiliation
-        
-        if verbose:
-            print(f"        Page loaded but no affiliation tags found")
-        
-        _write_cache(cache_key, '', namespace='dblp_affiliation')  # Cache negative result
-    
-    except Exception as e:
-        if verbose:
-            print(f"        Error fetching page: {e}")
-        # Don't cache errors - retry next time
-    
-    return None
+        return None
 
 def enrich_affiliations(authors_data, output_path=None, max_authors=None, verbose=False):
     """

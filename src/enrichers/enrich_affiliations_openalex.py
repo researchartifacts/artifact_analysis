@@ -296,26 +296,17 @@ def _dblp_affiliation(
     if cached is not None:
         return cached if cached else None
 
-    # --- Try pre-extracted data (no network) ---
     try:
-        from ..utils.dblp_extract import load_affiliations
-        affiliations = load_affiliations()
-        if affiliations:
-            affil = affiliations.get(clean)
-            if not affil:
-                lower = clean.lower()
-                for aname, a in affiliations.items():
-                    if aname.lower() == lower:
-                        affil = a
-                        break
-            if affil:
-                if verbose:
-                    print(f"      DBLP-local: {affil}")
-                _write_cache(cache_key, affil, "dblp")
-                return affil
-    except (ImportError, Exception) as e:
+        from ..utils.dblp_extract import find_affiliation
+        affil = find_affiliation(clean)
+    except (ImportError, Exception):
+        affil = None
+
+    if affil:
         if verbose:
-            print(f"      DBLP local lookup error: {e}")
+            print(f"      DBLP-local: {affil}")
+        _write_cache(cache_key, affil, "dblp")
+        return affil
 
     _write_cache(cache_key, "", "dblp")
     return None

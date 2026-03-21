@@ -22,14 +22,10 @@ Usage:
 import argparse
 import json
 import os
-import re
 import yaml
 from collections import defaultdict
-from gzip import GzipFile
 
-import lxml.etree as ET
-
-from .generate_author_stats import venue_to_conference
+from ..utils.dblp_extract import paper_count_by_venue_year
 
 AREA_MAP = {
     "USENIXSEC": "security", "NDSS": "security", "ACSAC": "security",
@@ -41,63 +37,11 @@ AREA_MAP = {
 
 
 def _count_papers_from_dblp(dblp_file, target_conf_years):
-    """Count papers per (conference, year) from DBLP data.
-
-    Uses the pre-extracted JSON cache when available (fast).
-    Falls back to parsing the raw XML if the cache does not exist.
-
-    Args:
-        dblp_file: Path to dblp.xml.gz (used only as fallback)
-        target_conf_years: set of (conf_upper, year_int) tuples to count
-
-    Returns:
-        dict: (conf, year) -> paper_count
-    """
-    # --- Try pre-extracted data first ---
-    try:
-        from ..utils.dblp_extract import paper_count_by_venue_year
-        all_counts = paper_count_by_venue_year()
-        if all_counts:
-            counts = {k: v for k, v in all_counts.items() if k in target_conf_years}
-            print(f"Loaded DBLP paper counts from extraction cache ({len(counts)} conference/years)")
-            return counts
-    except (ImportError, Exception):
-        pass  # fall through to XML parse
-
-    # --- Fallback: parse raw XML ---
-    target_confs = {cy[0] for cy in target_conf_years}
-
-    counts = defaultdict(int)  # (conf, year) -> count
-    print(f"Parsing DBLP XML for paper counts ({len(target_conf_years)} conference/year targets)...")
-
-    dblp_stream = GzipFile(filename=dblp_file)
-    iteration = 0
-
-    for _, elem in ET.iterparse(
-        dblp_stream,
-        events=("end",),
-        tag=("inproceedings", "article"),
-        load_dtd=True,
-        recover=True,
-        huge_tree=True,
-    ):
-        booktitle = elem.findtext("booktitle") or elem.findtext("journal") or ""
-        mapped_conf = venue_to_conference(booktitle)
-        if mapped_conf and mapped_conf in target_confs:
-            year_str = elem.findtext("year")
-            if year_str:
-                year = int(year_str)
-                if (mapped_conf, year) in target_conf_years:
-                    counts[(mapped_conf, year)] += 1
-
-        iteration += 1
-        if iteration % 2_000_000 == 0:
-            print(f"  ... {iteration // 1_000_000}M elements processed")
-        elem.clear()
-
-    dblp_stream.close()
-    print(f"  Done — {iteration} elements, found counts for {len(counts)} conference/years")
-    return dict(counts)
+    """Count papers per (conference, year) from pre-extracted DBLP data."""
+    all_counts = paper_count_by_venue_year()
+    counts = {k: v for k, v in all_counts.items() if k in target_conf_years}
+    print(f"Loaded DBLP paper counts from extraction cache ({len(counts)} conference/years)")
+    return counts
 
 
 def generate_participation_stats(dblp_file, output_dir):
