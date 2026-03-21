@@ -25,15 +25,8 @@ import os
 import yaml
 from collections import defaultdict
 
+from ..utils.conference import conf_area
 from ..utils.dblp_extract import paper_count_by_venue_year
-
-AREA_MAP = {
-    "USENIXSEC": "security", "NDSS": "security", "ACSAC": "security",
-    "PETS": "security", "CHES": "security", "WOOT": "security",
-    "OSDI": "systems", "SOSP": "systems", "ATC": "systems",
-    "EUROSYS": "systems", "FAST": "systems", "SC": "systems",
-    "SYSTEX": "security",
-}
 
 
 def _count_papers_from_dblp(dblp_file, target_conf_years):
@@ -89,7 +82,7 @@ def generate_participation_stats(dblp_file, output_dir):
 
         ae_papers = info["ae_papers"]
         participation_rate = round(ae_papers / total_papers * 100, 1)
-        area = AREA_MAP.get(conf, "unknown")
+        area = conf_area(conf)
 
         entry = {
             "conference": conf,

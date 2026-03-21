@@ -20,28 +20,7 @@ from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
 from ..scrapers.sys_sec_scrape import get_conferences_from_prefix
 from ..utils.collect_artifact_stats import github_stats, zenodo_stats, figshare_stats
 from ..utils.test_artifact_repositories import check_artifact_exists
-
-import re
-
-SYSTEMS_CONFS = {"ATC", "EUROSYS", "OSDI", "SOSP", "SYSTEX"}
-SECURITY_CONFS = {"ACSAC", "NDSS", "PETS", "USENIXSEC", "WOOT"}
-
-
-def _conf_area(conf_name):
-    """Classify a conference as 'systems' or 'security'."""
-    c = conf_name.upper()
-    if c in SYSTEMS_CONFS:
-        return "systems"
-    if c in SECURITY_CONFS:
-        return "security"
-    return "unknown"
-
-
-def extract_conference_name(conf_year_str):
-    match = re.match(r'^([a-zA-Z]+)(\d{4})$', conf_year_str)
-    if match:
-        return match.group(1).upper(), int(match.group(2))
-    return conf_year_str.upper(), None
+from ..utils.conference import conf_area as _conf_area, parse_conf_year as extract_conference_name
 
 
 def collect_stats_for_results(results, url_keys=None):

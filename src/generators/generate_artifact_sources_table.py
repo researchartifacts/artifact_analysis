@@ -20,6 +20,11 @@ from collections import defaultdict
 from sys_sec_artifacts_results_scrape import get_ae_results
 from test_artifact_repositories import _normalise_url
 
+try:
+    from src.utils.conference import conf_area
+except ImportError:
+    from utils.conference import conf_area
+
 
 def _resolve_doi_prefix(url):
     """Resolve DOI prefix to actual repository. Returns repository name or None."""
@@ -158,26 +163,19 @@ def count_sources_by_area(all_results):
     
     for conf_year, artifacts in all_results.items():
         # Determine if this is a systems or security conference
-        # Load conference metadata to determine area
         conf_name = re.match(r'^([a-zA-Z]+)', conf_year)
         if not conf_name:
             continue
         conf_name = conf_name.group(1).upper()
-        
-        # These are from the sysartifacts and secartifacts websites
-        systems_confs = {'ATC', 'EUROSYS', 'FAST', 'OSDI', 'SC', 'SOSP'}
-        security_confs = {'ACSAC', 'CHES', 'NDSS', 'PETS', 'SYSTEX', 'USENIX', 'WOOT'}
-        
-        target_dict = None
-        is_systems = False
-        if conf_name in systems_confs:
+
+        area = conf_area(conf_name)
+        if area == 'systems':
             target_dict = sys_sources
             is_systems = True
-        elif conf_name in security_confs:
+        elif area == 'security':
             target_dict = sec_sources
             is_systems = False
-        
-        if target_dict is None:
+        else:
             # Try to infer: check for "Security" in second part of conf_year
             if 'security' in conf_year.lower():
                 target_dict = sec_sources

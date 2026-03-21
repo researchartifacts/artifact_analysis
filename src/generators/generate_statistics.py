@@ -20,6 +20,7 @@ from ..scrapers.acm_scrape import (
     to_pipeline_format as acm_to_pipeline_format,
     get_acm_conferences,
 )
+from ..utils.conference import parse_conf_year as extract_conference_name
 
 # Workshops (as opposed to conferences) — used for visual distinction
 WORKSHOPS = {'woot', 'systex'}
@@ -34,13 +35,6 @@ USENIX_CONF_MAP = {
     'atc':       ('atc',              'systems'),
     'usenixsec': ('usenixsecurity',  'security'),
 }
-
-def extract_conference_name(conf_year_str):
-    """Extract conference name from string like 'osdi2024' -> 'osdi'"""
-    match = re.match(r'^([a-zA-Z]+)(\d{4})$', conf_year_str)
-    if match:
-        return match.group(1), match.group(2)
-    return conf_year_str, None
 
 def count_badges(artifacts):
     """Count different badge types in artifacts list"""
@@ -104,10 +98,9 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
     for dir_name in sorted(sys_all_dirs | sec_all_dirs):
         if dir_name in parsed_keys:
             continue  # already have results from sysartifacts/secartifacts
-        conf_name, year_str = extract_conference_name(dir_name)
-        if not year_str:
+        conf_name, year = extract_conference_name(dir_name)
+        if year is None:
             continue
-        year = int(year_str)
         conf_lower = conf_name.lower()
         if conf_lower not in USENIX_CONF_MAP:
             continue
@@ -381,8 +374,8 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
         if cyear:
             category = 'systems' if d in sys_all_dirs else 'security'
             all_discovered[d] = {
-                'conference': cname.upper(),
-                'year': int(cyear),
+                'conference': cname,
+                'year': cyear,
                 'category': category,
                 'parsed': d in all_results and len(all_results[d]) > 0,
                 'artifact_count': len(all_results.get(d, []))
@@ -393,8 +386,8 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
         if cyear:
             category = usenix_categories.get(d, 'systems')
             all_discovered[d] = {
-                'conference': cname.upper(),
-                'year': int(cyear),
+                'conference': cname,
+                'year': cyear,
                 'category': category,
                 'parsed': d in all_results and len(all_results[d]) > 0,
                 'artifact_count': len(all_results.get(d, []))
@@ -405,8 +398,8 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
         if cyear:
             category = acm_categories.get(d, 'security')
             all_discovered[d] = {
-                'conference': cname.upper(),
-                'year': int(cyear),
+                'conference': cname,
+                'year': cyear,
                 'category': category,
                 'parsed': d in all_results and len(all_results[d]) > 0,
                 'artifact_count': len(all_results.get(d, []))

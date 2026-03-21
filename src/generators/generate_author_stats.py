@@ -15,6 +15,7 @@ import lxml.etree as ET
 from gzip import GzipFile
 import re
 from .generate_combined_rankings import _normalize_affiliation
+from ..utils.conference import clean_name as clean_display_name
 
 # Conference categorization is derived from the source (sys vs sec artifacts)
 # and stored in the 'category' field of each artifact by generate_statistics.py
@@ -67,19 +68,6 @@ def normalize_title(title):
     normalized = ' '.join(normalized.split())
     return normalized
 
-
-def clean_display_name(name):
-    """Normalize display name while preserving raw DBLP name elsewhere.
-
-    Removes DBLP disambiguation suffixes (e.g. " 0001") and collapses
-    whitespace/tabs/newlines.
-    """
-    if not name:
-        return ''
-    cleaned = re.sub(r'[\t\n\r]+', ' ', name)
-    cleaned = re.sub(r'\s+\d{4}$', '', cleaned)
-    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
-    return cleaned
 
 def load_artifacts(data_dir):
     """Load artifacts from generated data file"""

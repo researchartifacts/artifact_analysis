@@ -16,6 +16,7 @@ import argparse
 import re
 from collections import defaultdict
 from .generate_combined_rankings import _normalize_affiliation
+from ..utils.conference import clean_name
 
 DATA_DIR = None  # Set via CLI
 
@@ -31,12 +32,7 @@ def save_yaml(filename, data):
 
 
 def _normalize_name_key(name):
-    if not name:
-        return ''
-    key = re.sub(r'[\t\n\r]+', ' ', name).strip().lower()
-    key = re.sub(r'\s+\d{4}$', '', key)
-    key = re.sub(r'\s+', ' ', key).strip()
-    return key
+    return clean_name(name).lower()
 
 
 def _load_ae_affiliation_fallback():

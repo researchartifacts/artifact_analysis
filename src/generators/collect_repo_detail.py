@@ -20,28 +20,8 @@ import time
 import requests
 import yaml
 
-SYSTEMS_CONFS = {"ATC", "EUROSYS", "OSDI", "SOSP"}
-SECURITY_CONFS = {"ACSAC", "NDSS", "PETS", "USENIXSEC", "WOOT"}
-# SYSTEX spans both — classify as systems for this analysis
-SYSTEMS_CONFS.add("SYSTEX")
-
-
-def _github_headers():
-    headers = {"Accept": "application/vnd.github.v3+json"}
-    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
-    if token:
-        headers["Authorization"] = f"token {token}"
-    return headers
-
-
-def _parse_conf_year(key):
-    """Parse 'atc2022' -> ('ATC', 2022)."""
-    m = re.match(r"([a-z]+)(\d{4})", key)
-    if not m:
-        return None, None
-    name = m.group(1).upper()
-    year = int(m.group(2))
-    return name, year
+from ..utils.conference import conf_area, parse_conf_year as _parse_conf_year
+from ..scrapers.sys_sec_scrape import _github_headers
 
 
 def _normalize_repo(url):
@@ -75,8 +55,8 @@ def collect(cache_path, output_path):
         conf, year = _parse_conf_year(conf_year)
         if conf is None:
             continue
-        area = "systems" if conf in SYSTEMS_CONFS else "security" if conf in SECURITY_CONFS else None
-        if area is None:
+        area = conf_area(conf)
+        if area == "unknown":
             print(f"  Skipping unknown conference: {conf}")
             continue
         for a in artifacts:

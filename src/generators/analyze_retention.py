@@ -25,49 +25,15 @@ from src.scrapers.alternative_committee_scrape import (
     CHES_KNOWN_YEARS,
     PETS_KNOWN_YEARS,
 )
-
-# ── Conference classification ────────────────────────────────────────────────
-
-SYSTEMS_CONFS = {'atc', 'eurosys', 'fast', 'osdi', 'sc', 'sosp'}
-SECURITY_CONFS = {'acsac', 'ches', 'ndss', 'pets', 'systex', 'usenixsec', 'woot'}
+from src.utils.conference import (
+    conf_area as _conf_area,
+    parse_conf_year as _extract_conf_year,
+    clean_name as _display_name,
+    normalize_name as _normalize_name,
+)
 
 MIN_COMMITTEE_SIZE = 5
 PLACEHOLDER_NAMES = {'you?', 'you', 'tba', 'tbd', 'n/a', '', 'title: organizers'}
-
-
-def _extract_conf_year(conf_year_str):
-    m = re.match(r'^([a-zA-Z]+)(\d{4})$', conf_year_str)
-    if m:
-        return m.group(1).upper(), int(m.group(2))
-    return conf_year_str.upper(), None
-
-
-def _conf_area(conf_year):
-    conf_name, _ = _extract_conf_year(conf_year)
-    name_lower = conf_name.lower()
-    if name_lower in SYSTEMS_CONFS:
-        return 'systems'
-    if name_lower in SECURITY_CONFS:
-        return 'security'
-    return 'unknown'
-
-
-def _normalize_name(name):
-    name = name.strip().lower()
-    name = unicodedata.normalize('NFKD', name)
-    name = ''.join(c for c in name if not unicodedata.combining(c))
-    name = re.sub(r'\.', '', name)
-    name = re.sub(r'\s+', ' ', name).strip()
-    return name
-
-
-def _display_name(name):
-    if not name:
-        return ''
-    name = re.sub(r'[\t\n\r]+', ' ', name)
-    name = re.sub(r'\s+\d{4}$', '', name)
-    name = re.sub(r'\s+', ' ', name).strip()
-    return name
 
 
 def _clean_committee(members):

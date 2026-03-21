@@ -31,6 +31,12 @@ from src.scrapers.alternative_committee_scrape import (
     PETS_KNOWN_YEARS,
 )
 from .generate_combined_rankings import _normalize_affiliation
+from src.utils.conference import (
+    conf_area as _conf_area,
+    parse_conf_year as _extract_conf_year,
+    clean_name as _display_name,
+    normalize_name as _normalize_name,
+)
 
 # ── Country → Continent mapping ──────────────────────────────────────────────
 
@@ -89,14 +95,6 @@ COUNTRY_TO_CONTINENT = {
     'Australia': 'Oceania', 'Fiji': 'Oceania',
     'New Zealand': 'Oceania', 'Papua New Guinea': 'Oceania',
 }
-
-
-def _extract_conf_year(conf_year_str):
-    """Extract conference name and year from string like 'osdi2024'."""
-    m = re.match(r'^([a-zA-Z]+)(\d{4})$', conf_year_str)
-    if m:
-        return m.group(1).upper(), int(m.group(2))
-    return conf_year_str.upper(), None
 
 
 def _build_university_index():
@@ -381,23 +379,6 @@ def _top_n(d, n=20):
     return sorted(d.items(), key=lambda x: x[1], reverse=True)[:n]
 
 
-# ── Conference → area mapping ────────────────────────────────────────────────
-
-SYSTEMS_CONFS = {'atc', 'eurosys', 'fast', 'osdi', 'sc', 'sosp'}
-SECURITY_CONFS = {'acsac', 'ches', 'ndss', 'pets', 'systex', 'usenixsec', 'woot'}
-
-
-def _conf_area(conf_year):
-    """Determine area (systems/security) from a conf_year string."""
-    conf_name, _ = _extract_conf_year(conf_year)
-    name_lower = conf_name.lower()
-    if name_lower in SYSTEMS_CONFS:
-        return 'systems'
-    if name_lower in SECURITY_CONFS:
-        return 'security'
-    return 'unknown'
-
-
 # Minimum committee size to consider data valid from sysartifacts/secartifacts.
 # Committees with fewer members are likely placeholder or chair-only entries.
 # PETS secartifacts has only 3 (chairs); real committees have 13-172 members.
@@ -405,34 +386,6 @@ MIN_COMMITTEE_SIZE = 5
 
 # Known placeholder names to filter out
 PLACEHOLDER_NAMES = {'you?', 'you', 'tba', 'tbd', 'n/a', '', 'title: organizers'}
-
-
-def _normalize_name(name):
-    """Normalize a person's name for matching across conferences.
-
-    Strips whitespace, lowercases, removes accents via simple mapping,
-    and collapses middle initials.
-    """
-    import unicodedata
-    name = name.strip().lower()
-    # Normalize unicode accented characters (e.g. é → e)
-    name = unicodedata.normalize('NFKD', name)
-    name = ''.join(c for c in name if not unicodedata.combining(c))
-    # Remove period after initials
-    name = re.sub(r'\.', '', name)
-    # Collapse multiple spaces
-    name = re.sub(r'\s+', ' ', name).strip()
-    return name
-
-
-def _display_name(name):
-    """Normalize member name for display while keeping matching robust."""
-    if not name:
-        return ''
-    name = re.sub(r'[\t\n\r]+', ' ', name)
-    name = re.sub(r'\s+\d{4}$', '', name)
-    name = re.sub(r'\s+', ' ', name).strip()
-    return name
 
 
 def _compute_recurring_members(all_results, conf_to_area, classified):

@@ -24,29 +24,9 @@ import yaml
 from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
 from ..scrapers.sys_sec_scrape import get_conferences_from_prefix
 from ..utils.test_artifact_repositories import check_artifact_exists
-
-SYSTEMS_CONFS = {"ATC", "EUROSYS", "OSDI", "SOSP", "SYSTEX", "FAST", "SC"}
-SECURITY_CONFS = {"ACSAC", "CHES", "NDSS", "PETS", "USENIXSEC", "WOOT"}
+from ..utils.conference import conf_area as _conf_area, parse_conf_year as _extract_conference_year
 
 URL_KEYS = ["repository_url", "artifact_url"]
-
-
-def _conf_area(conf_name):
-    """Classify a conference as 'systems' or 'security'."""
-    c = conf_name.upper()
-    if c in SYSTEMS_CONFS:
-        return "systems"
-    if c in SECURITY_CONFS:
-        return "security"
-    return "unknown"
-
-
-def _extract_conference_year(conf_year_str):
-    """Extract conference name and year from 'confYYYY' string."""
-    match = re.match(r'^([a-zA-Z]+)(\d{4})$', conf_year_str)
-    if match:
-        return match.group(1).upper(), int(match.group(2))
-    return conf_year_str.upper(), None
 
 
 def _detect_platform(url):
