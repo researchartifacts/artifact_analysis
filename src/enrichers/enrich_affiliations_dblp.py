@@ -53,27 +53,50 @@ def _write_cache(key, body, namespace='default'):
 
 def search_dblp_author(author_name, session, verbose=False):
     """
-    Search for an author in DBLP and return their PID if found.
-    Uses the DBLP API search endpoint.
+    Look up an author in the pre-extracted DBLP affiliations.
+
+    Returns a synthetic 'PID' string (the author name) when a match is found,
+    so that the caller's control flow (pid → affiliation) still works.
+    Falls back to the DBLP API only when the extraction cache does not exist.
     """
     # Clean up author name (remove DBLP suffixes like "0003")
     clean_name = re.sub(r'\s+\d{4}$', '', author_name).strip()
-    
-    api_url = f"https://dblp.org/search/author/api?q={clean_name}&format=json&h=5"
-    
-    # Check cache first
+
+    # Check disk cache first (preserves old caching behaviour)
     cache_key = f"search:{clean_name}"
     cached = _read_cache(cache_key, ttl=CACHE_TTL, namespace='dblp_author')
     if cached is not None:
         if verbose:
             print(f"      Cached PID: {cached if cached else 'not found'}")
         return cached if cached else None
-    
+
+    # --- Try pre-extracted data (no network) ---
+    try:
+        from ..utils.dblp_extract import load_affiliations
+        affiliations = load_affiliations()
+        if affiliations:
+            # Exact match
+            if clean_name in affiliations:
+                _write_cache(cache_key, clean_name, namespace='dblp_author')
+                return clean_name
+            # Case-insensitive match
+            lower = clean_name.lower()
+            for aname in affiliations:
+                if aname.lower() == lower:
+                    _write_cache(cache_key, aname, namespace='dblp_author')
+                    return aname
+            # No match
+            _write_cache(cache_key, '', namespace='dblp_author')
+            return None
+    except (ImportError, Exception):
+        pass  # extraction cache unavailable, fall through to API
+
     if verbose:
         print(f"      Searching DBLP API for: {clean_name}")
-    
+
     try:
         time.sleep(REQUEST_DELAY)
+        api_url = f"https://dblp.org/search/author/api?q={clean_name}&format=json&h=5"
         response = session.get(api_url, timeout=10)
         response.raise_for_status()
         data = response.json()
@@ -132,17 +155,41 @@ def fuzzy_name_match(name1, name2):
 
 def fetch_affiliation_from_dblp_page(pid, session, verbose=False):
     """
-    Fetch affiliation from a DBLP person page.
+    Fetch affiliation for an author.
+
+    When the pre-extracted DBLP data is available the *pid* is actually the
+    author name (as returned by the modified ``search_dblp_author``).  We look
+    it up directly.  Falls back to scraping the DBLP person page otherwise.
     """
-    url = f"https://dblp.org/pid/{pid}.html"
-    
-    # Check cache first
+    # Check disk cache first
     cache_key = f"affiliation:{pid}"
     cached = _read_cache(cache_key, ttl=CACHE_TTL, namespace='dblp_affiliation')
     if cached is not None:
         if verbose:
             print(f"        Cached affiliation: {cached if cached else 'not found'}")
         return cached if cached else None
+
+    # --- Try pre-extracted data (no network) ---
+    try:
+        from ..utils.dblp_extract import load_affiliations
+        affiliations = load_affiliations()
+        if affiliations:
+            affil = affiliations.get(pid)
+            if not affil:
+                lower = pid.lower()
+                for aname, a in affiliations.items():
+                    if aname.lower() == lower:
+                        affil = a
+                        break
+            if affil:
+                _write_cache(cache_key, affil, namespace='dblp_affiliation')
+                return affil
+            _write_cache(cache_key, '', namespace='dblp_affiliation')
+            return None
+    except (ImportError, Exception):
+        pass  # fall through to web scraping
+
+    url = f"https://dblp.org/pid/{pid}.html"
     
     if verbose:
         print(f"        Fetching: {url}")

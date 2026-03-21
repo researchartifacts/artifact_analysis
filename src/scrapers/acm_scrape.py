@@ -102,10 +102,35 @@ def _normalise_badge(text):
 
 def _dblp_papers(dblp_key, year, session=None):
     """
-    Fetch the list of papers from the DBLP XML API for a proceedings volume.
+    Get the list of papers for a proceedings volume from the pre-extracted
+    DBLP data (JSON).  Falls back to the DBLP API if the extraction cache
+    does not exist (e.g. standalone CLI usage without dblp.xml.gz).
 
     Returns a list of dicts with keys: title, doi, authors, dblp_url.
     """
+    # --- Try pre-extracted JSON first (no network needed) ---
+    try:
+        from ..utils.dblp_extract import papers_for_venue_year
+        # Map our dblp_key to the conference name used in the extraction
+        # (e.g. 'sosp' -> 'SOSP').
+        conf_upper = dblp_key.upper()
+        extracted = papers_for_venue_year(conf_upper, year)
+        if extracted:
+            papers = []
+            for p in extracted:
+                authors_list = p.get('authors', [])
+                papers.append({
+                    'title': p['title'],
+                    'doi': p.get('doi', ''),
+                    'authors': ', '.join(authors_list) if isinstance(authors_list, list) else authors_list,
+                    'dblp_url': '',
+                })
+            print(f"  Got {len(papers)} papers from DBLP extraction cache", file=sys.stderr)
+            return papers
+    except (ImportError, Exception):
+        pass  # Fall through to API
+
+    # --- Fallback: DBLP API (only when extraction cache is unavailable) ---
     cache_key = f'dblp:{dblp_key}:{year}'
     cached = _read_cache(cache_key, ttl=CACHE_TTL, namespace='acm_dblp')
     if cached is not None:

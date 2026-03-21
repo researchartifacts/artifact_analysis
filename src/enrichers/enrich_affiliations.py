@@ -108,70 +108,29 @@ class AffiliationFinder:
         return None
     
     def _try_dblp(self, name: str) -> Optional[str]:
-        """Query DBLP for author affiliation."""
-        self.log(f"Querying DBLP for: {name}")
-        
+        """Look up author affiliation from pre-extracted DBLP XML data."""
+        self.log(f"Looking up DBLP affiliation for: {name}")
+
         try:
-            # DBLP has a search API and pub pages
-            safe_name = quote(name)
-            url = f"https://dblp.org/search/publ/api?q={safe_name}&format=json"
-            
-            opener = self._get_opener()
-            with opener.open(url, timeout=10) as response:
-                if response.status != 200:
-                    return None
-                
-                data = json.loads(response.read().decode())
-                
-                # Extract affiliations from hits
-                if 'result' in data and 'hits' in data['result']:
-                    for hit in data['result']['hits'].get('hit', [])[:5]:
-                        info = hit.get('info', {})
-                        if 'authors' in info:
-                            for author in info['authors'].get('author', []):
-                                if isinstance(author, dict) and 'text' in author:
-                                    if author.get('text', '').lower() == name.lower():
-                                        # Found matching author
-                                        if 'affiliation' in author:
-                                            return author['affiliation']
-                
-                # Try to parse author pages
-                if 'result' in data and 'hits' in data['result']:
-                    for hit in data['result']['hits'].get('hit', [])[:3]:
-                        url_candidate = hit.get('info', {}).get('url', '')
-                        if 'pid' in url_candidate:
-                            affil = self._scrape_dblp_author_page(url_candidate)
-                            if affil:
-                                return affil
-        
-        except (urllib.error.URLError, json.JSONDecodeError, Exception) as e:
-            self.log(f"DBLP lookup failed for {name}: {e}")
-        
-        return None
-    
-    def _scrape_dblp_author_page(self, dblp_url: str) -> Optional[str]:
-        """Scrape DBLP author page for affiliation."""
-        try:
-            self.log(f"Scraping DBLP page: {dblp_url}")
-            
-            opener = self._get_opener()
-            with opener.open(dblp_url, timeout=10) as response:
-                html = response.read().decode()
-                
-                # Look for affiliation patterns in HTML
-                # DBLP format: <span class="affiliation">...</span> or similar
-                affil_match = re.search(r'<span [^>]*class="[^"]*affiliation[^"]*"[^>]*>([^<]+)</span>', html)
-                if affil_match:
-                    return affil_match.group(1).strip()
-                
-                # Alternative pattern
-                affil_match = re.search(r'(?:Affiliation|affiliation):\s*([^<\n]+)', html)
-                if affil_match:
-                    return affil_match.group(1).strip()
-        
-        except Exception as e:
-            self.log(f"Failed to scrape {dblp_url}: {e}")
-        
+            from ..utils.dblp_extract import load_affiliations
+            affiliations = load_affiliations()
+            if not affiliations:
+                self.log("No DBLP extraction cache available")
+                return None
+
+            # Exact match first
+            if name in affiliations:
+                return affiliations[name]
+
+            # Case-insensitive match
+            name_lower = name.lower()
+            for aname, affil in affiliations.items():
+                if aname.lower() == name_lower:
+                    return affil
+
+        except (ImportError, Exception) as e:
+            self.log(f"DBLP local lookup failed for {name}: {e}")
+
         return None
     
     def _try_orcid(self, name: str) -> Optional[str]:

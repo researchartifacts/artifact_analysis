@@ -76,6 +76,7 @@ Scripts are organized into functional categories:
 
 | Script | Purpose |
 |--------|---------|
+| `src/utils/dblp_extract.py` | Pre-extracts DBLP XML into JSON lookup files (papers, affiliations) |
 | `src/utils/parse_dlbp.py` | DBLP XML parsing |
 | `src/utils/collect_artifact_stats.py` | Artifact stats collector |
 | `src/utils/committee_statistics.py` | Committee analysis utilities |
@@ -129,6 +130,19 @@ artifact_analysis/
 
 - **GitHub responses** are cached in `.cache/` with a 1-hour TTL
 - **DBLP XML** freshness is checked via HTTP `Last-Modified` header at each run
+- **DBLP extracted data** is cached in `.cache/dblp_extracted/` and refreshed
+  whenever the XML file changes
+
+## DBLP Data Policy
+
+All DBLP data is sourced from the **local XML dump** (`data/dblp/dblp.xml.gz`)
+downloaded by `scripts/download_dblp.sh`.  The pipeline step `src/utils/dblp_extract.py`
+parses the XML once and writes JSON lookup files that every downstream module
+can load.
+
+**Do NOT add new DBLP API calls** (`dblp.org/search/…`).  The API has
+increasingly strict rate limits that worsen as the number of tracked
+conferences grows.  Use `src.utils.dblp_extract` lookup functions instead.
 
 ## Conferences Tracked
 

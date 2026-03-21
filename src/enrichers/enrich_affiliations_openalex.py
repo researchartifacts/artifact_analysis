@@ -288,7 +288,7 @@ def _dblp_affiliation(
     author_name: str,
     verbose: bool = False,
 ) -> Optional[str]:
-    """Search DBLP for the author PID, then scrape affiliation from person page."""
+    """Look up affiliation from pre-extracted DBLP XML data."""
     clean = re.sub(r"\s+\d{4}$", "", author_name).strip()
 
     cache_key = f"dblp:{_normalise_name(clean)}"
@@ -296,66 +296,26 @@ def _dblp_affiliation(
     if cached is not None:
         return cached if cached else None
 
-    # Step 1: find PID via author search API
-    pid = None
+    # --- Try pre-extracted data (no network) ---
     try:
-        time.sleep(DBLP_DELAY)
-        url = f"https://dblp.org/search/author/api?q={quote(clean)}&format=json&h=3"
-        resp = session.get(url, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-
-        for hit in data.get("result", {}).get("hits", {}).get("hit", []):
-            info = hit.get("info", {})
-            hit_name = info.get("author", "")
-            hit_url = info.get("url", "")
-
-            # Check for inline affiliation in API notes
-            notes = info.get("notes", {}).get("note", {})
-            if isinstance(notes, dict):
-                note_text = notes.get("text", "")
-            elif isinstance(notes, list):
-                note_text = notes[0].get("text", "") if notes else ""
-            else:
-                note_text = ""
-
-            if _names_match(clean, hit_name):
-                if note_text:
-                    if verbose:
-                        print(f"      DBLP-api: {note_text}")
-                    _write_cache(cache_key, note_text, "dblp")
-                    return note_text
-                m = re.search(r"/pid/([\w/\-]+)", hit_url)
-                if m:
-                    pid = m.group(1)
-                    break
-    except Exception as e:
-        if verbose:
-            print(f"      DBLP search error: {e}")
-
-    if not pid:
-        _write_cache(cache_key, "", "dblp")
-        return None
-
-    # Step 2: scrape person page
-    try:
-        time.sleep(DBLP_DELAY)
-        resp = session.get(f"https://dblp.org/pid/{pid}.html", timeout=10)
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.content, "html.parser")
-
-        li = soup.find("li", itemprop="affiliation")
-        if li:
-            span = li.find("span", itemprop="name")
-            if span and span.text.strip():
-                affil = span.text.strip()
+        from ..utils.dblp_extract import load_affiliations
+        affiliations = load_affiliations()
+        if affiliations:
+            affil = affiliations.get(clean)
+            if not affil:
+                lower = clean.lower()
+                for aname, a in affiliations.items():
+                    if aname.lower() == lower:
+                        affil = a
+                        break
+            if affil:
                 if verbose:
-                    print(f"      DBLP-page: {affil}")
+                    print(f"      DBLP-local: {affil}")
                 _write_cache(cache_key, affil, "dblp")
                 return affil
-    except Exception as e:
+    except (ImportError, Exception) as e:
         if verbose:
-            print(f"      DBLP page error: {e}")
+            print(f"      DBLP local lookup error: {e}")
 
     _write_cache(cache_key, "", "dblp")
     return None

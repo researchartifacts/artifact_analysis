@@ -41,16 +41,30 @@ AREA_MAP = {
 
 
 def _count_papers_from_dblp(dblp_file, target_conf_years):
-    """Parse DBLP XML and count papers per (conference, year).
+    """Count papers per (conference, year) from DBLP data.
+
+    Uses the pre-extracted JSON cache when available (fast).
+    Falls back to parsing the raw XML if the cache does not exist.
 
     Args:
-        dblp_file: Path to dblp.xml.gz
+        dblp_file: Path to dblp.xml.gz (used only as fallback)
         target_conf_years: set of (conf_upper, year_int) tuples to count
 
     Returns:
         dict: (conf, year) -> paper_count
     """
-    # Build set of conferences we care about for early filtering
+    # --- Try pre-extracted data first ---
+    try:
+        from ..utils.dblp_extract import paper_count_by_venue_year
+        all_counts = paper_count_by_venue_year()
+        if all_counts:
+            counts = {k: v for k, v in all_counts.items() if k in target_conf_years}
+            print(f"Loaded DBLP paper counts from extraction cache ({len(counts)} conference/years)")
+            return counts
+    except (ImportError, Exception):
+        pass  # fall through to XML parse
+
+    # --- Fallback: parse raw XML ---
     target_confs = {cy[0] for cy in target_conf_years}
 
     counts = defaultdict(int)  # (conf, year) -> count

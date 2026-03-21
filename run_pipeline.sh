@@ -95,6 +95,14 @@ exec > >(tee "$LOGFILE") 2>&1
 echo "[1/10] Checking DBLP freshness..."
 "$SCRIPTS_DIR/download_dblp.sh" --auto
 
+echo "[1b/10] Extracting DBLP lookup data..."
+if [ -f "$DBLP_FILE" ]; then
+    $PYTHON -m src.utils.dblp_extract --dblp_file "$DBLP_FILE" \
+        || { echo "⚠️  DBLP extraction failed"; }
+else
+    echo "⚠️  Skipped ($DBLP_FILE not found)"
+fi
+
 echo "[2/10] Generating statistics (sysartifacts + secartifacts + USENIX)..."
 $PYTHON -m src.generators.generate_statistics --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "❌ Statistics failed"; exit 1; }
