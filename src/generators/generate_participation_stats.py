@@ -77,10 +77,13 @@ def generate_participation_stats(dblp_file, output_dir):
     for (conf, year), info in sorted(ae_data.items()):
         total_papers = dblp_counts.get((conf, year))
         if not total_papers:
-            print(f"  ⚠ {conf} {year}: no DBLP data")
+            print(f"  ⚠ {conf} {year}: no DBLP data — skipping")
             continue
 
         ae_papers = info["ae_papers"]
+        if ae_papers > total_papers:
+            print(f"  ⚠ {conf} {year}: DBLP data incomplete ({total_papers} papers in DBLP, {ae_papers} AE papers) — skipping")
+            continue
         participation_rate = round(ae_papers / total_papers * 100, 1)
         area = conf_area(conf)
 
