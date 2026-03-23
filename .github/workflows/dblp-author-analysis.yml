@@ -1,0 +1,123 @@
+name: DBLP Author Analysis
+
+on:
+  # Run weekly on Sundays at 12:00 UTC (before monthly stats update)
+  schedule:
+    - cron: '0 12 * * 0'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  dblp-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout researchartifacts.github.io repository
+        uses: actions/checkout@v4
+        with:
+          repository: researchartifacts/researchartifacts.github.io
+          path: website
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-ci.txt
+      
+      - name: Cache DBLP database
+        uses: actions/cache@v4
+        with:
+          path: data/dblp/dblp.xml.gz
+          key: dblp-${{ hashFiles('config/cache-version.txt') }}
+          restore-keys: |
+            dblp-
+      
+      - name: Download DBLP if not cached
+        run: |
+          if [ ! -f data/dblp/dblp.xml.gz ]; then
+            echo "Downloading DBLP database (~3GB)..."
+            mkdir -p data/dblp
+            wget -q -O data/dblp/dblp.xml.gz https://dblp.org/xml/dblp.xml.gz
+            echo "Download complete"
+          else
+            echo "Using cached DBLP database"
+          fi
+      
+      - name: Generate author statistics
+        run: |
+          python -m src.generators.generate_author_stats \
+            --dblp_file data/dblp/dblp.xml.gz \
+            --data_dir website \
+            --output_dir website
+      
+      - name: DBLP affiliation enrichment (optional)
+        continue-on-error: true
+        run: |
+          echo "Attempting DBLP affiliation enrichment..."
+          # This step is optional and may not complete in GitHub Actions
+          # due to rate limiting and network constraints
+          python -m src.enrichers.enrich_affiliations_dblp_incremental \
+            --data_dir . \
+            --max_searches 100 \
+            --verbose \
+            --timeout 30 || {
+            echo "⚠️ Affiliation enrichment did not complete (rate limited or timed out)"
+            echo "Continuing with existing affiliations..."
+          }
+          
+          # Regenerate stats with any enriched data
+          if [ -f "authors.json" ]; then
+            echo "Regenerating author stats with enriched data..."
+            python -m src.generators.generate_author_stats \
+              --dblp_file data/dblp/dblp.xml.gz \
+              --data_dir website \
+              --output_dir website || echo "Stats regeneration skipped"
+          fi
+      
+      - name: Generate per-area author data
+        run: |
+          python -m src.generators.generate_area_authors --data_dir website
+      
+      - name: Upload DBLP analysis results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dblp-analysis-results
+          path: |
+            website/_data/authors.yml
+            website/_data/author_summary.yml
+            website/_data/systems_authors.yml
+            website/_data/security_authors.yml
+            website/assets/data/authors.json
+            website/assets/data/systems_authors.json
+            website/assets/data/security_authors.json
+          retention-days: 7
+      
+      - name: Summary
+        run: |
+          echo "## DBLP Author Analysis Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ DBLP database processed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Author statistics generated" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Per-area author data created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Affiliation Enrichment" >> $GITHUB_STEP_SUMMARY
+          echo "Affiliation enrichment is attempted but may be rate-limited in GitHub Actions:" >> $GITHUB_STEP_SUMMARY
+          echo "- Skips authors that already have affiliations" >> $GITHUB_STEP_SUMMARY
+          echo "- Prioritizes new authors (searches immediately)" >> $GITHUB_STEP_SUMMARY
+          echo "- Uses exponential backoff for unsuccessful searches (1d → 2d → 4d → ... → 30d max)" >> $GITHUB_STEP_SUMMARY
+          echo "- Maintains search history to resume without re-searching" >> $GITHUB_STEP_SUMMARY
+          echo "- Max 100 searches per run to respect rate limits" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Results uploaded as artifact and will be merged by statistics update" >> $GITHUB_STEP_SUMMARY

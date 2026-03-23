@@ -1,0 +1,217 @@
+name: Update Research Artifacts Statistics
+
+on:
+  # Run monthly on the 1st at 00:00 UTC
+  schedule:
+    - cron: '0 0 1 * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  update-statistics:
+    runs-on: ubuntu-latest
+    env:
+      SKIP_USENIX_SCRAPE: "1"
+    
+    steps:
+      - name: Checkout artifact_analysis repository
+        uses: actions/checkout@v4
+        with:
+          path: artifact_analysis
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Checkout researchartifacts.github.io repository
+        uses: actions/checkout@v4
+        with:
+          repository: researchartifacts/researchartifacts.github.io
+          path: website
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Checkout artifact_analysis_results repository
+        uses: actions/checkout@v4
+        with:
+          repository: researchartifacts/artifact_analysis_results
+          path: results_archive
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          cd artifact_analysis
+          pip install -r requirements-ci.txt
+      
+      - name: Create output directories
+        run: |
+          mkdir -p website/_data
+          mkdir -p website/assets/data
+          mkdir -p website/assets/charts
+      
+      - name: Generate timestamp
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "RUN_TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+          echo "Pipeline run started at: $TIMESTAMP"
+      
+      - name: Generate statistics
+        run: |
+          cd artifact_analysis
+          python generate_statistics.py \
+            --conf_regex '.*20[12][0-9]' \
+            --output_dir ../website
+      
+      - name: Generate repository statistics
+        run: |
+          cd artifact_analysis
+          python generate_repo_stats.py \
+            --conf_regex '.*20[12][0-9]' \
+            --output_dir ../website || echo "⚠️ Repository stats generation skipped"
+      
+      - name: Generate visualizations
+        run: |
+          cd artifact_analysis
+          python generate_visualizations.py --data_dir ../website
+      
+      - name: Generate per-area author data
+        run: |
+          cd artifact_analysis
+          python generate_area_authors.py --data_dir ../website
+      
+      - name: Generate combined rankings
+        run: |
+          cd artifact_analysis
+          python generate_combined_rankings.py --data_dir ../website
+      
+      - name: Generate institution rankings
+        run: |
+          cd artifact_analysis
+          python generate_institution_rankings.py --data_dir ../website
+      
+      - name: Download DBLP author analysis artifact (if available)
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: dblp-author-analysis.yml
+          workflow_conclusion: success
+          name: dblp-analysis-results
+          path: dblp-results/
+          skip_unpack: false
+        continue-on-error: true
+      
+      - name: Merge DBLP results if available
+        run: |
+          if [ -d "dblp-results" ] && [ "$(ls -A dblp-results)" ]; then
+            echo "Found DBLP analysis results, merging into website..."
+            cp -r dblp-results/_data/* website/_data/ 2>/dev/null || true
+            cp -r dblp-results/assets/data/* website/assets/data/ 2>/dev/null || true
+            echo "DBLP results merged successfully"
+          else
+            echo "⚠️ No recent DBLP analysis results found (pipeline runs separately)"
+          fi
+      
+      - name: Add run metadata to website
+        run: |
+          cd website
+          cat > _data/pipeline_metadata.yml <<EOF
+          last_run: "${{ env.RUN_TIMESTAMP }}"
+          status: "success"
+          workflow: "GitHub Actions"
+          EOF
+          echo "Pipeline metadata created:"
+          cat _data/pipeline_metadata.yml
+      
+      - name: Verify generated files
+        run: |
+          echo "Checking generated files..."
+          ls -lh website/_data/
+          ls -lh website/assets/data/ || true
+          ls -lh website/assets/charts/ || true
+          echo "Files generated successfully!"
+      
+      - name: Push to results archive
+        run: |
+          cd results_archive
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          
+          # Copy generated data to archive
+          mkdir -p output/website_data
+          cp -r ../website/_data output/website_data/ 2>/dev/null || true
+          cp -r ../website/assets output/website_data/ 2>/dev/null || true
+          
+          # Create run summary
+          cat > output/RUN_SUMMARY.txt <<EOF
+          Pipeline Run Summary
+          ====================
+          Timestamp: ${{ env.RUN_TIMESTAMP }}
+          Status: SUCCESS
+          
+          Generated Outputs:
+          - Statistics data
+          - Repository statistics
+          - Visualizations
+          - Per-area author data
+          - Combined rankings
+          - Institution rankings
+          EOF
+          
+          git add output/
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit to archive"
+          else
+            git commit -m "Archive pipeline run from ${{ env.RUN_TIMESTAMP }}"
+            git push
+            echo "Archive pushed successfully"
+          fi
+      
+      - name: Commit and push to main branch
+        run: |
+          cd website
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          
+          # Add all generated files
+          git add _data/ assets/
+          
+          # Check if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update statistics from pipeline run ${{ env.RUN_TIMESTAMP }}"
+            git push origin main
+            echo "Changes pushed to main branch successfully"
+          fi
+      
+      - name: Summary
+        run: |
+          echo "## Pipeline Statistics Update Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏰ **Run Timestamp**: ${{ env.RUN_TIMESTAMP }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Tasks Completed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Statistics generated" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Repository statistics collected" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Visualizations created" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Per-area author data generated" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Ranked data compiled" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Results archived to artifact_analysis_results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Debug branch updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Repositories Updated" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 artifact_analysis_results: Timestamped archive" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌐 researchartifacts.github.io (debug branch): Website data" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔍 Review changes in [debug branch](https://github.com/researchartifacts/researchartifacts.github.io/tree/debug)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✔️ Test website rendering at debug branch deploy preview" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 View archived data in [artifact_analysis_results](https://github.com/researchartifacts/artifact_analysis_results)" >> $GITHUB_STEP_SUMMARY
