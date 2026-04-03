@@ -97,6 +97,21 @@ jobs:
           cd artifact_analysis
           python -m src.generators.generate_institution_rankings --data_dir ../website
       
+      - name: Generate author profiles
+        run: |
+          cd artifact_analysis
+          python -m src.generators.generate_author_profiles --data_dir ../website
+      
+      - name: Generate search data
+        run: |
+          cd artifact_analysis
+          python -m src.generators.generate_search_data --data_dir ../website
+      
+      - name: Update ranking history
+        run: |
+          cd artifact_analysis
+          python -m src.generators.generate_ranking_history --data_dir ../website
+      
       - name: Download DBLP author analysis artifact (if available)
         uses: dawidd6/action-download-artifact@v3
         with:
