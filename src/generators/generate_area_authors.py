@@ -168,9 +168,9 @@ def generate_area_authors():
                     area_total_papers += per_conf_totals.get(conf, 0)
 
             if total > area_total_papers:
-                raise ValueError(
-                    f"Invariant violation for '{author['name']}' in {area_name}: artifacts ({total}) > total_papers ({area_total_papers})"
-                )
+                print(f"  ⚠ DBLP undercount for '{author['name']}' in {area_name}: "
+                      f"artifacts ({total}) > total_papers ({area_total_papers}), clamping")
+                area_total_papers = total
             if badges_reproducible > total:
                 raise ValueError(
                     f"Invariant violation for '{author['name']}' in {area_name}: reproduced_badges ({badges_reproducible}) > artifacts ({total})"

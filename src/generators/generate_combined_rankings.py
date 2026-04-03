@@ -462,9 +462,9 @@ def _build_entry(*, name, affiliation, artifacts, total_papers, artifact_rate,
     yr_keys = [int(y) for y in years.keys()] if years else []
     
     if artifacts > total_papers:
-        raise ValueError(
-            f"Invariant violation for '{name}': artifacts ({artifacts}) > total_papers ({total_papers})"
-        )
+        print(f"  ⚠ DBLP undercount for '{name}': "
+              f"artifacts ({artifacts}) > total_papers ({total_papers}), clamping")
+        total_papers = artifacts
     if badges_reproducible > artifacts:
         raise ValueError(
             f"Invariant violation for '{name}': reproduced_badges ({badges_reproducible}) > artifacts ({artifacts})"
@@ -630,9 +630,9 @@ def generate_combined_rankings(data_dir: str):
                 existing['last_year'] = max(all_years)
                 
             if existing['artifacts'] > existing['total_papers']:
-                raise ValueError(
-                    f"Invariant violation after systems+security merge for '{existing['name']}': artifacts ({existing['artifacts']}) > total_papers ({existing['total_papers']})"
-                )
+                    print(f"  ⚠ DBLP undercount after merge for '{existing['name']}': "
+                          f"artifacts ({existing['artifacts']}) > total_papers ({existing['total_papers']}), clamping")
+                    existing['total_papers'] = existing['artifacts']
             if existing['badges_reproducible'] > existing['artifacts']:
                 raise ValueError(
                     f"Invariant violation after systems+security merge for '{existing['name']}': reproduced_badges ({existing['badges_reproducible']}) > artifacts ({existing['artifacts']})"
