@@ -21,7 +21,7 @@ jobs:
       - name: Checkout researchartifacts.github.io repository
         uses: actions/checkout@v4
         with:
-          repository: researchartifacts/researchartifacts.github.io
+          repository: ${{ github.repository_owner }}/researchartifacts.github.io
           path: website
           ref: main
           token: ${{ secrets.CROSS_REPO_TOKEN }}

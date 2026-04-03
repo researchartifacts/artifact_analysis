@@ -28,7 +28,7 @@ jobs:
       - name: Checkout researchartifacts.github.io repository
         uses: actions/checkout@v4
         with:
-          repository: researchartifacts/researchartifacts.github.io
+          repository: ${{ github.repository_owner }}/researchartifacts.github.io
           path: website
           ref: main
           token: ${{ secrets.CROSS_REPO_TOKEN }}
@@ -36,7 +36,7 @@ jobs:
       - name: Checkout artifact_analysis_results repository
         uses: actions/checkout@v4
         with:
-          repository: researchartifacts/artifact_analysis_results
+          repository: ${{ github.repository_owner }}/artifact_analysis_results
           path: results_archive
           token: ${{ secrets.CROSS_REPO_TOKEN }}
       
@@ -227,6 +227,6 @@ jobs:
           echo "- 🌐 researchartifacts.github.io (debug branch): Website data" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔍 Review changes in [debug branch](https://github.com/researchartifacts/researchartifacts.github.io/tree/debug)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔍 Review changes in [debug branch](https://github.com/${{ github.repository_owner }}/researchartifacts.github.io/tree/debug)" >> $GITHUB_STEP_SUMMARY
           echo "- ✔️ Test website rendering at debug branch deploy preview" >> $GITHUB_STEP_SUMMARY
-          echo "- 📊 View archived data in [artifact_analysis_results](https://github.com/researchartifacts/artifact_analysis_results)" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 View archived data in [artifact_analysis_results](https://github.com/${{ github.repository_owner }}/artifact_analysis_results)" >> $GITHUB_STEP_SUMMARY
