@@ -31,14 +31,14 @@ jobs:
           repository: researchartifacts/researchartifacts.github.io
           path: website
           ref: main
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
       
       - name: Checkout artifact_analysis_results repository
         uses: actions/checkout@v4
         with:
           repository: researchartifacts/artifact_analysis_results
           path: results_archive
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
       
       - name: Set up Python
         uses: actions/setup-python@v5
