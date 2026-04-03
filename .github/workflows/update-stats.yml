@@ -15,8 +15,6 @@ permissions:
 jobs:
   update-statistics:
     runs-on: ubuntu-latest
-    env:
-      SKIP_USENIX_SCRAPE: "1"
     
     steps:
       - name: Checkout artifact_analysis repository
