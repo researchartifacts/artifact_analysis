@@ -235,7 +235,7 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
             for artifact in artifacts:
                 raw_badges = artifact.get('badges', [])
                 if isinstance(raw_badges, str):
-                    raw_badges = [b.strip() for b in raw_badges.split(',')]
+                    raw_badges = [b.strip() for b in raw_badges.split(',') if b.strip()]
                 # Resolve the best repository URL from several possible keys
                 repo_url = (artifact.get('repository_url', '')
                             or artifact.get('github_url', '')

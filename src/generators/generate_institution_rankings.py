@@ -181,14 +181,18 @@ def aggregate_by_institution(combined_data):
             ae_ratio = 0.0  # Neither artifacts nor AE service
         
         # Classify institution role based on A:E ratio
-        role = None
-        if ae_ratio is not None and ae_ratio > 0:
-            if ae_ratio > 2.0:
-                role = 'Producer'
-            elif ae_ratio < 0.5:
-                role = 'Consumer'
-            else:
-                role = 'Balanced'
+        if ae_ratio is None:
+            # Artifact-only (ae_score == 0, artifact_score > 0) → creator
+            role = 'Producer'
+        elif ae_ratio == 0.0:
+            # AE-only or neither (artifact_score == 0) → evaluator
+            role = 'Consumer'
+        elif ae_ratio > 2.0:
+            role = 'Producer'
+        elif ae_ratio < 0.5:
+            role = 'Consumer'
+        else:
+            role = 'Balanced'
         
         # Only include institutions with meaningful contributions, excluding incomplete affiliations
         if data['combined_score'] >= 3 and affiliation.strip() not in ('Univ', 'University', 'Unknown', '_'):

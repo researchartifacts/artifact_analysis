@@ -302,6 +302,8 @@ def main():
                         help='Regex for conference names/years')
     parser.add_argument('--output_dir', type=str, default=None,
                         help='Website repo root directory')
+    parser.add_argument('--refresh', action='store_true',
+                        help='Re-fetch all stats instead of only new artifacts')
     args = parser.parse_args()
 
     # Try to load the cached results written by generate_statistics.py to
@@ -329,9 +331,72 @@ def main():
         all_results = {**sys_results, **sec_results}
         print(f"Found {sum(len(v) for v in all_results.values())} artifacts across {len(all_results)} conference-years")
 
-    print("Collecting repository statistics (this may take a while)...")
-    all_stats = collect_stats_for_results(all_results)
-    print(f"Collected stats for {len(all_stats)} repositories")
+    # Load existing repo stats from the website (historical data).
+    # Only fetch stats for NEW artifacts not already in the historical data,
+    # unless --refresh is used which forces a full re-fetch.
+    existing_stats = []
+    existing_urls = set()
+    if not args.refresh and args.output_dir:
+        detail_path = os.path.join(args.output_dir, 'assets', 'data', 'repo_stats_detail.json')
+        if os.path.exists(detail_path):
+            with open(detail_path, 'r') as f:
+                raw_existing = json.load(f)
+            # Normalize existing entries to the format collect_stats_for_results produces
+            for entry in raw_existing:
+                if 'source' not in entry:
+                    url_lower = (entry.get('url', '') or '').lower()
+                    if 'github' in url_lower:
+                        entry['source'] = 'github'
+                    elif 'zenodo' in url_lower:
+                        entry['source'] = 'zenodo'
+                    elif 'figshare' in url_lower:
+                        entry['source'] = 'figshare'
+                    else:
+                        entry['source'] = 'github'  # detail JSON is GitHub-only
+                if 'github_stars' not in entry and 'stars' in entry:
+                    entry['github_stars'] = entry['stars']
+                if 'github_forks' not in entry and 'forks' in entry:
+                    entry['github_forks'] = entry['forks']
+            existing_stats = raw_existing
+            existing_urls = {s.get('url', '').rstrip('/') for s in existing_stats}
+            print(f"Loaded {len(existing_stats)} existing repo stats ({len(existing_urls)} unique URLs)")
+
+    if args.refresh:
+        print("--refresh: fetching stats for ALL artifacts")
+
+    # Determine which artifacts are new (not in existing stats)
+    new_results = {}
+    total_artifacts = 0
+    for conf_year, artifacts in all_results.items():
+        new_arts = []
+        for art in artifacts:
+            total_artifacts += 1
+            if not args.refresh:
+                # Check all URL fields for this artifact
+                has_existing = False
+                for url_key in ['repository_url', 'artifact_url', 'github_url',
+                                'second_repository_url', 'bitbucket_url']:
+                    url = art.get(url_key, '')
+                    if url and url.rstrip('/') in existing_urls:
+                        has_existing = True
+                        break
+                if has_existing:
+                    continue
+            new_arts.append(art)
+        if new_arts:
+            new_results[conf_year] = new_arts
+
+    new_count = sum(len(v) for v in new_results.values())
+    print(f"Total artifacts: {total_artifacts}, already have stats: {total_artifacts - new_count}, new to fetch: {new_count}")
+
+    if new_count > 0:
+        print(f"Collecting repository statistics for {new_count} artifacts...")
+        new_stats = collect_stats_for_results(new_results)
+        print(f"Collected stats for {len(new_stats)} repositories")
+        all_stats = existing_stats + new_stats
+    else:
+        print("No new artifacts — reusing existing stats")
+        all_stats = existing_stats
 
     print("Aggregating statistics...")
     aggregated = aggregate_stats(all_stats)
@@ -356,6 +421,71 @@ def main():
         with open(detail_path, 'w') as f:
             json.dump(aggregated.get('all_github_repos', []), f, indent=2)
         print(f"Written per-repo detail ({len(aggregated.get('all_github_repos', []))} repos) to {detail_path}")
+
+        # ---- Historical time-series tracking ----
+        # Append a dated snapshot for each fetched artifact so we can track
+        # stars/forks/views/downloads over time across monthly runs.
+        today = datetime.now().strftime('%Y-%m-%d')
+        history_path = os.path.join(assets_dir, 'repo_stats_history.json')
+
+        # Load existing history
+        history = {}
+        if os.path.exists(history_path):
+            with open(history_path, 'r') as f:
+                history = json.load(f)
+            print(f"Loaded history for {len(history)} URLs")
+
+        # Build snapshots from the raw all_stats (which have full metric detail)
+        updated = 0
+        for s in all_stats:
+            url = s.get('url', '').rstrip('/')
+            if not url:
+                continue
+
+            source = s.get('source', '')
+            if not source:
+                url_lower = url.lower()
+                if 'github' in url_lower:
+                    source = 'github'
+                elif 'zenodo' in url_lower:
+                    source = 'zenodo'
+                elif 'figshare' in url_lower:
+                    source = 'figshare'
+                else:
+                    source = 'unknown'
+
+            # Build the snapshot — only time-varying metrics
+            snapshot = {'date': today}
+            if source == 'github':
+                snapshot['stars'] = s.get('github_stars', s.get('stars', 0)) or 0
+                snapshot['forks'] = s.get('github_forks', s.get('forks', 0)) or 0
+            elif source in ('zenodo', 'figshare'):
+                snapshot['views'] = s.get('zenodo_views', s.get('views', 0)) or 0
+                snapshot['downloads'] = s.get('zenodo_downloads', s.get('downloads', 0)) or 0
+
+            if url not in history:
+                history[url] = {
+                    'meta': {
+                        'conference': s.get('conference', ''),
+                        'year': s.get('year', 0),
+                        'area': _conf_area(s.get('conference', '')),
+                        'title': s.get('title', ''),
+                        'source': source,
+                    },
+                    'snapshots': [],
+                }
+
+            snapshots = history[url]['snapshots']
+            # Replace if we already have a snapshot for today, otherwise append
+            if snapshots and snapshots[-1].get('date') == today:
+                snapshots[-1] = snapshot
+            else:
+                snapshots.append(snapshot)
+            updated += 1
+
+        with open(history_path, 'w') as f:
+            json.dump(history, f, indent=2)
+        print(f"Written history ({len(history)} URLs, {updated} snapshots updated) to {history_path}")
 
     return aggregated
 

@@ -78,7 +78,8 @@ jobs:
           cd artifact_analysis
           python -m src.generators.generate_repo_stats \
             --conf_regex '.*20[12][0-9]' \
-            --output_dir ../website || echo "⚠️ Repository stats generation skipped"
+            --output_dir ../website \
+            --refresh || echo "⚠️ Repository stats generation skipped"
       
       - name: Generate visualizations
         run: |
