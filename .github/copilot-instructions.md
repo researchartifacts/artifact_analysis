@@ -50,3 +50,24 @@ print('OK')
 The XML file is downloaded by `scripts/download_dblp.sh` and parsed by `src/utils/dblp_extract.py`.
 The API has strict rate limits and is unreliable for bulk queries. All author/paper
 lookups must go through the XML file.
+
+## Module CLI Requirements
+
+Every module in `src/generators/` and `src/scrapers/` **must** be runnable both as:
+
+1. **CLI** via `python -m src.generators.<module_name>` with `argparse` arguments.
+2. **Importable function** that can be called from other Python code.
+
+Use an `if __name__ == "__main__":` block with `argparse` for CLI, and expose the
+core logic as a function (e.g., `def main(...)` or `def run(...)`).
+
+## Monthly Pipeline Integration
+
+Any new or modified generator **must** be added to the monthly CI pipeline in
+`.github/workflows/update-stats.yml`. When creating a new generator:
+
+1. Add a step in `update-stats.yml` following the existing pattern (see current steps).
+2. Place it in the correct order relative to dependencies (e.g., after data it reads is generated).
+3. Use `--data_dir ../website` or `--output_dir ../website` consistently.
+4. If the step can fail gracefully, append `|| echo "⚠️ <step> skipped"`.
+5. Add the corresponding schema validation entry in the "Validate output against JSON schemas" step.
