@@ -89,12 +89,17 @@ def collect_stats_for_results(results, url_keys=None):
     all_stats = []
     seen_urls = set()
 
+    total_artifacts = sum(len(arts) for arts in results.values())
+    processed = 0
+    collected = 0
+
     for conf_year, artifacts in results.items():
         conf_name, year = extract_conference_name(conf_year)
         if year is None:
             continue
 
         for artifact in artifacts:
+            processed += 1
             for url_key in url_keys:
                 url = artifact.get(url_key, '')
                 exists_key = f'{url_key}_exists'
@@ -124,6 +129,7 @@ def collect_stats_for_results(results, url_keys=None):
                     continue
 
                 if stats:
+                    collected += 1
                     entry = {
                         'conference': conf_name,
                         'year': year,
@@ -133,6 +139,10 @@ def collect_stats_for_results(results, url_keys=None):
                     }
                     entry.update(stats)
                     all_stats.append(entry)
+
+            if processed % 50 == 0 or processed == total_artifacts:
+                print(f"  Progress: {processed}/{total_artifacts} artifacts checked, "
+                      f"{collected} stats collected, {len(seen_urls)} unique URLs")
 
     return all_stats
 
