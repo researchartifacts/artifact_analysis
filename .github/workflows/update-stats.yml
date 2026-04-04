@@ -69,6 +69,7 @@ jobs:
             --output_dir ../website
       
       - name: Generate repository statistics
+        timeout-minutes: 300
         env:
           GITHUB_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
         run: |
