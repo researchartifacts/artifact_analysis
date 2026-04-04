@@ -43,3 +43,10 @@ jsonschema.validate(data, schema)
 print('OK')
 "
 ```
+
+## DBLP Data Access
+
+**Do NOT use the DBLP HTTP API.** Always use the local DBLP XML dump (`data/dblp/dblp.xml.gz`).
+The XML file is downloaded by `scripts/download_dblp.sh` and parsed by `src/utils/dblp_extract.py`.
+The API has strict rate limits and is unreliable for bulk queries. All author/paper
+lookups must go through the XML file.
