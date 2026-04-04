@@ -46,10 +46,18 @@ jobs:
           python-version: '3.10'
           cache: 'pip'
       
+      - name: Checkout data-schemas repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/data-schemas
+          path: data-schemas
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
+      
       - name: Install dependencies
         run: |
           cd artifact_analysis
           pip install -r requirements-ci.txt
+          pip install jsonschema
       
       - name: Create output directories
         run: |
@@ -155,6 +163,52 @@ jobs:
           ls -lh website/assets/data/ || true
           ls -lh website/assets/charts/ || true
           echo "Files generated successfully!"
+      
+      - name: Validate output against JSON schemas
+        run: |
+          python -c "
+          import json, sys, pathlib
+          try:
+              import jsonschema
+          except ImportError:
+              print('⚠️ jsonschema not installed, skipping validation')
+              sys.exit(0)
+
+          schemas_dir = pathlib.Path('data-schemas/schemas')
+          if not schemas_dir.exists():
+              print('⚠️ data-schemas not checked out, skipping validation')
+              sys.exit(0)
+
+          validations = [
+              ('artifacts.schema.json', 'results_archive/output/artifacts.json'),
+              ('institution_rankings.schema.json', 'website/_data/institution_rankings.json'),
+          ]
+          
+          errors = 0
+          for schema_file, data_file in validations:
+              schema_path = schemas_dir / schema_file
+              data_path = pathlib.Path(data_file)
+              if not schema_path.exists():
+                  print(f'⚠️  Schema not found: {schema_file}')
+                  continue
+              if not data_path.exists():
+                  print(f'⚠️  Data not found: {data_file}')
+                  continue
+              schema = json.loads(schema_path.read_text())
+              data = json.loads(data_path.read_text())
+              try:
+                  jsonschema.validate(data, schema)
+                  print(f'✅ {data_file} validates against {schema_file}')
+              except jsonschema.ValidationError as e:
+                  print(f'❌ {data_file} FAILS {schema_file}: {e.message}')
+                  print(f'   Path: {list(e.absolute_path)[:5]}')
+                  errors += 1
+          
+          if errors:
+              print(f'\n⚠️ {errors} validation error(s) — schemas in data-schemas may need updating')
+          else:
+              print('\n✅ All outputs match their schemas')
+          "
       
       - name: Push to results archive
         run: |
