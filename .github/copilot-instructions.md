@@ -71,3 +71,27 @@ Any new or modified generator **must** be added to the monthly CI pipeline in
 3. Use `--data_dir ../website` or `--output_dir ../website` consistently.
 4. If the step can fail gracefully, append `|| echo "⚠️ <step> skipped"`.
 5. Add the corresponding schema validation entry in the "Validate output against JSON schemas" step.
+
+## Caching Conventions
+
+- All HTTP calls must use `_session_with_retries()` from `src/scrapers/sys_sec_scrape.py`.
+- Cache responses in `.cache/` with appropriate TTL: 30 days for stable data, 7 days for URL liveness (negative), 90 days for URL existence (positive).
+- Use `_read_cache()` / `_write_cache()` helpers for consistency.
+- DBLP extracted data lives in `.cache/dblp_extracted/` and is invalidated by mtime of the XML file.
+- Never commit `.cache/` — it is gitignored.
+
+## Error Handling
+
+- Network errors: retry with exponential backoff (reuse `_session_with_retries()`).
+- Missing optional input files: warn with `print("⚠️ ...")` and skip gracefully.
+- Output directories: always create with `os.makedirs(path, exist_ok=True)`.
+- Pipeline steps that can fail: use `|| echo "⚠️ <step> skipped"` in bash; in Python, catch exceptions and continue.
+
+## Naming Conventions
+
+- Generators: `generate_<descriptive_noun>.py`
+- Scrapers: `<platform>_scrape.py`
+- Enrichers: `enrich_<what>.py`
+- CLI arguments: `--snake_case` with sensible defaults
+- Conference names: always uppercase (`OSDI`, `ACSAC`, `USENIXSEC`)
+- Years: integers in Python, strings only when used as YAML/JSON keys
