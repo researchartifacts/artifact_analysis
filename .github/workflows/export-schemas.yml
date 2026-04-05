@@ -1,0 +1,52 @@
+name: Export Data Schemas
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/models/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: researchartifacts/data-schemas
+          path: data-schemas
+          token: ${{ secrets.DATA_SCHEMAS_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install pydantic
+
+      - name: Export schemas from Pydantic models
+        run: python -m src.models.export_schemas --output_dir data-schemas/schemas
+
+      - name: Check for changes
+        id: diff
+        working-directory: data-schemas
+        run: |
+          git diff --quiet schemas/ && echo "changed=false" >> "$GITHUB_OUTPUT" || echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push schema updates
+        if: steps.diff.outputs.changed == 'true'
+        working-directory: data-schemas
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add schemas/
+          git commit -m "Auto-update schemas from Pydantic models
+
+          Source: ${{ github.repository }}@${{ github.sha }}"
+          git push

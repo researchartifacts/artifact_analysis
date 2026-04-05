@@ -1,6 +1,7 @@
 # Project-specific
 data/dblp/
 logs/
+site/
 
 # Python
 __pycache__/

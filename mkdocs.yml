@@ -1,0 +1,68 @@
+site_name: Artifact Analysis
+site_description: Documentation for the researchartifacts artifact analysis pipeline
+site_url: https://researchartifacts.github.io/artifact_analysis/
+repo_url: https://github.com/researchartifacts/artifact_analysis
+repo_name: researchartifacts/artifact_analysis
+
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - search.suggest
+    - toc.follow
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
+        - docs/gen_cli_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - section-index
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+          options:
+            show_source: true
+            show_root_heading: true
+            heading_level: 2
+            members_order: source
+            docstring_style: google
+            show_signature_annotations: true
+
+nav:
+  - Home: index.md
+  - CLI Reference: cli/
+  - Data Schemas: schemas/
+  - API Reference: reference/
+
+extra:
+  version:
+    provider: mike
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
