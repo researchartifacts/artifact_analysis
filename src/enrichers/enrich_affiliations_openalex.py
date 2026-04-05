@@ -482,6 +482,7 @@ def enrich(
     max_authors: Optional[int] = None,
     verbose: bool = False,
     dry_run: bool = False,
+    recheck: bool = False,
 ) -> dict:
     """
     Main entry point.  Reads authors.yml and paper_authors_map.json,
@@ -500,12 +501,16 @@ def enrich(
     print("Parsing authors.yml (fast line scan)...")
     authors = _parse_authors_yml_fast(authors_file)
     total = len(authors)
-    missing = [a for a in authors if not a.get("affiliation")]
-    print(f"  {total} total authors, {len(missing)} missing affiliations")
+    if recheck:
+        candidates = list(authors)
+        print(f"  {total} total authors, rechecking ALL affiliations")
+    else:
+        candidates = [a for a in authors if not a.get("affiliation")]
+        print(f"  {total} total authors, {len(candidates)} missing affiliations")
 
     if max_authors:
-        missing = missing[:max_authors]
-        print(f"  Processing first {len(missing)} (--max_authors)")
+        candidates = candidates[:max_authors]
+        print(f"  Processing first {len(candidates)} (--max_authors)")
 
     # HTTP session
     session = requests.Session()
@@ -521,7 +526,7 @@ def enrich(
 
     stats = {
         "total": total,
-        "missing": len(missing),
+        "candidates": len(candidates),
         "found": 0,
         "not_found": 0,
         "by_source": {},
@@ -530,10 +535,10 @@ def enrich(
 
     updates: Dict[str, str] = {}
 
-    print(f"\nEnriching {len(missing)} authors...")
+    print(f"\nEnriching {len(candidates)} authors...")
     print("=" * 70)
 
-    for idx, author in enumerate(missing, 1):
+    for idx, author in enumerate(candidates, 1):
         name = author.get("name", "")
         if not name:
             continue
@@ -542,7 +547,7 @@ def enrich(
         paper_count = len(papers)
 
         if verbose:
-            print(f"[{idx}/{len(missing)}] {name}  ({paper_count} papers)")
+            print(f"[{idx}/{len(candidates)}] {name}  ({paper_count} papers)")
 
         affiliation, source = find_affiliation_for_author(
             session, name, papers, verbose=verbose
@@ -554,12 +559,12 @@ def enrich(
             updates[name] = affiliation
             marker = "+"
             if not verbose:
-                print(f"[{idx}/{len(missing)}] {name:40s}  +  {affiliation[:50]}  ({source})")
+                print(f"[{idx}/{len(candidates)}] {name:40s}  +  {affiliation[:50]}  ({source})")
         else:
             stats["not_found"] += 1
             marker = "-"
             if not verbose:
-                print(f"[{idx}/{len(missing)}] {name:40s}  -")
+                print(f"[{idx}/{len(candidates)}] {name:40s}  -")
 
     print("=" * 70)
     print(f"\nResults:  found {stats['found']}, not found {stats['not_found']}")
@@ -590,6 +595,7 @@ def main():
     parser.add_argument("--max_authors", type=int, default=None, help="Limit number of authors to process")
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--dry_run", action="store_true", help="Don't write changes")
+    parser.add_argument("--recheck", action="store_true", help="Re-query all authors, including those with existing affiliations")
     args = parser.parse_args()
 
     enrich(
@@ -599,6 +605,7 @@ def main():
         max_authors=args.max_authors,
         verbose=args.verbose,
         dry_run=args.dry_run,
+        recheck=args.recheck,
     )
 
 

@@ -1,16 +1,26 @@
-name: DBLP Author Analysis
+name: Author & Affiliation Pipeline
 
 on:
-  # Run weekly on Sundays at 12:00 UTC (before monthly stats update)
+  # Run weekly on Sundays at 12:00 UTC (incremental enrichment)
   schedule:
     - cron: '0 12 * * 0'
+    # Quarterly full recheck on 1st of Jan/Apr/Jul/Oct at 06:00 UTC
+    - cron: '0 6 1 1,4,7,10 *'
   
-  # Allow manual trigger
+  # Allow manual trigger with optional full recheck
   workflow_dispatch:
+    inputs:
+      recheck:
+        description: 'Recheck all affiliations (not just missing)'
+        type: boolean
+        default: false
 
 jobs:
-  dblp-analysis:
+  author-analysis:
     runs-on: ubuntu-latest
+    env:
+      # Auto-enable recheck on quarterly schedule or manual trigger
+      RECHECK: ${{ inputs.recheck == true || github.event.schedule == '0 6 1 1,4,7,10 *' }}
     
     steps:
       - name: Checkout repository
@@ -78,10 +88,15 @@ jobs:
         continue-on-error: true
         run: |
           echo "Enriching affiliations from DBLP..."
+          RECHECK_FLAG=""
+          if [ "${{ env.RECHECK }}" = "true" ]; then
+            RECHECK_FLAG="--recheck"
+            echo "Full recheck mode: re-querying all authors"
+          fi
           python -m src.enrichers.enrich_affiliations_dblp_incremental \
             --data_dir website \
             --max_searches 100 \
-            --verbose || {
+            --verbose $RECHECK_FLAG || {
             echo "⚠️ DBLP enrichment did not complete (rate limited or timed out)"
             echo "Continuing with existing affiliations..."
           }
@@ -90,11 +105,18 @@ jobs:
         continue-on-error: true
         run: |
           echo "Enriching affiliations from OpenAlex/CrossRef..."
+          RECHECK_FLAG=""
+          MAX_AUTHORS=200
+          if [ "${{ env.RECHECK }}" = "true" ]; then
+            RECHECK_FLAG="--recheck"
+            MAX_AUTHORS=500
+            echo "Full recheck mode: re-querying all authors (max $MAX_AUTHORS)"
+          fi
           python -m src.enrichers.enrich_affiliations_openalex \
             --authors_file website/_data/authors.yml \
             --papers_file website/assets/data/paper_authors_map.json \
-            --max_authors 200 \
-            --verbose || {
+            --max_authors $MAX_AUTHORS \
+            --verbose $RECHECK_FLAG || {
             echo "⚠️ OpenAlex enrichment did not complete"
             echo "Continuing with existing affiliations..."
           }
@@ -127,18 +149,21 @@ jobs:
       
       - name: Summary
         run: |
-          echo "## DBLP Author Analysis Complete" >> $GITHUB_STEP_SUMMARY
+          echo "## Author & Affiliation Pipeline Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ DBLP database processed" >> $GITHUB_STEP_SUMMARY
           echo "✅ Author statistics generated" >> $GITHUB_STEP_SUMMARY
           echo "✅ Per-area author data created" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Affiliation Enrichment" >> $GITHUB_STEP_SUMMARY
-          echo "Affiliation enrichment is attempted but may be rate-limited in GitHub Actions:" >> $GITHUB_STEP_SUMMARY
-          echo "- Skips authors that already have affiliations" >> $GITHUB_STEP_SUMMARY
-          echo "- Prioritizes new authors (searches immediately)" >> $GITHUB_STEP_SUMMARY
-          echo "- Uses exponential backoff for unsuccessful searches (1d → 2d → 4d → ... → 30d max)" >> $GITHUB_STEP_SUMMARY
-          echo "- Maintains search history to resume without re-searching" >> $GITHUB_STEP_SUMMARY
-          echo "- Max 100 searches per run to respect rate limits" >> $GITHUB_STEP_SUMMARY
+          echo "### Affiliation Enrichment Layers" >> $GITHUB_STEP_SUMMARY
+          echo "1. **CSRankings** — offline faculty match (overwrites if found)" >> $GITHUB_STEP_SUMMARY
+          echo "2. **DBLP** — local XML search (incremental, 100/run)" >> $GITHUB_STEP_SUMMARY
+          echo "3. **OpenAlex** — paper-based disambiguation (200/run)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ env.RECHECK }}" = "true" ]; then
+            echo "🔄 **Full recheck mode** — re-queried all authors" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "📝 Incremental mode — only enriched missing affiliations" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📊 Results uploaded as artifact and will be merged by statistics update" >> $GITHUB_STEP_SUMMARY

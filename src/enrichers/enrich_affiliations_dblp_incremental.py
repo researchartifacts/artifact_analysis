@@ -94,7 +94,7 @@ def fetch_affiliation_from_dblp_page(pid, session=None, verbose=False):
     except (ImportError, Exception):
         return None
 
-def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbose=False):
+def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbose=False, recheck=False):
     """
     Incrementally enrich author affiliations using DBLP with smart prioritization.
     
@@ -103,6 +103,7 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
         output_path: Path to save enriched data (if None, returns without saving)
         max_searches: Maximum number of searches to perform (for rate limiting)
         verbose: Print detailed progress
+        recheck: If True, re-query all authors including those with existing affiliations
     
     Returns:
         Tuple of (enriched_authors_data, stats_dict)
@@ -145,8 +146,8 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
         name = author.get('name', '')
         affiliation = author.get('affiliation', '')
         
-        # Skip if already has good affiliation
-        if affiliation and affiliation not in ['Unknown', ''] and not affiliation.startswith('_'):
+        # Skip if already has good affiliation (unless rechecking)
+        if not recheck and affiliation and affiliation not in ['Unknown', ''] and not affiliation.startswith('_'):
             stats['already_has_affiliation'] += 1
             enriched_data.append(author)
             continue
@@ -277,6 +278,11 @@ def main():
         action='store_true',
         help='Clear search history and start fresh'
     )
+    parser.add_argument(
+        '--recheck',
+        action='store_true',
+        help='Re-query all authors, including those with existing affiliations'
+    )
     
     args = parser.parse_args()
     
@@ -301,7 +307,8 @@ def main():
         authors_data,
         output_path=output_path,
         max_searches=args.max_searches,
-        verbose=args.verbose
+        verbose=args.verbose,
+        recheck=args.recheck
     )
     
     return stats
