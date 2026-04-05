@@ -7,27 +7,29 @@ All JSON/YAML data structures produced by this pipeline are formally documented 
 
 When modifying any generator in `src/generators/`, check whether the change affects
 the output schema (adding/removing/renaming fields, changing types, changing nesting).
-If it does, **also update the corresponding schema file** in the sibling
-`../data-schemas/schemas/` directory.
+If it does, **update the corresponding Pydantic model** in `src/models/`.
+JSON Schema files in `data-schemas` are auto-generated from these models via
+`.github/workflows/export-schemas.yml` (runs on push when `src/models/` changes).
 
-### Schema mapping
-
-| Generator | Schema file(s) |
-|-----------|---------------|
-| `generate_statistics.py` | `summary.schema.json`, `artifacts_by_conference.schema.json`, `artifacts_by_year.schema.json`, `artifacts.schema.json` |
-| `generate_repo_stats.py` | `repo_stats.schema.json`, `repo_stats_summary.schema.json` |
-| `generate_combined_rankings.py` | `combined_rankings.schema.json` |
-| `generate_institution_rankings.py` | `institution_rankings.schema.json` |
-| `generate_author_stats.py` | `author_stats.schema.json`, `paper_index.schema.json` |
-| `generate_search_data.py` | `search_data.schema.json` |
-
-### How to update schemas
+### Schema workflow
 
 1. Edit the generator in `src/generators/`.
-2. Open the corresponding `.schema.json` file in `../data-schemas/schemas/`.
-3. Update `properties`, `required`, `$defs`, or `description` to match the new output.
-4. Run `cd ../data-schemas && .venv/bin/python -c "import json,jsonschema; s=json.load(open('schemas/FILE.schema.json')); jsonschema.Draft202012Validator.check_schema(s); print('OK')"` to verify.
-5. Commit changes to **both** repos.
+2. Update the Pydantic model in `src/models/`.
+3. Commit — CI auto-exports updated `.schema.json` files to `data-schemas`.
+
+To export locally: `python -m src.models.export_schemas --output_dir ../data-schemas/schemas`
+
+### Pydantic model mapping
+
+| Generator | Pydantic model (`src/models/`) |
+|-----------|-------------------------------|
+| `generate_statistics.py` | `summary.py`, `artifacts_by_conference.py`, `artifacts_by_year.py`, `artifacts.py` |
+| `generate_repo_stats.py` | `repo_stats.py` (both `RepoStatsEntry` and `RepoStatsSummary`) |
+| `generate_combined_rankings.py` | `combined_rankings.py` |
+| `generate_institution_rankings.py` | `institution_rankings.py` |
+| `generate_author_stats.py` | `author_stats.py`, `paper_index.py` |
+| `generate_search_data.py` | `search_data.py` |
+| `generate_author_index.py` | `author_index.py` |
 
 ### Validation
 
@@ -71,6 +73,16 @@ Any new or modified generator **must** be added to the monthly CI pipeline in
 3. Use `--data_dir ../website` or `--output_dir ../website` consistently.
 4. If the step can fail gracefully, append `|| echo "⚠️ <step> skipped"`.
 5. Add the corresponding schema validation entry in the "Validate output against JSON schemas" step.
+
+## CI Secrets
+
+All cross-repo workflows use `secrets.CROSS_REPO_TOKEN` (a PAT with push access to
+sibling repos under the `researchartifacts` org). Do **not** create separate tokens
+per workflow. Workflows that use it:
+
+- `update-stats.yml` — pushes to `researchartifacts.github.io` and `artifact_analysis_results`
+- `dblp-author-analysis.yml` — pushes to `researchartifacts.github.io`
+- `export-schemas.yml` — pushes to `data-schemas`
 
 ## Caching Conventions
 

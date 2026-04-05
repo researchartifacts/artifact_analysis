@@ -20,7 +20,7 @@ jobs:
         with:
           repository: researchartifacts/data-schemas
           path: data-schemas
-          token: ${{ secrets.DATA_SCHEMAS_TOKEN }}
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
