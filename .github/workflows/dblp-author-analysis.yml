@@ -109,7 +109,7 @@ jobs:
           MAX_AUTHORS=200
           if [ "${{ env.RECHECK }}" = "true" ]; then
             RECHECK_FLAG="--recheck"
-            MAX_AUTHORS=500
+            MAX_AUTHORS=10000
             echo "Full recheck mode: re-querying all authors (max $MAX_AUTHORS)"
           fi
           python -m src.enrichers.enrich_affiliations_openalex \
