@@ -1,6 +1,12 @@
 # Research Artifacts Analysis
 
+[![Tests](https://github.com/researchartifacts/artifact_analysis/actions/workflows/tests.yml/badge.svg)](https://github.com/researchartifacts/artifact_analysis/actions/workflows/tests.yml)
+[![Docs](https://github.com/researchartifacts/artifact_analysis/actions/workflows/deploy-docs.yml/badge.svg)](https://researchartifacts.github.io/artifact_analysis/)
+[![Schemas](https://github.com/researchartifacts/artifact_analysis/actions/workflows/export-schemas.yml/badge.svg)](https://researchartifacts.github.io/data-schemas/)
+
 Scrapes artifact evaluation data from [sysartifacts](https://sysartifacts.github.io), [secartifacts](https://secartifacts.github.io), and [USENIX](https://www.usenix.org) conference pages, then generates statistics, visualizations, and author rankings for [researchartifacts.github.io](https://researchartifacts.github.io).
+
+**[Documentation](https://researchartifacts.github.io/artifact_analysis/)** · **[Data Schemas](https://researchartifacts.github.io/data-schemas/)**
 
 ## Quick Start
 
@@ -139,10 +145,6 @@ All DBLP data is sourced from the **local XML dump** (`data/dblp/dblp.xml.gz`)
 downloaded by `scripts/download_dblp.sh`.  The pipeline step `src/utils/dblp_extract.py`
 parses the XML once and writes JSON lookup files that every downstream module
 can load.
-
-**Do NOT add new DBLP API calls** (`dblp.org/search/…`).  The API has
-increasingly strict rate limits that worsen as the number of tracked
-conferences grows.  Use `src.utils.dblp_extract` lookup functions instead.
 
 ## Conferences Tracked
 
