@@ -62,28 +62,50 @@ jobs:
             --data_dir website \
             --output_dir website
       
-      - name: DBLP affiliation enrichment (optional)
+      - name: "Enrichment layer 1: CSRankings (offline faculty match)"
         continue-on-error: true
         run: |
-          echo "Attempting DBLP affiliation enrichment..."
-          # This step is optional and may not complete in GitHub Actions
-          # due to rate limiting and network constraints
+          echo "Enriching affiliations from CSRankings..."
+          python -m src.enrichers.enrich_affiliations_csrankings \
+            --authors_file website/assets/data/authors.json \
+            --output website/assets/data/authors.json \
+            --verbose || {
+            echo "⚠️ CSRankings enrichment failed"
+            echo "Continuing with existing affiliations..."
+          }
+
+      - name: "Enrichment layer 2: DBLP local XML"
+        continue-on-error: true
+        run: |
+          echo "Enriching affiliations from DBLP..."
           python -m src.enrichers.enrich_affiliations_dblp_incremental \
             --data_dir website \
             --max_searches 100 \
             --verbose || {
-            echo "⚠️ Affiliation enrichment did not complete (rate limited or timed out)"
+            echo "⚠️ DBLP enrichment did not complete (rate limited or timed out)"
             echo "Continuing with existing affiliations..."
           }
-          
-          # Regenerate stats with any enriched data
-          if [ -f "website/assets/data/authors.json" ]; then
-            echo "Regenerating author stats with enriched data..."
-            python -m src.generators.generate_author_stats \
-              --dblp_file data/dblp/dblp.xml.gz \
-              --data_dir website \
-              --output_dir website || echo "Stats regeneration skipped"
-          fi
+
+      - name: "Enrichment layer 3: OpenAlex paper disambiguation"
+        continue-on-error: true
+        run: |
+          echo "Enriching affiliations from OpenAlex/CrossRef..."
+          python -m src.enrichers.enrich_affiliations_openalex \
+            --authors_file website/_data/authors.yml \
+            --papers_file website/assets/data/paper_authors_map.json \
+            --max_authors 200 \
+            --verbose || {
+            echo "⚠️ OpenAlex enrichment did not complete"
+            echo "Continuing with existing affiliations..."
+          }
+
+      - name: Regenerate stats with enriched data
+        run: |
+          echo "Regenerating author stats with enriched data..."
+          python -m src.generators.generate_author_stats \
+            --dblp_file data/dblp/dblp.xml.gz \
+            --data_dir website \
+            --output_dir website || echo "Stats regeneration skipped"
       
       - name: Generate per-area author data
         run: |
