@@ -24,7 +24,7 @@ jobs:
           repository: ${{ github.repository_owner }}/researchartifacts.github.io
           path: website
           ref: main
-          token: ${{ secrets.CROSS_REPO_TOKEN }}
+          token: ${{ secrets.CROSS_REPO_TOKEN || secrets.GITHUB_TOKEN }}
       
       - name: Set up Python
         uses: actions/setup-python@v5
