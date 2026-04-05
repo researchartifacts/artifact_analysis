@@ -61,11 +61,18 @@ def collect(cache_path, output_path):
             continue
         for a in artifacts:
             github_url = None
-            for field in ["repository_url", "artifact_url"]:
-                url = a.get(field, "")
-                if url and "github.com" in url:
+            # New format: artifact_urls is the canonical list
+            for url in a.get("artifact_urls", []):
+                if isinstance(url, str) and "github.com" in url:
                     github_url = url
                     break
+            # Legacy fallback
+            if not github_url:
+                for field in ["repository_url", "artifact_url"]:
+                    url = a.get(field, "")
+                    if url and "github.com" in url:
+                        github_url = url
+                        break
             if not github_url:
                 continue
             repo = _normalize_repo(github_url)

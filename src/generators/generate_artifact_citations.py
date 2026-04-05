@@ -377,7 +377,10 @@ def generate(data_dir: str) -> None:
         title = artifact.get("title", "")
         if not title:
             continue
-        urls = [artifact.get("artifact_url", ""), artifact.get("repository_url", "")]
+        urls = artifact.get("artifact_urls", [])
+        if not urls:
+            # Legacy fallback
+            urls = [artifact.get("artifact_url", ""), artifact.get("repository_url", "")]
 
         doi = ""
         source = ""

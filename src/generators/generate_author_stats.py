@@ -627,16 +627,26 @@ def generate_author_stats(dblp_file, data_dir, output_dir):
         papers_with_authors, venue_papers, affiliations, conference_active_years, citations_by_title
     )
 
-    # Load author index for IDs
+    # Load author index for IDs and canonical affiliations
     try:
-        from src.utils.author_index import build_name_to_id
-        name_to_id = build_name_to_id(data_dir)
-        if name_to_id:
+        from src.utils.author_index import load_author_index
+        index_entries, index_by_name = load_author_index(data_dir)
+        if index_by_name:
+            patched_aff = 0
             for author in authors_list:
-                aid = name_to_id.get(author['name'])
-                if aid is not None:
-                    author['author_id'] = aid
-            print(f"Author IDs assigned: {sum(1 for a in authors_list if 'author_id' in a)}/{len(authors_list)}")
+                idx_entry = index_by_name.get(author['name'])
+                if idx_entry is None:
+                    continue
+                if idx_entry.get('id') is not None:
+                    author['author_id'] = idx_entry['id']
+                # Override affiliation with canonical index value (enricher-sourced)
+                idx_aff = idx_entry.get('affiliation', '')
+                if idx_aff and idx_aff != author.get('affiliation', ''):
+                    author['affiliation'] = idx_aff
+                    patched_aff += 1
+            assigned = sum(1 for a in authors_list if 'author_id' in a)
+            print(f"Author IDs assigned: {assigned}/{len(authors_list)}")
+            print(f"Affiliations overridden from author index: {patched_aff}")
     except ImportError:
         pass
     
@@ -661,14 +671,57 @@ def generate_author_stats(dblp_file, data_dir, output_dir):
     os.makedirs(os.path.join(output_dir, '_data'), exist_ok=True)
     os.makedirs(os.path.join(output_dir, 'assets/data'), exist_ok=True)
     
-    # YAML for Jekyll (all authors, not truncated)
+    # --- Build paper index and replace embedded papers with IDs ---
+    from .generate_paper_index import build_paper_index, load_existing_index, normalize_title
+    index_path = os.path.join(output_dir, '_data', 'papers.json')
+    existing_papers, existing_by_title = load_existing_index(index_path)
+    max_paper_id = max((e['id'] for e in existing_papers), default=0)
+    papers_list, norm_to_id = build_paper_index(authors_list, existing_by_title, max_paper_id)
+
+    # Write paper index
+    with open(index_path, 'w') as f:
+        json.dump(papers_list, f, indent=2, ensure_ascii=False)
+    assets_papers = os.path.join(output_dir, 'assets/data/papers.json')
+    with open(assets_papers, 'w') as f:
+        json.dump(papers_list, f, ensure_ascii=False)
+    artifact_count = sum(1 for p in papers_list if p.get('has_artifact', True))
+    print(f"Paper index: {len(papers_list)} papers ({artifact_count} with artifacts)")
+
+    # Replace embedded papers with paper_ids in authors_list
+    for author in authors_list:
+        paper_ids = []
+        for p in author.get('papers', []):
+            norm = normalize_title(p.get('title', ''))
+            pid = norm_to_id.get(norm)
+            if pid is not None:
+                paper_ids.append(pid)
+        author['paper_ids'] = paper_ids
+
+        without_ids = []
+        for p in author.get('papers_without_artifacts', []):
+            norm = normalize_title(p.get('title', ''))
+            pid = norm_to_id.get(norm)
+            if pid is not None:
+                without_ids.append(pid)
+        author['papers_without_artifact_ids'] = without_ids
+
+        # Keep 'papers' in the full JSON for backward compatibility,
+        # but remove from YAML to cut file size
+    
+    # YAML for Jekyll — without embedded papers (use paper_ids instead)
+    authors_for_yaml = []
+    for author in authors_list:
+        entry = {k: v for k, v in author.items()
+                 if k not in ('papers', 'papers_without_artifacts',
+                              'total_papers_by_conf', 'total_papers_by_conf_year')}
+        authors_for_yaml.append(entry)
     with open(os.path.join(output_dir, '_data/authors.yml'), 'w') as f:
-        yaml.dump(authors_list, f, default_flow_style=False, allow_unicode=True)
+        yaml.dump(authors_for_yaml, f, default_flow_style=False, allow_unicode=True)
     
     with open(os.path.join(output_dir, '_data/author_summary.yml'), 'w') as f:
         yaml.dump(author_summary, f, default_flow_style=False)
     
-    # JSON for download
+    # JSON for download (full data including embedded papers for backward compat)
     with open(os.path.join(output_dir, 'assets/data/authors.json'), 'w') as f:
         json.dump(authors_list, f, indent=2, ensure_ascii=False)
 

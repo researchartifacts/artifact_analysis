@@ -52,10 +52,23 @@ def _load_ae_affiliation_fallback():
     return fallback
 
 
+def _load_author_index_affiliations():
+    """Load canonical affiliations from author_index.json (primary source)."""
+    try:
+        from src.utils.author_index import load_author_index
+        website_root = os.path.join(DATA_DIR, '..')
+        _, index_by_name = load_author_index(website_root)
+        return {name: entry.get('affiliation', '') for name, entry in index_by_name.items()
+                if entry.get('affiliation')}
+    except (ImportError, Exception):
+        return {}
+
+
 def generate_area_authors():
     summary = load_yaml('summary.yml')
     authors = load_yaml('authors.yml')
     ae_aff_fallback = _load_ae_affiliation_fallback()
+    index_affiliations = _load_author_index_affiliations()
 
     systems_confs = set(summary.get('systems_conferences', []))
     security_confs = set(summary.get('security_conferences', []))
@@ -191,8 +204,12 @@ def generate_area_authors():
 
             author_name = author['name']
             norm_key = _normalize_name_key(author_name)
-            base_aff = _normalize_affiliation(author.get('affiliation', '') or '')
-            aff = base_aff or ae_aff_fallback.get(norm_key, '')
+            # Affiliation priority: author_index (enricher-sourced) > authors.yml (DBLP) > AE fallback
+            aff = index_affiliations.get(author_name, '')
+            if not aff:
+                aff = _normalize_affiliation(author.get('affiliation', '') or '')
+            if not aff:
+                aff = ae_aff_fallback.get(norm_key, '')
 
             entry = {
                 'name': author_name,

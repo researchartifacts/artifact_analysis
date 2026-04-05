@@ -63,15 +63,12 @@ def generate_search_data(data_dir: str) -> list:
             'category': art['category'],
             'year': art['year'],
             'badges': art['badges'],
-            'repository_url': art.get('repository_url', ''),
-            'artifact_url': art.get('artifact_url', ''),
+            'artifact_urls': art.get('artifact_urls', []),
             'doi_url': doi_url,
             'authors': clean_authors,
             'affiliations': affiliations,
         }
-        if 'artifact_urls' in art:
-            entry['artifact_urls'] = art['artifact_urls']
-        for optional_key in ('paper_url', 'appendix_url', 'github_url', 'award'):
+        for optional_key in ('paper_url', 'appendix_url', 'award'):
             if art.get(optional_key):
                 entry[optional_key] = art[optional_key]
         merged.append(entry)

@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""
+Generate a canonical paper index (papers.json) from authors.yml.
+
+Each unique paper gets a stable integer ID. Co-authored papers are stored
+once in the index and referenced by ID from each author entry.
+
+Usage:
+    python -m src.generators.generate_paper_index --data_dir ../researchartifacts.github.io
+"""
+
+import json
+import os
+import re
+import argparse
+
+
+def normalize_title(title):
+    """Normalize title for dedup matching (same logic as generate_author_stats)."""
+    if not title:
+        return ""
+    normalized = re.sub(r'[^\w\s]', '', title.lower())
+    return ' '.join(normalized.split())
+
+
+def load_existing_index(path):
+    """Load existing paper index to preserve IDs across runs."""
+    if not os.path.exists(path):
+        return [], {}
+    with open(path) as f:
+        entries = json.load(f)
+    by_norm_title = {}
+    for entry in entries:
+        key = entry.get('normalized_title', '')
+        if key:
+            by_norm_title[key] = entry
+    return entries, by_norm_title
+
+
+def build_paper_index(authors_data, existing_by_title, max_id):
+    """Build paper index from authors.yml data.
+
+    Returns (papers_list, norm_title_to_id dict).
+    """
+    # Collect unique papers from all authors
+    seen = {}  # normalized_title -> paper dict
+    for author in authors_data:
+        for paper in author.get('papers', []):
+            title = paper.get('title', '')
+            norm = normalize_title(title)
+            if not norm:
+                continue
+            if norm not in seen:
+                seen[norm] = {
+                    'title': title,
+                    'normalized_title': norm,
+                    'conference': paper.get('conference', ''),
+                    'year': paper.get('year'),
+                    'category': paper.get('category', ''),
+                    'badges': paper.get('badges', []),
+                    'artifact_citations': paper.get('artifact_citations', 0),
+                }
+            else:
+                # Update citation count if higher
+                existing_cit = seen[norm].get('artifact_citations', 0) or 0
+                new_cit = paper.get('artifact_citations', 0) or 0
+                if new_cit > existing_cit:
+                    seen[norm]['artifact_citations'] = new_cit
+
+        # Also collect papers_without_artifacts
+        for paper in author.get('papers_without_artifacts', []):
+            title = paper.get('title', '')
+            norm = normalize_title(title)
+            if not norm:
+                continue
+            if norm not in seen:
+                seen[norm] = {
+                    'title': title,
+                    'normalized_title': norm,
+                    'conference': paper.get('conference', ''),
+                    'year': paper.get('year'),
+                    'category': paper.get('category', ''),
+                    'badges': [],
+                    'artifact_citations': 0,
+                    'has_artifact': False,
+                }
+
+    # Assign IDs: preserve existing, assign new for unseen
+    papers = []
+    next_id = max_id + 1
+
+    for norm_title, paper in seen.items():
+        if norm_title in existing_by_title:
+            paper['id'] = existing_by_title[norm_title]['id']
+        else:
+            paper['id'] = next_id
+            next_id += 1
+        # Mark whether this paper has artifacts
+        if 'has_artifact' not in paper:
+            paper['has_artifact'] = True
+        papers.append(paper)
+
+    papers.sort(key=lambda x: x['id'])
+    norm_to_id = {p['normalized_title']: p['id'] for p in papers}
+    return papers, norm_to_id
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Generate canonical paper index.')
+    parser.add_argument('--data_dir', type=str, required=True,
+                        help='Path to the website repo root (containing _data/)')
+    args = parser.parse_args()
+
+    data_dir = args.data_dir
+    authors_path = os.path.join(data_dir, '_data', 'authors.yml')
+    index_path = os.path.join(data_dir, '_data', 'papers.json')
+
+    # Load authors (use JSON if available, else YAML)
+    json_path = os.path.join(data_dir, 'assets', 'data', 'authors.json')
+    if os.path.exists(json_path):
+        with open(json_path) as f:
+            authors_data = json.load(f)
+    else:
+        import yaml
+        with open(authors_path) as f:
+            authors_data = yaml.safe_load(f)
+
+    existing, existing_by_title = load_existing_index(index_path)
+    max_id = max((e['id'] for e in existing), default=0)
+
+    papers, norm_to_id = build_paper_index(authors_data, existing_by_title, max_id)
+
+    # Write paper index
+    os.makedirs(os.path.dirname(index_path), exist_ok=True)
+    with open(index_path, 'w') as f:
+        json.dump(papers, f, indent=2, ensure_ascii=False)
+
+    # Also write to assets/data for client-side loading
+    assets_path = os.path.join(data_dir, 'assets', 'data', 'papers.json')
+    os.makedirs(os.path.dirname(assets_path), exist_ok=True)
+    with open(assets_path, 'w') as f:
+        json.dump(papers, f, ensure_ascii=False)
+
+    print(f"Paper index: {len(papers)} unique papers -> {index_path}")
+    artifact_papers = sum(1 for p in papers if p.get('has_artifact', True))
+    print(f"  With artifacts: {artifact_papers}, without: {len(papers) - artifact_papers}")
+
+    return papers, norm_to_id
+
+
+if __name__ == '__main__':
+    main()

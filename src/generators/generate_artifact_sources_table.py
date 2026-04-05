@@ -84,10 +84,16 @@ def extract_source(url):
 
 def get_artifact_url(artifact):
     """Extract the first valid URL from an artifact."""
-    url_keys = ['repository_url', 'artifact_url', 'github_url', 
-                'second_repository_url', 'bitbucket_url', 'artifact_urls']
-    
-    for key in url_keys:
+    # New format: artifact_urls is the canonical list
+    urls = artifact.get('artifact_urls', [])
+    if isinstance(urls, list):
+        for u in urls:
+            norm = _normalise_url(u)
+            if norm:
+                return norm
+    # Legacy fallback
+    for key in ['repository_url', 'artifact_url', 'github_url',
+                'second_repository_url', 'bitbucket_url']:
         val = artifact.get(key, '')
         if isinstance(val, list):
             val = val[0] if val else ''
@@ -99,22 +105,28 @@ def get_artifact_url(artifact):
 
 
 def get_artifact_urls(artifact):
-    """Extract all normalized URLs from an artifact across known URL keys."""
-    url_keys = ['repository_url', 'artifact_url', 'github_url',
-                'second_repository_url', 'bitbucket_url', 'artifact_urls']
-
+    """Extract all normalized URLs from an artifact."""
     urls = []
-    for key in url_keys:
-        val = artifact.get(key, '')
-        if isinstance(val, list):
-            candidates = val
-        else:
-            candidates = [val]
-
-        for candidate in candidates:
-            norm = _normalise_url(candidate)
+    # New format: artifact_urls is the canonical list
+    art_urls = artifact.get('artifact_urls', [])
+    if isinstance(art_urls, list):
+        for u in art_urls:
+            norm = _normalise_url(u)
             if norm:
                 urls.append(norm)
+    # Legacy fallback for old-format data
+    if not urls:
+        for key in ['repository_url', 'artifact_url', 'github_url',
+                     'second_repository_url', 'bitbucket_url']:
+            val = artifact.get(key, '')
+            if isinstance(val, list):
+                candidates = val
+            else:
+                candidates = [val]
+            for candidate in candidates:
+                norm = _normalise_url(candidate)
+                if norm:
+                    urls.append(norm)
 
     deduped = []
     seen = set()

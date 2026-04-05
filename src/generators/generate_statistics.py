@@ -236,54 +236,50 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
                 raw_badges = artifact.get('badges', [])
                 if isinstance(raw_badges, str):
                     raw_badges = [b.strip() for b in raw_badges.split(',') if b.strip()]
-                # Resolve the best repository URL from several possible keys
-                repo_url = (artifact.get('repository_url', '')
-                            or artifact.get('github_url', '')
-                            or artifact.get('second_repository_url', '')
-                            or artifact.get('bitbucket_url', ''))
-                # Collect ALL artifact URLs (both single and list-valued fields)
-                art_urls = []
+                # --- Collect ALL artifact-related URLs into a single list ---
+                all_artifact_urls = []
+                # Repository URLs (GitHub, GitLab, Bitbucket, etc.)
+                for repo_key in ('repository_url', 'github_url', 'second_repository_url', 'bitbucket_url'):
+                    url = artifact.get(repo_key, '')
+                    if url:
+                        all_artifact_urls.append(url)
+                # Primary artifact URL
                 if artifact.get('artifact_url'):
-                    art_urls.append(artifact['artifact_url'])
+                    all_artifact_urls.append(artifact['artifact_url'])
+                # List-valued artifact URL fields
                 if isinstance(artifact.get('artifact_urls'), list):
-                    art_urls.extend([u for u in artifact['artifact_urls'] if u])
+                    all_artifact_urls.extend([u for u in artifact['artifact_urls'] if u])
                 if isinstance(artifact.get('additional_urls'), list):
-                    art_urls.extend([u for u in artifact['additional_urls'] if u])
-                # Normalize artifact_doi → DOI URL and add to artifact URLs
+                    all_artifact_urls.extend([u for u in artifact['additional_urls'] if u])
+                # Normalize artifact_doi → DOI URL
                 artifact_doi = artifact.get('artifact_doi', '')
                 if artifact_doi:
                     if not artifact_doi.startswith('http'):
                         artifact_doi = f'https://doi.org/{artifact_doi}'
-                    if artifact_doi not in art_urls:
-                        art_urls.append(artifact_doi)
-                # Collect miscellaneous URL fields into artifact_urls
+                    all_artifact_urls.append(artifact_doi)
+                # Collect miscellaneous URL fields
                 for url_key in ('cloudlab_url', 'web_url', 'scripts_url',
                                 'jupyter_url', 'vm_url', 'proof_url', 'data_url'):
                     extra_url = artifact.get(url_key, '')
-                    if extra_url and extra_url not in art_urls:
-                        art_urls.append(extra_url)
-                # Deduplicate while preserving order (filter non-string values)
+                    if extra_url:
+                        all_artifact_urls.append(extra_url)
+                # Deduplicate while preserving order
                 seen_urls = set()
                 deduped = []
-                for u in art_urls:
+                for u in all_artifact_urls:
                     if isinstance(u, str) and u and u not in seen_urls:
                         seen_urls.add(u)
                         deduped.append(u)
-                art_urls = deduped
-                # For backward compatibility, use first URL if available, else empty
-                art_url = art_urls[0] if art_urls else ''
+                all_artifact_urls = deduped
+
                 artifact_entry = {
                     'conference': conf_name.upper(),
                     'category': category,
                     'year': int(year),
                     'title': artifact.get('title', 'Unknown'),
                     'badges': raw_badges,
-                    'repository_url': repo_url,
-                    'artifact_url': art_url,
+                    'artifact_urls': all_artifact_urls,
                 }
-                # Store all URLs for downstream processing (e.g., repo stats)
-                if len(art_urls) > 1:
-                    artifact_entry['artifact_urls'] = art_urls
                 # Normalize paper_url: merge doi and paper_doi fields
                 paper_url = artifact.get('paper_url', '')
                 if not paper_url:
@@ -305,9 +301,6 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
                         elif conf_year in sys_results:
                             appendix_url = f'https://sysartifacts.github.io/{conf_year}/{appendix_url}'
                     artifact_entry['appendix_url'] = appendix_url
-                github_url = artifact.get('github_url', '')
-                if github_url:
-                    artifact_entry['github_url'] = github_url
                 award = artifact.get('award', '')
                 if award:
                     artifact_entry['award'] = award

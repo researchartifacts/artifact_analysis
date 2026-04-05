@@ -78,10 +78,16 @@ def extract_source(url):
 
 def get_artifact_url(artifact):
     """Extract the first valid URL from an artifact."""
-    url_keys = ['repository_url', 'artifact_url', 'github_url', 
-                'second_repository_url', 'bitbucket_url', 'artifact_urls']
-    
-    for key in url_keys:
+    # New format: artifact_urls is the canonical list
+    urls = artifact.get('artifact_urls', [])
+    if isinstance(urls, list):
+        for u in urls:
+            norm = _normalise_url(u)
+            if norm:
+                return norm
+    # Legacy fallback
+    for key in ['repository_url', 'artifact_url', 'github_url',
+                'second_repository_url', 'bitbucket_url']:
         val = artifact.get(key, '')
         if isinstance(val, list):
             val = val[0] if val else ''
