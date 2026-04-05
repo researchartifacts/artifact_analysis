@@ -71,8 +71,7 @@ jobs:
           python -m src.enrichers.enrich_affiliations_dblp_incremental \
             --data_dir . \
             --max_searches 100 \
-            --verbose \
-            --timeout 30 || {
+            --verbose || {
             echo "⚠️ Affiliation enrichment did not complete (rate limited or timed out)"
             echo "Continuing with existing affiliations..."
           }
