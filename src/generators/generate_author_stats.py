@@ -626,6 +626,19 @@ def generate_author_stats(dblp_file, data_dir, output_dir):
     authors_list, category_breakdown = aggregate_author_statistics(
         papers_with_authors, venue_papers, affiliations, conference_active_years, citations_by_title
     )
+
+    # Load author index for IDs
+    try:
+        from src.utils.author_index import build_name_to_id
+        name_to_id = build_name_to_id(data_dir)
+        if name_to_id:
+            for author in authors_list:
+                aid = name_to_id.get(author['name'])
+                if aid is not None:
+                    author['author_id'] = aid
+            print(f"Author IDs assigned: {sum(1 for a in authors_list if 'author_id' in a)}/{len(authors_list)}")
+    except ImportError:
+        pass
     
     # Count affiliation coverage
     with_affil = sum(1 for a in authors_list if a.get('affiliation'))

@@ -15,6 +15,7 @@ import json
 import time
 import re
 import os
+import requests
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -95,7 +96,7 @@ def fetch_affiliation_from_dblp_page(pid, session=None, verbose=False):
     except (ImportError, Exception):
         return None
 
-def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbose=False, recheck=False):
+def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbose=False, recheck=False, data_dir=None):
     """
     Incrementally enrich author affiliations using DBLP with smart prioritization.
     
@@ -105,6 +106,7 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
         max_searches: Maximum number of searches to perform (for rate limiting)
         verbose: Print detailed progress
         recheck: If True, re-query all authors including those with existing affiliations
+        data_dir: Website repo root for author index updates
     
     Returns:
         Tuple of (enriched_authors_data, stats_dict)
@@ -124,6 +126,21 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
     
     # Load search history
     history = load_search_history()
+
+    # Load author index if data_dir provided
+    index_by_name = {}
+    _update_index_fn = None
+    _save_index_fn = None
+    if data_dir:
+        try:
+            from src.utils.author_index import load_author_index, save_author_index, update_author_affiliation
+            _, index_by_name = load_author_index(data_dir)
+            _update_index_fn = update_author_affiliation
+            _save_index_fn = lambda: save_author_index(data_dir, sorted(index_by_name.values(), key=lambda e: e['id']))
+            if index_by_name:
+                print(f"Loaded author index ({len(index_by_name)} entries)")
+        except ImportError:
+            pass
     
     stats = {
         'total_authors': len(authors_data),
@@ -214,6 +231,9 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
                 stats['affiliations_found'] += 1
                 stats['new_affiliations'] += 1
                 author['affiliation'] = affil
+                # Update author index
+                if name in index_by_name and _update_index_fn:
+                    _update_index_fn(index_by_name[name], affil, 'dblp', external_id_key='dblp_pid', external_id_value=pid)
                 found_affil = True
                 print(f"    ✓ {name} → {affil}")
             elif verbose:
@@ -237,6 +257,10 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(enriched_data, f, indent=2, ensure_ascii=False)
         print(f"\n✅ Enriched data saved to {output_path}")
+        # Save updated author index
+        if _save_index_fn and index_by_name:
+            _save_index_fn()
+            print(f"Author index updated")
     
     print(f"\n📊 Summary:")
     print(f"   Searches performed: {stats['searches_performed']}")
@@ -309,7 +333,8 @@ def main():
         output_path=output_path,
         max_searches=args.max_searches,
         verbose=args.verbose,
-        recheck=args.recheck
+        recheck=args.recheck,
+        data_dir=args.data_dir
     )
     
     return stats

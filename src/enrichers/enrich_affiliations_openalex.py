@@ -483,6 +483,7 @@ def enrich(
     verbose: bool = False,
     dry_run: bool = False,
     recheck: bool = False,
+    data_dir: Optional[str] = None,
 ) -> dict:
     """
     Main entry point.  Reads authors.yml and paper_authors_map.json,
@@ -524,6 +525,21 @@ def enrich(
         session.proxies = {"http": http_proxy, "https": https_proxy}
         print(f"  Using proxy: {https_proxy or http_proxy}")
 
+    # Load author index
+    index_by_name = {}
+    _update_index_fn = None
+    _save_index_fn = None
+    if data_dir:
+        try:
+            from src.utils.author_index import load_author_index, save_author_index, update_author_affiliation
+            _, index_by_name = load_author_index(data_dir)
+            _update_index_fn = update_author_affiliation
+            _save_index_fn = lambda: save_author_index(data_dir, sorted(index_by_name.values(), key=lambda e: e['id']))
+            if index_by_name:
+                print(f"  Loaded author index ({len(index_by_name)} entries)")
+        except ImportError:
+            pass
+
     stats = {
         "total": total,
         "candidates": len(candidates),
@@ -557,6 +573,9 @@ def enrich(
             stats["found"] += 1
             stats["by_source"][source] = stats["by_source"].get(source, 0) + 1
             updates[name] = affiliation
+            # Update author index
+            if name in index_by_name and _update_index_fn:
+                _update_index_fn(index_by_name[name], affiliation, source)
             marker = "+"
             if not verbose:
                 print(f"[{idx}/{len(candidates)}] {name:40s}  +  {affiliation[:50]}  ({source})")
@@ -575,6 +594,10 @@ def enrich(
         print(f"\nWriting {len(updates)} updates to {output_file} ...")
         replaced = _update_authors_yml(output_file, updates)
         print(f"  {replaced} lines updated in YAML.")
+        # Save updated author index
+        if _save_index_fn and index_by_name:
+            _save_index_fn()
+            print(f"  Author index updated")
     elif dry_run:
         print(f"\n[DRY RUN] Would update {len(updates)} authors.")
 
@@ -596,6 +619,7 @@ def main():
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--dry_run", action="store_true", help="Don't write changes")
     parser.add_argument("--recheck", action="store_true", help="Re-query all authors, including those with existing affiliations")
+    parser.add_argument("--data_dir", default=None, help="Website repo root for author index updates")
     args = parser.parse_args()
 
     enrich(
@@ -606,6 +630,7 @@ def main():
         verbose=args.verbose,
         dry_run=args.dry_run,
         recheck=args.recheck,
+        data_dir=args.data_dir,
     )
 
 

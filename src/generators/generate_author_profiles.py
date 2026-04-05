@@ -134,6 +134,18 @@ def generate_profiles(data_dir: str) -> None:
                        x['name'])
     )
 
+    # Inject author_id from the canonical index
+    try:
+        from src.utils.author_index import build_name_to_id
+        name_to_id = build_name_to_id(data_dir)
+        if name_to_id:
+            for profile in profile_list:
+                aid = name_to_id.get(profile['name'])
+                if aid is not None:
+                    profile['author_id'] = aid
+    except ImportError:
+        pass
+
     # Write compact JSON
     with open(out_path, 'w') as f:
         json.dump(profile_list, f, ensure_ascii=False, separators=(',', ':'))

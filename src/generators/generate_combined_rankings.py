@@ -677,6 +677,20 @@ def generate_combined_rankings(data_dir: str):
                 rank = i + 1
             c['rank'] = rank
 
+    # Inject author_id from the canonical index
+    try:
+        from src.utils.author_index import build_name_to_id
+        name_to_id = build_name_to_id(data_dir)
+        if name_to_id:
+            for lst in (combined_all, combined_sys, combined_sec):
+                for entry in lst:
+                    aid = name_to_id.get(entry['name'])
+                    if aid is not None:
+                        entry['author_id'] = aid
+            print(f"  Author IDs injected from index")
+    except ImportError:
+        pass
+
     # Write JSON
     os.makedirs(assets_data, exist_ok=True)
     for fname, data in [

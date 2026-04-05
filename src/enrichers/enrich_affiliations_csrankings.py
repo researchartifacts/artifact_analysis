@@ -184,7 +184,8 @@ def enrich_affiliations(
     name_index: Dict[str, List[Dict]],
     max_authors: Optional[int] = None,
     dry_run: bool = False,
-    verbose: bool = False
+    verbose: bool = False,
+    data_dir: Optional[str] = None,
 ) -> Dict[str, int]:
     """
     Enrich author affiliations using CSRankings data.
@@ -193,6 +194,17 @@ def enrich_affiliations(
     # Load authors
     with open(authors_file, 'r', encoding='utf-8') as f:
         authors = json.load(f)
+
+    # Load author index if data_dir is provided
+    index_by_name = {}
+    if data_dir:
+        try:
+            from src.utils.author_index import load_author_index, save_author_index, update_author_affiliation
+            _, index_by_name = load_author_index(data_dir)
+            if index_by_name:
+                print(f"Loaded author index ({len(index_by_name)} entries)")
+        except ImportError:
+            pass
     
     # Track statistics
     stats = {
@@ -228,6 +240,9 @@ def enrich_affiliations(
         if affiliation:
             if affiliation != current_affil:
                 author['affiliation'] = affiliation
+                # Update author index
+                if name in index_by_name:
+                    update_author_affiliation(index_by_name[name], affiliation, 'csrankings')
                 if has_affil:
                     stats['overwritten'] += 1
                 else:
@@ -254,6 +269,10 @@ def enrich_affiliations(
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(authors, f, indent=2, ensure_ascii=False)
         print(f"\nEnriched authors saved to: {output_file}")
+        # Save updated author index
+        if data_dir and index_by_name:
+            idx_path = save_author_index(data_dir, [index_by_name[n] for n in sorted(index_by_name, key=lambda n: index_by_name[n]['id'])])
+            print(f"Author index updated: {idx_path}")
     else:
         print(f"\nDry run - would save to: {output_file}")
     
@@ -295,6 +314,11 @@ def main():
         action='store_true',
         help='Print detailed progress'
     )
+    parser.add_argument(
+        '--data_dir',
+        default=None,
+        help='Website repo root for author index updates'
+    )
     
     args = parser.parse_args()
     
@@ -314,7 +338,8 @@ def main():
         name_index=name_index,
         max_authors=args.max_authors,
         dry_run=args.dry_run,
-        verbose=args.verbose
+        verbose=args.verbose,
+        data_dir=args.data_dir,
     )
     
     # Print summary

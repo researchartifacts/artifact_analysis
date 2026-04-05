@@ -71,6 +71,11 @@ jobs:
             --dblp_file data/dblp/dblp.xml.gz \
             --data_dir website \
             --output_dir website
+
+      - name: "Build/update canonical author index"
+        run: |
+          python -m src.generators.generate_author_index \
+            --data_dir website
       
       - name: "Enrichment layer 1: CSRankings (offline faculty match)"
         continue-on-error: true
@@ -79,6 +84,7 @@ jobs:
           python -m src.enrichers.enrich_affiliations_csrankings \
             --authors_file website/assets/data/authors.json \
             --output website/assets/data/authors.json \
+            --data_dir website \
             --verbose || {
             echo "⚠️ CSRankings enrichment failed"
             echo "Continuing with existing affiliations..."
@@ -115,11 +121,18 @@ jobs:
           python -m src.enrichers.enrich_affiliations_openalex \
             --authors_file website/_data/authors.yml \
             --papers_file website/assets/data/paper_authors_map.json \
+            --data_dir website \
             --max_authors $MAX_AUTHORS \
             --verbose $RECHECK_FLAG || {
             echo "⚠️ OpenAlex enrichment did not complete"
             echo "Continuing with existing affiliations..."
           }
+
+      - name: "Sync author index after enrichment"
+        run: |
+          echo "Syncing author index with enriched data..."
+          python -m src.generators.generate_author_index \
+            --data_dir website
 
       - name: Regenerate stats with enriched data
         run: |
@@ -143,6 +156,7 @@ jobs:
             website/_data/systems_authors.yml
             website/_data/security_authors.yml
             website/assets/data/authors.json
+            website/assets/data/author_index.json
             website/assets/data/systems_authors.json
             website/assets/data/security_authors.json
           retention-days: 7
@@ -152,6 +166,7 @@ jobs:
           echo "## Author & Affiliation Pipeline Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ DBLP database processed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Author index maintained (stable IDs)" >> $GITHUB_STEP_SUMMARY
           echo "✅ Author statistics generated" >> $GITHUB_STEP_SUMMARY
           echo "✅ Per-area author data created" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

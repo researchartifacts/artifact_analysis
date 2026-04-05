@@ -230,6 +230,21 @@ def generate_area_authors():
     systems_authors = process_authors_for_area(authors, systems_confs, 'systems')
     security_authors = process_authors_for_area(authors, security_confs, 'security')
 
+    # Inject author_id from the canonical index
+    name_to_id = {}
+    try:
+        from src.utils.author_index import build_name_to_id
+        website_root = os.path.join(DATA_DIR, '..')
+        name_to_id = build_name_to_id(website_root)
+        if name_to_id:
+            for lst in (systems_authors, security_authors):
+                for entry in lst:
+                    aid = name_to_id.get(entry['name'])
+                    if aid is not None:
+                        entry['author_id'] = aid
+    except (ImportError, NameError):
+        pass
+
     # Save YAML for Jekyll (kept for backwards compat, but pages now load JSON)
     save_yaml('systems_authors.yml', systems_authors)
     save_yaml('security_authors.yml', security_authors)
@@ -246,6 +261,12 @@ def generate_area_authors():
     all_confs = systems_confs | security_confs
     for conf in sorted(all_confs):
         conf_authors = process_authors_for_area(authors, {conf}, conf)
+        # Inject author_id
+        if name_to_id:
+            for entry in conf_authors:
+                aid = name_to_id.get(entry['name'])
+                if aid is not None:
+                    entry['author_id'] = aid
         fname = f"{conf.lower()}_conf_authors.json"
         with open(os.path.join(assets_data, fname), 'w') as f:
             json.dump(conf_authors, f, ensure_ascii=False)
