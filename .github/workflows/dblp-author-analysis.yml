@@ -69,7 +69,7 @@ jobs:
           # This step is optional and may not complete in GitHub Actions
           # due to rate limiting and network constraints
           python -m src.enrichers.enrich_affiliations_dblp_incremental \
-            --data_dir . \
+            --data_dir website \
             --max_searches 100 \
             --verbose || {
             echo "⚠️ Affiliation enrichment did not complete (rate limited or timed out)"
@@ -77,7 +77,7 @@ jobs:
           }
           
           # Regenerate stats with any enriched data
-          if [ -f "authors.json" ]; then
+          if [ -f "website/assets/data/authors.json" ]; then
             echo "Regenerating author stats with enriched data..."
             python -m src.generators.generate_author_stats \
               --dblp_file data/dblp/dblp.xml.gz \
