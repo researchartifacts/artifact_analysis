@@ -221,7 +221,7 @@ def enrich_affiliations(
             stats['already_has_affiliation'] += 1
         
         if verbose:
-            print(f"  [{i}/{len(missing_affiliation)}] Looking up: {name}")
+            print(f"  [{i}/{len(authors)}] Looking up: {name}")
         
         affiliation = match_author_to_csrankings(name, name_index, verbose)
         
