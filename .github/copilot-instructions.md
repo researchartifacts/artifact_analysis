@@ -18,7 +18,7 @@ If it does, **also update the corresponding schema file** in the sibling
 | `generate_repo_stats.py` | `repo_stats.schema.json`, `repo_stats_summary.schema.json` |
 | `generate_combined_rankings.py` | `combined_rankings.schema.json` |
 | `generate_institution_rankings.py` | `institution_rankings.schema.json` |
-| `generate_author_stats.py` | `author_stats.schema.json` |
+| `generate_author_stats.py` | `author_stats.schema.json`, `paper_index.schema.json` |
 | `generate_search_data.py` | `search_data.schema.json` |
 
 ### How to update schemas
@@ -86,6 +86,58 @@ Any new or modified generator **must** be added to the monthly CI pipeline in
 - Missing optional input files: warn with `print("⚠️ ...")` and skip gracefully.
 - Output directories: always create with `os.makedirs(path, exist_ok=True)`.
 - Pipeline steps that can fail: use `|| echo "⚠️ <step> skipped"` in bash; in Python, catch exceptions and continue.
+
+## Testing
+
+All new or modified logic **must** have corresponding tests in `tests/`.
+
+### Test file layout
+
+| Source module | Test file |
+|---------------|-----------|
+| `src/generators/generate_<name>.py` | `tests/test_<name>.py` |
+| `src/enrichers/enrich_<name>.py` | `tests/test_enricher_<name>.py` |
+| `src/utils/<name>.py` | `tests/test_<name>.py` |
+
+### How to write tests
+
+1. **Unit tests** for pure functions (normalization, scoring, ranking, URL parsing).
+   Import the function directly; no fixtures or network needed.
+2. **Fixture-based tests** for generators that read/write files. Use the `tmp_website`
+   fixture from `conftest.py` (provides `_data/` + `assets/data/` directories).
+   Use `sample_authors` / `sample_index` fixtures for author data.
+3. **Integration tests** for multi-step workflows. Mark with `@pytest.mark.integration`.
+4. **No network** — tests must never make HTTP calls. Mock or use cached fixture data.
+
+### Conventions
+
+- Use `pytest` (not `unittest`). Group related tests in classes (`class TestFeatureName:`).
+- Use descriptive names: `test_deduplicates_coauthored_papers`, not `test_1`.
+- For file I/O tests, use `tmp_path` (pytest built-in) or `tmp_website` (our fixture).
+- Helper functions for writing/reading fixture data: `write_json()` / `read_json()` in `conftest.py`.
+- Mark slow tests with `@pytest.mark.slow`.
+
+### Running tests
+
+```bash
+# All tests
+pytest tests/ -v
+
+# Specific file
+pytest tests/test_paper_index.py -v
+
+# Skip slow tests (default in CI)
+pytest tests/ -m "not slow"
+
+# Integration only
+pytest tests/ -m integration
+```
+
+### CI workflow
+
+Tests run automatically on push/PR to `main` via `.github/workflows/tests.yml`
+(Python 3.10 + 3.12). CI uses `requirements-ci.txt` (minimal deps, no heavy
+packages). When adding a new import to test code, ensure it's in `requirements-ci.txt`.
 
 ## Naming Conventions
 
