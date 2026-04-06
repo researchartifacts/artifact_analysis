@@ -103,7 +103,14 @@ def fetch_affiliation_from_dblp_page(pid, session=None, verbose=False):
         return None
 
 
-def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbose=False, recheck=False, data_dir=None):
+def enrich_affiliations(
+    authors_data: list[dict],
+    output_path: str | None = None,
+    max_searches: int | None = None,
+    verbose: bool = False,
+    recheck: bool = False,
+    data_dir: str | None = None,
+) -> tuple[list[dict], dict[str, int]]:
     """
     Incrementally enrich author affiliations using DBLP with smart prioritization.
 

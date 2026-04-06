@@ -33,7 +33,7 @@ def build_name_to_id(data_dir: str) -> dict[str, int]:
     return {name: entry["id"] for name, entry in by_name.items()}
 
 
-def save_author_index(data_dir: str, entries: list) -> str:
+def save_author_index(data_dir: str, entries: list[dict]) -> str:
     """Write ``author_index.json`` back to disk.  Returns the file path."""
     path = os.path.join(data_dir, "assets", "data", "author_index.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)

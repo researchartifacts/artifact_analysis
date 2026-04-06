@@ -550,7 +550,7 @@ def _build_entry(
 # ── Main entry ────────────────────────────────────────────────────────────────
 
 
-def generate_combined_rankings(data_dir: str):
+def generate_combined_rankings(data_dir: str) -> None:
     """Read author + AE data, write combined ranking files."""
 
     assets_data = os.path.join(data_dir, "assets", "data")

@@ -68,7 +68,7 @@ def _is_fresh(dblp_file, extract_dir):
         return False
 
 
-def extract_dblp(dblp_file):
+def extract_dblp(dblp_file: str) -> tuple[str, str]:
     """Parse dblp.xml.gz and write JSON lookup files.
 
     Returns (papers_path, affiliations_path).
@@ -180,7 +180,7 @@ def extract_dblp(dblp_file):
 # ── Public lookup helpers ────────────────────────────────────────────────────
 
 
-def load_papers_by_venue(repo_root=None):
+def load_papers_by_venue(repo_root: str | None = None) -> dict[str, dict[int, list[dict]]]:
     """Load the pre-extracted papers index.
 
     Returns dict: conf (str) → year_str (str) → list of paper dicts.
@@ -193,7 +193,7 @@ def load_papers_by_venue(repo_root=None):
         return json.load(f)
 
 
-def load_affiliations(repo_root=None):
+def load_affiliations(repo_root: str | None = None) -> dict[str, str]:
     """Load the pre-extracted author → affiliation mapping.
 
     Returns dict: author_name (str) → affiliation (str).
@@ -225,7 +225,7 @@ def find_affiliation(name, repo_root=None):
     return None
 
 
-def papers_for_venue_year(conf, year, repo_root=None):
+def papers_for_venue_year(conf: str, year: int, repo_root: str | None = None) -> list[dict]:
     """Convenience: return list of paper dicts for a conference/year.
 
     Falls back to empty list if data is not available.

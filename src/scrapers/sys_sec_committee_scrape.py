@@ -75,7 +75,7 @@ def _parse_member_line(line):
     return name, affiliation
 
 
-def get_committee_for_conference(conference, prefix):
+def get_committee_for_conference(conference: str, prefix: str) -> dict | None:
     base_url = github_urls[prefix]["raw_base_url"] + conference
     # committee files are either named committee.md or organizers.md
     try:
@@ -161,7 +161,7 @@ def get_committee_for_conference(conference, prefix):
     return committee
 
 
-def get_committees(conference_regex, prefix):
+def get_committees(conference_regex: str, prefix: str) -> dict[str, dict]:
     results = {}
     # get conference name from prefix
     conferences = get_conferences_from_prefix(prefix)

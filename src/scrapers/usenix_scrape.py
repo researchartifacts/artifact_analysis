@@ -56,7 +56,7 @@ def get_session(session=None):
     return s
 
 
-def scrape_presentation_links(conference, year, session=None):
+def scrape_presentation_links(conference: str, year: int, session: requests.Session | None = None) -> list[str]:
     """
     Scrape the technical-sessions page for a USENIX conference and return
     a list of unique presentation paths (e.g. /conference/fast25/presentation/satija).
@@ -91,7 +91,7 @@ def scrape_presentation_links(conference, year, session=None):
     return result
 
 
-def scrape_paper_page(path, session=None):
+def scrape_paper_page(path: str, session: requests.Session | None = None) -> dict | None:
     """
     Scrape a single USENIX presentation page and extract:
       - title
@@ -180,7 +180,9 @@ def scrape_paper_page(path, session=None):
     return result
 
 
-def scrape_conference_year(conference, year, session=None, max_workers=4, delay=0.5):
+def scrape_conference_year(
+    conference: str, year: int, session: requests.Session | None = None, max_workers: int = 4, delay: float = 0.5
+) -> list[dict]:
     """
     Scrape all papers and badges for a conference/year combination.
 
@@ -231,7 +233,7 @@ def scrape_conference_year(conference, year, session=None, max_workers=4, delay=
     return artifacts
 
 
-def scrape_organizers(conference, year, session=None):
+def scrape_organizers(conference: str, year: int, session: requests.Session | None = None) -> dict | None:
     """
     Scrape the AE committee chairs and members from the USENIX call-for-artifacts page.
 

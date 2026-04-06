@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import time
+from typing import Any
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -27,7 +28,7 @@ def _github_headers():
     return headers
 
 
-def _session_with_retries(retries=3, backoff=1.0, timeout=30):
+def _session_with_retries(retries: int = 3, backoff: float = 1.0, timeout: int = 30) -> requests.Session:
     """Create a requests.Session with automatic retries and timeouts."""
     session = requests.Session()
     retry = Retry(
@@ -70,7 +71,7 @@ def _cache_path(key, namespace="default"):
     return os.path.join(ns_dir, hashed)
 
 
-def _read_cache(key, ttl=CACHE_TTL, namespace="default"):
+def _read_cache(key: str, ttl: int = CACHE_TTL, namespace: str = "default") -> str | None:
     """Return cached value if fresh, else None."""
     path = _cache_path(key, namespace)
     if not os.path.exists(path):
@@ -97,7 +98,7 @@ def _read_cache_entry(key, namespace="default"):
         return None
 
 
-def _write_cache(key, body, namespace="default", etag=None):
+def _write_cache(key: str, body: str, namespace: str = "default", etag: str | None = None) -> None:
     """Write value to cache, optionally storing an ETag for conditional requests."""
     path = _cache_path(key, namespace)
     entry = {"ts": time.time(), "body": body}
@@ -120,7 +121,7 @@ def _refresh_cache_ts(key, namespace="default"):
         pass
 
 
-def check_url_cached(url, ttl=CACHE_TTL_URL):
+def check_url_cached(url: str, ttl: int = CACHE_TTL_URL) -> bool:
     """Check if a URL exists, with disk caching.
 
     Returns True/False.  Positive results are cached for ``ttl`` seconds;
@@ -151,7 +152,7 @@ def check_url_cached(url, ttl=CACHE_TTL_URL):
     return exists
 
 
-def cached_github_stats(url, ttl=CACHE_TTL_STATS):
+def cached_github_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
     """Fetch GitHub repo stats with caching, ETags, and rate-limit handling.
 
     Uses conditional requests (If-None-Match) so that 304 responses do NOT
@@ -210,7 +211,7 @@ def cached_github_stats(url, ttl=CACHE_TTL_STATS):
     return result
 
 
-def cached_zenodo_stats(url, ttl=CACHE_TTL_STATS):
+def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
     """Fetch Zenodo record stats with caching."""
     cached = _read_cache(url, ttl=ttl, namespace="zenodo_stats")
     if cached is not None:

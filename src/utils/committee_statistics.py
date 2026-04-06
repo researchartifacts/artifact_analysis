@@ -10,7 +10,7 @@ from thefuzz import fuzz
 logger = logging.getLogger(__name__)
 
 
-def calculate_affiliation_stats(results):
+def calculate_affiliation_stats(results: dict[str, list[dict]]) -> dict[str, int]:
     affiliation_stats = {}
     for name in results:
         for member in results[name]:
@@ -38,7 +38,7 @@ def calculate_affiliation_stats_per_year(results):
     return affiliation_stats
 
 
-def aec_retention(results):
+def aec_retention(results: dict[str, list[dict]]) -> dict[str, list]:
     conf_mem_set = {}
     for conf in results:
         conf_mem_set[conf] = {}

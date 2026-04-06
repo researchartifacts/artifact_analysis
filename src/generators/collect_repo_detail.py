@@ -42,7 +42,7 @@ def _normalize_repo(url):
     return None
 
 
-def collect(cache_path, output_path):
+def collect(cache_path: str, output_path: str) -> None:
     with open(cache_path) as f:
         data = yaml.safe_load(f)
 

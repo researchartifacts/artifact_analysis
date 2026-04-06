@@ -19,6 +19,7 @@ import os
 import re
 from collections import defaultdict
 from datetime import datetime, timezone
+from typing import Any
 
 import yaml
 
@@ -53,7 +54,7 @@ def _detect_platform(url):
     return "other"
 
 
-def generate_availability(results):
+def generate_availability(results: dict[str, list[dict]]) -> tuple[list[dict], dict, dict]:
     """Check URL liveness for all artifacts and produce per-artifact records.
 
     Returns a list of dicts, one per artifact, with fields:
@@ -97,7 +98,7 @@ def generate_availability(results):
     return records, counts, failed
 
 
-def build_summary(records):
+def build_summary(records: list[dict]) -> dict[str, Any]:
     """Aggregate availability records into summary statistics."""
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 

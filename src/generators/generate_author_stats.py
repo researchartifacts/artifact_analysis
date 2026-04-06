@@ -76,7 +76,7 @@ def normalize_title(title):
     return normalized
 
 
-def load_artifacts(data_dir):
+def load_artifacts(data_dir: str) -> list[dict] | None:
     """Load artifacts from generated data file"""
     artifacts_path = os.path.join(data_dir, "assets/data/artifacts.json")
     if not os.path.exists(artifacts_path):
@@ -122,7 +122,7 @@ def load_conference_active_years(data_dir):
     return active_years
 
 
-def load_artifact_citations(data_dir):
+def load_artifact_citations(data_dir: str) -> dict[str, int]:
     """Load artifact citation data if available.
 
     Returns dict: normalized_title -> cited_by_count (max across duplicates).
@@ -147,7 +147,7 @@ def load_artifact_citations(data_dir):
     return by_title
 
 
-def extract_paper_titles(artifacts):
+def extract_paper_titles(artifacts: list[dict]) -> tuple[set[str], dict[str, dict]]:
     """Extract unique paper titles from artifacts"""
     titles = set()
     title_to_artifact = {}
@@ -165,7 +165,9 @@ def extract_paper_titles(artifacts):
     return titles, title_to_artifact
 
 
-def parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact):
+def parse_dblp_for_authors(
+    dblp_file: str, paper_titles: set[str], title_to_artifact: dict[str, dict]
+) -> tuple[list[dict], dict, dict]:
     """
     Parse DBLP XML and find authors for artifact papers.
     Also collects ALL papers at tracked conference venues so we can later
@@ -601,7 +603,7 @@ def aggregate_author_statistics(
     return authors_list, category_breakdown
 
 
-def generate_author_stats(dblp_file, data_dir, output_dir):
+def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> None:
     """Main function to generate author statistics"""
     logger.info("Generating author statistics...")
 

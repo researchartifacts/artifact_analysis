@@ -44,7 +44,7 @@ def load_authors_json(path):
         return json.load(f)
 
 
-def build_index(authors, existing_by_name, max_id):
+def build_index(authors: list[dict], existing_by_name: dict[str, dict], max_id: int) -> list[dict]:
     """Build a new index, preserving existing IDs and syncing affiliations.
 
     When an enricher updates authors.json with a new affiliation, we detect

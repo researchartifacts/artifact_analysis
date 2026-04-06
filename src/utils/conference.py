@@ -39,7 +39,7 @@ SECURITY_CONFS = frozenset(
 ALL_CONFS = SYSTEMS_CONFS | SECURITY_CONFS
 
 
-def conf_area(conf_name):
+def conf_area(conf_name: str) -> str:
     """Return ``'systems'``, ``'security'``, or ``'unknown'``.
 
     Accepts a bare conference name (``'OSDI'``) **or** a conf-year string
@@ -58,7 +58,7 @@ def conf_area(conf_name):
 _CONF_YEAR_RE = re.compile(r"^([a-zA-Z]+)(\d{4})$")
 
 
-def parse_conf_year(conf_year_str):
+def parse_conf_year(conf_year_str: str) -> tuple[str, int | None]:
     """Parse ``'osdi2024'`` → ``('OSDI', 2024)``.
 
     Returns ``(name_upper, year_int)`` on success, or
@@ -73,7 +73,7 @@ def parse_conf_year(conf_year_str):
 # ── Author / person name normalisation ──────────────────────────────────────
 
 
-def clean_name(name):
+def clean_name(name: str) -> str:
     """Remove DBLP disambiguation suffixes and collapse whitespace.
 
     ``'Jane Doe 0001'`` → ``'Jane Doe'``
@@ -86,7 +86,7 @@ def clean_name(name):
     return name
 
 
-def normalize_name(name):
+def normalize_name(name: str) -> str:
     """Aggressive normalisation for cross-source matching.
 
     Lower-cases, strips accents, removes dots, collapses whitespace.

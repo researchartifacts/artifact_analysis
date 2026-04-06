@@ -107,7 +107,7 @@ def extract_year_from_confname(conf_year_str):
     return None
 
 
-def count_sources_by_year(all_results):
+def count_sources_by_year(all_results: dict[str, list[dict]]) -> dict[int, int]:
     """
     Count artifacts by source for each year.
 

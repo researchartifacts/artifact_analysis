@@ -135,7 +135,7 @@ def get_artifact_urls(artifact):
     return deduped
 
 
-def count_sources_by_conference(all_results):
+def count_sources_by_conference(all_results: dict[str, list[dict]]) -> dict[str, int]:
     """Count artifacts by source for each conference."""
     stats = defaultdict(lambda: defaultdict(int))
     stats["overall"] = defaultdict(int)
@@ -161,7 +161,7 @@ def count_sources_by_conference(all_results):
     return dict(stats)
 
 
-def count_sources_by_area(all_results):
+def count_sources_by_area(all_results: dict[str, list[dict]]) -> dict[str, int]:
     """Count artifacts by source for systems vs security."""
     sys_sources = defaultdict(int)
     sec_sources = defaultdict(int)
