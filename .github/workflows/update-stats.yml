@@ -89,11 +89,6 @@ jobs:
             --output_dir ../website \
             --refresh || echo "⚠️ Repository stats generation skipped"
       
-      - name: Generate visualizations
-        run: |
-          cd artifact_analysis
-          python -m src.generators.generate_visualizations --data_dir ../website
-      
       - name: Generate per-area author data
         run: |
           cd artifact_analysis

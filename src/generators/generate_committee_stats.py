@@ -967,11 +967,6 @@ def _generate_committee_charts(summary, detail, output_dir, inst_timeline=None):
     _chart_committee_sizes(summary, os.path.join(charts_dir, 'committee_sizes.svg'))
     _chart_continent_timeline(detail, os.path.join(charts_dir, 'committee_continent_timeline.svg'))
 
-    # New: institution timeline chart
-    if inst_timeline:
-        _chart_institution_timeline(inst_timeline, os.path.join(charts_dir, 'institution_timeline.svg'))
-        _chart_top_institutions_over_time(inst_timeline, os.path.join(charts_dir, 'institution_top_timeline.svg'))
-
     print(f"  Committee charts generated in {charts_dir}")
 
 
