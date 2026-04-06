@@ -67,6 +67,106 @@ def count_badges(artifacts):
     return badges
 
 
+def _collect_artifact_urls(artifact: dict) -> list[str]:
+    """Collect and deduplicate all artifact-related URLs from a raw artifact dict."""
+    urls: list[str] = []
+    # Repository URLs (GitHub, GitLab, Bitbucket, etc.)
+    for repo_key in ("repository_url", "github_url", "second_repository_url", "bitbucket_url"):
+        url = artifact.get(repo_key, "")
+        if url:
+            urls.append(url)
+    # Primary artifact URL
+    if artifact.get("artifact_url"):
+        urls.append(artifact["artifact_url"])
+    # List-valued artifact URL fields
+    if isinstance(artifact.get("artifact_urls"), list):
+        urls.extend([u for u in artifact["artifact_urls"] if u])
+    if isinstance(artifact.get("additional_urls"), list):
+        urls.extend([u for u in artifact["additional_urls"] if u])
+    # Normalize artifact_doi -> DOI URL
+    artifact_doi = artifact.get("artifact_doi", "")
+    if artifact_doi:
+        if not artifact_doi.startswith("http"):
+            artifact_doi = f"https://doi.org/{artifact_doi}"
+        urls.append(artifact_doi)
+    # Collect miscellaneous URL fields
+    for url_key in (
+        "cloudlab_url",
+        "web_url",
+        "scripts_url",
+        "jupyter_url",
+        "vm_url",
+        "proof_url",
+        "data_url",
+    ):
+        extra_url = artifact.get(url_key, "")
+        if extra_url:
+            urls.append(extra_url)
+    # Deduplicate while preserving order
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for u in urls:
+        if isinstance(u, str) and u and u not in seen:
+            seen.add(u)
+            deduped.append(u)
+    return deduped
+
+
+def _build_artifact_entry(
+    artifact: dict,
+    conf_name: str,
+    category: str,
+    year: int,
+    conf_year: str,
+    sec_results: dict,
+    sys_results: dict,
+) -> dict:
+    """Build a normalized artifact entry dict from a raw scraped artifact."""
+    raw_badges = artifact.get("badges", [])
+    if isinstance(raw_badges, str):
+        raw_badges = [b.strip() for b in raw_badges.split(",") if b.strip()]
+
+    entry = {
+        "conference": conf_name.upper(),
+        "category": category,
+        "year": year,
+        "title": artifact.get("title", "Unknown"),
+        "badges": raw_badges,
+        "artifact_urls": _collect_artifact_urls(artifact),
+    }
+
+    # Normalize paper_url: merge doi and paper_doi fields
+    paper_url = artifact.get("paper_url", "")
+    if not paper_url:
+        raw_doi = artifact.get("doi", "")
+        if raw_doi:
+            paper_url = f"https://doi.org/{raw_doi}" if not raw_doi.startswith("http") else raw_doi
+    if not paper_url:
+        raw_paper_doi = artifact.get("paper_doi", "")
+        if raw_paper_doi:
+            paper_url = (
+                f"https://doi.org/10.1145/{raw_paper_doi}"
+                if not raw_paper_doi.startswith("10.")
+                else f"https://doi.org/{raw_paper_doi}"
+            )
+    if paper_url:
+        entry["paper_url"] = paper_url
+
+    appendix_url = artifact.get("appendix_url", "")
+    if appendix_url:
+        if not appendix_url.startswith("http"):
+            if conf_year in sec_results:
+                appendix_url = f"https://secartifacts.github.io/{conf_year}/{appendix_url}"
+            elif conf_year in sys_results:
+                appendix_url = f"https://sysartifacts.github.io/{conf_year}/{appendix_url}"
+        entry["appendix_url"] = appendix_url
+
+    award = artifact.get("award", "")
+    if award:
+        entry["award"] = award
+    return entry
+
+
 def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
     """
     Generate comprehensive statistics from sys and sec artifacts.
@@ -234,89 +334,17 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
 
             # Collect all artifacts with metadata
             for artifact in artifacts:
-                raw_badges = artifact.get("badges", [])
-                if isinstance(raw_badges, str):
-                    raw_badges = [b.strip() for b in raw_badges.split(",") if b.strip()]
-                # --- Collect ALL artifact-related URLs into a single list ---
-                all_artifact_urls = []
-                # Repository URLs (GitHub, GitLab, Bitbucket, etc.)
-                for repo_key in ("repository_url", "github_url", "second_repository_url", "bitbucket_url"):
-                    url = artifact.get(repo_key, "")
-                    if url:
-                        all_artifact_urls.append(url)
-                # Primary artifact URL
-                if artifact.get("artifact_url"):
-                    all_artifact_urls.append(artifact["artifact_url"])
-                # List-valued artifact URL fields
-                if isinstance(artifact.get("artifact_urls"), list):
-                    all_artifact_urls.extend([u for u in artifact["artifact_urls"] if u])
-                if isinstance(artifact.get("additional_urls"), list):
-                    all_artifact_urls.extend([u for u in artifact["additional_urls"] if u])
-                # Normalize artifact_doi → DOI URL
-                artifact_doi = artifact.get("artifact_doi", "")
-                if artifact_doi:
-                    if not artifact_doi.startswith("http"):
-                        artifact_doi = f"https://doi.org/{artifact_doi}"
-                    all_artifact_urls.append(artifact_doi)
-                # Collect miscellaneous URL fields
-                for url_key in (
-                    "cloudlab_url",
-                    "web_url",
-                    "scripts_url",
-                    "jupyter_url",
-                    "vm_url",
-                    "proof_url",
-                    "data_url",
-                ):
-                    extra_url = artifact.get(url_key, "")
-                    if extra_url:
-                        all_artifact_urls.append(extra_url)
-                # Deduplicate while preserving order
-                seen_urls = set()
-                deduped = []
-                for u in all_artifact_urls:
-                    if isinstance(u, str) and u and u not in seen_urls:
-                        seen_urls.add(u)
-                        deduped.append(u)
-                all_artifact_urls = deduped
-
-                artifact_entry = {
-                    "conference": conf_name.upper(),
-                    "category": category,
-                    "year": int(year),
-                    "title": artifact.get("title", "Unknown"),
-                    "badges": raw_badges,
-                    "artifact_urls": all_artifact_urls,
-                }
-                # Normalize paper_url: merge doi and paper_doi fields
-                paper_url = artifact.get("paper_url", "")
-                if not paper_url:
-                    raw_doi = artifact.get("doi", "")
-                    if raw_doi:
-                        paper_url = f"https://doi.org/{raw_doi}" if not raw_doi.startswith("http") else raw_doi
-                if not paper_url:
-                    raw_paper_doi = artifact.get("paper_doi", "")
-                    if raw_paper_doi:
-                        paper_url = (
-                            f"https://doi.org/10.1145/{raw_paper_doi}"
-                            if not raw_paper_doi.startswith("10.")
-                            else f"https://doi.org/{raw_paper_doi}"
-                        )
-                if paper_url:
-                    artifact_entry["paper_url"] = paper_url
-                appendix_url = artifact.get("appendix_url", "")
-                if appendix_url:
-                    # Convert relative appendix paths to absolute URLs
-                    if not appendix_url.startswith("http"):
-                        if conf_year in sec_results:
-                            appendix_url = f"https://secartifacts.github.io/{conf_year}/{appendix_url}"
-                        elif conf_year in sys_results:
-                            appendix_url = f"https://sysartifacts.github.io/{conf_year}/{appendix_url}"
-                    artifact_entry["appendix_url"] = appendix_url
-                award = artifact.get("award", "")
-                if award:
-                    artifact_entry["award"] = award
-                all_artifacts.append(artifact_entry)
+                all_artifacts.append(
+                    _build_artifact_entry(
+                        artifact,
+                        conf_name,
+                        category,
+                        int(year),
+                        conf_year,
+                        sec_results,
+                        sys_results,
+                    )
+                )
 
     # Sort years for each conference
     for conf in by_conference.values():
