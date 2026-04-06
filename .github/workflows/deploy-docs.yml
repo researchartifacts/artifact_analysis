@@ -64,8 +64,10 @@ jobs:
           ALIAS="${{ steps.version.outputs.alias }}"
           if [[ -n "$ALIAS" ]]; then
             mike deploy --push --update-aliases "$VERSION" "$ALIAS"
+            git fetch origin gh-pages
+            mike set-default --push latest
           else
             mike deploy --push "$VERSION"
+            git fetch origin gh-pages
+            mike set-default --push "$VERSION"
           fi
-          # Set default version to latest if it exists, otherwise dev
-          mike set-default --push latest 2>/dev/null || mike set-default --push dev 2>/dev/null || true
