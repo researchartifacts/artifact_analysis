@@ -32,7 +32,7 @@ def read_cache(base_dir: str, key: str, ttl: int, namespace: str = "default") ->
         if time.time() - entry.get("ts", 0) < ttl:
             return entry.get("body")
     except (json.JSONDecodeError, KeyError, OSError):
-        pass
+        logger.debug("Cache miss or corruption for key %s in namespace %s", key, namespace)
     return None
 
 
@@ -74,4 +74,4 @@ def refresh_cache_ts(base_dir: str, key: str, namespace: str = "default") -> Non
         with open(path, "w") as f:
             json.dump(entry, f)
     except (json.JSONDecodeError, KeyError, OSError):
-        pass
+        logger.debug("Failed to refresh cache timestamp for key %s", key)

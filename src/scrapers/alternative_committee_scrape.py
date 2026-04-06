@@ -417,7 +417,7 @@ def scrape_ches_committee(year, session=None):
                 if name and len(name) > 1:
                     members.append({"name": name, "affiliation": affiliation, "role": "member"})
     except (requests.RequestException, ValueError, KeyError):
-        pass
+        logger.warning("Failed to fetch/parse CHES committee JSON, skipping JSON source")
 
     # 2. Fetch HTML page for chairs (and fallback members if JSON failed)
     html_url = f"https://ches.iacr.org/{year}/artifacts.php"

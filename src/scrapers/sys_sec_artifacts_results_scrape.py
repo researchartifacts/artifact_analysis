@@ -189,6 +189,7 @@ def get_ae_results(conference_regex, prefix):
                     downloaded = True
                     break
                 except requests.exceptions.HTTPError:
+                    logger.debug("HTTPError downloading %s, trying next source", filename if filename else "file")
                     continue
                 except requests.exceptions.ConnectionError as e:
                     logger.error(f"  connection error for {name}/{filename}: {e}")

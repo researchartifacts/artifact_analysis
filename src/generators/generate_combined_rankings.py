@@ -724,7 +724,7 @@ def generate_combined_rankings(data_dir: str) -> None:
                         entry["author_id"] = aid
             logger.info("  Author IDs injected from index")
     except ImportError:
-        pass
+        logger.debug("Optional module not available, skipping enrichment")
 
     # Write JSON
     os.makedirs(assets_data, exist_ok=True)

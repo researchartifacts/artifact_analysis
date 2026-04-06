@@ -266,7 +266,7 @@ def generate_area_authors():
                     if aid is not None:
                         entry["author_id"] = aid
     except (ImportError, NameError):
-        pass
+        logger.debug("Optional module not available, skipping enrichment")
 
     # Save YAML for Jekyll (kept for backwards compat, but pages now load JSON)
     save_yaml("systems_authors.yml", systems_authors)

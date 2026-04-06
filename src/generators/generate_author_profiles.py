@@ -146,7 +146,7 @@ def generate_profiles(data_dir: str) -> None:
                 if aid is not None:
                     profile["author_id"] = aid
     except ImportError:
-        pass
+        logger.debug("Optional module not available, skipping enrichment")
 
     # Write compact JSON
     with open(out_path, "w") as f:

@@ -510,7 +510,7 @@ def enrich(
             if index_by_name:
                 logger.info(f"  Loaded author index ({len(index_by_name)} entries)")
         except ImportError:
-            pass
+            logger.debug("Optional module not available, skipping enrichment")
 
     stats = {
         "total": total,

@@ -657,7 +657,7 @@ def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> Non
             logger.info(f"Author IDs assigned: {assigned}/{len(authors_list)}")
             logger.info(f"Affiliations overridden from author index: {patched_aff}")
     except ImportError:
-        pass
+        logger.debug("Optional module not available, skipping enrichment")
 
     # Count affiliation coverage
     with_affil = sum(1 for a in authors_list if a.get("affiliation"))

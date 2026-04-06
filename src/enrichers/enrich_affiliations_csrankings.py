@@ -215,7 +215,7 @@ def enrich_affiliations(
             if index_by_name:
                 logger.info(f"Loaded author index ({len(index_by_name)} entries)")
         except ImportError:
-            pass
+            logger.debug("Author index not available, skipping author ID enrichment")
 
     # Track statistics
     stats = {"total": len(authors), "already_has_affiliation": 0, "csrankings_match": 0, "no_match": 0, "enriched": 0}

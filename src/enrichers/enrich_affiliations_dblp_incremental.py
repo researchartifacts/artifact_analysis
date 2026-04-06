@@ -89,7 +89,7 @@ def search_dblp_author(author_name, session=None, verbose=False):
         if find_affiliation(clean_name) is not None:
             return clean_name
     except (ImportError, Exception):
-        pass
+        logger.debug("DBLP extraction module not available for %s", author_name)
     return None
 
 
@@ -160,7 +160,7 @@ def enrich_affiliations(
             if index_by_name:
                 logger.info(f"Loaded author index ({len(index_by_name)} entries)")
         except ImportError:
-            pass
+            logger.debug("Optional module not available, skipping enrichment")
 
     stats = {
         "total_authors": len(authors_data),
