@@ -40,3 +40,14 @@ for path in sorted(src.rglob("*.py")):
 # Write navigation summary
 with mkdocs_gen_files.open("reference/SUMMARY.md", "w") as nav_file:
     nav_file.writelines(nav.build_literate_nav())
+
+# Write index page for the reference section
+with mkdocs_gen_files.open("reference/index.md", "w") as fd:
+    fd.write("# API Reference\n\n")
+    fd.write("Auto-generated documentation for all Python modules in the pipeline.\n\n")
+    fd.write("Browse by category:\n\n")
+    fd.write("- **[Generators](generators/)** — Statistics, visualizations, and output generation\n")
+    fd.write("- **[Scrapers](scrapers/)** — Data collection from conference sites\n")
+    fd.write("- **[Enrichers](enrichers/)** — Affiliation and data enhancement\n")
+    fd.write("- **[Models](models/)** — Pydantic data models for output schemas\n")
+    fd.write("- **[Utils](utils/)** — Shared utilities and helpers\n")
