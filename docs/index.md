@@ -20,5 +20,5 @@ pytest tests/ -v
 ## Documentation Sections
 
 - **[CLI Reference](cli/)** — Command-line arguments for all 40 scripts
-- **[Data Schemas](schemas/)** — Pydantic models defining all output formats
+- **[Data Schemas](https://researchartifacts.github.io/data-schemas/)** — JSON Schema definitions for all output formats
 - **[API Reference](reference/)** — Python module documentation

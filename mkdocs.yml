@@ -51,7 +51,7 @@ plugins:
 nav:
   - Home: index.md
   - CLI Reference: cli/
-  - Data Schemas: schemas/
+  - Data Schemas: https://researchartifacts.github.io/data-schemas/
   - API Reference: reference/
 
 extra:
