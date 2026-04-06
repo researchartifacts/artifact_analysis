@@ -182,7 +182,10 @@ class TestInvariantViolations:
                 badges_reproducible=0,
             )
 
-    def test_artifacts_exceeding_total_papers_clamped(self, capsys):
+    def test_artifacts_exceeding_total_papers_clamped(self, caplog):
+        import logging
+
+        caplog.set_level(logging.INFO, logger="src.generators.generate_combined_rankings")
         """artifacts > total_papers is soft-clamped (warning, not error)."""
         from src.generators.generate_combined_rankings import _build_entry
 
@@ -203,8 +206,7 @@ class TestInvariantViolations:
         )
         # total_papers is clamped up to artifacts
         assert entry["total_papers"] >= entry["artifacts"]
-        captured = capsys.readouterr()
-        assert "undercount" in captured.out.lower() or "clamping" in captured.out.lower()
+        assert "undercount" in caplog.text.lower() or "clamping" in caplog.text.lower()
 
 
 # ── Ranking contract ─────────────────────────────────────────────────────────

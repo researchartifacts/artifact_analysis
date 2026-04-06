@@ -13,6 +13,7 @@ Usage:
 
 import argparse
 import json
+import logging
 import time
 
 import requests
@@ -21,6 +22,8 @@ import yaml
 from ..scrapers.sys_sec_scrape import _github_headers
 from ..utils.conference import conf_area
 from ..utils.conference import parse_conf_year as _parse_conf_year
+
+logger = logging.getLogger(__name__)
 
 
 def _normalize_repo(url):
@@ -56,7 +59,7 @@ def collect(cache_path, output_path):
             continue
         area = conf_area(conf)
         if area == "unknown":
-            print(f"  Skipping unknown conference: {conf}")
+            logger.warning(f"  Skipping unknown conference: {conf}")
             continue
         for a in artifacts:
             github_url = None
@@ -92,26 +95,26 @@ def collect(cache_path, output_path):
                 }
             )
 
-    print(f"Found {len(entries)} unique GitHub repos to query")
+    logger.info(f"Found {len(entries)} unique GitHub repos to query")
 
     results = []
     errors = 0
     for i, entry in enumerate(entries):
         if (i + 1) % 100 == 0:
-            print(f"  Progress: {i + 1}/{len(entries)} ({errors} errors)")
+            logger.error(f"  Progress: {i + 1}/{len(entries)} ({errors} errors)")
         repo = entry["repo"]
         api_url = f"https://api.github.com/repos/{repo}"
         try:
             resp = session.get(api_url, timeout=30)
         except requests.RequestException as e:
-            print(f"  Network error for {repo}: {e}")
+            logger.error(f"  Network error for {repo}: {e}")
             errors += 1
             continue
 
         if resp.status_code == 403 and "rate limit" in resp.text.lower():
             reset_time = int(resp.headers.get("X-RateLimit-Reset", 0))
             wait = max(reset_time - int(time.time()), 0) + 5
-            print(f"  Rate limited. Waiting {wait}s...")
+            logger.info(f"  Rate limited. Waiting {wait}s...")
             time.sleep(wait)
             resp = session.get(api_url, timeout=30)
 
@@ -149,14 +152,14 @@ def collect(cache_path, output_path):
             )
             errors += 1
         else:
-            print(f"  HTTP {resp.status_code} for {repo}")
+            logger.info(f"  HTTP {resp.status_code} for {repo}")
             errors += 1
 
-    print(f"\nDone: {len(results)} repos collected, {errors} errors")
+    logger.error(f"\nDone: {len(results)} repos collected, {errors} errors")
 
     with open(output_path, "w") as f:
         json.dump(results, f, indent=2)
-    print(f"Wrote {output_path}")
+    logger.info(f"Wrote {output_path}")
 
 
 def main():
@@ -168,4 +171,8 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

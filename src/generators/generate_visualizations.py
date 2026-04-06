@@ -6,12 +6,14 @@ Creates SVG charts that can be embedded in the Jekyll site.
 
 import argparse
 import json
+import logging
 import os
 from collections import defaultdict
 
 import matplotlib
 import yaml
 
+logger = logging.getLogger(__name__)
 matplotlib.use("Agg")  # Use non-interactive backend
 import matplotlib.pyplot as plt
 
@@ -300,7 +302,7 @@ def generate_all_charts(data_dir):
     # Coverage table
     create_coverage_table(by_conference, os.path.join(charts_dir, "coverage_table.svg"))
 
-    print(f"Charts generated in {charts_dir}")
+    logger.info(f"Charts generated in {charts_dir}")
 
 
 def main():
@@ -310,8 +312,8 @@ def main():
     args = parser.parse_args()
 
     if not os.path.exists(args.data_dir):
-        print(f"Error: Data directory '{args.data_dir}' not found")
-        print("Please run generate_statistics.py first")
+        logger.error(f"Error: Data directory '{args.data_dir}' not found")
+        logger.info("Please run generate_statistics.py first")
         return 1
 
     generate_all_charts(args.data_dir)
@@ -319,4 +321,8 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     exit(main())

@@ -7,6 +7,7 @@ Download from: https://dblp.org/xml/dblp.xml.gz
 
 import argparse
 import json
+import logging
 import os
 import re
 from collections import defaultdict
@@ -22,6 +23,8 @@ from .generate_combined_rankings import _normalize_affiliation
 # Conference categorization is derived from the source (sys vs sec artifacts)
 # and stored in the 'category' field of each artifact by generate_statistics.py
 
+
+logger = logging.getLogger(__name__)
 # Mapping from DBLP booktitle substrings to our conference identifiers.
 # Used to count ALL papers by an author at tracked conferences (not just artifact papers).
 DBLP_VENUE_MAP = {
@@ -77,8 +80,8 @@ def load_artifacts(data_dir):
     """Load artifacts from generated data file"""
     artifacts_path = os.path.join(data_dir, "assets/data/artifacts.json")
     if not os.path.exists(artifacts_path):
-        print(f"Error: {artifacts_path} not found")
-        print("Please run generate_statistics.py first")
+        logger.error(f"Error: {artifacts_path} not found")
+        logger.info("Please run generate_statistics.py first")
         return None
 
     with open(artifacts_path, "r") as f:
@@ -94,7 +97,7 @@ def load_conference_active_years(data_dir):
     """
     conf_path = os.path.join(data_dir, "_data/artifacts_by_conference.yml")
     if not os.path.exists(conf_path):
-        print(f"Warning: {conf_path} not found, will count all years")
+        logger.warning(f"Warning: {conf_path} not found, will count all years")
         return {}
 
     with open(conf_path, "r") as f:
@@ -110,11 +113,11 @@ def load_conference_active_years(data_dir):
         # Include any year that had at least one artifact
         active_years[conf_name] = set(year_entry["year"] for year_entry in years if year_entry.get("total", 0) > 0)
 
-    print(f"Loaded active years for {len(active_years)} conferences")
+    logger.info(f"Loaded active years for {len(active_years)} conferences")
     for conf, years in sorted(active_years.items()):
         if years:
             year_list = sorted(years)
-            print(f"  {conf}: {min(year_list)}-{max(year_list)} ({len(year_list)} years)")
+            logger.info(f"  {conf}: {min(year_list)}-{max(year_list)} ({len(year_list)} years)")
 
     return active_years
 
@@ -126,7 +129,7 @@ def load_artifact_citations(data_dir):
     """
     citations_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
     if not os.path.exists(citations_path):
-        print(f"Warning: {citations_path} not found, skipping citation enrichment")
+        logger.warning(f"Warning: {citations_path} not found, skipping citation enrichment")
         return {}
 
     with open(citations_path, "r") as f:
@@ -182,11 +185,11 @@ def parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact):
           - Dict mapping author_name -> affiliation string (from DBLP <www> entries)
     """
     if not os.path.exists(dblp_file):
-        print(f"Error: DBLP file not found: {dblp_file}")
-        print("Please download from: https://dblp.org/xml/dblp.xml.gz")
+        logger.error(f"Error: DBLP file not found: {dblp_file}")
+        logger.info("Please download from: https://dblp.org/xml/dblp.xml.gz")
         return [], {}, {}
 
-    print("Parsing DBLP XML file (this may take several minutes)...")
+    logger.info("Parsing DBLP XML file (this may take several minutes)...")
 
     papers_found = []
     titles_to_find = paper_titles.copy()
@@ -290,16 +293,16 @@ def parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact):
         dblp_stream.close()
 
     except Exception as e:
-        print(f"Error parsing DBLP: {e}")
+        logger.error(f"Error parsing DBLP: {e}")
         return papers_found, venue_papers, affiliations
 
     if titles_to_find:
-        print(f"Warning: {len(titles_to_find)} papers not found in DBLP")
+        logger.warning(f"Warning: {len(titles_to_find)} papers not found in DBLP")
 
     total_venue = sum(len(t) for ydict in venue_papers.values() for t in ydict.values())
-    print(f"Total artifact papers matched: {len(papers_found)}")
-    print(f"Total papers tracked at conference venues: {total_venue} (author-paper pairs)")
-    print(f"Total DBLP affiliations extracted: {len(affiliations)}")
+    logger.info(f"Total artifact papers matched: {len(papers_found)}")
+    logger.info(f"Total papers tracked at conference venues: {total_venue} (author-paper pairs)")
+    logger.info(f"Total DBLP affiliations extracted: {len(affiliations)}")
     return papers_found, venue_papers, affiliations
 
 
@@ -600,7 +603,7 @@ def aggregate_author_statistics(
 
 def generate_author_stats(dblp_file, data_dir, output_dir):
     """Main function to generate author statistics"""
-    print("Generating author statistics...")
+    logger.info("Generating author statistics...")
 
     # Load artifacts
     artifacts = load_artifacts(data_dir)
@@ -619,7 +622,7 @@ def generate_author_stats(dblp_file, data_dir, output_dir):
     papers_with_authors, venue_papers, affiliations = parse_dblp_for_authors(dblp_file, paper_titles, title_to_artifact)
 
     if not papers_with_authors:
-        print("No papers matched in DBLP")
+        logger.info("No papers matched in DBLP")
         return None
 
     # Load artifact citations (optional)
@@ -649,14 +652,14 @@ def generate_author_stats(dblp_file, data_dir, output_dir):
                     author["affiliation"] = idx_aff
                     patched_aff += 1
             assigned = sum(1 for a in authors_list if "author_id" in a)
-            print(f"Author IDs assigned: {assigned}/{len(authors_list)}")
-            print(f"Affiliations overridden from author index: {patched_aff}")
+            logger.info(f"Author IDs assigned: {assigned}/{len(authors_list)}")
+            logger.info(f"Affiliations overridden from author index: {patched_aff}")
     except ImportError:
         pass
 
     # Count affiliation coverage
     with_affil = sum(1 for a in authors_list if a.get("affiliation"))
-    print(
+    logger.info(
         f"Authors with DBLP affiliation: {with_affil}/{len(authors_list)} ({round(with_affil / len(authors_list) * 100, 1) if authors_list else 0}%)"
     )
 
@@ -692,7 +695,7 @@ def generate_author_stats(dblp_file, data_dir, output_dir):
     with open(assets_papers, "w") as f:
         json.dump(papers_list, f, ensure_ascii=False)
     artifact_count = sum(1 for p in papers_list if p.get("has_artifact", True))
-    print(f"Paper index: {len(papers_list)} papers ({artifact_count} with artifacts)")
+    logger.info(f"Paper index: {len(papers_list)} papers ({artifact_count} with artifacts)")
 
     # Replace embedded papers with paper_ids in authors_list
     for author in authors_list:
@@ -738,7 +741,7 @@ def generate_author_stats(dblp_file, data_dir, output_dir):
     with open(os.path.join(output_dir, "assets/data/paper_authors_map.json"), "w") as f:
         json.dump(papers_with_authors, f, indent=2, ensure_ascii=False)
 
-    print(f"Author data written to {output_dir} ({len(authors_list)} authors, {len(papers_with_authors)} papers)")
+    logger.info(f"Author data written to {output_dir} ({len(authors_list)} authors, {len(papers_with_authors)} papers)")
 
     return {"authors": authors_list, "summary": author_summary}
 
@@ -763,8 +766,14 @@ def main():
 
     if result:
         s = result["summary"]
-        print(f"Authors: {s['total_authors']} ({s['total_papers_matched']} papers, {s['multi_conference']} multi-conf)")
+        logger.info(
+            f"Authors: {s['total_authors']} ({s['total_papers_matched']} papers, {s['multi_conference']} multi-conf)"
+        )
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

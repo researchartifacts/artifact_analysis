@@ -26,6 +26,7 @@ Usage examples:
 
 import argparse
 import json
+import logging
 import re
 import sys
 import time
@@ -37,6 +38,7 @@ from bs4 import BeautifulSoup
 
 from .sys_sec_scrape import CACHE_TTL, _read_cache, _write_cache
 
+logger = logging.getLogger(__name__)
 BASE_URL = "https://www.usenix.org"
 
 
@@ -63,11 +65,11 @@ def scrape_presentation_links(conference, year, session=None):
     suffix = _year_suffix(year)
     url = f"{BASE_URL}/conference/{conference}{suffix}/technical-sessions"
 
-    print(f"  Fetching program: {url}", file=sys.stderr)
+    logger.info(f"  Fetching program: {url}", file=sys.stderr)
     cached = _read_cache(url, ttl=CACHE_TTL, namespace="usenix")
     if cached is not None:
         links = cached
-        print(f"  Found {len(links)} unique presentation pages (cached)", file=sys.stderr)
+        logger.info(f"  Found {len(links)} unique presentation pages (cached)", file=sys.stderr)
         return links
 
     resp = sess.get(url, timeout=30)
@@ -85,7 +87,7 @@ def scrape_presentation_links(conference, year, session=None):
 
     result = sorted(links)
     _write_cache(url, result, namespace="usenix")
-    print(f"  Found {len(result)} unique presentation pages", file=sys.stderr)
+    logger.info(f"  Found {len(result)} unique presentation pages", file=sys.stderr)
     return result
 
 
@@ -196,7 +198,7 @@ def scrape_conference_year(conference, year, session=None, max_workers=4, delay=
     paths = scrape_presentation_links(conference, year, sess)
 
     if not paths:
-        print(f"  No presentation pages found for {conference.upper()} {year}", file=sys.stderr)
+        logger.info(f"  No presentation pages found for {conference.upper()} {year}", file=sys.stderr)
         return []
 
     artifacts = []
@@ -218,11 +220,11 @@ def scrape_conference_year(conference, year, session=None, max_workers=4, delay=
                     if result["badges"]:
                         papers_with_badges += 1
                     if i % 10 == 0 or i == len(paths):
-                        print(f"  Scraped {i}/{len(paths)} pages...", file=sys.stderr)
+                        logger.info(f"  Scraped {i}/{len(paths)} pages...", file=sys.stderr)
             except Exception as e:
-                print(f"  Error scraping {path}: {e}", file=sys.stderr)
+                logger.error(f"  Error scraping {path}: {e}", file=sys.stderr)
 
-    print(
+    logger.info(
         f"  {conference.upper()} {year}: {len(artifacts)} papers, {papers_with_badges} with artifact badges",
         file=sys.stderr,
     )
@@ -256,12 +258,12 @@ def scrape_organizers(conference, year, session=None):
     if cached is not None:
         return cached
 
-    print(f"  Fetching organizers: {url}", file=sys.stderr)
+    logger.info(f"  Fetching organizers: {url}", file=sys.stderr)
     try:
         resp = sess.get(url, timeout=30)
         resp.raise_for_status()
     except Exception as e:
-        print(f"  Warning: Could not fetch organizers page: {e}", file=sys.stderr)
+        logger.warning(f"  Warning: Could not fetch organizers page: {e}", file=sys.stderr)
         return None
 
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -356,12 +358,12 @@ def scrape_organizers(conference, year, session=None):
                 break
 
     if not chairs and not members:
-        print(f"  Warning: No organizer data found for {conference.upper()} {year}", file=sys.stderr)
+        logger.warning(f"  Warning: No organizer data found for {conference.upper()} {year}", file=sys.stderr)
         _write_cache(cache_key, None, namespace="usenix_organizers")
         return None
 
     result = {"chairs": chairs, "members": members}
-    print(f"  Found {len(chairs)} chairs and {len(members)} committee members", file=sys.stderr)
+    logger.info(f"  Found {len(chairs)} chairs and {len(members)} committee members", file=sys.stderr)
     _write_cache(cache_key, result, namespace="usenix_organizers")
     return result
 
@@ -425,9 +427,9 @@ def main():
     for conf in conferences:
         for year in years:
             key = f"{conf}{year}"
-            print(f"\n{'=' * 60}", file=sys.stderr)
-            print(f"Scraping {conf.upper()} {year}", file=sys.stderr)
-            print(f"{'=' * 60}", file=sys.stderr)
+            logger.info(f"\n{'=' * 60}", file=sys.stderr)
+            logger.info(f"Scraping {conf.upper()} {year}", file=sys.stderr)
+            logger.info(f"{'=' * 60}", file=sys.stderr)
 
             artifacts = scrape_conference_year(conf, year, session, max_workers=args.max_workers, delay=args.delay)
 
@@ -438,14 +440,14 @@ def main():
 
     # Output
     if args.format == "json":
-        print(json.dumps(all_results, indent=2))
+        logger.info(json.dumps(all_results, indent=2))
     elif args.format == "yaml":
-        print(yaml.dump(all_results, default_flow_style=False))
+        logger.info(yaml.dump(all_results, default_flow_style=False))
     else:
         # Summary
-        print(f"\n{'=' * 60}")
-        print("SUMMARY")
-        print(f"{'=' * 60}")
+        logger.info(f"\n{'=' * 60}")
+        logger.info("SUMMARY")
+        logger.info(f"{'=' * 60}")
         for key, artifacts in sorted(all_results.items()):
             conf_name, year = re.match(r"^([a-z]+)(\d{4})$", key).groups()
             total = len(artifacts)
@@ -459,7 +461,7 @@ def main():
                 avail = sum(1 for a in artifacts if "available" in a.get("badges", ""))
                 func = sum(1 for a in artifacts if "functional" in a.get("badges", ""))
                 repro = sum(1 for a in artifacts if "reproduced" in a.get("badges", ""))
-            print(
+            logger.info(
                 f"  {conf_name.upper()} {year}: {total} papers"
                 f" | {with_badges} with badges"
                 f" (available={avail}, functional={func}, reproduced={repro})"
@@ -467,4 +469,8 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

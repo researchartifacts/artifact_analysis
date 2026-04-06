@@ -23,6 +23,7 @@ Usage examples:
 
 import argparse
 import json
+import logging
 import re
 import sys
 import time
@@ -125,7 +126,7 @@ def _dblp_papers(dblp_key, year, session=None):
                 "dblp_url": "",
             }
         )
-    print(f"  Got {len(papers)} papers from DBLP extraction cache", file=sys.stderr)
+    logger.info(f"  Got {len(papers)} papers from DBLP extraction cache", file=sys.stderr)
     return papers
 
 
@@ -164,7 +165,7 @@ def _scrape_acm_paper_badges(doi, session=None):
             },
         )
     except requests.RequestException as e:
-        print(f"  Request error for {url}: {e}", file=sys.stderr)
+        logger.error(f"  Request error for {url}: {e}", file=sys.stderr)
         return None
 
     if resp.status_code == 403:
@@ -219,7 +220,7 @@ def scrape_acm_proceedings(conference, year, session=None, max_workers=4, delay=
     """
     conf_meta = ACM_CONFERENCES.get(conference)
     if not conf_meta:
-        print(f"  Unknown ACM conference: {conference}", file=sys.stderr)
+        logger.info(f"  Unknown ACM conference: {conference}", file=sys.stderr)
         return [], False
 
     dblp_key = conf_meta["dblp_key"]
@@ -240,7 +241,9 @@ def scrape_acm_proceedings(conference, year, session=None, max_workers=4, delay=
             blocked_count += 1
             if blocked_count >= 3:
                 acm_dl_accessible = False
-                print("  ACM DL appears blocked (3 consecutive failures), skipping further scraping", file=sys.stderr)
+                logger.warning(
+                    "  ACM DL appears blocked (3 consecutive failures), skipping further scraping", file=sys.stderr
+                )
             return paper, []
         time.sleep(delay)
         return paper, badges
@@ -258,10 +261,10 @@ def scrape_acm_proceedings(conference, year, session=None, max_workers=4, delay=
             }
             results.append(paper_out)
             if i % 20 == 0 or i == len(papers):
-                print(f"  Processed {i}/{len(papers)} papers …", file=sys.stderr)
+                logger.info(f"  Processed {i}/{len(papers)} papers …", file=sys.stderr)
 
     with_badges = sum(1 for r in results if r["badges"])
-    print(
+    logger.info(
         f"  {conference.upper()} {year}: {len(results)} papers, "
         f"{with_badges} with badges"
         f" (ACM DL {'accessible' if acm_dl_accessible else 'BLOCKED'})",
@@ -340,9 +343,9 @@ def main():
     for conf in conferences:
         for year in years:
             key = f"{conf}{year}"
-            print(f"\n{'=' * 60}", file=sys.stderr)
-            print(f"Processing {conf.upper()} {year}", file=sys.stderr)
-            print(f"{'=' * 60}", file=sys.stderr)
+            logger.info(f"\n{'=' * 60}", file=sys.stderr)
+            logger.info(f"Processing {conf.upper()} {year}", file=sys.stderr)
+            logger.info(f"{'=' * 60}", file=sys.stderr)
 
             artifacts = scrape_conference_year(conf, year, max_workers=args.max_workers, delay=args.delay)
             if args.all_papers:
@@ -351,13 +354,13 @@ def main():
                 all_results[key] = to_pipeline_format(artifacts)
 
     if args.format == "json":
-        print(json.dumps(all_results, indent=2))
+        logger.info(json.dumps(all_results, indent=2))
     elif args.format == "yaml":
-        print(yaml.dump(all_results, default_flow_style=False))
+        logger.info(yaml.dump(all_results, default_flow_style=False))
     else:
-        print(f"\n{'=' * 60}")
-        print("SUMMARY")
-        print(f"{'=' * 60}")
+        logger.info(f"\n{'=' * 60}")
+        logger.info("SUMMARY")
+        logger.info(f"{'=' * 60}")
         for key, arts in sorted(all_results.items()):
             match = re.match(r"^([a-z]+)(\d{4})$", key)
             if match:
@@ -372,7 +375,7 @@ def main():
             avail = sum(1 for a in arts if "available" in str(a.get("badges", "")))
             func = sum(1 for a in arts if "functional" in str(a.get("badges", "")))
             repro = sum(1 for a in arts if "reproduced" in str(a.get("badges", "")))
-            print(
+            logger.info(
                 f"  {cname.upper()} {yr}: {total} papers"
                 f" | {with_badges} with badges"
                 f" (available={avail}, functional={func},"
@@ -381,4 +384,9 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
     main()
+
+logger = logging.getLogger(__name__)

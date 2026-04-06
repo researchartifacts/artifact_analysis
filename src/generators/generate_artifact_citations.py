@@ -12,6 +12,7 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 import re
 import time
@@ -19,6 +20,7 @@ import urllib.parse
 import urllib.request
 from collections import defaultdict
 
+logger = logging.getLogger(__name__)
 DOI_REGEX = re.compile(r"10\.[0-9]{4,9}/[-._;()/:A-Za-z0-9]+")
 # Only accept DOIs from artifact repositories (Zenodo, Figshare)
 # Reject paper DOIs from publishers (ACM, IEEE, Springer, etc.)
@@ -29,7 +31,7 @@ ALLOWED_ARTIFACT_DOI_PREFIXES = (
 
 
 def log(msg: str) -> None:
-    print(msg, flush=True)
+    logger.info(msg, flush=True)
 
 
 def short_url(url: str, max_len: int = 120) -> str:
@@ -320,24 +322,24 @@ def generate(data_dir: str) -> None:
     local_env_path = os.path.join(repo_root, ".env.local")
     load_local_env_file(local_env_path)
 
-    print("=" * 60, flush=True)
-    print("Starting artifact citation generation...", flush=True)
-    print("=" * 60, flush=True)
+    logger.info("=" * 60, flush=True)
+    logger.info("Starting artifact citation generation...", flush=True)
+    logger.info("=" * 60, flush=True)
 
     artifacts_path = os.path.join(data_dir, "assets", "data", "artifacts.json")
     out_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
     summary_path = os.path.join(data_dir, "assets", "data", "artifact_citations_summary.json")
 
-    print(f"Loading artifacts from: {artifacts_path}", flush=True)
+    logger.info(f"Loading artifacts from: {artifacts_path}", flush=True)
 
     if not os.path.exists(artifacts_path):
-        print(f"Error: {artifacts_path} not found. Run generate_statistics.py first.", flush=True)
+        logger.error(f"Error: {artifacts_path} not found. Run generate_statistics.py first.", flush=True)
         return
 
     with open(artifacts_path, "r") as f:
         artifacts = json.load(f)
 
-    print(f"✓ Loaded {len(artifacts)} artifacts", flush=True)
+    logger.info(f"✓ Loaded {len(artifacts)} artifacts", flush=True)
 
     zenodo_cache = {}
     openalex_cache = {}
@@ -345,10 +347,10 @@ def generate(data_dir: str) -> None:
     openalex_citing_limit = int(os.environ.get("OPENALEX_CITING_DOI_LIMIT", "200"))
     semantic_citing_limit = int(os.environ.get("SEMANTIC_SCHOLAR_CITING_DOI_LIMIT", "200"))
 
-    print(f"Processing {len(artifacts)} artifacts...", flush=True)
-    print(f"OpenAlex citing DOI limit: {openalex_citing_limit}", flush=True)
-    print(f"Semantic Scholar citing DOI limit: {semantic_citing_limit}", flush=True)
-    print(flush=True)
+    logger.info(f"Processing {len(artifacts)} artifacts...", flush=True)
+    logger.info(f"OpenAlex citing DOI limit: {openalex_citing_limit}", flush=True)
+    logger.info(f"Semantic Scholar citing DOI limit: {semantic_citing_limit}", flush=True)
+    logger.info(flush=True)
 
     entries = []
     seen_doi = set()
@@ -405,7 +407,7 @@ def generate(data_dir: str) -> None:
 
         # Progress indicator
         if idx % 50 == 0:
-            print(
+            logger.info(
                 f"Progress: {idx}/{len(artifacts)} artifacts processed, {dois_found} DOIs found, {dois_filtered} filtered",
                 flush=True,
             )
@@ -505,15 +507,15 @@ def generate(data_dir: str) -> None:
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
 
-    print(flush=True)
-    print("✓ Processing complete!", flush=True)
-    print(f"  Total artifacts: {len(artifacts)}", flush=True)
-    print(f"  Artifact DOIs found: {dois_found}", flush=True)
-    print(f"  Paper DOIs filtered: {dois_filtered}", flush=True)
-    print(f"  Artifacts with citations: {cited}", flush=True)
-    print(flush=True)
-    print(f"Wrote {out_path} ({len(entries)} entries)", flush=True)
-    print(f"Wrote {summary_path}", flush=True)
+    logger.info(flush=True)
+    logger.info("✓ Processing complete!", flush=True)
+    logger.info(f"  Total artifacts: {len(artifacts)}", flush=True)
+    logger.info(f"  Artifact DOIs found: {dois_found}", flush=True)
+    logger.info(f"  Paper DOIs filtered: {dois_filtered}", flush=True)
+    logger.info(f"  Artifacts with citations: {cited}", flush=True)
+    logger.info(flush=True)
+    logger.info(f"Wrote {out_path} ({len(entries)} entries)", flush=True)
+    logger.info(f"Wrote {summary_path}", flush=True)
 
 
 def main() -> None:
@@ -528,26 +530,30 @@ def main() -> None:
     args = parser.parse_args()
 
     if not args.enable_citations:
-        print("=" * 78, flush=True)
-        print("WARNING: Citation collection is DISABLED by default.", flush=True)
-        print("", flush=True)
-        print("OpenAlex citation counts for artifact DOIs are UNRELIABLE.", flush=True)
-        print("Verification (March 2026) found that ALL 43 reported citing DOIs", flush=True)
-        print("were false positives (paper DOI cited instead of artifact DOI),", flush=True)
-        print("self-citations, or unresolvable. Zero genuine third-party artifact", flush=True)
-        print("citations exist in the current dataset.", flush=True)
-        print("", flush=True)
-        print("If you still want to run citation collection (e.g., for research", flush=True)
-        print("or to check whether the situation has improved), pass:", flush=True)
-        print("  --enable-citations", flush=True)
-        print("", flush=True)
-        print("After collection, run verify_artifact_citations.py to validate", flush=True)
-        print("whether any reported citations are genuine.", flush=True)
-        print("=" * 78, flush=True)
+        logger.info("=" * 78, flush=True)
+        logger.warning("WARNING: Citation collection is DISABLED by default.", flush=True)
+        logger.info("", flush=True)
+        logger.info("OpenAlex citation counts for artifact DOIs are UNRELIABLE.", flush=True)
+        logger.info("Verification (March 2026) found that ALL 43 reported citing DOIs", flush=True)
+        logger.info("were false positives (paper DOI cited instead of artifact DOI),", flush=True)
+        logger.info("self-citations, or unresolvable. Zero genuine third-party artifact", flush=True)
+        logger.info("citations exist in the current dataset.", flush=True)
+        logger.info("", flush=True)
+        logger.info("If you still want to run citation collection (e.g., for research", flush=True)
+        logger.info("or to check whether the situation has improved), pass:", flush=True)
+        logger.info("  --enable-citations", flush=True)
+        logger.info("", flush=True)
+        logger.info("After collection, run verify_artifact_citations.py to validate", flush=True)
+        logger.info("whether any reported citations are genuine.", flush=True)
+        logger.info("=" * 78, flush=True)
         return
 
     generate(args.data_dir)
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

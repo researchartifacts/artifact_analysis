@@ -11,6 +11,7 @@ Usage:
 
 import argparse
 import csv
+import logging
 import os
 import re
 from collections import defaultdict
@@ -19,6 +20,7 @@ import yaml
 from sys_sec_artifacts_results_scrape import get_ae_results
 from test_artifact_repositories import _normalise_url
 
+logger = logging.getLogger(__name__)
 try:
     from src.utils.conference import conf_area
 except ImportError:
@@ -243,19 +245,19 @@ def main():
         cache_path = os.path.join(repo_root, ".cache", "all_results_cache.yml")
 
     if os.path.exists(cache_path):
-        print(f"Loading cached results from {cache_path}...")
+        logger.info(f"Loading cached results from {cache_path}...")
         with open(cache_path, "r") as f:
             all_results = yaml.safe_load(f) or {}
         all_results = {k: v for k, v in all_results.items() if re.search(args.conf_regex, k)}
-        print(f"Loaded {sum(len(v) for v in all_results.values())} artifacts")
+        logger.info(f"Loaded {sum(len(v) for v in all_results.values())} artifacts")
     else:
-        print("Collecting artifact results (scraping)...")
+        logger.info("Collecting artifact results (scraping)...")
         sys_results = get_ae_results(args.conf_regex, "sys")
         sec_results = get_ae_results(args.conf_regex, "sec")
         all_results = {**sys_results, **sec_results}
-        print(f"Found {sum(len(v) for v in all_results.values())} artifacts")
+        logger.info(f"Found {sum(len(v) for v in all_results.values())} artifacts")
 
-    print("\nAnalyzing artifact sources...")
+    logger.info("\nAnalyzing artifact sources...")
 
     # Get statistics
     by_conf = count_sources_by_conference(all_results)
@@ -263,29 +265,29 @@ def main():
     overall = count_sources_overall(all_results)
 
     # Print overall summary
-    print("\nOverall artifact sources:")
+    logger.info("\nOverall artifact sources:")
     for source in sorted(overall.keys(), key=lambda x: overall[x], reverse=True):
         count = overall[source]
         pct = (count / overall.get("total", 1) * 100) if source != "total" else 0
         if source == "total":
-            print(f"  Total artifacts: {count}")
+            logger.info(f"  Total artifacts: {count}")
         else:
-            print(f"  {source}: {count} ({pct:.1f}%)")
+            logger.info(f"  {source}: {count} ({pct:.1f}%)")
 
-    print("\nArtifacts by area:")
-    print(f"  Systems: {by_area['systems'].get('total', 0)} total")
+    logger.info("\nArtifacts by area:")
+    logger.info(f"  Systems: {by_area['systems'].get('total', 0)} total")
     for source in sorted(by_area["systems"].keys(), key=lambda x: by_area["systems"][x], reverse=True):
         if source != "total":
             count = by_area["systems"][source]
             pct = count / by_area["systems"].get("total", 1) * 100
-            print(f"    {source}: {count} ({pct:.1f}%)")
+            logger.info(f"    {source}: {count} ({pct:.1f}%)")
 
-    print(f"\n  Security: {by_area['security'].get('total', 0)} total")
+    logger.info(f"\n  Security: {by_area['security'].get('total', 0)} total")
     for source in sorted(by_area["security"].keys(), key=lambda x: by_area["security"][x], reverse=True):
         if source != "total":
             count = by_area["security"][source]
             pct = count / by_area["security"].get("total", 1) * 100
-            print(f"    {source}: {count} ({pct:.1f}%)")
+            logger.info(f"    {source}: {count} ({pct:.1f}%)")
 
     # Generate CSV files
     if args.output_dir:
@@ -302,7 +304,7 @@ def main():
                     count = overall[source]
                     pct = count / total * 100 if total > 0 else 0
                     writer.writerow({"Source": source, "Count": count, "Percentage": f"{pct:.1f}"})
-        print(f"\nWritten: {sources_csv}")
+        logger.info(f"\nWritten: {sources_csv}")
 
         # By-area CSV
         area_csv = os.path.join(args.output_dir, "artifact_sources_by_area.csv")
@@ -335,7 +337,7 @@ def main():
             writer.writerow(
                 {"Source": "TOTAL", "Systems": sys_total, "Security": sec_total, "Total": sys_total + sec_total}
             )
-        print(f"Written: {area_csv}")
+        logger.info(f"Written: {area_csv}")
 
         # By-conference CSV (top conferences)
         conf_csv = os.path.join(args.output_dir, "artifact_sources_by_conference.csv")
@@ -357,10 +359,14 @@ def main():
                 row = {"Conference": conf}
                 row.update({s: by_conf[conf].get(s, 0) for s in all_sources})
                 writer.writerow(row)
-        print(f"Written: {conf_csv}")
+        logger.info(f"Written: {conf_csv}")
 
     return 0
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     exit(main())

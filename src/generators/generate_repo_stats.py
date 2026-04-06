@@ -11,6 +11,7 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 import re
 from collections import defaultdict
@@ -23,6 +24,8 @@ from ..utils.collect_artifact_stats import figshare_stats, github_stats, zenodo_
 from ..utils.conference import conf_area as _conf_area
 from ..utils.conference import parse_conf_year as extract_conference_name
 from ..utils.test_artifact_repositories import check_artifact_exists
+
+logger = logging.getLogger(__name__)
 
 
 def collect_stats_for_results(results, url_keys=None):
@@ -80,9 +83,9 @@ def collect_stats_for_results(results, url_keys=None):
                     present_keys.add(key)
     url_keys = [k for k in url_keys if k in present_keys]
     if not url_keys:
-        print("  Warning: No URL keys found in artifact data. No repository stats to collect.")
+        logger.warning("  Warning: No URL keys found in artifact data. No repository stats to collect.")
         return []
-    print(f"  Scanning URL fields: {', '.join(url_keys)}")
+    logger.info(f"  Scanning URL fields: {', '.join(url_keys)}")
 
     # Check which URLs exist
     results, _, _ = check_artifact_exists(results, url_keys)
@@ -126,7 +129,7 @@ def collect_stats_for_results(results, url_keys=None):
                         stats = figshare_stats(url)
                         source = "figshare"
                 except Exception as e:
-                    print(f"  Error collecting stats for {url}: {e}")
+                    logger.error(f"  Error collecting stats for {url}: {e}")
                     continue
 
                 if stats:
@@ -142,7 +145,7 @@ def collect_stats_for_results(results, url_keys=None):
                     all_stats.append(entry)
 
             if processed % 50 == 0 or processed == total_artifacts:
-                print(
+                logger.info(
                     f"  Progress: {processed}/{total_artifacts} artifacts checked, "
                     f"{collected} stats collected, {len(seen_urls)} unique URLs"
                 )
@@ -346,20 +349,22 @@ def main():
         cache_path = os.path.join(repo_root, ".cache", "all_results_cache.yml")
 
     if os.path.exists(cache_path):
-        print(f"Loading cached results from {cache_path}...")
+        logger.info(f"Loading cached results from {cache_path}...")
         with open(cache_path, "r") as f:
             all_results = yaml.safe_load(f) or {}
         # Filter by conf_regex (cache may contain more conferences)
         all_results = {k: v for k, v in all_results.items() if re.search(args.conf_regex, k)}
-        print(
+        logger.info(
             f"Loaded {sum(len(v) for v in all_results.values())} artifacts across {len(all_results)} conference-years (from cache)"
         )
     else:
-        print("Collecting artifact results (no cache found, scraping)...")
+        logger.info("Collecting artifact results (no cache found, scraping)...")
         sys_results = get_ae_results(args.conf_regex, "sys")
         sec_results = get_ae_results(args.conf_regex, "sec")
         all_results = {**sys_results, **sec_results}
-        print(f"Found {sum(len(v) for v in all_results.values())} artifacts across {len(all_results)} conference-years")
+        logger.info(
+            f"Found {sum(len(v) for v in all_results.values())} artifacts across {len(all_results)} conference-years"
+        )
 
     # Load existing repo stats from the website (historical data).
     # Only fetch stats for NEW artifacts not already in the historical data,
@@ -389,10 +394,10 @@ def main():
                     entry["github_forks"] = entry["forks"]
             existing_stats = raw_existing
             existing_urls = {s.get("url", "").rstrip("/") for s in existing_stats}
-            print(f"Loaded {len(existing_stats)} existing repo stats ({len(existing_urls)} unique URLs)")
+            logger.info(f"Loaded {len(existing_stats)} existing repo stats ({len(existing_urls)} unique URLs)")
 
     if args.refresh:
-        print("--refresh: fetching stats for ALL artifacts")
+        logger.info("--refresh: fetching stats for ALL artifacts")
 
     # Determine which artifacts are new (not in existing stats)
     new_results = {}
@@ -422,23 +427,23 @@ def main():
             new_results[conf_year] = new_arts
 
     new_count = sum(len(v) for v in new_results.values())
-    print(
+    logger.info(
         f"Total artifacts: {total_artifacts}, already have stats: {total_artifacts - new_count}, new to fetch: {new_count}"
     )
 
     if new_count > 0:
-        print(f"Collecting repository statistics for {new_count} artifacts...")
+        logger.info(f"Collecting repository statistics for {new_count} artifacts...")
         new_stats = collect_stats_for_results(new_results)
-        print(f"Collected stats for {len(new_stats)} repositories")
+        logger.info(f"Collected stats for {len(new_stats)} repositories")
         all_stats = existing_stats + new_stats
     else:
-        print("No new artifacts — reusing existing stats")
+        logger.info("No new artifacts — reusing existing stats")
         all_stats = existing_stats
 
-    print("Aggregating statistics...")
+    logger.info("Aggregating statistics...")
     aggregated = aggregate_stats(all_stats)
 
-    print(
+    logger.info(
         f"Overall: {aggregated['overall']['github_repos']} GitHub repos, "
         f"{aggregated['overall']['total_stars']} total stars, "
         f"{aggregated['overall']['total_forks']} total forks"
@@ -457,13 +462,13 @@ def main():
                 default_flow_style=False,
                 sort_keys=False,
             )
-        print(f"Written to {out_path}")
+        logger.info(f"Written to {out_path}")
 
         # Write per-repo detail JSON for CDF generation
         detail_path = os.path.join(assets_dir, "repo_stats_detail.json")
         with open(detail_path, "w") as f:
             json.dump(aggregated.get("all_github_repos", []), f, indent=2)
-        print(f"Written per-repo detail ({len(aggregated.get('all_github_repos', []))} repos) to {detail_path}")
+        logger.info(f"Written per-repo detail ({len(aggregated.get('all_github_repos', []))} repos) to {detail_path}")
 
         # ---- Historical time-series tracking ----
         # Append a dated snapshot for each fetched artifact so we can track
@@ -476,7 +481,7 @@ def main():
         if os.path.exists(history_path):
             with open(history_path, "r") as f:
                 history = json.load(f)
-            print(f"Loaded history for {len(history)} URLs")
+            logger.info(f"Loaded history for {len(history)} URLs")
 
         # Build snapshots from the raw all_stats (which have full metric detail)
         updated = 0
@@ -528,10 +533,14 @@ def main():
 
         with open(history_path, "w") as f:
             json.dump(history, f, indent=2)
-        print(f"Written history ({len(history)} URLs, {updated} snapshots updated) to {history_path}")
+        logger.info(f"Written history ({len(history)} URLs, {updated} snapshots updated) to {history_path}")
 
     return aggregated
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

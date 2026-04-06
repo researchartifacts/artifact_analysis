@@ -7,6 +7,7 @@ and generates YAML/JSON files for Jekyll to render.
 
 import argparse
 import json
+import logging
 import os
 import re
 from collections import defaultdict
@@ -108,20 +109,20 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
         if not re.search(conf_regex, dir_name):
             continue
         if skip_usenix:
-            print(f"Skipping USENIX {conf_name.upper()} {year} (SKIP_USENIX_SCRAPE set)")
+            logger.warning(f"Skipping USENIX {conf_name.upper()} {year} (SKIP_USENIX_SCRAPE set)")
             continue
-        print(f"Scraping USENIX {conf_name.upper()} {year} (fallback for missing sysartifacts results)...")
+        logger.info(f"Scraping USENIX {conf_name.upper()} {year} (fallback for missing sysartifacts results)...")
         try:
             artifacts = scrape_conference_year(usenix_short, year, max_workers=4, delay=0.3)
             pipeline_arts = to_pipeline_format(artifacts)
             if pipeline_arts:
                 usenix_results[dir_name] = pipeline_arts
                 usenix_categories[dir_name] = category
-                print(f"  Got {len(pipeline_arts)} artifacts with badges")
+                logger.info(f"  Got {len(pipeline_arts)} artifacts with badges")
             else:
-                print("  No artifacts with badges found")
+                logger.info("  No artifacts with badges found")
         except Exception as e:
-            print(f"  Error scraping {conf_name.upper()} {year}: {e}")
+            logger.error(f"  Error scraping {conf_name.upper()} {year}: {e}")
 
     # --- ACM conference scraping (independent of sysartifacts/secartifacts) ---
     # ACM conferences like CCS are not tracked on sysartifacts or secartifacts.
@@ -144,21 +145,21 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
             conf_year_key = f"{acm_key}{year}"
             if not re.search(conf_regex, conf_year_key):
                 continue
-            print(f"Scraping ACM {acm_meta['display_name']} {year} (DBLP + ACM DL)...")
+            logger.info(f"Scraping ACM {acm_meta['display_name']} {year} (DBLP + ACM DL)...")
             try:
                 artifacts = acm_scrape_conference_year(acm_key, year, max_workers=4, delay=0.5)
                 pipeline_arts = acm_to_pipeline_format(artifacts)
                 if pipeline_arts:
                     acm_results[conf_year_key] = pipeline_arts
                     acm_categories[conf_year_key] = category
-                    print(f"  Got {len(pipeline_arts)} artifacts with badges")
+                    logger.info(f"  Got {len(pipeline_arts)} artifacts with badges")
                 else:
                     # Even without badges, record the conference as discovered
                     acm_results[conf_year_key] = []
                     acm_categories[conf_year_key] = category
-                    print("  No artifacts with badges found (ACM DL may be blocked)")
+                    logger.info("  No artifacts with badges found (ACM DL may be blocked)")
             except Exception as e:
-                print(f"  Error scraping {acm_meta['display_name']} {year}: {e}")
+                logger.error(f"  Error scraping {acm_meta['display_name']} {year}: {e}")
 
     # Tag each result by source
     sys_conf_years = set(sys_results.keys())
@@ -176,7 +177,7 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
     _cache_path = os.path.join(_cache_dir, "all_results_cache.yml")
     with open(_cache_path, "w") as _f:
         yaml.dump(all_results, _f, default_flow_style=False, sort_keys=False)
-    print(f"Cached raw results ({sum(len(v) for v in all_results.values())} artifacts) → {_cache_path}")
+    logger.info(f"Cached raw results ({sum(len(v) for v in all_results.values())} artifacts) → {_cache_path}")
 
     # Organize by conference
     by_conference = defaultdict(lambda: {"years": [], "total_artifacts": 0, "category": "unknown"})
@@ -439,7 +440,7 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
         with open(os.path.join(output_dir, "assets/data/summary.json"), "w") as f:
             json.dump(summary, f, indent=2)
 
-        print(f"Data files written to {output_dir}")
+        logger.info(f"Data files written to {output_dir}")
 
     return output_data
 
@@ -455,10 +456,15 @@ def main():
 
     data = generate_statistics(args.conf_regex, args.output_dir)
 
-    print(
+    logger.info(
         f"\nStatistics generated: {data['summary']['total_artifacts']} artifacts from {data['summary']['total_conferences']} conferences ({data['summary']['year_range']})"
     )
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
     main()
+
+logger = logging.getLogger(__name__)

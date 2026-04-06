@@ -1,10 +1,13 @@
 import argparse
 import json
+import logging
 
 from pytrie import Trie
 from sys_sec_committee_scrape import get_committees
 from sys_sec_scrape import download_file
 from thefuzz import fuzz
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_affiliation_stats(results):
@@ -53,9 +56,9 @@ def aec_retention(results):
                 retention_counts[name][comp_name] += 1 if member in conf_mem_set[comp_name] else 0
 
     # print table header
-    print(f"conferences;{';'.join(results.keys())}")
+    logger.info(f"conferences;{';'.join(results.keys())}")
     for name in results:
-        print(f"{name};{';'.join(str(n) for n in retention_counts[name].values())}")
+        logger.info(f"{name};{';'.join(str(n) for n in retention_counts[name].values())}")
 
 
 def classify_aec_by_country(results):
@@ -150,7 +153,7 @@ def classify_aec_by_country(results):
                     )
                 else:
                     failed.append(affiliation)
-                    print(f"Failed {affiliation} in {best_match['country']} with ratio {best_match_ratio}")
+                    logger.error(f"Failed {affiliation} in {best_match['country']} with ratio {best_match_ratio}")
 
     return per_year_country_stats, failed
 
@@ -165,17 +168,17 @@ def aec_by_country(results):
             countries.add(country)
 
     # print table header
-    print(f"countries;{';'.join(results.keys())};sum")
+    logger.info(f"countries;{';'.join(results.keys())};sum")
     for country in sorted(countries):
-        print(f"{country};", end="")
+        logger.info(f"{country};", end="")
         sum = 0
         for conf in per_year_country_stats:
-            print(f"{per_year_country_stats[conf].get(country, 0)}", end=";")
+            logger.info(f"{per_year_country_stats[conf].get(country, 0)}", end=";")
             sum += per_year_country_stats[conf].get(country, 0)
-        print(f"{sum}")
+        logger.info(f"{sum}")
 
-    print(f"Number failed to identify {len(failed)}")
-    print(f"List of failed affiliations:{', '.join(failed)}")
+    logger.error(f"Number failed to identify {len(failed)}")
+    logger.error(f"List of failed affiliations:{', '.join(failed)}")
 
 
 def main():
@@ -209,14 +212,14 @@ def main():
     if args.analyze_affiliation:
         affiliation_stats = calculate_affiliation_stats(results)
         # print table header
-        print("Affiliation; Count")
+        logger.info("Affiliation; Count")
         for affiliation in sorted(affiliation_stats, key=lambda x: len(affiliation_stats[x]), reverse=True):
-            print(f"{affiliation}; {len(affiliation_stats[affiliation])}")
+            logger.info(f"{affiliation}; {len(affiliation_stats[affiliation])}")
 
     if args.analyze_affiliation_per_conference:
         affiliation_stats = calculate_affiliation_stats_per_year(results)
         # print table header
-        print(f"Affiliation;{';'.join(results.keys())};sum")
+        logger.info(f"Affiliation;{';'.join(results.keys())};sum")
 
         for affiliation in sorted(affiliation_stats.items()):
             counts = []
@@ -225,7 +228,7 @@ def main():
                     counts.append(len(affiliation_stats[affiliation[0]][conference]))
                 else:
                     counts.append(0)
-            print(f"{affiliation[0]};{';'.join(str(i) for i in counts)};{sum(counts)}")
+            logger.info(f"{affiliation[0]};{';'.join(str(i) for i in counts)};{sum(counts)}")
 
     if args.analyze_aec_retention:
         aec_retention(results)
@@ -235,4 +238,8 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

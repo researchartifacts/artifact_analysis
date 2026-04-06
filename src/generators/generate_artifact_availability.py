@@ -14,6 +14,7 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 import re
 from collections import defaultdict
@@ -26,6 +27,7 @@ from ..utils.conference import conf_area as _conf_area
 from ..utils.conference import parse_conf_year as _extract_conference_year
 from ..utils.test_artifact_repositories import check_artifact_exists
 
+logger = logging.getLogger(__name__)
 URL_KEYS = ["repository_url", "artifact_url"]
 
 
@@ -196,20 +198,22 @@ def main():
         cache_path = os.path.join(repo_root, ".cache", "all_results_cache.yml")
 
     if os.path.exists(cache_path):
-        print(f"Loading cached results from {cache_path}...")
+        logger.info(f"Loading cached results from {cache_path}...")
         with open(cache_path, "r") as f:
             all_results = yaml.safe_load(f) or {}
         all_results = {k: v for k, v in all_results.items() if re.search(args.conf_regex, k)}
-        print(
+        logger.info(
             f"Loaded {sum(len(v) for v in all_results.values())} artifacts "
             f"across {len(all_results)} conference-years (from cache)"
         )
     else:
-        print("Collecting artifact results (no cache found, scraping)...")
+        logger.info("Collecting artifact results (no cache found, scraping)...")
         sys_results = get_ae_results(args.conf_regex, "sys")
         sec_results = get_ae_results(args.conf_regex, "sec")
         all_results = {**sys_results, **sec_results}
-        print(f"Loaded {sum(len(v) for v in all_results.values())} artifacts from {len(all_results)} conference-years")
+        logger.info(
+            f"Loaded {sum(len(v) for v in all_results.values())} artifacts from {len(all_results)} conference-years"
+        )
 
     # Run availability checks
     records, counts, failed = generate_availability(all_results)
@@ -218,22 +222,22 @@ def main():
     summary = build_summary(records)
 
     # Print overview
-    print(f"\nArtifact Availability Report ({summary['checked_at']})")
-    print(f"  Total URLs checked:  {summary['total_urls']}")
-    print(f"  Accessible:          {summary['accessible_urls']} ({summary['accessibility_pct']}%)")
-    print("\n  By platform:")
+    logger.info(f"\nArtifact Availability Report ({summary['checked_at']})")
+    logger.info(f"  Total URLs checked:  {summary['total_urls']}")
+    logger.info(f"  Accessible:          {summary['accessible_urls']} ({summary['accessibility_pct']}%)")
+    logger.info("\n  By platform:")
     for p, d in summary["by_platform"].items():
-        print(f"    {p:12s}: {d['accessible']:4d}/{d['total']:4d} ({d['pct']}%)")
-    print("\n  By area:")
+        logger.info(f"    {p:12s}: {d['accessible']:4d}/{d['total']:4d} ({d['pct']}%)")
+    logger.info("\n  By area:")
     for a, d in summary["by_area"].items():
-        print(f"    {a:12s}: {d['accessible']:4d}/{d['total']:4d} ({d['pct']}%)")
+        logger.info(f"    {a:12s}: {d['accessible']:4d}/{d['total']:4d} ({d['pct']}%)")
 
     if failed:
-        print(f"\n  Failed URLs ({len(failed)}):")
+        logger.error(f"\n  Failed URLs ({len(failed)}):")
         for url in failed[:20]:
-            print(f"    {url}")
+            logger.info(f"    {url}")
         if len(failed) > 20:
-            print(f"    ... and {len(failed) - 20} more")
+            logger.error(f"    ... and {len(failed) - 20} more")
 
     # Write output
     if output_dir:
@@ -245,8 +249,12 @@ def main():
         }
         with open(out_path, "w") as f:
             json.dump(output, f, indent=2)
-        print(f"\n✓ Wrote {out_path}")
+        logger.info(f"\n✓ Wrote {out_path}")
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

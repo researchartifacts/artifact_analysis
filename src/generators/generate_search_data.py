@@ -3,8 +3,11 @@
 
 import argparse
 import json
+import logging
 import os
 import re
+
+logger = logging.getLogger(__name__)
 
 
 def normalize_title(t: str) -> str:
@@ -75,7 +78,7 @@ def generate_search_data(data_dir: str) -> list:
     with open(out_path, "w") as f:
         json.dump(merged, f)
 
-    print(
+    logger.info(
         f"search_data.json: {len(merged)} artifacts "
         f"({sum(1 for e in merged if e['authors'])} with authors, "
         f"{sum(1 for e in merged if e['affiliations'])} with affiliations)"
@@ -91,4 +94,8 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

@@ -6,9 +6,12 @@ Creates JSON files for overall, systems, and security institution rankings.
 
 import argparse
 import json
+import logging
 import re
 from collections import defaultdict
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def load_combined_ranking(path):
@@ -248,7 +251,7 @@ def main():
     data_dir = website_path / "assets" / "data"
 
     # Process overall combined ranking
-    print("Processing overall combined ranking...")
+    logger.info("Processing overall combined ranking...")
     combined_path = data_dir / "combined_rankings.json"
     if combined_path.exists():
         combined_data = load_combined_ranking(combined_path)
@@ -257,12 +260,12 @@ def main():
         output_path = data_dir / "institution_rankings.json"
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(institutions, f, indent=2, ensure_ascii=False)
-        print(f"  ✓ Generated {output_path} ({len(institutions)} institutions)")
+        logger.info(f"  ✓ Generated {output_path} ({len(institutions)} institutions)")
     else:
-        print(f"  ✗ {combined_path} not found")
+        logger.info(f"  ✗ {combined_path} not found")
 
     # Process systems combined ranking
-    print("Processing systems combined ranking...")
+    logger.info("Processing systems combined ranking...")
     systems_path = data_dir / "systems_combined_rankings.json"
     if systems_path.exists():
         systems_data = load_combined_ranking(systems_path)
@@ -271,12 +274,12 @@ def main():
         output_path = data_dir / "systems_institution_rankings.json"
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(systems_institutions, f, indent=2, ensure_ascii=False)
-        print(f"  ✓ Generated {output_path} ({len(systems_institutions)} institutions)")
+        logger.info(f"  ✓ Generated {output_path} ({len(systems_institutions)} institutions)")
     else:
-        print(f"  ✗ {systems_path} not found")
+        logger.info(f"  ✗ {systems_path} not found")
 
     # Process security combined ranking
-    print("Processing security combined ranking...")
+    logger.info("Processing security combined ranking...")
     security_path = data_dir / "security_combined_rankings.json"
     if security_path.exists():
         security_data = load_combined_ranking(security_path)
@@ -285,10 +288,14 @@ def main():
         output_path = data_dir / "security_institution_rankings.json"
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(security_institutions, f, indent=2, ensure_ascii=False)
-        print(f"  ✓ Generated {output_path} ({len(security_institutions)} institutions)")
+        logger.info(f"  ✓ Generated {output_path} ({len(security_institutions)} institutions)")
     else:
-        print(f"  ✗ {security_path} not found")
+        logger.info(f"  ✗ {security_path} not found")
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

@@ -1,8 +1,11 @@
 import argparse
+import logging
 
 from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
 from ..scrapers.sys_sec_scrape import cached_figshare_stats, cached_github_stats, cached_zenodo_stats
 from .test_artifact_repositories import check_artifact_exists
+
+logger = logging.getLogger(__name__)
 
 
 # Keep thin wrappers so existing callers still work
@@ -21,7 +24,7 @@ def figshare_stats(url):
 def get_all_artifact_stats(results, url_keys):
     for name, artifacts in results.items():
         for url_key in url_keys:
-            print(f"Getting stats for {len(artifacts)}")
+            logger.info(f"Getting stats for {len(artifacts)}")
             for artifact in artifacts:
                 if url_key + "_exists" in artifact and artifact[url_key + "_exists"]:
                     if "zenodo" in artifact[url_key]:
@@ -31,13 +34,13 @@ def get_all_artifact_stats(results, url_keys):
                     elif "github" in artifact[url_key]:
                         stats = github_stats(artifact[url_key])
                     else:  # needed since stats doesn't exist otherwise
-                        print(f"No stats for {artifact[url_key]} at {name} titled {artifact['title']}")
+                        logger.info(f"No stats for {artifact[url_key]} at {name} titled {artifact['title']}")
                         continue
 
                     if stats:
                         artifact["stats"] = {**stats, **artifact.get("stats", {})}
                 else:
-                    print(f"{url_key} does not exist for {artifact['title']} at {name}")
+                    logger.info(f"{url_key} does not exist for {artifact['title']} at {name}")
 
     return results
 
@@ -75,10 +78,14 @@ def main():
                 continue
 
             for key, value in artifact["stats"].items():
-                print(f"{name},{artifact_id},{key},{value}")
+                logger.info(f"{name},{artifact_id},{key},{value}")
 
             artifact_id += 1
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

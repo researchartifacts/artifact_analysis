@@ -11,6 +11,7 @@ Compares results with EuroSys claim of "very little retention"
 
 import argparse
 import json
+import logging
 import re
 from collections import defaultdict
 
@@ -34,6 +35,8 @@ from src.utils.conference import (
 from src.utils.conference import (
     parse_conf_year as _extract_conf_year,
 )
+
+logger = logging.getLogger(__name__)
 
 MIN_COMMITTEE_SIZE = 5
 PLACEHOLDER_NAMES = {"you?", "you", "tba", "tbd", "n/a", "", "title: organizers"}
@@ -64,13 +67,13 @@ def _is_valid_committee(members):
 
 def scrape_all_committees(conf_regex):
     """Scrape committee data from all sources, returning {conf_year: [members]}."""
-    print("Scraping systems committees from sysartifacts...")
+    logger.info("Scraping systems committees from sysartifacts...")
     sys_results = get_committees(conf_regex, "sys")
-    print(f"  Found {len(sys_results)} systems conference-years")
+    logger.info(f"  Found {len(sys_results)} systems conference-years")
 
-    print("Scraping security committees from secartifacts...")
+    logger.info("Scraping security committees from secartifacts...")
     sec_results = get_committees(conf_regex, "sec")
-    print(f"  Found {len(sec_results)} security conference-years")
+    logger.info(f"  Found {len(sec_results)} security conference-years")
 
     all_results = {}
     all_results.update(sys_results)
@@ -98,13 +101,13 @@ def scrape_all_committees(conf_regex):
     # The secartifacts YAML has PETs chairs but not full committees
 
     if conferences_needed:
-        print(f"  Fetching alternative sources for {len(conferences_needed)} conference-years...")
+        logger.info(f"  Fetching alternative sources for {len(conferences_needed)} conference-years...")
         alt_results = get_alternative_committees(conferences_needed)
         for cy, members in alt_results.items():
             cleaned = _clean_committee(members)
             if cleaned:
                 all_results[cy] = cleaned
-                print(f"    ✓ {cy}: {len(cleaned)} members")
+                logger.info(f"    ✓ {cy}: {len(cleaned)} members")
 
     return all_results
 
@@ -147,9 +150,9 @@ def analyze_retention(all_results):
     # ── (a) Within-conference retention ──────────────────────────────────
     # For each conference, what % of year Y members were also in year Y-1
     # for THE SAME conference?
-    print("\n" + "=" * 70)
-    print("(a) WITHIN-CONFERENCE RETENTION (same conference, year Y-1 → Y)")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("(a) WITHIN-CONFERENCE RETENTION (same conference, year Y-1 → Y)")
+    logger.info("=" * 70)
 
     within_conf_data = {}
     for conf in all_confs:
@@ -173,14 +176,14 @@ def analyze_retention(all_results):
                 "retained": len(retained),
                 "retained_pct": pct,
             }
-            print(
+            logger.info(
                 f"  {conf} {prev_year}→{curr_year}: "
                 f"{len(retained)}/{len(curr_members)} retained = {pct:.1f}%  "
                 f"(prev={len(prev_members)}, curr={len(curr_members)})"
             )
 
     # Aggregate within-conference retention by year
-    print("\n  --- Aggregated within-conference retention by year ---")
+    logger.info("\n  --- Aggregated within-conference retention by year ---")
     for year in all_years:
         total_retained = 0
         total_curr = 0
@@ -191,11 +194,11 @@ def analyze_retention(all_results):
                     total_curr += data["curr_size"]
         if total_curr > 0:
             pct = total_retained / total_curr * 100
-            print(f"  Year {year}: {total_retained}/{total_curr} = {pct:.1f}%")
+            logger.info(f"  Year {year}: {total_retained}/{total_curr} = {pct:.1f}%")
 
     # Aggregate by area
     for area_label, area_confs in [("SYSTEMS", SYSTEMS_CONFS), ("SECURITY", SECURITY_CONFS)]:
-        print(f"\n  --- {area_label} within-conference retention by year ---")
+        logger.info(f"\n  --- {area_label} within-conference retention by year ---")
         for year in all_years:
             total_retained = 0
             total_curr = 0
@@ -208,17 +211,17 @@ def analyze_retention(all_results):
                         total_curr += data["curr_size"]
             if total_curr > 0:
                 pct = total_retained / total_curr * 100
-                print(f"  Year {year}: {total_retained}/{total_curr} = {pct:.1f}%")
+                logger.info(f"  Year {year}: {total_retained}/{total_curr} = {pct:.1f}%")
 
     # ── (b) Cross-conference retention (same area) ───────────────────────
     # For each year, what % of members served on a DIFFERENT conference
     # in the same area the previous year?
-    print("\n" + "=" * 70)
-    print("(b) CROSS-CONFERENCE RETENTION (different conf, same area, Y-1 → Y)")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("(b) CROSS-CONFERENCE RETENTION (different conf, same area, Y-1 → Y)")
+    logger.info("=" * 70)
 
     for area_label, area_confs in [("SYSTEMS", SYSTEMS_CONFS), ("SECURITY", SECURITY_CONFS)]:
-        print(f"\n  --- {area_label} ---")
+        logger.info(f"\n  --- {area_label} ---")
         area_conf_names = [c for c in all_confs if c.lower() in area_confs]
 
         for year in all_years:
@@ -256,7 +259,7 @@ def analyze_retention(all_results):
                 pct_total = total_retained / len(curr_area_members) * 100
                 newcomers = len(curr_area_members) - total_retained
                 pct_new = newcomers / len(curr_area_members) * 100
-                print(
+                logger.info(
                     f"  {year}: total={len(curr_area_members)}  "
                     f"same-conf={len(retained_same_conf)} ({pct_same:.1f}%)  "
                     f"diff-conf={len(retained_diff_conf)} ({pct_diff:.1f}%)  "
@@ -266,9 +269,9 @@ def analyze_retention(all_results):
 
     # ── (c) Cross-area retention ─────────────────────────────────────────
     # Members who served in BOTH systems and security conferences
-    print("\n" + "=" * 70)
-    print("(c) CROSS-AREA RETENTION (systems ↔ security)")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("(c) CROSS-AREA RETENTION (systems ↔ security)")
+    logger.info("=" * 70)
 
     # Per member: which areas did they serve in?
     cross_area_members = set()
@@ -283,12 +286,12 @@ def analyze_retention(all_results):
             cross_area_members.add(norm)
 
     total_unique = len(member_map)
-    print(f"\n  Total unique members: {total_unique}")
-    print(f"  Cross-area members (served in both systems + security): {len(cross_area_members)}")
-    print(f"  Cross-area percentage: {len(cross_area_members) / total_unique * 100:.1f}%")
+    logger.info(f"\n  Total unique members: {total_unique}")
+    logger.info(f"  Cross-area members (served in both systems + security): {len(cross_area_members)}")
+    logger.info(f"  Cross-area percentage: {len(cross_area_members) / total_unique * 100:.1f}%")
 
     # Year-by-year cross-area analysis
-    print("\n  --- Cross-area by year ---")
+    logger.info("\n  --- Cross-area by year ---")
     for year in all_years:
         sys_members_year = set()
         sec_members_year = set()
@@ -303,16 +306,16 @@ def analyze_retention(all_results):
         if sys_members_year and sec_members_year:
             overlap = sys_members_year & sec_members_year
             # Members who were in security previously, now in systems (or vice versa)
-            print(
+            logger.info(
                 f"  {year}: systems={len(sys_members_year)}, security={len(sec_members_year)}, "
                 f"overlap={len(overlap)} ({len(overlap) / len(sys_members_year | sec_members_year) * 100:.1f}%)"
             )
         elif sys_members_year or sec_members_year:
             len(sys_members_year) + len(sec_members_year)
-            print(f"  {year}: systems={len(sys_members_year)}, security={len(sec_members_year)}, overlap=0")
+            logger.info(f"  {year}: systems={len(sys_members_year)}, security={len(sec_members_year)}, overlap=0")
 
     # Cross-area year-over-year: members in area X in year Y who were in area Z in year Y-1
-    print("\n  --- Cross-area mobility (area X this year, area Y last year) ---")
+    logger.info("\n  --- Cross-area mobility (area X this year, area Y last year) ---")
     for year in all_years:
         prev_year = year - 1
         sys_curr = set()
@@ -333,13 +336,13 @@ def analyze_retention(all_results):
         # Systems→Security mobility
         sys_to_sec = sec_curr & sys_prev - sec_prev
         if sys_curr or sec_curr:
-            print(f"  {year}: sec→sys={len(sec_to_sys)}, sys→sec={len(sys_to_sec)}")
+            logger.info(f"  {year}: sec→sys={len(sec_to_sys)}, sys→sec={len(sys_to_sec)}")
 
     # ── Summary comparison with EuroSys ──────────────────────────────────
-    print("\n" + "=" * 70)
-    print("SUMMARY: Comparison with EuroSys findings (D'Elia et al., ACM REP '25)")
-    print("=" * 70)
-    print("""
+    logger.info("\n" + "=" * 70)
+    logger.info("SUMMARY: Comparison with EuroSys findings (D'Elia et al., ACM REP '25)")
+    logger.info("=" * 70)
+    logger.info("""
 EuroSys claim: "the number of returning members remains relatively small,
 suggesting that most AEC members are new." (Based on EuroSys-only data, Table 4b)
 
@@ -349,7 +352,7 @@ Our findings:
     # Compute EuroSys-specific retention if available
     eurosys_years = sorted(y for c, y in cy_members if c == "EUROSYS")
     if len(eurosys_years) >= 2:
-        print("  EuroSys within-conference retention (for direct comparison):")
+        logger.info("  EuroSys within-conference retention (for direct comparison):")
         for i in range(1, len(eurosys_years)):
             py, cy = eurosys_years[i - 1], eurosys_years[i]
             prev = cy_members.get(("EUROSYS", py), set())
@@ -357,7 +360,7 @@ Our findings:
             retained = prev & curr
             if curr:
                 pct = len(retained) / len(curr) * 100
-                print(f"    {py}→{cy}: {len(retained)}/{len(curr)} = {pct:.1f}%")
+                logger.info(f"    {py}→{cy}: {len(retained)}/{len(curr)} = {pct:.1f}%")
 
     # Overall within-conf average
     all_within = []
@@ -367,10 +370,10 @@ Our findings:
                 all_within.append(data["retained_pct"])
     if all_within:
         avg_within = sum(all_within) / len(all_within)
-        print(f"\n  Average within-conference retention: {avg_within:.1f}%")
+        logger.info(f"\n  Average within-conference retention: {avg_within:.1f}%")
 
     # Average cross-conference (different conf, same area)
-    print("\n  Key insight: Are people switching conferences rather than leaving entirely?")
+    logger.info("\n  Key insight: Are people switching conferences rather than leaving entirely?")
 
 
 def main():
@@ -384,11 +387,11 @@ def main():
     # Filter out tiny committees (likely just chairs)
     valid_results = {cy: members for cy, members in all_results.items() if len(members) >= MIN_COMMITTEE_SIZE}
 
-    print(f"\nUsing {len(valid_results)} conference-years with ≥{MIN_COMMITTEE_SIZE} members")
+    logger.info(f"\nUsing {len(valid_results)} conference-years with ≥{MIN_COMMITTEE_SIZE} members")
     for cy in sorted(valid_results.keys()):
         conf, year = _extract_conf_year(cy)
         area = _conf_area(cy)
-        print(f"  {cy}: {len(valid_results[cy])} members ({area})")
+        logger.info(f"  {cy}: {len(valid_results[cy])} members ({area})")
 
     analyze_retention(valid_results)
 
@@ -400,8 +403,11 @@ def main():
             output_data[norm] = sorted([[c, y] for c, y in conf_years])
         with open(args.output, "w") as f:
             json.dump(output_data, f, indent=2)
-        print(f"\nSaved member→conference_years mapping to {args.output}")
+        logger.info(f"\nSaved member→conference_years mapping to {args.output}")
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
     main()

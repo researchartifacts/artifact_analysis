@@ -15,7 +15,10 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 
 def generate_profiles(data_dir: str) -> None:
@@ -149,9 +152,9 @@ def generate_profiles(data_dir: str) -> None:
     with open(out_path, "w") as f:
         json.dump(profile_list, f, ensure_ascii=False, separators=(",", ":"))
 
-    print(f"Wrote {out_path} ({len(profile_list)} profiles, {os.path.getsize(out_path) / 1024:.0f}KB)")
-    print(f"  Authors with papers: {sum(1 for p in profile_list if p['papers'])}")
-    print(f"  Authors with AE service: {sum(1 for p in profile_list if p.get('ae_memberships', 0) > 0)}")
+    logger.info(f"Wrote {out_path} ({len(profile_list)} profiles, {os.path.getsize(out_path) / 1024:.0f}KB)")
+    logger.info(f"  Authors with papers: {sum(1 for p in profile_list if p['papers'])}")
+    logger.info(f"  Authors with AE service: {sum(1 for p in profile_list if p.get('ae_memberships', 0) > 0)}")
 
 
 def main():
@@ -162,4 +165,8 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

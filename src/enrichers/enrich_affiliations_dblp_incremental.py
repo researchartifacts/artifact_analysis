@@ -12,6 +12,7 @@ instead of the DBLP web API.
 """
 
 import json
+import logging
 import os
 import re
 import time
@@ -19,6 +20,7 @@ from pathlib import Path
 
 import requests
 
+logger = logging.getLogger(__name__)
 # Cache configuration
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(SCRIPT_DIR)
@@ -129,7 +131,7 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
             "http": os.environ.get("http_proxy", os.environ.get("https_proxy")),
             "https": os.environ.get("https_proxy"),
         }
-        print(f"Using proxy: {os.environ.get('https_proxy')}")
+        logger.info(f"Using proxy: {os.environ.get('https_proxy')}")
 
     # Load search history
     history = load_search_history()
@@ -149,7 +151,7 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
                 return save_author_index(data_dir, sorted(index_by_name.values(), key=lambda e: e["id"]))
 
             if index_by_name:
-                print(f"Loaded author index ({len(index_by_name)} entries)")
+                logger.info(f"Loaded author index ({len(index_by_name)} entries)")
         except ImportError:
             pass
 
@@ -166,7 +168,7 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
 
     enriched_data = []
 
-    print(f"Total authors: {stats['total_authors']}")
+    logger.info(f"Total authors: {stats['total_authors']}")
 
     # Categorize authors
     to_search = []
@@ -199,21 +201,21 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
     # Sort by priority (new authors first), then randomly within priority
     to_search.sort(key=lambda x: x[0])
 
-    print(f"Already have affiliation: {stats['already_has_affiliation']}")
-    print(f"New authors to search: {stats['new_authors_to_search']}")
-    print(f"Ready for retry: {stats['authors_ready_for_retry']}")
-    print(f"In backoff period: {stats['authors_in_backoff']}")
-    print(f"Total to search now: {len(to_search)}")
+    logger.info(f"Already have affiliation: {stats['already_has_affiliation']}")
+    logger.info(f"New authors to search: {stats['new_authors_to_search']}")
+    logger.info(f"Ready for retry: {stats['authors_ready_for_retry']}")
+    logger.info(f"In backoff period: {stats['authors_in_backoff']}")
+    logger.info(f"Total to search now: {len(to_search)}")
 
     if len(to_search) == 0:
-        print("\nNo new authors to search. All have affiliations or are in backoff period.")
+        logger.info("\nNo new authors to search. All have affiliations or are in backoff period.")
         return authors_data, stats
 
-    print("\nStarting incremental DBLP enrichment...\n")
+    logger.info("\nStarting incremental DBLP enrichment...\n")
 
     for _priority, name, author in to_search:
         if max_searches and stats["searches_performed"] >= max_searches:
-            print(f"\nReached max searches limit ({max_searches})")
+            logger.info(f"\nReached max searches limit ({max_searches})")
             enriched_data.append(author)
             continue
 
@@ -226,12 +228,12 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
                 if stats["searches_performed"] > 0
                 else 0
             )
-            print(
+            logger.info(
                 f"  [{stats['searches_performed']}/{len(to_search)}] Found: {stats['affiliations_found']} ({found_rate:.1f}%)"
             )
 
         if verbose:
-            print(f"    Searching: {name}")
+            logger.info(f"    Searching: {name}")
 
         # Search for author's PID
         pid = search_dblp_author(name, session, verbose=verbose)
@@ -239,7 +241,7 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
 
         if pid:
             if verbose:
-                print(f"      Found PID: {pid}")
+                logger.info(f"      Found PID: {pid}")
 
             # Fetch affiliation from person page
             affil = fetch_affiliation_from_dblp_page(pid, session, verbose=verbose)
@@ -254,9 +256,9 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
                         index_by_name[name], affil, "dblp", external_id_key="dblp_pid", external_id_value=pid
                     )
                 found_affil = True
-                print(f"    ✓ {name} → {affil}")
+                logger.info(f"    ✓ {name} → {affil}")
             elif verbose:
-                print("      No affiliation found on page")
+                logger.info("      No affiliation found on page")
 
         # Update search history
         if name not in history:
@@ -275,19 +277,19 @@ def enrich_affiliations(authors_data, output_path=None, max_searches=None, verbo
     if output_path:
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(enriched_data, f, indent=2, ensure_ascii=False)
-        print(f"\n✅ Enriched data saved to {output_path}")
+        logger.info(f"\n✅ Enriched data saved to {output_path}")
         # Save updated author index
         if _save_index_fn and index_by_name:
             _save_index_fn()
-            print("Author index updated")
+            logger.info("Author index updated")
 
-    print("\n📊 Summary:")
-    print(f"   Searches performed: {stats['searches_performed']}")
-    print(f"   New affiliations found: {stats['new_affiliations']}")
-    print(
+    logger.info("\n📊 Summary:")
+    logger.info(f"   Searches performed: {stats['searches_performed']}")
+    logger.info(f"   New affiliations found: {stats['new_affiliations']}")
+    logger.info(
         f"   Success rate: {stats['affiliations_found']}/{stats['searches_performed']} ({stats['affiliations_found'] / stats['searches_performed'] * 100:.1f}% if stats['searches_performed'] > 0 else 0)"
     )
-    print(f"   Search history saved: {SEARCH_HISTORY_FILE}")
+    logger.info(f"   Search history saved: {SEARCH_HISTORY_FILE}")
 
     return enriched_data, stats
 
@@ -312,16 +314,16 @@ def main():
 
     if args.clear_history and os.path.exists(SEARCH_HISTORY_FILE):
         os.remove(SEARCH_HISTORY_FILE)
-        print(f"Cleared search history: {SEARCH_HISTORY_FILE}")
+        logger.info(f"Cleared search history: {SEARCH_HISTORY_FILE}")
 
     # Load authors.json
     authors_path = Path(args.data_dir) / "assets" / "data" / "authors.json"
 
     if not authors_path.exists():
-        print(f"Error: {authors_path} not found")
+        logger.error(f"Error: {authors_path} not found")
         return None
 
-    print(f"Loading {authors_path}...")
+    logger.info(f"Loading {authors_path}...")
     with open(authors_path, "r", encoding="utf-8") as f:
         authors_data = json.load(f)
 
@@ -340,4 +342,8 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

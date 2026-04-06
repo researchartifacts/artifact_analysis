@@ -11,8 +11,11 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 import re
+
+logger = logging.getLogger(__name__)
 
 
 def normalize_title(title):
@@ -141,12 +144,16 @@ def main():
     with open(assets_path, "w") as f:
         json.dump(papers, f, ensure_ascii=False)
 
-    print(f"Paper index: {len(papers)} unique papers -> {index_path}")
+    logger.info(f"Paper index: {len(papers)} unique papers -> {index_path}")
     artifact_papers = sum(1 for p in papers if p.get("has_artifact", True))
-    print(f"  With artifacts: {artifact_papers}, without: {len(papers) - artifact_papers}")
+    logger.info(f"  With artifacts: {artifact_papers}, without: {len(papers) - artifact_papers}")
 
     return papers, norm_to_id
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

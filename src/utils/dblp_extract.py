@@ -29,6 +29,7 @@ new DBLP API calls.
 
 import argparse
 import json
+import logging
 import os
 from collections import defaultdict
 from gzip import GzipFile
@@ -37,6 +38,7 @@ import lxml.etree as ET
 
 from ..generators.generate_author_stats import venue_to_conference
 
+logger = logging.getLogger(__name__)
 # Where we write the extracted JSON files
 _EXTRACT_DIR_NAME = "dblp_extracted"
 
@@ -80,10 +82,10 @@ def extract_dblp(dblp_file):
 
     # Re-use cached files if the DBLP dump hasn't changed
     if _is_fresh(dblp_file, extract_dir):
-        print("DBLP extraction cache is fresh — skipping parse")
+        logger.warning("DBLP extraction cache is fresh — skipping parse")
         return papers_path, affiliations_path
 
-    print(f"Parsing DBLP XML ({dblp_file}) …")
+    logger.info(f"Parsing DBLP XML ({dblp_file}) …")
 
     # {conf -> {year_str -> [paper_dict]}}
     papers = defaultdict(lambda: defaultdict(list))
@@ -147,13 +149,15 @@ def extract_dblp(dblp_file):
 
         iteration += 1
         if iteration % 2_000_000 == 0:
-            print(f"  … {iteration // 1_000_000}M elements")
+            logger.info(f"  … {iteration // 1_000_000}M elements")
         elem.clear()
 
     dblp_stream.close()
 
     total_papers = sum(len(plist) for conf_years in papers.values() for plist in conf_years.values())
-    print(f"  Done — {iteration} elements, {total_papers} conference papers, {len(affiliations)} author affiliations")
+    logger.info(
+        f"  Done — {iteration} elements, {total_papers} conference papers, {len(affiliations)} author affiliations"
+    )
 
     # Write JSON files
     with open(papers_path, "w") as f:
@@ -167,8 +171,8 @@ def extract_dblp(dblp_file):
 
     sz_p = os.path.getsize(papers_path) // 1024 // 1024
     sz_a = os.path.getsize(affiliations_path) // 1024 // 1024
-    print(f"  → {papers_path} ({sz_p} MB)")
-    print(f"  → {affiliations_path} ({sz_a} MB)")
+    logger.info(f"  → {papers_path} ({sz_p} MB)")
+    logger.info(f"  → {affiliations_path} ({sz_a} MB)")
 
     return papers_path, affiliations_path
 
@@ -254,12 +258,16 @@ def main():
     args = parser.parse_args()
 
     if not os.path.exists(args.dblp_file):
-        print(f"Error: {args.dblp_file} not found")
-        print("Run scripts/download_dblp.sh first.")
+        logger.error(f"Error: {args.dblp_file} not found")
+        logger.info("Run scripts/download_dblp.sh first.")
         return
 
     extract_dblp(args.dblp_file)
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

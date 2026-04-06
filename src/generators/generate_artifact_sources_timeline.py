@@ -11,12 +11,15 @@ Usage:
 
 import argparse
 import csv
+import logging
 import os
 import re
 from collections import defaultdict
 
 from sys_sec_artifacts_results_scrape import get_ae_results
 from test_artifact_repositories import _normalise_url
+
+logger = logging.getLogger(__name__)
 
 
 def _resolve_doi_prefix(url):
@@ -130,7 +133,7 @@ def generate_csv(output_dir):
     """Generate CSV file with artifact sources by year."""
 
     # Get all artifacts (from both systems and security)
-    print("Fetching artifact evaluation results...")
+    logger.info("Fetching artifact evaluation results...")
     sys_results = get_ae_results(r".*20[12][0-9]", "sys")
     sec_results = get_ae_results(r".*20[12][0-9]", "sec")
     all_results = {**sys_results, **sec_results}
@@ -165,19 +168,23 @@ def generate_csv(output_dir):
                 row[source] = stats_by_year[year].get(source, 0)
             writer.writerow(row)
 
-    print(f"✓ Generated {csv_path}")
+    logger.info(f"✓ Generated {csv_path}")
 
     # Print summary
-    print("\nArtifact sources over time:")
-    print(f"{'Year':<6} {' '.join(f'{s:>10}' for s in sources)}")
+    logger.info("\nArtifact sources over time:")
+    logger.info(f"{'Year':<6} {' '.join(f'{s:>10}' for s in sources)}")
     for year in years:
         counts = [str(stats_by_year[year].get(s, 0)) for s in sources]
-        print(f"{year:<6} {' '.join(f'{c:>10}' for c in counts)}")
+        logger.info(f"{year:<6} {' '.join(f'{c:>10}' for c in counts)}")
 
     return csv_path
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     parser = argparse.ArgumentParser(description="Generate artifact sources over time statistics")
     parser.add_argument(
         "--output_dir",

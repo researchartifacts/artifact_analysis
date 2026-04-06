@@ -10,6 +10,7 @@ csrankings.csv file and matches our authors to their faculty records.
 import argparse
 import csv
 import json
+import logging
 import os
 import re
 import sys
@@ -20,6 +21,7 @@ from typing import Optional
 
 import requests
 
+logger = logging.getLogger(__name__)
 CSRANKINGS_URL = "https://raw.githubusercontent.com/emeryberger/CSrankings/gh-pages/csrankings.csv"
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
@@ -37,12 +39,12 @@ def download_csrankings(force_refresh: bool = False, verbose: bool = False) -> P
         age_days = (time.time() - CACHE_FILE.stat().st_mtime) / 86400
         if age_days < CACHE_TTL_DAYS:
             if verbose:
-                print(f"Using cached CSRankings data (age: {age_days:.1f} days)")
+                logger.info(f"Using cached CSRankings data (age: {age_days:.1f} days)")
             return CACHE_FILE
 
     # Download fresh data
     if verbose:
-        print(f"Downloading CSRankings data from {CSRANKINGS_URL}...")
+        logger.info(f"Downloading CSRankings data from {CSRANKINGS_URL}...")
 
     # Support proxy environment variables
     proxies = {}
@@ -57,12 +59,12 @@ def download_csrankings(force_refresh: bool = False, verbose: bool = False) -> P
 
         CACHE_FILE.write_text(response.text, encoding="utf-8")
         if verbose:
-            print(f"Downloaded {len(response.text)} bytes to {CACHE_FILE}")
+            logger.info(f"Downloaded {len(response.text)} bytes to {CACHE_FILE}")
 
         return CACHE_FILE
     except Exception as e:
         if CACHE_FILE.exists():
-            print(f"Warning: Download failed ({e}), using stale cache", file=sys.stderr)
+            logger.error(f"Warning: Download failed ({e}), using stale cache", file=sys.stderr)
             return CACHE_FILE
         raise
 
@@ -103,7 +105,7 @@ def load_csrankings(csv_path: Path, verbose: bool = False) -> dict[str, list[dic
                 name_index[f"lastname:{last_name}"].append(record)
 
     if verbose:
-        print(
+        logger.info(
             f"Loaded {len([r for records in name_index.values() for r in records if 'lastname:' not in r])} CSRankings records"
         )
 
@@ -180,7 +182,7 @@ def match_author_to_csrankings(
     for record in candidates:
         if fuzzy_name_match(author_name, record["name"]):
             if verbose:
-                print(f"    Matched '{author_name}' -> '{record['name']}' ({record['affiliation']})")
+                logger.info(f"    Matched '{author_name}' -> '{record['name']}' ({record['affiliation']})")
             return record["affiliation"]
 
     return None
@@ -211,7 +213,7 @@ def enrich_affiliations(
 
             _, index_by_name = load_author_index(data_dir)
             if index_by_name:
-                print(f"Loaded author index ({len(index_by_name)} entries)")
+                logger.info(f"Loaded author index ({len(index_by_name)} entries)")
         except ImportError:
             pass
 
@@ -224,7 +226,7 @@ def enrich_affiliations(
     if max_authors:
         authors = authors[:max_authors]
 
-    print(f"Processing {len(authors)} authors for CSRankings matches...")
+    logger.info(f"Processing {len(authors)} authors for CSRankings matches...")
 
     # Enrich affiliations (CSRankings takes precedence if available)
     enriched_count = 0
@@ -236,7 +238,7 @@ def enrich_affiliations(
             stats["already_has_affiliation"] += 1
 
         if verbose:
-            print(f"  [{i}/{len(authors)}] Looking up: {name}")
+            logger.info(f"  [{i}/{len(authors)}] Looking up: {name}")
 
         affiliation = match_author_to_csrankings(name, name_index, verbose)
 
@@ -252,15 +254,15 @@ def enrich_affiliations(
                     enriched_count += 1
             stats["csrankings_match"] += 1
             if verbose:
-                print(f"    ✓ Found: {affiliation}")
+                logger.info(f"    ✓ Found: {affiliation}")
 
             # Progress update every 100 authors
             if not verbose and i % 100 == 0:
-                print(f"  Processed {i}/{len(authors)}... (found {enriched_count} so far)")
+                logger.info(f"  Processed {i}/{len(authors)}... (found {enriched_count} so far)")
         else:
             stats["no_match"] += 1
             if verbose:
-                print("    ✗ No match in CSRankings")
+                logger.info("    ✗ No match in CSRankings")
 
     stats["enriched"] = enriched_count
     stats["remaining"] = sum(1 for a in authors if not a.get("affiliation") or a.get("affiliation") == "Unknown")
@@ -270,15 +272,15 @@ def enrich_affiliations(
     if not dry_run:
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(authors, f, indent=2, ensure_ascii=False)
-        print(f"\nEnriched authors saved to: {output_file}")
+        logger.info(f"\nEnriched authors saved to: {output_file}")
         # Save updated author index
         if data_dir and index_by_name:
             idx_path = save_author_index(
                 data_dir, [index_by_name[n] for n in sorted(index_by_name, key=lambda n: index_by_name[n]["id"])]
             )
-            print(f"Author index updated: {idx_path}")
+            logger.info(f"Author index updated: {idx_path}")
     else:
-        print(f"\nDry run - would save to: {output_file}")
+        logger.info(f"\nDry run - would save to: {output_file}")
 
     return stats
 
@@ -323,25 +325,31 @@ def main():
     )
 
     # Print summary
-    print("\n" + "=" * 60)
-    print("CSRankings Enrichment Summary")
-    print("=" * 60)
-    print(f"Total authors:              {stats['total']:,}")
-    print(f"Already have affiliation:   {stats['already_has_affiliation']:,}")
-    print(f"Missing affiliation:        {stats['total'] - stats['already_has_affiliation']:,}")
-    print(f"CSRankings matches:         {stats['csrankings_match']:,}")
-    print(f"No match found:             {stats['no_match']:,}")
-    print(f"Total enriched:             {stats['enriched']:,}")
-    print(f"Overwritten affiliations:   {stats['overwritten']:,}")
+    logger.info("\n" + "=" * 60)
+    logger.info("CSRankings Enrichment Summary")
+    logger.info("=" * 60)
+    logger.info(f"Total authors:              {stats['total']:,}")
+    logger.info(f"Already have affiliation:   {stats['already_has_affiliation']:,}")
+    logger.info(f"Missing affiliation:        {stats['total'] - stats['already_has_affiliation']:,}")
+    logger.info(f"CSRankings matches:         {stats['csrankings_match']:,}")
+    logger.info(f"No match found:             {stats['no_match']:,}")
+    logger.info(f"Total enriched:             {stats['enriched']:,}")
+    logger.info(f"Overwritten affiliations:   {stats['overwritten']:,}")
 
     if stats["total"] > 0:
         match_rate = 100 * stats["csrankings_match"] / stats["total"]
-        print(f"Match rate:                 {match_rate:.1f}%")
+        logger.info(f"Match rate:                 {match_rate:.1f}%")
 
-    print(f"Final coverage:             {stats['final_coverage']:.1f}%")
-    print(f"Still missing:              {stats['remaining']:,} ({100 * stats['remaining'] / stats['total']:.1f}%)")
-    print("=" * 60)
+    logger.info(f"Final coverage:             {stats['final_coverage']:.1f}%")
+    logger.info(
+        f"Still missing:              {stats['remaining']:,} ({100 * stats['remaining'] / stats['total']:.1f}%)"
+    )
+    logger.info("=" * 60)
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

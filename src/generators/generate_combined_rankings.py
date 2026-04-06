@@ -16,6 +16,7 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 import re
 import unicodedata
@@ -25,6 +26,8 @@ import yaml
 
 # ── Name normalisation ────────────────────────────────────────────────────────
 
+
+logger = logging.getLogger(__name__)
 _DBLP_SUFFIX = re.compile(r"\s+\d{4}$")  # e.g. "Haibo Chen 0001"
 _INITIALS = re.compile(r"\b[A-Z]\.\s*")  # e.g. "J. Doe"
 _MULTI_SPACE = re.compile(r"\s+")
@@ -323,7 +326,7 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
         if scored[0][0] > 0 and (len(scored) < 2 or scored[0][0] > scored[1][0]):
             # Clear winner — unique best conference overlap
             _ae_winner[norm] = scored[0][1]
-            print(
+            logger.info(
                 f"  Disambiguated '{norm}': {scored[0][1]} "
                 f"(conf overlap {scored[0][0]}) wins over "
                 f"{[s[1] for s in scored[1:]]}"
@@ -332,13 +335,13 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
             # Ambiguous — don't link anyone; AE member appears standalone
             _ae_winner[norm] = None
             _ambiguous_norms.add(norm)
-            print(
+            logger.info(
                 f"  AMBIGUOUS '{norm}': {[s[1] for s in scored]} "
                 f"(overlaps: {[s[0] for s in scored]}) — AE member unlinked"
             )
 
     if _ambiguous_norms:
-        print(f"  ⚠ {len(_ambiguous_norms)} AE members could not be unambiguously linked to a DBLP author")
+        logger.info(f"  ⚠ {len(_ambiguous_norms)} AE members could not be unambiguously linked to a DBLP author")
 
     linked_ae_norms: set[str] = set()
     combined: list[dict] = []
@@ -491,7 +494,9 @@ def _build_entry(
     yr_keys = [int(y) for y in years] if years else []
 
     if artifacts > total_papers:
-        print(f"  ⚠ DBLP undercount for '{name}': artifacts ({artifacts}) > total_papers ({total_papers}), clamping")
+        logger.info(
+            f"  ⚠ DBLP undercount for '{name}': artifacts ({artifacts}) > total_papers ({total_papers}), clamping"
+        )
         total_papers = artifacts
     if badges_reproducible > artifacts:
         raise ValueError(
@@ -555,7 +560,7 @@ def generate_combined_rankings(data_dir: str):
     def _load_json(name):
         path = os.path.join(assets_data, name)
         if not os.path.exists(path):
-            print(f"  Warning: {name} not found, skipping")
+            logger.warning(f"  Warning: {name} not found, skipping")
             return []
         with open(path) as f:
             return json.load(f)
@@ -608,7 +613,7 @@ def generate_combined_rankings(data_dir: str):
 
     # Create combined_all as the union of systems and security to enforce
     # monotonic totals (all >= systems, all >= security)
-    print("Merging systems and security rankings into combined all...")
+    logger.info("Merging systems and security rankings into combined all...")
     combined_all_dict = {}
 
     # Add all people from systems
@@ -659,7 +664,7 @@ def generate_combined_rankings(data_dir: str):
                 existing["last_year"] = max(all_years)
 
             if existing["artifacts"] > existing["total_papers"]:
-                print(
+                logger.info(
                     f"  ⚠ DBLP undercount after merge for '{existing['name']}': "
                     f"artifacts ({existing['artifacts']}) > total_papers ({existing['total_papers']}), clamping"
                 )
@@ -717,7 +722,7 @@ def generate_combined_rankings(data_dir: str):
                     aid = name_to_id.get(entry["name"])
                     if aid is not None:
                         entry["author_id"] = aid
-            print("  Author IDs injected from index")
+            logger.info("  Author IDs injected from index")
     except ImportError:
         pass
 
@@ -731,7 +736,7 @@ def generate_combined_rankings(data_dir: str):
         path = os.path.join(assets_data, fname)
         with open(path, "w") as f:
             json.dump(data, f, ensure_ascii=False)
-        print(f"  Wrote {path} ({len(data)} entries)")
+        logger.info(f"  Wrote {path} ({len(data)} entries)")
 
     # Summary YAML
     # Count people who have both artifacts AND AE service
@@ -751,10 +756,12 @@ def generate_combined_rankings(data_dir: str):
     yml_path = os.path.join(yaml_dir, "combined_summary.yml")
     with open(yml_path, "w") as f:
         yaml.dump(summary, f, default_flow_style=False, sort_keys=False)
-    print(f"  Wrote {yml_path}")
+    logger.info(f"  Wrote {yml_path}")
 
-    print(f"  Combined rankings: {len(combined_all)} total, {len(combined_sys)} systems, {len(combined_sec)} security")
-    print(f"  People with both artifacts and AE service: {both_all}")
+    logger.info(
+        f"  Combined rankings: {len(combined_all)} total, {len(combined_sys)} systems, {len(combined_sec)} security"
+    )
+    logger.info(f"  People with both artifacts and AE service: {both_all}")
 
 
 def main():
@@ -767,4 +774,8 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

@@ -30,11 +30,14 @@ The generated results.md files can be dropped into the sysartifacts repo:
 """
 
 import argparse
+import logging
 import os
 import sys
 
 # Import from sibling module in the same package
 from .usenix_scrape import scrape_conference_year, scrape_organizers
+
+logger = logging.getLogger(__name__)
 
 
 def generate_results_md(conference, year, papers_with_badges):
@@ -210,9 +213,9 @@ def main():
 
     for year in years:
         conf_label = f"{conference.upper()} {year}"
-        print(f"\n{'=' * 60}", file=sys.stderr)
-        print(f"Scraping {conf_label} from USENIX...", file=sys.stderr)
-        print(f"{'=' * 60}", file=sys.stderr)
+        logger.info(f"\n{'=' * 60}", file=sys.stderr)
+        logger.info(f"Scraping {conf_label} from USENIX...", file=sys.stderr)
+        logger.info(f"{'=' * 60}", file=sys.stderr)
 
         all_papers = scrape_conference_year(conference, year, max_workers=args.max_workers, delay=args.delay)
 
@@ -220,10 +223,10 @@ def main():
         papers_with_badges = [p for p in all_papers if p.get("badges")]
 
         if not papers_with_badges:
-            print(f"WARNING: No papers with badges found for {conf_label}", file=sys.stderr)
+            logger.warning(f"WARNING: No papers with badges found for {conf_label}", file=sys.stderr)
             continue
 
-        print(
+        logger.info(
             f"\n{conf_label}: {len(papers_with_badges)} papers with badges (of {len(all_papers)} total)",
             file=sys.stderr,
         )
@@ -236,13 +239,13 @@ def main():
         organizers_content = generate_organizers_md(organizers)
 
         if args.dry_run:
-            print(f"\n--- {dir_prefix}{year}/results.md ---")
-            print(content)
+            logger.info(f"\n--- {dir_prefix}{year}/results.md ---")
+            logger.info(content)
             if organizers_content:
-                print(f"\n--- {dir_prefix}{year}/organizers.md ---")
-                print(organizers_content)
+                logger.info(f"\n--- {dir_prefix}{year}/organizers.md ---")
+                logger.info(organizers_content)
             else:
-                print(f"\n  (no organizers found for {conf_label})", file=sys.stderr)
+                logger.info(f"\n  (no organizers found for {conf_label})", file=sys.stderr)
         else:
             out_dir = args.output_dir or "."
             conf_dir = os.path.join(out_dir, f"{dir_prefix}{year}")
@@ -250,18 +253,22 @@ def main():
             out_path = os.path.join(conf_dir, "results.md")
             with open(out_path, "w") as f:
                 f.write(content)
-            print(f"Written: {out_path}", file=sys.stderr)
+            logger.info(f"Written: {out_path}", file=sys.stderr)
 
             if organizers_content:
                 org_path = os.path.join(conf_dir, "organizers.md")
                 with open(org_path, "w") as f:
                     f.write(organizers_content)
-                print(f"Written: {org_path}", file=sys.stderr)
+                logger.info(f"Written: {org_path}", file=sys.stderr)
             else:
-                print(f"  Skipped organizers.md (no data) for {conf_label}", file=sys.stderr)
+                logger.warning(f"  Skipped organizers.md (no data) for {conf_label}", file=sys.stderr)
 
-    print("\nDone!", file=sys.stderr)
+    logger.info("\nDone!", file=sys.stderr)
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

@@ -27,8 +27,11 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 def _load_json(path: str) -> list | dict:
@@ -70,7 +73,9 @@ def generate_ranking_history(data_dir: str, force: bool = False) -> None:
     author_history: list = _load_json(author_hist_path)  # type: ignore[assignment]
 
     if _has_snapshot(author_history, date) and not force:
-        print(f"  Author ranking history: snapshot for {date} already exists, skipping (use --force to overwrite)")
+        logger.warning(
+            f"  Author ranking history: snapshot for {date} already exists, skipping (use --force to overwrite)"
+        )
     else:
         author_entries = {}
         for r in rankings:
@@ -93,8 +98,10 @@ def generate_ranking_history(data_dir: str, force: bool = False) -> None:
         with open(author_hist_path, "w") as f:
             json.dump(author_history, f, ensure_ascii=False, separators=(",", ":"))
 
-        print(f"  Author ranking history: {len(author_history)} snapshots, {len(author_entries)} entries for {date}")
-        print(f"  Wrote {author_hist_path} ({os.path.getsize(author_hist_path) / 1024:.0f}KB)")
+        logger.info(
+            f"  Author ranking history: {len(author_history)} snapshots, {len(author_entries)} entries for {date}"
+        )
+        logger.info(f"  Wrote {author_hist_path} ({os.path.getsize(author_hist_path) / 1024:.0f}KB)")
 
     # ── Institution rankings ─────────────────────────────────────────────
     ir_path = os.path.join(data_dir, "assets/data/institution_rankings.json")
@@ -104,7 +111,9 @@ def generate_ranking_history(data_dir: str, force: bool = False) -> None:
     inst_history: list = _load_json(inst_hist_path)  # type: ignore[assignment]
 
     if _has_snapshot(inst_history, date) and not force:
-        print(f"  Institution ranking history: snapshot for {date} already exists, skipping (use --force to overwrite)")
+        logger.warning(
+            f"  Institution ranking history: snapshot for {date} already exists, skipping (use --force to overwrite)"
+        )
     else:
         inst_entries = {}
         for idx, r in enumerate(inst_rankings):
@@ -132,8 +141,10 @@ def generate_ranking_history(data_dir: str, force: bool = False) -> None:
         with open(inst_hist_path, "w") as f:
             json.dump(inst_history, f, ensure_ascii=False, separators=(",", ":"))
 
-        print(f"  Institution ranking history: {len(inst_history)} snapshots, {len(inst_entries)} entries for {date}")
-        print(f"  Wrote {inst_hist_path} ({os.path.getsize(inst_hist_path) / 1024:.0f}KB)")
+        logger.info(
+            f"  Institution ranking history: {len(inst_history)} snapshots, {len(inst_entries)} entries for {date}"
+        )
+        logger.info(f"  Wrote {inst_hist_path} ({os.path.getsize(inst_hist_path) / 1024:.0f}KB)")
 
 
 def main():
@@ -145,4 +156,8 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

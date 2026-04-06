@@ -9,6 +9,7 @@ Supported sources:
 - PETS website (petsymposium.org)
 """
 
+import logging
 import re
 import sys
 
@@ -17,6 +18,8 @@ from bs4 import BeautifulSoup
 
 # ── USENIX conference URL patterns ──────────────────────────────────────────
 
+
+logger = logging.getLogger(__name__)
 # Maps our internal conference name to the USENIX URL slug.
 # Key: lowercase conference name as used in sysartifacts (e.g. "fast", "osdi")
 # Value: USENIX slug prefix (year suffix is appended as 2-digit)
@@ -276,7 +279,7 @@ def scrape_usenix_committee(conference, year, session=None):
             return None
         resp.raise_for_status()
     except requests.RequestException as e:
-        print(f"  Warning: Failed to fetch {url}: {e}", file=sys.stderr)
+        logger.error(f"  Warning: Failed to fetch {url}: {e}", file=sys.stderr)
         return None
 
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -301,7 +304,7 @@ def scrape_usenix_committee(conference, year, session=None):
             deduped.append(m)
 
     if deduped:
-        print(f"  USENIX: Found {len(deduped)} members for {conference}{year}", file=sys.stderr)
+        logger.info(f"  USENIX: Found {len(deduped)} members for {conference}{year}", file=sys.stderr)
     return deduped if deduped else None
 
 
@@ -443,14 +446,16 @@ def scrape_ches_committee(year, session=None):
             if deduped:
                 chair_count = sum(1 for m in deduped if m["role"] == "chair")
                 member_count = len(deduped) - chair_count
-                print(f"  CHES: Found {member_count} members + {chair_count} chair(s) for ches{year}", file=sys.stderr)
+                logger.info(
+                    f"  CHES: Found {member_count} members + {chair_count} chair(s) for ches{year}", file=sys.stderr
+                )
             return deduped if deduped else None
     except requests.RequestException as e:
-        print(f"  Warning: Failed to fetch {html_url}: {e}", file=sys.stderr)
+        logger.error(f"  Warning: Failed to fetch {html_url}: {e}", file=sys.stderr)
 
     # If only JSON members were found (HTML failed), return those
     if members:
-        print(f"  CHES: Found {len(members)} members for ches{year} (JSON only)", file=sys.stderr)
+        logger.info(f"  CHES: Found {len(members)} members for ches{year} (JSON only)", file=sys.stderr)
         return members
 
     return None
@@ -484,7 +489,7 @@ def scrape_pets_committee(year, session=None):
             return None
         resp.raise_for_status()
     except requests.RequestException as e:
-        print(f"  Warning: Failed to fetch {url}: {e}", file=sys.stderr)
+        logger.error(f"  Warning: Failed to fetch {url}: {e}", file=sys.stderr)
         return None
 
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -525,7 +530,7 @@ def scrape_pets_committee(year, session=None):
                 members.append({"name": name, "affiliation": affiliation, "role": "member"})
 
     if members:
-        print(f"  PETS: Found {len(members)} members for pets{year}", file=sys.stderr)
+        logger.info(f"  PETS: Found {len(members)} members for pets{year}", file=sys.stderr)
     return members if members else None
 
 
@@ -605,6 +610,10 @@ def get_all_usenix_committees(conf_regex=None):
 # ── CLI for testing ──────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     import argparse
 
     parser = argparse.ArgumentParser(description="Scrape AE committees from alternative sources")
@@ -618,23 +627,23 @@ if __name__ == "__main__":
     if args.all_usenix:
         results = get_all_usenix_committees()
         for cy, members in sorted(results.items()):
-            print(f"{cy}: {len(members)} members")
+            logger.info(f"{cy}: {len(members)} members")
     elif args.all_ches:
         sess = _get_session()
         for y in CHES_KNOWN_YEARS:
             committee = scrape_ches_committee(y, session=sess)
             if committee:
-                print(f"ches{y}: {len(committee)} members")
+                logger.info(f"ches{y}: {len(committee)} members")
             else:
-                print(f"ches{y}: not found")
+                logger.info(f"ches{y}: not found")
     elif args.all_pets:
         sess = _get_session()
         for y in PETS_KNOWN_YEARS:
             committee = scrape_pets_committee(y, session=sess)
             if committee:
-                print(f"pets{y}: {len(committee)} members")
+                logger.info(f"pets{y}: {len(committee)} members")
             else:
-                print(f"pets{y}: not found")
+                logger.info(f"pets{y}: not found")
     elif args.conference and args.year:
         conf = args.conference.lower()
         if conf in USENIX_CONF_SLUGS:
@@ -644,14 +653,14 @@ if __name__ == "__main__":
         elif conf == "pets":
             result = scrape_pets_committee(args.year)
         else:
-            print(f"Unknown conference: {conf}")
+            logger.info(f"Unknown conference: {conf}")
             sys.exit(1)
 
         if result:
-            print(f"Found {len(result)} members:")
+            logger.info(f"Found {len(result)} members:")
             for m in result:
-                print(f"  {m['name']} — {m['affiliation']}")
+                logger.info(f"  {m['name']} — {m['affiliation']}")
         else:
-            print("No committee data found.")
+            logger.info("No committee data found.")
     else:
         parser.print_help()

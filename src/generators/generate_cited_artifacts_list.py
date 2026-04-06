@@ -17,9 +17,12 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 import re
 from collections import defaultdict
+
+logger = logging.getLogger(__name__)
 
 
 def normalize_title(title: str) -> str:
@@ -45,7 +48,7 @@ def generate(data_dir: str) -> None:
 
     # Load data
     if not os.path.exists(citations_path):
-        print(f"Error: {citations_path} not found. Run generate_artifact_citations.py first")
+        logger.error(f"Error: {citations_path} not found. Run generate_artifact_citations.py first")
         return
 
     with open(citations_path, "r") as f:
@@ -59,10 +62,10 @@ def generate(data_dir: str) -> None:
             if norm_title:
                 cited_artifacts[norm_title] = citation_entry
 
-    print(f"Found {len(cited_artifacts)} artifacts with citations")
+    logger.info(f"Found {len(cited_artifacts)} artifacts with citations")
 
     if not cited_artifacts:
-        print("No cited artifacts found. Skipping mapping generation.")
+        logger.warning("No cited artifacts found. Skipping mapping generation.")
         return
 
     # Load paper-to-authors mapping
@@ -75,7 +78,9 @@ def generate(data_dir: str) -> None:
                 if norm_title:
                     paper_author_map[norm_title] = paper
     else:
-        print(f"Warning: {paper_authors_map_path} not found. Run generate_author_stats.py first for full mapping.")
+        logger.warning(
+            f"Warning: {paper_authors_map_path} not found. Run generate_author_stats.py first for full mapping."
+        )
 
     # Load institution and author ranking data
     author_info = {}
@@ -213,9 +218,9 @@ def generate(data_dir: str) -> None:
         sorted_list = sorted(cited_artifacts_list, key=lambda x: x["cited_by_count"], reverse=True)
         json.dump(sorted_list, f, indent=2, ensure_ascii=False)
 
-    print(f"Wrote {out_author_cited} ({len(cited_by_author)} authors with cited artifacts)")
-    print(f"Wrote {out_institution_cited} ({len(cited_by_institution)} institutions with cited artifacts)")
-    print(f"Wrote {out_cited_list} ({len(cited_artifacts_list)} cited artifacts)")
+    logger.info(f"Wrote {out_author_cited} ({len(cited_by_author)} authors with cited artifacts)")
+    logger.info(f"Wrote {out_institution_cited} ({len(cited_by_institution)} institutions with cited artifacts)")
+    logger.info(f"Wrote {out_cited_list} ({len(cited_artifacts_list)} cited artifacts)")
 
 
 def main() -> None:
@@ -226,4 +231,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

@@ -21,6 +21,7 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 from collections import defaultdict
 
@@ -29,12 +30,14 @@ import yaml
 from ..utils.conference import conf_area
 from ..utils.dblp_extract import paper_count_by_venue_year
 
+logger = logging.getLogger(__name__)
+
 
 def _count_papers_from_dblp(dblp_file, target_conf_years):
     """Count papers per (conference, year) from pre-extracted DBLP data."""
     all_counts = paper_count_by_venue_year()
     counts = {k: v for k, v in all_counts.items() if k in target_conf_years}
-    print(f"Loaded DBLP paper counts from extraction cache ({len(counts)} conference/years)")
+    logger.info(f"Loaded DBLP paper counts from extraction cache ({len(counts)} conference/years)")
     return counts
 
 
@@ -42,14 +45,14 @@ def generate_participation_stats(dblp_file, output_dir):
     """Generate AE participation and badge-rate statistics."""
 
     if not os.path.exists(dblp_file):
-        print(f"Error: DBLP file not found: {dblp_file}")
-        print("  Run scripts/download_dblp.sh first.")
+        logger.error(f"Error: DBLP file not found: {dblp_file}")
+        logger.info("  Run scripts/download_dblp.sh first.")
         return None
 
     # Load artifacts_by_conference for per-conference badge counts
     abc_path = os.path.join(output_dir, "_data/artifacts_by_conference.yml")
     if not os.path.exists(abc_path):
-        print(f"Error: {abc_path} not found — run generate_statistics first")
+        logger.error(f"Error: {abc_path} not found — run generate_statistics first")
         return None
 
     with open(abc_path) as f:
@@ -78,12 +81,12 @@ def generate_participation_stats(dblp_file, output_dir):
     for (conf, year), info in sorted(ae_data.items()):
         total_papers = dblp_counts.get((conf, year))
         if not total_papers:
-            print(f"  ⚠ {conf} {year}: no DBLP data — skipping")
+            logger.warning(f"  ⚠ {conf} {year}: no DBLP data — skipping")
             continue
 
         ae_papers = info["ae_papers"]
         if ae_papers > total_papers:
-            print(
+            logger.info(
                 f"  ⚠ {conf} {year}: DBLP data incomplete ({total_papers} papers in DBLP, {ae_papers} AE papers) — skipping"
             )
             continue
@@ -106,10 +109,10 @@ def generate_participation_stats(dblp_file, output_dir):
             "reproduced_pct": round(info["reproduced"] / total_papers * 100, 1),
         }
         stats.append(entry)
-        print(f"  {conf} {year}: {ae_papers}/{total_papers} = {participation_rate}% AE participation")
+        logger.info(f"  {conf} {year}: {ae_papers}/{total_papers} = {participation_rate}% AE participation")
 
     if not stats:
-        print("No participation data generated")
+        logger.info("No participation data generated")
         return None
 
     # Sort by conference then year
@@ -157,9 +160,9 @@ def generate_participation_stats(dblp_file, output_dir):
     with open(json_path, "w") as f:
         json.dump(output, f, indent=2)
 
-    print(f"\n✅ Participation stats: {len(stats)} conference/year entries")
-    print(f"   → {yml_path}")
-    print(f"   → {json_path}")
+    logger.info(f"\n✅ Participation stats: {len(stats)} conference/year entries")
+    logger.info(f"   → {yml_path}")
+    logger.info(f"   → {json_path}")
 
     return output
 
@@ -183,4 +186,8 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

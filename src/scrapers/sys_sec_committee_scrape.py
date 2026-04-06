@@ -1,9 +1,12 @@
 import argparse
+import logging
 import re
 
 import requests
 
 from .sys_sec_scrape import download_file, get_conferences_from_prefix, github_urls
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_member_line(line):
@@ -81,7 +84,7 @@ def get_committee_for_conference(conference, prefix):
         try:
             response = download_file(base_url + "/organizers.md")
         except requests.exceptions.HTTPError:
-            print(f"couldn't get committee for {conference}")
+            logger.info(f"couldn't get committee for {conference}")
             return None
 
     # --- Parse chairs and members separately ---
@@ -163,7 +166,7 @@ def get_committees(conference_regex, prefix):
     # get conference name from prefix
     conferences = get_conferences_from_prefix(prefix)
     if conferences is None:
-        print(f"Invalid prefix: {prefix}")
+        logger.info(f"Invalid prefix: {prefix}")
         return results
     # get the base url for the conference
     for conf in conferences:
@@ -198,12 +201,16 @@ def main():
     results = get_committees(args.conf_regex, args.prefix)
 
     for year in results:
-        print(f"{year}: {len(results[year])}")
+        logger.info(f"{year}: {len(results[year])}")
 
     if args.print:
         for year in results:
-            print(results[year])
+            logger.info(results[year])
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

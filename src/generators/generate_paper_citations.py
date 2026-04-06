@@ -31,11 +31,13 @@ Usage:
 import argparse
 import hashlib
 import json
+import logging
 import os
 import re
 import time
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
 # ── Configuration ────────────────────────────────────────────────────────────
 CACHE_DIR = Path(__file__).resolve().parent.parent.parent / ".cache" / "paper_citations"
 CACHE_NS = "scholar"  # single namespace — one source
@@ -48,7 +50,7 @@ MAX_CONSECUTIVE_ERRORS = 3  # stop after this many errors in a row
 
 
 def log(msg: str) -> None:
-    print(msg, flush=True)
+    logger.info(msg, flush=True)
 
 
 def _normalize_title(title: str) -> str:
@@ -435,4 +437,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

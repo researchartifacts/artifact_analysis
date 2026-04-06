@@ -10,8 +10,11 @@ Usage:
 import argparse
 import contextlib
 import json
+import logging
 import os
 import sys
+
+logger = logging.getLogger(__name__)
 
 
 def export_citations(data_dir: str, output_file: str = None) -> None:
@@ -20,8 +23,8 @@ def export_citations(data_dir: str, output_file: str = None) -> None:
     citations_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
 
     if not os.path.exists(citations_path):
-        print(f"Error: {citations_path} not found.", file=sys.stderr)
-        print("Run generate_artifact_citations.py first.", file=sys.stderr)
+        logger.error(f"Error: {citations_path} not found.", file=sys.stderr)
+        logger.info("Run generate_artifact_citations.py first.", file=sys.stderr)
         sys.exit(1)
 
     with open(citations_path, "r") as f:
@@ -70,13 +73,13 @@ def export_citations(data_dir: str, output_file: str = None) -> None:
                 out.write(f"{doi}: {citing_dois_str}\n")
 
         # Print summary to stderr so it doesn't interfere with output
-        print("\n# Summary:", file=sys.stderr)
-        print(f"# Total artifacts with DOIs: {sum(1 for a in artifacts if a.get('doi'))}", file=sys.stderr)
-        print(f"# Artifacts with citing DOIs: {artifacts_with_citations}", file=sys.stderr)
-        print(f"# Total citing DOIs collected: {total_citing_dois}", file=sys.stderr)
+        logger.info("\n# Summary:", file=sys.stderr)
+        logger.info(f"# Total artifacts with DOIs: {sum(1 for a in artifacts if a.get('doi'))}", file=sys.stderr)
+        logger.info(f"# Artifacts with citing DOIs: {artifacts_with_citations}", file=sys.stderr)
+        logger.info(f"# Total citing DOIs collected: {total_citing_dois}", file=sys.stderr)
 
     if output_file:
-        print(f"\nWrote citations export to: {output_file}", file=sys.stderr)
+        logger.info(f"\nWrote citations export to: {output_file}", file=sys.stderr)
 
 
 def main():
@@ -108,4 +111,8 @@ Examples:
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

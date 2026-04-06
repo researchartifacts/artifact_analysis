@@ -11,9 +11,11 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 from typing import Any
 
+logger = logging.getLogger(__name__)
 # Registry: (schema_filename, list_wrapper, model_class_import_path)
 # list_wrapper == True means the top-level schema is ``type: array`` wrapping items.
 SCHEMA_REGISTRY: list[tuple[str, bool, str, str]] = [
@@ -97,7 +99,7 @@ def export_all(output_dir: str) -> list[str]:
             f.write("\n")
 
         written.append(path)
-        print(f"  {filename}")
+        logger.info(f"  {filename}")
 
     return written
 
@@ -112,10 +114,14 @@ def main():
     )
     args = parser.parse_args()
 
-    print(f"Exporting {len(SCHEMA_REGISTRY)} schemas to {args.output_dir}")
+    logger.info(f"Exporting {len(SCHEMA_REGISTRY)} schemas to {args.output_dir}")
     written = export_all(args.output_dir)
-    print(f"\nDone. {len(written)} schema files written.")
+    logger.info(f"\nDone. {len(written)} schema files written.")
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

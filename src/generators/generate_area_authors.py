@@ -11,6 +11,7 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 from collections import defaultdict
 
@@ -19,6 +20,7 @@ import yaml
 from ..utils.conference import clean_name
 from .generate_combined_rankings import _normalize_affiliation
 
+logger = logging.getLogger(__name__)
 DATA_DIR = None  # Set via CLI
 
 
@@ -182,7 +184,7 @@ def generate_area_authors():
                     area_total_papers += per_conf_totals.get(conf, 0)
 
             if total > area_total_papers:
-                print(
+                logger.info(
                     f"  ⚠ DBLP undercount for '{author['name']}' in {area_name}: "
                     f"artifacts ({total}) > total_papers ({area_total_papers}), clamping"
                 )
@@ -291,7 +293,7 @@ def generate_area_authors():
         fname = f"{conf.lower()}_conf_authors.json"
         with open(os.path.join(assets_data, fname), "w") as f:
             json.dump(conf_authors, f, ensure_ascii=False)
-        print(f"  {conf}: {len(conf_authors)} authors -> assets/data/{fname}")
+        logger.info(f"  {conf}: {len(conf_authors)} authors -> assets/data/{fname}")
 
     # Update author_summary with correct counts
     author_summary = load_yaml("author_summary.yml")
@@ -304,13 +306,17 @@ def generate_area_authors():
     author_summary["cross_domain_authors"] = len(sys_names & sec_names)
     save_yaml("author_summary.yml", author_summary)
 
-    print(f"Generated {len(systems_authors)} systems authors -> _data/systems_authors.yml")
-    print(f"Generated {len(security_authors)} security authors -> _data/security_authors.yml")
-    print(f"Cross-domain authors: {len(sys_names & sec_names)}")
-    print(f"Global year range from artifacts_by_year: {min_year}-{max_year}")
+    logger.info(f"Generated {len(systems_authors)} systems authors -> _data/systems_authors.yml")
+    logger.info(f"Generated {len(security_authors)} security authors -> _data/security_authors.yml")
+    logger.info(f"Cross-domain authors: {len(sys_names & sec_names)}")
+    logger.info(f"Global year range from artifacts_by_year: {min_year}-{max_year}")
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     parser = argparse.ArgumentParser(description="Generate per-area author data files.")
     parser.add_argument(
         "--data_dir",

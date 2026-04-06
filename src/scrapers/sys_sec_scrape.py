@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import os
 import time
 
@@ -7,6 +8,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+logger = logging.getLogger(__name__)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(SCRIPT_DIR)
 CACHE_DIR = os.path.join(REPO_ROOT, ".cache")
@@ -140,7 +142,7 @@ def check_url_cached(url, ttl=CACHE_TTL_URL):
             resp = _session.head(url, allow_redirects=True, timeout=10)
         exists = 200 <= resp.status_code < 300
     except requests.RequestException as e:
-        print(f"  Request error for {url}: {e}")
+        logger.error(f"  Request error for {url}: {e}")
         # Network errors (timeouts, DNS failures, connection refused) are
         # transient — do NOT cache them as negative results.
         return False
@@ -177,7 +179,7 @@ def cached_github_stats(url, ttl=CACHE_TTL_STATS):
     if resp.status_code == 403 and "rate limit" in resp.text.lower():
         reset_time = int(resp.headers.get("X-RateLimit-Reset", 0))
         wait = max(reset_time - int(time.time()), 0) + 5
-        print(f"  Rate limited. Waiting {wait}s for reset...")
+        logger.info(f"  Rate limited. Waiting {wait}s for reset...")
         time.sleep(wait)
         resp = _session.get(f"https://api.github.com/repos/{repo}", headers=headers, timeout=_session._default_timeout)
 
@@ -202,7 +204,7 @@ def cached_github_stats(url, ttl=CACHE_TTL_STATS):
         etag = resp.headers.get("ETag")
         _write_cache(url, result, namespace="github_stats", etag=etag)
         return result
-    print(f"  Could not collect GitHub stats for {url} (HTTP {resp.status_code})")
+    logger.info(f"  Could not collect GitHub stats for {url} (HTTP {resp.status_code})")
     result = None
     _write_cache(url, result, namespace="github_stats")
     return result
@@ -219,7 +221,7 @@ def cached_zenodo_stats(url, ttl=CACHE_TTL_STATS):
     elif "zenodo." in url:
         rec = url.split("zenodo.")[-1]
     else:
-        print(f"  Could not parse Zenodo URL {url}")
+        logger.info(f"  Could not parse Zenodo URL {url}")
         return None
 
     try:
@@ -233,10 +235,10 @@ def cached_zenodo_stats(url, ttl=CACHE_TTL_STATS):
                 "created_at": record["created"],
             }
         else:
-            print(f"  Could not collect Zenodo stats for {url} (HTTP {resp.status_code})")
+            logger.info(f"  Could not collect Zenodo stats for {url} (HTTP {resp.status_code})")
             result = None
     except requests.RequestException as e:
-        print(f"  Zenodo request error for {url}: {e}")
+        logger.error(f"  Zenodo request error for {url}: {e}")
         result = None
 
     _write_cache(url, result, namespace="zenodo_stats")
@@ -273,7 +275,7 @@ def cached_figshare_stats(url, ttl=CACHE_TTL_STATS):
             updated = d["modified_date"]
             created = d["created_date"]
     except requests.RequestException as e:
-        print(f"  Figshare request error for {url}: {e}")
+        logger.error(f"  Figshare request error for {url}: {e}")
 
     result = {
         "figshare_views": views,
@@ -308,7 +310,7 @@ def _cached_get(url):
     if response.status_code == 403 and "rate limit" in response.text.lower():
         reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
         wait = max(reset_time - int(time.time()), 0) + 5
-        print(f"  Rate limited. Waiting {wait}s for reset...")
+        logger.info(f"  Rate limited. Waiting {wait}s for reset...")
         time.sleep(wait)
         response = _session.get(url, headers=headers, allow_redirects=True, timeout=_session._default_timeout)
 

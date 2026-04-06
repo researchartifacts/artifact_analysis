@@ -1,9 +1,11 @@
 import argparse
+import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
 from ..scrapers.sys_sec_scrape import check_url_cached
 
+logger = logging.getLogger(__name__)
 MAX_URL_WORKERS = 16  # parallel URL checks
 
 
@@ -45,7 +47,7 @@ def check_artifact_exists(results, url_keys):
                 else:
                     counts[url_key][name]["total"] += 1
 
-        print(
+        logger.info(
             f"testing {len(jobs)} artifact urls for {url_key} ({len(results)} conferences, {MAX_URL_WORKERS} workers)"
         )
 
@@ -98,19 +100,23 @@ def main():
 
     _, counts, failed = check_artifact_exists(results, args.url_keys)
 
-    print("url_key, name, total, exists, failed, percentage")
+    logger.error("url_key, name, total, exists, failed, percentage")
     for url_key, key_counts in counts.items():
         for name, count in key_counts.items():
             percentage = (count["exists"] / count["total"]) * 100 if count["total"] > 0 else 0
-            print(
+            logger.info(
                 f"{url_key}, {name}, {count['total']}, {count['exists']}, {count['total'] - count['exists']}, {percentage:.2f}%"
             )
 
     if args.print_failed:
-        print("Failed:")
+        logger.error("Failed:")
         for f in failed:
-            print(f)
+            logger.info(f)
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

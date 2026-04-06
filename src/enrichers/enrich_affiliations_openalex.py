@@ -23,6 +23,7 @@ Usage:
 import argparse
 import hashlib
 import json
+import logging
 import os
 import re
 import time
@@ -33,6 +34,7 @@ from urllib.parse import quote
 
 import requests
 
+logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Cache
 # ---------------------------------------------------------------------------
@@ -149,12 +151,12 @@ def _openalex_affiliation_by_title(
                         inst_name = institutions[0].get("display_name", "")
                         if inst_name:
                             if verbose:
-                                print(f"      OA-title: {inst_name}")
+                                logger.info(f"      OA-title: {inst_name}")
                             _write_cache(cache_key, inst_name, "openalex_title")
                             return inst_name
     except Exception as e:
         if verbose:
-            print(f"      OA-title error: {e}")
+            logger.error(f"      OA-title error: {e}")
 
     _write_cache(cache_key, "", "openalex_title")
     return None
@@ -198,12 +200,12 @@ def _crossref_affiliation_by_title(
                         name_str = aff.get("name", "")
                         if name_str:
                             if verbose:
-                                print(f"      CR-title: {name_str}")
+                                logger.info(f"      CR-title: {name_str}")
                             _write_cache(cache_key, name_str, "crossref_title")
                             return name_str
     except Exception as e:
         if verbose:
-            print(f"      CR-title error: {e}")
+            logger.error(f"      CR-title error: {e}")
 
     _write_cache(cache_key, "", "crossref_title")
     return None
@@ -256,12 +258,12 @@ def _crossref_affiliation_by_doi(
                     name_str = aff.get("name", "")
                     if name_str:
                         if verbose:
-                            print(f"      CR-doi: {name_str}")
+                            logger.info(f"      CR-doi: {name_str}")
                         _write_cache(cache_key, name_str, "crossref_doi")
                         return name_str
     except Exception as e:
         if verbose:
-            print(f"      CR-doi error: {e}")
+            logger.error(f"      CR-doi error: {e}")
 
     _write_cache(cache_key, "", "crossref_doi")
     return None
@@ -292,7 +294,7 @@ def _dblp_affiliation(
 
     if affil:
         if verbose:
-            print(f"      DBLP-local: {affil}")
+            logger.info(f"      DBLP-local: {affil}")
         _write_cache(cache_key, affil, "dblp")
         return affil
 
@@ -327,7 +329,7 @@ def find_affiliation_for_author(
         doi_url = paper.get("doi_url", "")
         if doi_url and _is_real_doi(doi_url):
             if verbose:
-                print(f"    DOI: {paper.get('title', '')[:55]}... ({paper.get('year', '?')})")
+                logger.info(f"    DOI: {paper.get('title', '')[:55]}... ({paper.get('year', '?')})")
             affil = _crossref_affiliation_by_doi(session, author_name, doi_url, verbose)
             if affil:
                 return affil, "crossref_doi"
@@ -343,7 +345,7 @@ def find_affiliation_for_author(
         papers_tried += 1
 
         if verbose:
-            print(f"    Title: {title[:55]}... ({paper.get('year', '?')})")
+            logger.info(f"    Title: {title[:55]}... ({paper.get('year', '?')})")
 
         # OpenAlex by title (best coverage)
         affil = _openalex_affiliation_by_title(session, author_name, title, verbose)
@@ -482,24 +484,24 @@ def enrich(
     output_file = output_file or authors_file
 
     # Build paper index
-    print("Loading paper-authors map...")
+    logger.info("Loading paper-authors map...")
     author_papers = _build_author_papers_index(papers_file)
-    print(f"  {len(author_papers)} unique author names across papers")
+    logger.info(f"  {len(author_papers)} unique author names across papers")
 
     # Parse authors.yml (fast)
-    print("Parsing authors.yml (fast line scan)...")
+    logger.info("Parsing authors.yml (fast line scan)...")
     authors = _parse_authors_yml_fast(authors_file)
     total = len(authors)
     if recheck:
         candidates = list(authors)
-        print(f"  {total} total authors, rechecking ALL affiliations")
+        logger.info(f"  {total} total authors, rechecking ALL affiliations")
     else:
         candidates = [a for a in authors if not a.get("affiliation")]
-        print(f"  {total} total authors, {len(candidates)} missing affiliations")
+        logger.info(f"  {total} total authors, {len(candidates)} missing affiliations")
 
     if max_authors:
         candidates = candidates[:max_authors]
-        print(f"  Processing first {len(candidates)} (--max_authors)")
+        logger.info(f"  Processing first {len(candidates)} (--max_authors)")
 
     # HTTP session
     session = requests.Session()
@@ -510,7 +512,7 @@ def enrich(
     https_proxy = os.environ.get("https_proxy") or os.environ.get("HTTPS_PROXY", "")
     if https_proxy or http_proxy:
         session.proxies = {"http": http_proxy, "https": https_proxy}
-        print(f"  Using proxy: {https_proxy or http_proxy}")
+        logger.info(f"  Using proxy: {https_proxy or http_proxy}")
 
     # Load author index
     index_by_name = {}
@@ -527,7 +529,7 @@ def enrich(
                 return save_author_index(data_dir, sorted(index_by_name.values(), key=lambda e: e["id"]))
 
             if index_by_name:
-                print(f"  Loaded author index ({len(index_by_name)} entries)")
+                logger.info(f"  Loaded author index ({len(index_by_name)} entries)")
         except ImportError:
             pass
 
@@ -542,8 +544,8 @@ def enrich(
 
     updates: dict[str, str] = {}
 
-    print(f"\nEnriching {len(candidates)} authors...")
-    print("=" * 70)
+    logger.info(f"\nEnriching {len(candidates)} authors...")
+    logger.info("=" * 70)
 
     for idx, author in enumerate(candidates, 1):
         name = author.get("name", "")
@@ -554,7 +556,7 @@ def enrich(
         paper_count = len(papers)
 
         if verbose:
-            print(f"[{idx}/{len(candidates)}] {name}  ({paper_count} papers)")
+            logger.info(f"[{idx}/{len(candidates)}] {name}  ({paper_count} papers)")
 
         affiliation, source = find_affiliation_for_author(session, name, papers, verbose=verbose)
 
@@ -566,27 +568,27 @@ def enrich(
             if name in index_by_name and _update_index_fn:
                 _update_index_fn(index_by_name[name], affiliation, source)
             if not verbose:
-                print(f"[{idx}/{len(candidates)}] {name:40s}  +  {affiliation[:50]}  ({source})")
+                logger.info(f"[{idx}/{len(candidates)}] {name:40s}  +  {affiliation[:50]}  ({source})")
         else:
             stats["not_found"] += 1
             if not verbose:
-                print(f"[{idx}/{len(candidates)}] {name:40s}  -")
+                logger.info(f"[{idx}/{len(candidates)}] {name:40s}  -")
 
-    print("=" * 70)
-    print(f"\nResults:  found {stats['found']}, not found {stats['not_found']}")
+    logger.info("=" * 70)
+    logger.info(f"\nResults:  found {stats['found']}, not found {stats['not_found']}")
     for src, cnt in sorted(stats["by_source"].items(), key=lambda x: -x[1]):
-        print(f"  {src:20s}: {cnt}")
+        logger.info(f"  {src:20s}: {cnt}")
 
     if not dry_run and updates:
-        print(f"\nWriting {len(updates)} updates to {output_file} ...")
+        logger.info(f"\nWriting {len(updates)} updates to {output_file} ...")
         replaced = _update_authors_yml(output_file, updates)
-        print(f"  {replaced} lines updated in YAML.")
+        logger.info(f"  {replaced} lines updated in YAML.")
         # Save updated author index
         if _save_index_fn and index_by_name:
             _save_index_fn()
-            print("  Author index updated")
+            logger.info("  Author index updated")
     elif dry_run:
-        print(f"\n[DRY RUN] Would update {len(updates)} authors.")
+        logger.info(f"\n[DRY RUN] Would update {len(updates)} authors.")
 
     stats["updates_written"] = len(updates) if not dry_run else 0
     return stats
@@ -622,4 +624,8 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

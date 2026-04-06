@@ -9,6 +9,7 @@ structured YAML/JSON for Jekyll rendering + chart generation.
 
 import argparse
 import json
+import logging
 import os
 import re
 from collections import defaultdict
@@ -20,6 +21,7 @@ import yaml
 from pytrie import Trie
 from thefuzz import fuzz
 
+logger = logging.getLogger(__name__)
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
@@ -790,13 +792,13 @@ def generate_committee_data(conf_regex, output_dir):
     """Main entry point: scrape committees, classify, and write output files."""
 
     # ── 1. Scrape committees from both prefixes ──────────────────────────────
-    print("  Scraping systems committee data from sysartifacts...")
+    logger.info("  Scraping systems committee data from sysartifacts...")
     sys_results = get_committees(conf_regex, "sys")
-    print(f"    Found {len(sys_results)} systems conference-years")
+    logger.info(f"    Found {len(sys_results)} systems conference-years")
 
-    print("  Scraping security committee data from secartifacts...")
+    logger.info("  Scraping security committee data from secartifacts...")
     sec_results = get_committees(conf_regex, "sec")
-    print(f"    Found {len(sec_results)} security conference-years")
+    logger.info(f"    Found {len(sec_results)} security conference-years")
 
     all_results = {}
     all_results.update(sys_results)
@@ -808,7 +810,7 @@ def generate_committee_data(conf_regex, output_dir):
 
     # ── 1b. Supplement with alternative sources ──────────────────────────────
     #  Identify conferences that are missing or have low-quality data
-    print("  Checking for conferences needing alternative sources...")
+    logger.info("  Checking for conferences needing alternative sources...")
     conferences_needed = {}
 
     # Determine which conference-years we expect based on USENIX/CHES/PETS
@@ -831,10 +833,10 @@ def generate_committee_data(conf_regex, output_dir):
             conferences_needed[cy] = "security"
 
     if conferences_needed:
-        print(f"    Need alternative sources for {len(conferences_needed)} conference-years:")
+        logger.info(f"    Need alternative sources for {len(conferences_needed)} conference-years:")
         for cy in sorted(conferences_needed.keys()):
             existing = len(all_results.get(cy, []))
-            print(f"      {cy} (currently {existing} members)")
+            logger.info(f"      {cy} (currently {existing} members)")
 
         alt_results = get_alternative_committees(conferences_needed)
         for cy, members in alt_results.items():
@@ -842,20 +844,20 @@ def generate_committee_data(conf_regex, output_dir):
             if cleaned:
                 existing_count = len(all_results.get(cy, []))
                 all_results[cy] = cleaned
-                print(f"    ✓ {cy}: replaced {existing_count} → {len(cleaned)} members (alternative source)")
+                logger.info(f"    ✓ {cy}: replaced {existing_count} → {len(cleaned)} members (alternative source)")
     else:
-        print("    All conference-years have valid committee data.")
+        logger.info("    All conference-years have valid committee data.")
 
     if not all_results:
-        print("  No committee data found — skipping committee stats.")
+        logger.warning("  No committee data found — skipping committee stats.")
         return None
 
     # ── 2. Classify by country / continent / institution ─────────────────────
-    print("  Classifying committee members...")
+    logger.info("  Classifying committee members...")
     classified = classify_committees(all_results)
 
     if classified["failed"]:
-        print(f"  ⚠️  Could not classify {len(classified['failed'])} members")
+        logger.error(f"  ⚠️  Could not classify {len(classified['failed'])} members")
 
     # Build area map
     conf_to_area = {cy: _conf_area(cy) for cy in all_results}
@@ -896,19 +898,19 @@ def generate_committee_data(conf_regex, output_dir):
     total_security = sum(len(m) for cy, m in all_results.items() if conf_to_area.get(cy) == "security")
 
     # ── 3b. Compute recurring AE member statistics ───────────────────────────
-    print("  Computing recurring AE member rankings...")
+    logger.info("  Computing recurring AE member rankings...")
     all_members, sys_members, sec_members, recurring_summary = _compute_recurring_members(
         all_results, conf_to_area, classified
     )
-    print(
+    logger.info(
         f"    Found {recurring_summary['total_recurring']} recurring members "
         f"({recurring_summary['total_chairs']} include chair roles)"
     )
 
     # ── 3c. Compute institution timeline ─────────────────────────────────────
-    print("  Computing institution timeline...")
+    logger.info("  Computing institution timeline...")
     inst_timeline = _compute_institution_timeline(classified, conf_to_area)
-    print(f"    Tracked {len(inst_timeline['unique_by_year'])} years of institution data")
+    logger.info(f"    Tracked {len(inst_timeline['unique_by_year'])} years of institution data")
 
     # ── 4. Build output structures ───────────────────────────────────────────
 
@@ -985,45 +987,45 @@ def generate_committee_data(conf_regex, output_dir):
         yml_path = os.path.join(output_dir, "_data/committee_stats.yml")
         with open(yml_path, "w") as f:
             yaml.dump(committee_summary, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-        print(f"  Wrote {yml_path}")
+        logger.info(f"  Wrote {yml_path}")
 
         json_path = os.path.join(output_dir, "assets/data/committee_stats.json")
         with open(json_path, "w") as f:
             json.dump(detail_json, f, indent=2, ensure_ascii=False)
-        print(f"  Wrote {json_path}")
+        logger.info(f"  Wrote {json_path}")
 
         # Write recurring AE member JSON files
         ae_all_path = os.path.join(output_dir, "assets/data/ae_members.json")
         with open(ae_all_path, "w") as f:
             json.dump(all_members, f, indent=2, ensure_ascii=False)
-        print(f"  Wrote {ae_all_path} ({len(all_members)} members)")
+        logger.info(f"  Wrote {ae_all_path} ({len(all_members)} members)")
 
         ae_sys_path = os.path.join(output_dir, "assets/data/systems_ae_members.json")
         with open(ae_sys_path, "w") as f:
             json.dump(sys_members, f, indent=2, ensure_ascii=False)
-        print(f"  Wrote {ae_sys_path} ({len(sys_members)} members)")
+        logger.info(f"  Wrote {ae_sys_path} ({len(sys_members)} members)")
 
         ae_sec_path = os.path.join(output_dir, "assets/data/security_ae_members.json")
         with open(ae_sec_path, "w") as f:
             json.dump(sec_members, f, indent=2, ensure_ascii=False)
-        print(f"  Wrote {ae_sec_path} ({len(sec_members)} members)")
+        logger.info(f"  Wrote {ae_sec_path} ({len(sec_members)} members)")
 
         # Write institution timeline JSON
         inst_timeline_path = os.path.join(output_dir, "assets/data/institution_timeline.json")
         with open(inst_timeline_path, "w") as f:
             json.dump(inst_timeline, f, indent=2, ensure_ascii=False)
-        print(f"  Wrote {inst_timeline_path}")
+        logger.info(f"  Wrote {inst_timeline_path}")
 
     # ── 6. Generate charts ───────────────────────────────────────────────────
     if output_dir:
         _generate_committee_charts(committee_summary, detail_json, output_dir, inst_timeline=inst_timeline)
 
-    print(
+    logger.info(
         f"  Committee stats: {total_members} members from "
         f"{len(country_all)} countries, {len(continent_all)} continents, "
         f"{len(inst_all)} institutions"
     )
-    print(
+    logger.info(
         f"  Recurring members: {recurring_summary['total_recurring']} "
         f"(sys: {recurring_summary['total_recurring_systems']}, "
         f"sec: {recurring_summary['total_recurring_security']}, "
@@ -1053,7 +1055,7 @@ def _generate_committee_charts(summary, detail, output_dir, inst_timeline=None):
     _chart_committee_sizes(summary, os.path.join(charts_dir, "committee_sizes.svg"))
     _chart_continent_timeline(detail, os.path.join(charts_dir, "committee_continent_timeline.svg"))
 
-    print(f"  Committee charts generated in {charts_dir}")
+    logger.info(f"  Committee charts generated in {charts_dir}")
 
 
 def _chart_top_countries(detail, path, area=None, top_n=15):
@@ -1313,4 +1315,8 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

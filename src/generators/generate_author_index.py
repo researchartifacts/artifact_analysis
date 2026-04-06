@@ -18,8 +18,11 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 def load_existing_index(path):
@@ -147,27 +150,27 @@ def main():
     # Load existing index (preserves IDs)
     _, existing_by_name, max_id = load_existing_index(index_path)
     if existing_by_name:
-        print(f"Loaded existing index: {len(existing_by_name)} authors, max ID {max_id}")
+        logger.info(f"Loaded existing index: {len(existing_by_name)} authors, max ID {max_id}")
     else:
-        print("No existing index found — creating from scratch")
+        logger.info("No existing index found — creating from scratch")
 
     # Load authors from generate_author_stats output
     authors = load_authors_json(authors_path)
     if not authors:
-        print(f"Error: no authors found in {authors_path}")
+        logger.error(f"Error: no authors found in {authors_path}")
         return None
-    print(f"Loaded {len(authors)} authors from {authors_path}")
+    logger.info(f"Loaded {len(authors)} authors from {authors_path}")
 
     # Build index
     index, stats = build_index(authors, existing_by_name, max_id)
 
-    print(
+    logger.info(
         f"Index built: {stats['total']} authors "
         f"({stats['preserved']} preserved, {stats['new']} new, "
         f"{stats['affiliation_changed']} affiliation changes, "
         f"max ID {stats['max_id']})"
     )
-    print(
+    logger.info(
         f"With affiliation: {stats['with_affiliation']}/{stats['total']} "
         f"({100 * stats['with_affiliation'] / stats['total']:.1f}%)"
     )
@@ -175,10 +178,14 @@ def main():
     # Write
     with open(index_path, "w", encoding="utf-8") as f:
         json.dump(index, f, indent=2, ensure_ascii=False)
-    print(f"Written to {index_path}")
+    logger.info(f"Written to {index_path}")
 
     return index
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

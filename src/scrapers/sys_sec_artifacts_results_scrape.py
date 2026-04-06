@@ -1,4 +1,5 @@
 import argparse
+import logging
 import re
 
 import requests
@@ -7,6 +8,7 @@ from bs4 import BeautifulSoup
 
 from .sys_sec_scrape import download_file, get_conferences_from_prefix, github_urls
 
+logger = logging.getLogger(__name__)
 # Alternative results file names used by different conferences
 RESULTS_FILENAMES = ["results.md", "result.md"]
 
@@ -170,7 +172,7 @@ def get_ae_results(conference_regex, prefix):
     # get conference name from prefix
     conferences = get_conferences_from_prefix(prefix)
     if conferences is None:
-        print(f"Invalid prefix: {prefix}")
+        logger.info(f"Invalid prefix: {prefix}")
         return results
     # get the base url for the conference
     for conf in conferences:
@@ -183,17 +185,17 @@ def get_ae_results(conference_regex, prefix):
                 file_url = github_urls[prefix]["raw_base_url"] + name + "/" + filename
                 try:
                     results[name] = download_file(file_url)
-                    print(f"got {name}/{filename}")
+                    logger.info(f"got {name}/{filename}")
                     downloaded = True
                     break
                 except requests.exceptions.HTTPError:
                     continue
                 except requests.exceptions.ConnectionError as e:
-                    print(f"  connection error for {name}/{filename}: {e}")
+                    logger.error(f"  connection error for {name}/{filename}: {e}")
                     continue
 
             if not downloaded:
-                print(f"couldn't get results for {name} (tried {', '.join(RESULTS_FILENAMES)})")
+                logger.info(f"couldn't get results for {name} (tried {', '.join(RESULTS_FILENAMES)})")
 
     parsed_results = {}
 
@@ -208,7 +210,7 @@ def get_ae_results(conference_regex, prefix):
                 parsed_content = yaml.safe_load(yaml_part)
                 if parsed_content and "artifacts" in parsed_content:
                     parsed_results[conf_year] = parsed_content["artifacts"]
-                    print(f"  {conf_year}: parsed {len(parsed_content['artifacts'])} artifacts (YAML)")
+                    logger.info(f"  {conf_year}: parsed {len(parsed_content['artifacts'])} artifacts (YAML)")
                     continue
                 if parsed_content and "issues" in parsed_content:
                     # PETS-style: artifacts nested under issues list
@@ -217,10 +219,10 @@ def get_ae_results(conference_regex, prefix):
                         all_artifacts.extend(issue.get("artifacts", []))
                     if all_artifacts:
                         parsed_results[conf_year] = all_artifacts
-                        print(f"  {conf_year}: parsed {len(all_artifacts)} artifacts (YAML/issues)")
+                        logger.info(f"  {conf_year}: parsed {len(all_artifacts)} artifacts (YAML/issues)")
                         continue
             except yaml.YAMLError as e:
-                print(f"  YAML parse error for {conf_year}: {e}")
+                logger.error(f"  YAML parse error for {conf_year}: {e}")
 
         # Fallback: try HTML table parsing (OSDI, ATC)
         artifacts = parse_html_results(content)
@@ -230,9 +232,9 @@ def get_ae_results(conference_regex, prefix):
 
         if artifacts:
             parsed_results[conf_year] = artifacts
-            print(f"  {conf_year}: parsed {len(artifacts)} artifacts (HTML table)")
+            logger.info(f"  {conf_year}: parsed {len(artifacts)} artifacts (HTML table)")
         else:
-            print(f"  {conf_year}: no artifacts found")
+            logger.info(f"  {conf_year}: no artifacts found")
 
     return parsed_results
 
@@ -254,9 +256,13 @@ def main():
 
     results = get_ae_results(args.conf_regex, args.prefix)
     for year in results:
-        print(f"{year}: {len(results[year])}")
-        print(results[year])
+        logger.info(f"{year}: {len(results[year])}")
+        logger.info(results[year])
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()

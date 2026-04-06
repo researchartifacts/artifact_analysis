@@ -19,6 +19,7 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 import re
 import sys
@@ -26,12 +27,13 @@ import time
 import urllib.parse
 import urllib.request
 
+logger = logging.getLogger(__name__)
 # Artifact DOI prefixes we recognise
 ARTIFACT_DOI_PREFIXES = ("10.5281/zenodo.", "10.6084/m9.figshare.")
 
 
 def log(msg: str) -> None:
-    print(msg, flush=True)
+    logger.info(msg, flush=True)
 
 
 def fetch_json(url: str, timeout: int = 20, headers: dict = None) -> dict:
@@ -402,4 +404,8 @@ def main():
 
 
 if __name__ == "__main__":
+    from src.utils.logging_config import setup_logging
+
+    setup_logging()
+
     main()
