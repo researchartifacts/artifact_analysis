@@ -13,13 +13,28 @@ import unicodedata
 # Canonical source: researchartifacts.github.io/_data/summary.yml
 # SysTEX is a security workshop co-located with systems venues.
 
-SYSTEMS_CONFS = frozenset({
-    "ATC", "EUROSYS", "FAST", "OSDI", "SC", "SOSP",
-})
+SYSTEMS_CONFS = frozenset(
+    {
+        "ATC",
+        "EUROSYS",
+        "FAST",
+        "OSDI",
+        "SC",
+        "SOSP",
+    }
+)
 
-SECURITY_CONFS = frozenset({
-    "ACSAC", "CHES", "NDSS", "PETS", "SYSTEX", "USENIXSEC", "WOOT",
-})
+SECURITY_CONFS = frozenset(
+    {
+        "ACSAC",
+        "CHES",
+        "NDSS",
+        "PETS",
+        "SYSTEX",
+        "USENIXSEC",
+        "WOOT",
+    }
+)
 
 ALL_CONFS = SYSTEMS_CONFS | SECURITY_CONFS
 
@@ -56,6 +71,7 @@ def parse_conf_year(conf_year_str):
 
 
 # ── Author / person name normalisation ──────────────────────────────────────
+
 
 def clean_name(name):
     """Remove DBLP disambiguation suffixes and collapse whitespace.

@@ -25,26 +25,24 @@ import hashlib
 import json
 import os
 import re
-import sys
 import time
 import unicodedata
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 from urllib.parse import quote
 
 import requests
-from bs4 import BeautifulSoup
 
 # ---------------------------------------------------------------------------
 # Cache
 # ---------------------------------------------------------------------------
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent.parent          # artifact_analysis/
+REPO_ROOT = SCRIPT_DIR.parent.parent  # artifact_analysis/
 CACHE_DIR = REPO_ROOT / ".cache" / "openalex"
-CACHE_TTL = 86400 * 90                        # 90 days
+CACHE_TTL = 86400 * 90  # 90 days
 
-REQUEST_DELAY = 0.15          # polite delay between API calls
-OPENALEX_DELAY = 0.12         # OpenAlex asks for 10 req/s max
+REQUEST_DELAY = 0.15  # polite delay between API calls
+OPENALEX_DELAY = 0.12  # OpenAlex asks for 10 req/s max
 CROSSREF_DELAY = 0.25
 DBLP_DELAY = 0.25
 
@@ -110,9 +108,7 @@ def _names_match(query: str, candidate: str) -> bool:
     if q_parts[-1] != c_parts[-1]:
         return False
     # At least first initial should match
-    if q_parts[0][0] == c_parts[0][0]:
-        return True
-    return False
+    return q_parts[0][0] == c_parts[0][0]
 
 
 # ---------------------------------------------------------------------------
@@ -131,12 +127,7 @@ def _openalex_affiliation_by_title(
         return cached if cached else None
 
     clean_title = re.sub(r"\.$", "", title).strip()  # remove trailing period
-    url = (
-        "https://api.openalex.org/works"
-        f"?search={quote(clean_title)}"
-        "&per_page=3"
-        "&select=title,authorships"
-    )
+    url = f"https://api.openalex.org/works?search={quote(clean_title)}&per_page=3&select=title,authorships"
 
     try:
         time.sleep(OPENALEX_DELAY)
@@ -185,11 +176,7 @@ def _crossref_affiliation_by_title(
         return cached if cached else None
 
     clean_title = re.sub(r"\.$", "", title).strip()
-    url = (
-        "https://api.crossref.org/works"
-        f"?query.bibliographic={quote(clean_title)}"
-        "&rows=3&select=title,author"
-    )
+    url = f"https://api.crossref.org/works?query.bibliographic={quote(clean_title)}&rows=3&select=title,author"
 
     try:
         time.sleep(CROSSREF_DELAY)
@@ -298,6 +285,7 @@ def _dblp_affiliation(
 
     try:
         from ..utils.dblp_extract import find_affiliation
+
         affil = find_affiliation(clean)
     except (ImportError, Exception):
         affil = None
@@ -318,9 +306,9 @@ def _dblp_affiliation(
 def find_affiliation_for_author(
     session: requests.Session,
     author_name: str,
-    papers: List[dict],
+    papers: list[dict],
     verbose: bool = False,
-) -> Tuple[Optional[str], str]:
+) -> tuple[Optional[str], str]:
     """
     Try to find affiliation using paper-based disambiguation.
 
@@ -378,12 +366,12 @@ def find_affiliation_for_author(
 # ---------------------------------------------------------------------------
 # Build a name → papers index from paper_authors_map.json
 # ---------------------------------------------------------------------------
-def _build_author_papers_index(papers_file: str) -> Dict[str, List[dict]]:
+def _build_author_papers_index(papers_file: str) -> dict[str, list[dict]]:
     """Map each author name → list of paper dicts (with title, year, doi_url)."""
     with open(papers_file, encoding="utf-8") as f:
         papers = json.load(f)
 
-    index: Dict[str, List[dict]] = {}
+    index: dict[str, list[dict]] = {}
     for paper in papers:
         for author in paper.get("authors", []):
             index.setdefault(author, []).append(paper)
@@ -393,7 +381,7 @@ def _build_author_papers_index(papers_file: str) -> Dict[str, List[dict]]:
 # ---------------------------------------------------------------------------
 # YAML helpers (line-by-line to avoid slow full-parse)
 # ---------------------------------------------------------------------------
-def _parse_authors_yml_fast(path: str) -> List[dict]:
+def _parse_authors_yml_fast(path: str) -> list[dict]:
     """
     Fast line-by-line parse of authors.yml extracting only name + affiliation.
     Returns list of {"name": ..., "affiliation": ..., "line_num": ...}.
@@ -427,7 +415,7 @@ def _parse_authors_yml_fast(path: str) -> List[dict]:
     return authors
 
 
-def _update_authors_yml(path: str, updates: Dict[str, str]) -> int:
+def _update_authors_yml(path: str, updates: dict[str, str]) -> int:
     """
     Rewrite authors.yml, replacing affiliation for names in *updates*.
     Returns count of replacements made.
@@ -443,7 +431,7 @@ def _update_authors_yml(path: str, updates: Dict[str, str]) -> int:
     #   Each entry starts with "- affiliation: ..."
     entry_affil_idx: Optional[int] = None
     entry_affil_empty = False
-    name_to_affil_line: Dict[str, int] = {}
+    name_to_affil_line: dict[str, int] = {}
 
     for i, line in enumerate(lines):
         stripped = line.strip()
@@ -515,10 +503,9 @@ def enrich(
 
     # HTTP session
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "ResearchArtifacts-Enricher/2.0 "
-        "(https://github.com/researchartifacts/artifact_analysis)"
-    })
+    session.headers.update(
+        {"User-Agent": "ResearchArtifacts-Enricher/2.0 (https://github.com/researchartifacts/artifact_analysis)"}
+    )
     http_proxy = os.environ.get("http_proxy") or os.environ.get("HTTP_PROXY", "")
     https_proxy = os.environ.get("https_proxy") or os.environ.get("HTTPS_PROXY", "")
     if https_proxy or http_proxy:
@@ -532,9 +519,13 @@ def enrich(
     if data_dir:
         try:
             from src.utils.author_index import load_author_index, save_author_index, update_author_affiliation
+
             _, index_by_name = load_author_index(data_dir)
             _update_index_fn = update_author_affiliation
-            _save_index_fn = lambda: save_author_index(data_dir, sorted(index_by_name.values(), key=lambda e: e['id']))
+
+            def _save_index_fn():
+                return save_author_index(data_dir, sorted(index_by_name.values(), key=lambda e: e["id"]))
+
             if index_by_name:
                 print(f"  Loaded author index ({len(index_by_name)} entries)")
         except ImportError:
@@ -549,7 +540,7 @@ def enrich(
         "errors": 0,
     }
 
-    updates: Dict[str, str] = {}
+    updates: dict[str, str] = {}
 
     print(f"\nEnriching {len(candidates)} authors...")
     print("=" * 70)
@@ -565,9 +556,7 @@ def enrich(
         if verbose:
             print(f"[{idx}/{len(candidates)}] {name}  ({paper_count} papers)")
 
-        affiliation, source = find_affiliation_for_author(
-            session, name, papers, verbose=verbose
-        )
+        affiliation, source = find_affiliation_for_author(session, name, papers, verbose=verbose)
 
         if affiliation:
             stats["found"] += 1
@@ -576,12 +565,10 @@ def enrich(
             # Update author index
             if name in index_by_name and _update_index_fn:
                 _update_index_fn(index_by_name[name], affiliation, source)
-            marker = "+"
             if not verbose:
                 print(f"[{idx}/{len(candidates)}] {name:40s}  +  {affiliation[:50]}  ({source})")
         else:
             stats["not_found"] += 1
-            marker = "-"
             if not verbose:
                 print(f"[{idx}/{len(candidates)}] {name:40s}  -")
 
@@ -597,7 +584,7 @@ def enrich(
         # Save updated author index
         if _save_index_fn and index_by_name:
             _save_index_fn()
-            print(f"  Author index updated")
+            print("  Author index updated")
     elif dry_run:
         print(f"\n[DRY RUN] Would update {len(updates)} authors.")
 
@@ -609,16 +596,16 @@ def enrich(
 # CLI
 # ---------------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(
-        description="Paper-based affiliation enrichment (OpenAlex + CrossRef + DBLP)"
-    )
+    parser = argparse.ArgumentParser(description="Paper-based affiliation enrichment (OpenAlex + CrossRef + DBLP)")
     parser.add_argument("--authors_file", required=True, help="Path to authors.yml")
     parser.add_argument("--papers_file", required=True, help="Path to paper_authors_map.json")
     parser.add_argument("--output_file", default=None, help="Output path (default: overwrite authors_file)")
     parser.add_argument("--max_authors", type=int, default=None, help="Limit number of authors to process")
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--dry_run", action="store_true", help="Don't write changes")
-    parser.add_argument("--recheck", action="store_true", help="Re-query all authors, including those with existing affiliations")
+    parser.add_argument(
+        "--recheck", action="store_true", help="Re-query all authors, including those with existing affiliations"
+    )
     parser.add_argument("--data_dir", default=None, help="Website repo root for author index updates")
     args = parser.parse_args()
 

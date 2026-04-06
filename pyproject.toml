@@ -3,6 +3,53 @@ name = "artifact-analysis"
 version = "0.1.0"
 requires-python = ">=3.9"
 
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "PIE",  # flake8-pie
+    "RET",  # flake8-return
+    "LOG",  # flake8-logging
+    "T20",  # flake8-print (flag print statements)
+]
+ignore = [
+    "T201",   # allow print() — will migrate to logging incrementally
+    "E501",   # line length handled by formatter
+    "SIM108", # don't force ternary
+    "RET504", # unnecessary assignment before return
+    "B028",   # no explicit stacklevel in warnings
+    "UP015",  # redundant open mode — keep explicit for clarity
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.black]
+line-length = 120
+target-version = ["py39"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

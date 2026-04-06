@@ -1,18 +1,17 @@
 """Tests for src.utils.author_index — the shared author index utility."""
 
 import os
-import json
-import pytest
-from tests.conftest import write_json, read_json
+
 from src.utils.author_index import (
-    load_author_index,
     build_name_to_id,
+    load_author_index,
     save_author_index,
     update_author_affiliation,
 )
-
+from tests.conftest import read_json, write_json
 
 # ── load_author_index ────────────────────────────────────────────────────────
+
 
 class TestLoadAuthorIndex:
     def test_missing_file_returns_empty(self, tmp_website):
@@ -36,6 +35,7 @@ class TestLoadAuthorIndex:
 
 # ── build_name_to_id ─────────────────────────────────────────────────────────
 
+
 class TestBuildNameToId:
     def test_empty_when_no_file(self, tmp_website):
         result = build_name_to_id(str(tmp_website))
@@ -49,6 +49,7 @@ class TestBuildNameToId:
 
 
 # ── save_author_index ─────────────────────────────────────────────────────────
+
 
 class TestSaveAuthorIndex:
     def test_creates_file(self, tmp_website, sample_index):
@@ -70,6 +71,7 @@ class TestSaveAuthorIndex:
 
 
 # ── update_author_affiliation ─────────────────────────────────────────────────
+
 
 class TestUpdateAuthorAffiliation:
     def _make_entry(self, **overrides):
@@ -94,10 +96,7 @@ class TestUpdateAuthorAffiliation:
 
     def test_empty_affiliation_with_external_id(self):
         entry = self._make_entry()
-        result = update_author_affiliation(
-            entry, "", "dblp",
-            external_id_key="dblp_pid", external_id_value="p/TestA"
-        )
+        result = update_author_affiliation(entry, "", "dblp", external_id_key="dblp_pid", external_id_value="p/TestA")
         assert result is True
         assert entry["external_ids"]["dblp_pid"] == "p/TestA"
         assert entry["affiliation"] == ""
@@ -150,8 +149,7 @@ class TestUpdateAuthorAffiliation:
     def test_external_id_recorded_alongside_affiliation(self):
         entry = self._make_entry()
         update_author_affiliation(
-            entry, "ETH Zurich", "openalex",
-            external_id_key="openalex_id", external_id_value="A12345"
+            entry, "ETH Zurich", "openalex", external_id_key="openalex_id", external_id_value="A12345"
         )
         assert entry["affiliation"] == "ETH Zurich"
         assert entry["external_ids"]["openalex_id"] == "A12345"

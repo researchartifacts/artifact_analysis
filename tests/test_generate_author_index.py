@@ -1,14 +1,11 @@
 """Tests for src.generators.generate_author_index — the index builder."""
 
-import json
-import os
-import pytest
-from tests.conftest import write_json, read_json
 from src.generators.generate_author_index import (
-    load_existing_index,
-    load_authors_json,
     build_index,
+    load_authors_json,
+    load_existing_index,
 )
+from tests.conftest import write_json
 
 
 class TestLoadExistingIndex:
@@ -129,7 +126,8 @@ class TestBuildIndex:
         original_history_id = id(sample_index[0]["affiliation_history"])
         index, _ = build_index(
             [{"name": "Alice Smith", "display_name": "Alice Smith", "affiliation": "MIT"}],
-            by_name, 2,
+            by_name,
+            2,
         )
         # The index entry's history list should be a different object
         assert id(index[0]["affiliation_history"]) != original_history_id
@@ -137,9 +135,15 @@ class TestBuildIndex:
     def test_required_fields_present(self, sample_authors):
         """Every index entry must have the full set of required fields."""
         required = {
-            "id", "name", "display_name", "affiliation",
-            "affiliation_source", "affiliation_updated",
-            "affiliation_history", "external_ids", "category",
+            "id",
+            "name",
+            "display_name",
+            "affiliation",
+            "affiliation_source",
+            "affiliation_updated",
+            "affiliation_history",
+            "external_ids",
+            "category",
         }
         index, _ = build_index(sample_authors, {}, 0)
         for entry in index:

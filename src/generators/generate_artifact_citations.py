@@ -19,7 +19,6 @@ import urllib.parse
 import urllib.request
 from collections import defaultdict
 
-
 DOI_REGEX = re.compile(r"10\.[0-9]{4,9}/[-._;()/:A-Za-z0-9]+")
 # Only accept DOIs from artifact repositories (Zenodo, Figshare)
 # Reject paper DOIs from publishers (ACM, IEEE, Springer, etc.)
@@ -57,6 +56,7 @@ def load_local_env_file(file_path: str) -> None:
     except Exception as e:
         log(f"Warning: could not load local env file {file_path}: {type(e).__name__}: {e}")
 
+
 def is_artifact_doi(doi: str) -> bool:
     """Check if DOI is from an artifact repository (not a paper publisher)."""
     if not doi:
@@ -74,17 +74,17 @@ def normalize_title(title: str) -> str:
 def extract_doi(url) -> str:
     if not url or not isinstance(url, str):
         return ""
-    
+
     # Try direct DOI regex first
     match = DOI_REGEX.search(url)
     if match:
         return match.group(0).rstrip(".,);").lower()
-    
+
     # Try converting Zenodo record URL to DOI format: https://zenodo.org/records/<id> -> 10.5281/zenodo.<id>
     m = re.search(r"zenodo\.org/(?:record|records)/(\d+)", url, re.I)
     if m:
         return f"10.5281/zenodo.{m.group(1)}".lower()
-    
+
     return ""
 
 
@@ -131,11 +131,11 @@ def fetch_zenodo_doi(record_id: str, cache: dict) -> str:
     """
     if record_id in cache:
         return cache[record_id]
-    
+
     # Construct Zenodo DOI directly from record ID
     # This ensures we always get artifact citations, not paper citations
     doi = f"10.5281/zenodo.{record_id}".lower()
-    
+
     # Verify the record exists by checking the API
     url = f"https://zenodo.org/api/records/{record_id}"
     try:
@@ -153,9 +153,9 @@ def normalize_doi(value: str) -> str:
     if not value:
         return ""
     if value.lower().startswith("https://doi.org/"):
-        value = value[len("https://doi.org/"):]
+        value = value[len("https://doi.org/") :]
     if value.lower().startswith("http://doi.org/"):
-        value = value[len("http://doi.org/"):]
+        value = value[len("http://doi.org/") :]
     match = DOI_REGEX.search(value)
     if match:
         return match.group(0).rstrip(".,);").lower()
@@ -183,9 +183,7 @@ def fetch_openalex_citations(doi: str, cache: dict, citing_doi_limit: int) -> di
                     # Extract work ID from full URL (e.g., https://openalex.org/W12345 -> W12345)
                     work_id = openalex_id.split("/")[-1] if "/" in openalex_id else openalex_id
                     citing_works_url = f"https://api.openalex.org/works?filter=cites:{work_id}"
-                    citing_dois, truncated = fetch_openalex_citing_dois(
-                        citing_works_url, citing_doi_limit
-                    )
+                    citing_dois, truncated = fetch_openalex_citing_dois(citing_works_url, citing_doi_limit)
 
             cache[doi] = {
                 "count": cited_val,
@@ -257,9 +255,7 @@ def fetch_semantic_scholar_citations(doi: str, cache: dict, citing_doi_limit: in
             citing_dois = []
             truncated = False
             if citing_doi_limit > 0:
-                citing_dois, truncated = fetch_semantic_scholar_citing_dois(
-                    base_url, headers, citing_doi_limit
-                )
+                citing_dois, truncated = fetch_semantic_scholar_citing_dois(base_url, headers, citing_doi_limit)
             cache[doi] = {
                 "count": cited_val,
                 "citing_dois": citing_dois,
@@ -289,17 +285,13 @@ def semantic_scholar_reachable() -> bool:
         return False
 
 
-def fetch_semantic_scholar_citing_dois(
-    base_url: str, headers: dict, limit: int
-) -> tuple[list[str], bool]:
+def fetch_semantic_scholar_citing_dois(base_url: str, headers: dict, limit: int) -> tuple[list[str], bool]:
     citing_dois = set()
     truncated = False
     offset = 0
     page_size = 100
     while True:
-        url = (
-            f"{base_url}/citations?fields=externalIds&limit={page_size}&offset={offset}"
-        )
+        url = f"{base_url}/citations?fields=externalIds&limit={page_size}&offset={offset}"
         payload = fetch_json_with_headers(url, timeout=25, headers=headers)
         for entry in payload.get("data", []) or []:
             ext_ids = (entry.get("citingPaper", {}) or {}).get("externalIds", {}) or {}
@@ -331,20 +323,20 @@ def generate(data_dir: str) -> None:
     print("=" * 60, flush=True)
     print("Starting artifact citation generation...", flush=True)
     print("=" * 60, flush=True)
-    
+
     artifacts_path = os.path.join(data_dir, "assets", "data", "artifacts.json")
     out_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
     summary_path = os.path.join(data_dir, "assets", "data", "artifact_citations_summary.json")
 
     print(f"Loading artifacts from: {artifacts_path}", flush=True)
-    
+
     if not os.path.exists(artifacts_path):
         print(f"Error: {artifacts_path} not found. Run generate_statistics.py first.", flush=True)
         return
 
     with open(artifacts_path, "r") as f:
         artifacts = json.load(f)
-    
+
     print(f"✓ Loaded {len(artifacts)} artifacts", flush=True)
 
     zenodo_cache = {}
@@ -372,7 +364,7 @@ def generate(data_dir: str) -> None:
         if not semantic_scholar_reachable():
             semantic_disabled = True
             log("[SemanticScholar] disabled for this run due to connectivity failure")
-    
+
     for idx, artifact in enumerate(artifacts, 1):
         title = artifact.get("title", "")
         if not title:
@@ -384,7 +376,7 @@ def generate(data_dir: str) -> None:
 
         doi = ""
         source = ""
-        
+
         # First priority: Try to get DOI from Zenodo API for Zenodo records
         # This ensures we get the artifact DOI, not a paper DOI embedded in the page
         for url in urls:
@@ -394,7 +386,7 @@ def generate(data_dir: str) -> None:
                 if doi:
                     source = "zenodo_api"
                     break
-        
+
         # Fallback: Extract DOI directly from URL (for non-Zenodo artifacts)
         if not doi:
             for url in urls:
@@ -402,7 +394,7 @@ def generate(data_dir: str) -> None:
                 if doi:
                     source = "url"
                     break
-        
+
         # Filter: Only keep artifact DOIs (Zenodo, Figshare), drop paper DOIs (ACM, IEEE, etc.)
         if doi and not is_artifact_doi(doi):
             dois_filtered += 1
@@ -413,7 +405,10 @@ def generate(data_dir: str) -> None:
 
         # Progress indicator
         if idx % 50 == 0:
-            print(f"Progress: {idx}/{len(artifacts)} artifacts processed, {dois_found} DOIs found, {dois_filtered} filtered", flush=True)
+            print(
+                f"Progress: {idx}/{len(artifacts)} artifacts processed, {dois_found} DOIs found, {dois_filtered} filtered",
+                flush=True,
+            )
 
         cited_by = None
         openalex_err = ""
@@ -427,11 +422,14 @@ def generate(data_dir: str) -> None:
         if doi:
             openalex_entry = fetch_openalex_citations(doi, openalex_cache, openalex_citing_limit)
             if semantic_disabled:
-                semantic_entry = {"count": None, "citing_dois": [], "truncated": False, "error": "disabled_after_connect_failures"}
+                semantic_entry = {
+                    "count": None,
+                    "citing_dois": [],
+                    "truncated": False,
+                    "error": "disabled_after_connect_failures",
+                }
             else:
-                semantic_entry = fetch_semantic_scholar_citations(
-                    doi, semantic_scholar_cache, semantic_citing_limit
-                )
+                semantic_entry = fetch_semantic_scholar_citations(doi, semantic_scholar_cache, semantic_citing_limit)
             openalex_count = openalex_entry.get("count")
             semantic_count = semantic_entry.get("count")
             openalex_citing_dois = openalex_entry.get("citing_dois", [])
@@ -451,23 +449,25 @@ def generate(data_dir: str) -> None:
             cited_by = max(counts) if counts else None
             seen_doi.add(doi)
 
-        entries.append({
-            "title": title,
-            "normalized_title": normalize_title(title),
-            "conference": artifact.get("conference", ""),
-            "year": artifact.get("year", ""),
-            "doi": doi,
-            "doi_source": source,
-            "cited_by_count": cited_by,
-            "citations_openalex": openalex_count,
-            "citations_semantic_scholar": semantic_count,
-            "citing_dois_openalex": openalex_citing_dois,
-            "citing_dois_semantic_scholar": semantic_citing_dois,
-            "citing_dois_openalex_truncated": openalex_truncated,
-            "citing_dois_semantic_scholar_truncated": semantic_truncated,
-            "openalex_error": openalex_err,
-            "semantic_scholar_error": semantic_err,
-        })
+        entries.append(
+            {
+                "title": title,
+                "normalized_title": normalize_title(title),
+                "conference": artifact.get("conference", ""),
+                "year": artifact.get("year", ""),
+                "doi": doi,
+                "doi_source": source,
+                "cited_by_count": cited_by,
+                "citations_openalex": openalex_count,
+                "citations_semantic_scholar": semantic_count,
+                "citing_dois_openalex": openalex_citing_dois,
+                "citing_dois_semantic_scholar": semantic_citing_dois,
+                "citing_dois_openalex_truncated": openalex_truncated,
+                "citing_dois_semantic_scholar_truncated": semantic_truncated,
+                "openalex_error": openalex_err,
+                "semantic_scholar_error": semantic_err,
+            }
+        )
 
     # Summaries
     total = len(entries)
@@ -519,8 +519,12 @@ def generate(data_dir: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate artifact citation stats via OpenAlex and Semantic Scholar")
     parser.add_argument("--data_dir", type=str, required=True, help="Path to researchartifacts.github.io")
-    parser.add_argument("--enable-citations", action="store_true", default=False,
-                        help="Actually run citation collection. Without this flag, the script exits immediately.")
+    parser.add_argument(
+        "--enable-citations",
+        action="store_true",
+        default=False,
+        help="Actually run citation collection. Without this flag, the script exits immediately.",
+    )
     args = parser.parse_args()
 
     if not args.enable_citations:

@@ -4,13 +4,10 @@ Verifies that when an author_index.json exists, each generator adds the
 ``author_id`` field to its output records.
 """
 
-import json
-import os
-import pytest
-from tests.conftest import write_json, read_json
-
+from tests.conftest import read_json, write_json
 
 # ── Helper ────────────────────────────────────────────────────────────────────
+
 
 def make_index(tmp_website, names_ids):
     """Write a minimal author_index.json.  *names_ids* is a list of (name, id)."""
@@ -32,6 +29,7 @@ def make_index(tmp_website, names_ids):
 
 
 # ── generate_author_profiles ─────────────────────────────────────────────────
+
 
 class TestAuthorProfilesInjection:
     def test_author_id_injected(self, tmp_website, sample_authors, sample_index):

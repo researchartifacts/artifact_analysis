@@ -33,9 +33,7 @@ import argparse
 import os
 import sys
 
-
 # Import from sibling module in the same package
-from . import usenix_scrape
 from .usenix_scrape import scrape_conference_year, scrape_organizers
 
 
@@ -53,25 +51,25 @@ def generate_results_md(conference, year, papers_with_badges):
         String content of the results.md file.
     """
     # Count badges
-    n_available = sum(1 for p in papers_with_badges if 'available' in p['badges'])
-    n_functional = sum(1 for p in papers_with_badges if 'functional' in p['badges'])
-    n_reproduced = sum(1 for p in papers_with_badges if 'reproduced' in p['badges'])
+    n_available = sum(1 for p in papers_with_badges if "available" in p["badges"])
+    n_functional = sum(1 for p in papers_with_badges if "functional" in p["badges"])
+    n_reproduced = sum(1 for p in papers_with_badges if "reproduced" in p["badges"])
 
     # Build YAML front-matter artifacts list
     artifact_lines = []
     for p in papers_with_badges:
         # Escape YAML special characters in title
-        title = p['title'].replace('"', '\\"')
-        badges = ','.join(p['badges'])
-        paper_url = p.get('paper_url', '')
+        title = p["title"].replace('"', '\\"')
+        badges = ",".join(p["badges"])
+        paper_url = p.get("paper_url", "")
 
         artifact_lines.append(f'  - title: "{title}"')
         if paper_url:
             artifact_lines.append(f'    paper_url: "{paper_url}"')
         artifact_lines.append(f'    badges: "{badges}"')
-        artifact_lines.append('')
+        artifact_lines.append("")
 
-    artifacts_yaml = '\n'.join(artifact_lines).rstrip()
+    artifacts_yaml = "\n".join(artifact_lines).rstrip()
 
     md = f"""---
 title: Results
@@ -146,97 +144,89 @@ def generate_organizers_md(organizers):
     Returns:
         String content of the organizers.md file, or None if no data.
     """
-    if not organizers or (not organizers.get('chairs') and not organizers.get('members')):
+    if not organizers or (not organizers.get("chairs") and not organizers.get("members")):
         return None
 
     lines = [
-        '---',
-        'title: Organizers',
-        'order: 20',
-        '---',
-        '',
-        '## Artifact Evaluation Committee Co-Chairs',
-        '',
+        "---",
+        "title: Organizers",
+        "order: 20",
+        "---",
+        "",
+        "## Artifact Evaluation Committee Co-Chairs",
+        "",
     ]
 
-    for chair in organizers.get('chairs', []):
-        aff = f", {chair['affiliation']}" if chair['affiliation'] else ''
+    for chair in organizers.get("chairs", []):
+        aff = f", {chair['affiliation']}" if chair["affiliation"] else ""
         lines.append(f"{chair['name']}{aff} <br>")
 
-    lines.append('')
-    lines.append('## Artifact Evaluation Committee')
-    lines.append('')
+    lines.append("")
+    lines.append("## Artifact Evaluation Committee")
+    lines.append("")
 
-    members = organizers.get('members', [])
+    members = organizers.get("members", [])
     for i, member in enumerate(members):
-        aff = f", {member['affiliation']}" if member['affiliation'] else ''
-        suffix = '<br>' if i < len(members) - 1 else ''
+        aff = f", {member['affiliation']}" if member["affiliation"] else ""
+        suffix = "<br>" if i < len(members) - 1 else ""
         lines.append(f"{member['name']}{aff}{suffix}")
 
-    return '\n'.join(lines) + '\n'
+    return "\n".join(lines) + "\n"
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Generate sysartifacts results.md for USENIX conferences'
+    parser = argparse.ArgumentParser(description="Generate sysartifacts results.md for USENIX conferences")
+    parser.add_argument(
+        "--conference", "-c", type=str, required=True, help="USENIX conference short name (e.g. fast, osdi, atc, nsdi)"
     )
     parser.add_argument(
-        '--conference', '-c', type=str, required=True,
-        help='USENIX conference short name (e.g. fast, osdi, atc, nsdi)'
+        "--years", "-y", type=str, default="2024,2025", help="Comma-separated conference years (default: 2024,2025)"
     )
     parser.add_argument(
-        '--years', '-y', type=str, default='2024,2025',
-        help='Comma-separated conference years (default: 2024,2025)'
+        "--output_dir",
+        "-o",
+        type=str,
+        default=None,
+        help="Output directory (results written to <output_dir>/<conf><YYYY>/results.md). "
+        "If not specified and --dry-run is not set, writes to current directory.",
     )
     parser.add_argument(
-        '--output_dir', '-o', type=str, default=None,
-        help='Output directory (results written to <output_dir>/<conf><YYYY>/results.md). '
-             'If not specified and --dry-run is not set, writes to current directory.'
+        "--dir-prefix",
+        type=str,
+        default=None,
+        help="Override directory prefix (default: conference name). "
+        "E.g. --dir-prefix usenixatc to get usenixatc2024/ instead of atc2024/",
     )
     parser.add_argument(
-        '--dir-prefix', type=str, default=None,
-        help='Override directory prefix (default: conference name). '
-             'E.g. --dir-prefix usenixatc to get usenixatc2024/ instead of atc2024/'
+        "--dry-run", action="store_true", help="Print generated results to stdout instead of writing files"
     )
-    parser.add_argument(
-        '--dry-run', action='store_true',
-        help='Print generated results to stdout instead of writing files'
-    )
-    parser.add_argument(
-        '--max-workers', type=int, default=4,
-        help='Max parallel HTTP requests (default: 4)'
-    )
-    parser.add_argument(
-        '--delay', type=float, default=0.5,
-        help='Delay between requests in seconds (default: 0.5)'
-    )
+    parser.add_argument("--max-workers", type=int, default=4, help="Max parallel HTTP requests (default: 4)")
+    parser.add_argument("--delay", type=float, default=0.5, help="Delay between requests in seconds (default: 0.5)")
     args = parser.parse_args()
 
     conference = args.conference.lower()
     dir_prefix = (args.dir_prefix or conference).lower()
-    years = [int(y.strip()) for y in args.years.split(',')]
+    years = [int(y.strip()) for y in args.years.split(",")]
 
     for year in years:
         conf_label = f"{conference.upper()} {year}"
-        print(f"\n{'='*60}", file=sys.stderr)
+        print(f"\n{'=' * 60}", file=sys.stderr)
         print(f"Scraping {conf_label} from USENIX...", file=sys.stderr)
-        print(f"{'='*60}", file=sys.stderr)
+        print(f"{'=' * 60}", file=sys.stderr)
 
-        all_papers = scrape_conference_year(
-            conference, year,
-            max_workers=args.max_workers,
-            delay=args.delay
-        )
+        all_papers = scrape_conference_year(conference, year, max_workers=args.max_workers, delay=args.delay)
 
         # Filter to papers with badges only
-        papers_with_badges = [p for p in all_papers if p.get('badges')]
+        papers_with_badges = [p for p in all_papers if p.get("badges")]
 
         if not papers_with_badges:
             print(f"WARNING: No papers with badges found for {conf_label}", file=sys.stderr)
             continue
 
-        print(f"\n{conf_label}: {len(papers_with_badges)} papers with badges "
-              f"(of {len(all_papers)} total)", file=sys.stderr)
+        print(
+            f"\n{conf_label}: {len(papers_with_badges)} papers with badges (of {len(all_papers)} total)",
+            file=sys.stderr,
+        )
 
         # Generate the results.md content
         content = generate_results_md(conference, year, papers_with_badges)
@@ -254,25 +244,24 @@ def main():
             else:
                 print(f"\n  (no organizers found for {conf_label})", file=sys.stderr)
         else:
-            out_dir = args.output_dir or '.'
-            conf_dir = os.path.join(out_dir, f'{dir_prefix}{year}')
+            out_dir = args.output_dir or "."
+            conf_dir = os.path.join(out_dir, f"{dir_prefix}{year}")
             os.makedirs(conf_dir, exist_ok=True)
-            out_path = os.path.join(conf_dir, 'results.md')
-            with open(out_path, 'w') as f:
+            out_path = os.path.join(conf_dir, "results.md")
+            with open(out_path, "w") as f:
                 f.write(content)
             print(f"Written: {out_path}", file=sys.stderr)
 
             if organizers_content:
-                org_path = os.path.join(conf_dir, 'organizers.md')
-                with open(org_path, 'w') as f:
+                org_path = os.path.join(conf_dir, "organizers.md")
+                with open(org_path, "w") as f:
                     f.write(organizers_content)
                 print(f"Written: {org_path}", file=sys.stderr)
             else:
-                print(f"  Skipped organizers.md (no data) for {conf_label}",
-                      file=sys.stderr)
+                print(f"  Skipped organizers.md (no data) for {conf_label}", file=sys.stderr)
 
     print("\nDone!", file=sys.stderr)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

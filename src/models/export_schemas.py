@@ -38,6 +38,7 @@ BASE_URL = "https://researchartifacts.github.io/data-schemas/schemas"
 def _import_class(module_path: str, class_name: str):
     """Dynamically import a class from a dotted module path."""
     import importlib
+
     mod = importlib.import_module(module_path)
     return getattr(mod, class_name)
 
@@ -104,7 +105,9 @@ def export_all(output_dir: str) -> list[str]:
 def main():
     parser = argparse.ArgumentParser(description="Export JSON Schemas from Pydantic models.")
     parser.add_argument(
-        "--output_dir", type=str, default="../data-schemas/schemas",
+        "--output_dir",
+        type=str,
+        default="../data-schemas/schemas",
         help="Output directory for .schema.json files (default: ../data-schemas/schemas)",
     )
     args = parser.parse_args()

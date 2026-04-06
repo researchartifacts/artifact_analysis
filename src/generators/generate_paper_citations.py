@@ -36,13 +36,12 @@ import re
 import time
 from pathlib import Path
 
-
 # ── Configuration ────────────────────────────────────────────────────────────
 CACHE_DIR = Path(__file__).resolve().parent.parent.parent / ".cache" / "paper_citations"
 CACHE_NS = "scholar"  # single namespace — one source
 
-SCHOLAR_DELAY = 3.0       # seconds between queries (conservative)
-SCHOLAR_BATCH_SIZE = 15   # pause after this many NEW queries
+SCHOLAR_DELAY = 3.0  # seconds between queries (conservative)
+SCHOLAR_BATCH_SIZE = 15  # pause after this many NEW queries
 SCHOLAR_BATCH_PAUSE = 45  # seconds to pause between batches
 MAX_CONSECUTIVE_ERRORS = 3  # stop after this many errors in a row
 # ─────────────────────────────────────────────────────────────────────────────
@@ -59,6 +58,7 @@ def _normalize_title(title: str) -> str:
 
 
 # ── Disk Cache ───────────────────────────────────────────────────────────────
+
 
 def _cache_key(title: str) -> str:
     return hashlib.sha256(_normalize_title(title).encode()).hexdigest()
@@ -103,13 +103,16 @@ def _ensure_scholarly():
         return _scholarly_ready
     try:
         from scholarly import scholarly as _  # noqa: F401
+
         _scholarly_ready = True
         # Try setting up FreeProxies for CAPTCHA rotation
         try:
             from scholarly._proxy_generator import ProxyGenerator
+
             pg = ProxyGenerator()
             if pg.FreeProxies(timeout=3, wait_time=60):
                 from scholarly import scholarly
+
                 scholarly.use_proxy(pg)
                 log("  [Scholar] FreeProxies configured")
             else:
@@ -151,6 +154,7 @@ def scholar_lookup(title: str) -> dict | None:
 
 # ── Main Generation ──────────────────────────────────────────────────────────
 
+
 def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
     artifacts_path = os.path.join(data_dir, "assets", "data", "artifacts.json")
     out_path = os.path.join(data_dir, "assets", "data", "paper_citations.json")
@@ -180,7 +184,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
 
     # Count cache state
     cached_hits = 0
-    cached_miss_neg = 0   # negative cache (empty string = looked up, not found)
+    cached_miss_neg = 0  # negative cache (empty string = looked up, not found)
     uncached = 0
     for a in unique:
         c = _read_cache(a["title"], cache_ttl)
@@ -304,40 +308,44 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
 
             # Batch pause
             if new_queries > 0 and new_queries % SCHOLAR_BATCH_SIZE == 0:
-                log(f"  [{i+1}/{len(unique)}] found={found} new_queries={new_queries}"
-                    f" — pausing {SCHOLAR_BATCH_PAUSE}s")
+                log(
+                    f"  [{i + 1}/{len(unique)}] found={found} new_queries={new_queries}"
+                    f" — pausing {SCHOLAR_BATCH_PAUSE}s"
+                )
                 time.sleep(SCHOLAR_BATCH_PAUSE)
 
         except Exception as e:
             consecutive_errors += 1
             err_str = str(e).lower()
-            is_block = ("captcha" in err_str or "429" in err_str
-                        or "blocked" in err_str or "maxtries" in err_str)
+            is_block = "captcha" in err_str or "429" in err_str or "blocked" in err_str or "maxtries" in err_str
 
             if is_block and consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
-                log(f"\n⚠ Scholar blocked after {consecutive_errors} consecutive errors"
-                    f" — stopping. Run again later to continue.")
+                log(
+                    f"\n⚠ Scholar blocked after {consecutive_errors} consecutive errors"
+                    f" — stopping. Run again later to continue."
+                )
                 stopped_early = True
                 # Remaining papers get error entries
                 for j in range(i, len(unique)):
                     rem = unique[j]
-                    entries.append({
-                        "title": rem.get("title", ""),
-                        "normalized_title": _normalize_title(rem.get("title", "")),
-                        "conference": rem.get("conference", ""),
-                        "year": rem.get("year", 0),
-                        "category": rem.get("category", ""),
-                        "badges": rem.get("badges", []),
-                        "cited_by_count": None,
-                        "source": "",
-                        "error": "blocked",
-                    })
+                    entries.append(
+                        {
+                            "title": rem.get("title", ""),
+                            "normalized_title": _normalize_title(rem.get("title", "")),
+                            "conference": rem.get("conference", ""),
+                            "year": rem.get("year", 0),
+                            "category": rem.get("category", ""),
+                            "badges": rem.get("badges", []),
+                            "cited_by_count": None,
+                            "source": "",
+                            "error": "blocked",
+                        }
+                    )
                     errors += 1
                 break
-            elif is_block:
+            if is_block:
                 wait = 30 * consecutive_errors
-                log(f"  [Scholar] Blocked ({consecutive_errors}/{MAX_CONSECUTIVE_ERRORS}),"
-                    f" waiting {wait}s...")
+                log(f"  [Scholar] Blocked ({consecutive_errors}/{MAX_CONSECUTIVE_ERRORS}), waiting {wait}s...")
                 time.sleep(wait)
                 # Add error entry for this paper, continue to next
                 entry = {
@@ -371,11 +379,11 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
                 errors += 1
 
         if (i + 1) % 100 == 0:
-            log(f"  [{i+1}/{len(unique)}] found={found} queries={new_queries} errors={errors}")
+            log(f"  [{i + 1}/{len(unique)}] found={found} queries={new_queries} errors={errors}")
 
     # Write results
     log(f"\n✓ Processed {len(entries)} papers")
-    log(f"  Found: {found}/{len(entries)} ({100*found/max(1,len(entries)):.1f}%)")
+    log(f"  Found: {found}/{len(entries)} ({100 * found / max(1, len(entries)):.1f}%)")
     log(f"  New queries: {new_queries}")
     log(f"  Errors: {errors}")
     if stopped_early:
@@ -403,19 +411,23 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Enrich papers with Google Scholar citation counts"
-    )
+    parser = argparse.ArgumentParser(description="Enrich papers with Google Scholar citation counts")
     parser.add_argument(
-        "--data_dir", type=str, required=True,
+        "--data_dir",
+        type=str,
+        required=True,
         help="Path to researchartifacts.github.io",
     )
     parser.add_argument(
-        "--cache_ttl_days", type=int, default=90,
+        "--cache_ttl_days",
+        type=int,
+        default=90,
         help="Cache TTL in days (default: 90)",
     )
     parser.add_argument(
-        "--cache_only", action="store_true", default=False,
+        "--cache_only",
+        action="store_true",
+        default=False,
         help="Only use cached results — no API calls",
     )
     args = parser.parse_args()

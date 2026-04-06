@@ -22,8 +22,9 @@ Usage:
 import argparse
 import json
 import os
-import yaml
 from collections import defaultdict
+
+import yaml
 
 from ..utils.conference import conf_area
 from ..utils.dblp_extract import paper_count_by_venue_year
@@ -43,13 +44,13 @@ def generate_participation_stats(dblp_file, output_dir):
     if not os.path.exists(dblp_file):
         print(f"Error: DBLP file not found: {dblp_file}")
         print("  Run scripts/download_dblp.sh first.")
-        return
+        return None
 
     # Load artifacts_by_conference for per-conference badge counts
     abc_path = os.path.join(output_dir, "_data/artifacts_by_conference.yml")
     if not os.path.exists(abc_path):
         print(f"Error: {abc_path} not found — run generate_statistics first")
-        return
+        return None
 
     with open(abc_path) as f:
         by_conference = yaml.safe_load(f)
@@ -82,7 +83,9 @@ def generate_participation_stats(dblp_file, output_dir):
 
         ae_papers = info["ae_papers"]
         if ae_papers > total_papers:
-            print(f"  ⚠ {conf} {year}: DBLP data incomplete ({total_papers} papers in DBLP, {ae_papers} AE papers) — skipping")
+            print(
+                f"  ⚠ {conf} {year}: DBLP data incomplete ({total_papers} papers in DBLP, {ae_papers} AE papers) — skipping"
+            )
             continue
         participation_rate = round(ae_papers / total_papers * 100, 1)
         area = conf_area(conf)
@@ -107,14 +110,13 @@ def generate_participation_stats(dblp_file, output_dir):
 
     if not stats:
         print("No participation data generated")
-        return
+        return None
 
     # Sort by conference then year
     stats.sort(key=lambda x: (x["conference"], x["year"]))
 
     # Compute area-level summaries
-    area_year = defaultdict(lambda: defaultdict(lambda: {"ae": 0, "total": 0,
-        "avail": 0, "func": 0, "repro": 0}))
+    area_year = defaultdict(lambda: defaultdict(lambda: {"ae": 0, "total": 0, "avail": 0, "func": 0, "repro": 0}))
     for s in stats:
         ay = area_year[s["category"]][s["year"]]
         ay["ae"] += s["ae_papers"]
@@ -129,20 +131,12 @@ def generate_participation_stats(dblp_file, output_dir):
         area_summaries[area] = {
             "years": years,
             "participation_pct": [
-                round(area_year[area][y]["ae"] / area_year[area][y]["total"] * 100, 1)
-                for y in years
+                round(area_year[area][y]["ae"] / area_year[area][y]["total"] * 100, 1) for y in years
             ],
-            "available_pct": [
-                round(area_year[area][y]["avail"] / area_year[area][y]["total"] * 100, 1)
-                for y in years
-            ],
-            "functional_pct": [
-                round(area_year[area][y]["func"] / area_year[area][y]["total"] * 100, 1)
-                for y in years
-            ],
+            "available_pct": [round(area_year[area][y]["avail"] / area_year[area][y]["total"] * 100, 1) for y in years],
+            "functional_pct": [round(area_year[area][y]["func"] / area_year[area][y]["total"] * 100, 1) for y in years],
             "reproduced_pct": [
-                round(area_year[area][y]["repro"] / area_year[area][y]["total"] * 100, 1)
-                for y in years
+                round(area_year[area][y]["repro"] / area_year[area][y]["total"] * 100, 1) for y in years
             ],
         }
 
@@ -171,9 +165,7 @@ def generate_participation_stats(dblp_file, output_dir):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate AE participation statistics from DBLP XML paper counts"
-    )
+    parser = argparse.ArgumentParser(description="Generate AE participation statistics from DBLP XML paper counts")
     parser.add_argument(
         "--dblp_file",
         type=str,

@@ -13,15 +13,14 @@ Usage:
 
 import argparse
 import json
-import os
-import re
 import time
 
 import requests
 import yaml
 
-from ..utils.conference import conf_area, parse_conf_year as _parse_conf_year
 from ..scrapers.sys_sec_scrape import _github_headers
+from ..utils.conference import conf_area
+from ..utils.conference import parse_conf_year as _parse_conf_year
 
 
 def _normalize_repo(url):
@@ -83,13 +82,15 @@ def collect(cache_path, output_path):
             if key in seen_repos:
                 continue
             seen_repos.add(key)
-            entries.append({
-                "repo": repo,
-                "conference": conf,
-                "year": year,
-                "area": area,
-                "title": a.get("title", ""),
-            })
+            entries.append(
+                {
+                    "repo": repo,
+                    "conference": conf,
+                    "year": year,
+                    "area": area,
+                    "title": a.get("title", ""),
+                }
+            )
 
     print(f"Found {len(entries)} unique GitHub repos to query")
 
@@ -97,7 +98,7 @@ def collect(cache_path, output_path):
     errors = 0
     for i, entry in enumerate(entries):
         if (i + 1) % 100 == 0:
-            print(f"  Progress: {i+1}/{len(entries)} ({errors} errors)")
+            print(f"  Progress: {i + 1}/{len(entries)} ({errors} errors)")
         repo = entry["repo"]
         api_url = f"https://api.github.com/repos/{repo}"
         try:
@@ -116,32 +117,36 @@ def collect(cache_path, output_path):
 
         if resp.status_code == 200:
             d = resp.json()
-            results.append({
-                "repo": repo,
-                "conference": entry["conference"],
-                "year": entry["year"],
-                "area": entry["area"],
-                "title": entry["title"],
-                "stars": d.get("stargazers_count", 0),
-                "forks": d.get("forks_count", 0),
-                "language": d.get("language", ""),
-                "description": d.get("description", ""),
-                "pushed_at": d.get("pushed_at", ""),
-            })
+            results.append(
+                {
+                    "repo": repo,
+                    "conference": entry["conference"],
+                    "year": entry["year"],
+                    "area": entry["area"],
+                    "title": entry["title"],
+                    "stars": d.get("stargazers_count", 0),
+                    "forks": d.get("forks_count", 0),
+                    "language": d.get("language", ""),
+                    "description": d.get("description", ""),
+                    "pushed_at": d.get("pushed_at", ""),
+                }
+            )
         elif resp.status_code in (404, 451):
             # Repo deleted or DMCA'd — record with 0 stars/forks
-            results.append({
-                "repo": repo,
-                "conference": entry["conference"],
-                "year": entry["year"],
-                "area": entry["area"],
-                "title": entry["title"],
-                "stars": 0,
-                "forks": 0,
-                "language": "",
-                "description": "(not found)",
-                "pushed_at": "",
-            })
+            results.append(
+                {
+                    "repo": repo,
+                    "conference": entry["conference"],
+                    "year": entry["year"],
+                    "area": entry["area"],
+                    "title": entry["title"],
+                    "stars": 0,
+                    "forks": 0,
+                    "language": "",
+                    "description": "(not found)",
+                    "pushed_at": "",
+                }
+            )
             errors += 1
         else:
             print(f"  HTTP {resp.status_code} for {repo}")

@@ -6,8 +6,8 @@ generate_area_authors, and generate_institution_rankings.
 
 import pytest
 
-
 # ── Scoring formulas (from generate_combined_rankings._build_entry) ──────────
+
 
 class TestScoringFormulas:
     """Test the exact scoring formulas used in combined rankings."""
@@ -138,6 +138,7 @@ class TestScoringFormulas:
 
 # ── Invariant violations ─────────────────────────────────────────────────────
 
+
 class TestInvariantViolations:
     """Hard invariant checks that must raise ValueError."""
 
@@ -208,6 +209,7 @@ class TestInvariantViolations:
 
 # ── Ranking contract ─────────────────────────────────────────────────────────
 
+
 class TestRankingContract:
     """Verify rankings are assigned with correct tie-breaking."""
 
@@ -216,21 +218,23 @@ class TestRankingContract:
 
         entries = []
         for name, arts, ae in [("A", 3, 0), ("B", 3, 0), ("C", 1, 0)]:
-            entries.append(_build_entry(
-                name=name,
-                affiliation="",
-                artifacts=arts,
-                total_papers=arts,
-                artifact_rate=100,
-                ae_memberships=ae,
-                chair_count=0,
-                conferences=[],
-                years={},
-                artifact_citations=0,
-                badges_available=arts,
-                badges_functional=0,
-                badges_reproducible=0,
-            ))
+            entries.append(
+                _build_entry(
+                    name=name,
+                    affiliation="",
+                    artifacts=arts,
+                    total_papers=arts,
+                    artifact_rate=100,
+                    ae_memberships=ae,
+                    chair_count=0,
+                    conferences=[],
+                    years={},
+                    artifact_citations=0,
+                    badges_available=arts,
+                    badges_functional=0,
+                    badges_reproducible=0,
+                )
+            )
 
         # Sort and assign ranks like the generator does
         entries.sort(key=lambda x: (-x["combined_score"], -x["artifacts"], x["name"]))
@@ -248,6 +252,7 @@ class TestRankingContract:
 
 
 # ── Affiliation normalization ────────────────────────────────────────────────
+
 
 class TestAffiliationNormalization:
     """Spot-check the regex-based normalization."""

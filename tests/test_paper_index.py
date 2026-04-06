@@ -1,11 +1,11 @@
 """Tests for paper index generation (generate_paper_index.py)."""
 
 import json
-import pytest
+
 from src.generators.generate_paper_index import (
-    normalize_title,
     build_paper_index,
     load_existing_index,
+    normalize_title,
 )
 
 
@@ -31,8 +31,7 @@ class TestBuildPaperIndex:
             "papers_without_artifacts": papers_without_artifacts or [],
         }
 
-    def _make_paper(self, title, conference="SOSP", year=2023, badges=None,
-                    artifact_citations=0, category="systems"):
+    def _make_paper(self, title, conference="SOSP", year=2023, badges=None, artifact_citations=0, category="systems"):
         return {
             "title": title,
             "conference": conference,
@@ -54,10 +53,13 @@ class TestBuildPaperIndex:
 
     def test_assigns_sequential_ids(self):
         authors = [
-            self._make_author("Alice", papers=[
-                self._make_paper("Paper A"),
-                self._make_paper("Paper B"),
-            ]),
+            self._make_author(
+                "Alice",
+                papers=[
+                    self._make_paper("Paper A"),
+                    self._make_paper("Paper B"),
+                ],
+            ),
         ]
         papers, norm_to_id = build_paper_index(authors, {}, 0)
         ids = sorted(p["id"] for p in papers)
@@ -68,10 +70,13 @@ class TestBuildPaperIndex:
             "paper a": {"id": 42, "normalized_title": "paper a"},
         }
         authors = [
-            self._make_author("Alice", papers=[
-                self._make_paper("Paper A"),
-                self._make_paper("Paper B"),
-            ]),
+            self._make_author(
+                "Alice",
+                papers=[
+                    self._make_paper("Paper A"),
+                    self._make_paper("Paper B"),
+                ],
+            ),
         ]
         papers, norm_to_id = build_paper_index(authors, existing, 42)
         id_map = {p["normalized_title"]: p["id"] for p in papers}
@@ -91,8 +96,7 @@ class TestBuildPaperIndex:
 
     def test_papers_without_artifacts_marked(self):
         authors = [
-            self._make_author("Alice",
-                              papers_without_artifacts=[self._make_paper("No Artifact Paper")]),
+            self._make_author("Alice", papers_without_artifacts=[self._make_paper("No Artifact Paper")]),
         ]
         papers, _ = build_paper_index(authors, {}, 0)
         assert len(papers) == 1
@@ -114,10 +118,13 @@ class TestBuildPaperIndex:
 
     def test_empty_titles_skipped(self):
         authors = [
-            self._make_author("Alice", papers=[
-                self._make_paper(""),
-                self._make_paper("Good Title"),
-            ]),
+            self._make_author(
+                "Alice",
+                papers=[
+                    self._make_paper(""),
+                    self._make_paper("Good Title"),
+                ],
+            ),
         ]
         papers, _ = build_paper_index(authors, {}, 0)
         assert len(papers) == 1

@@ -5,20 +5,19 @@ author index when given a --data_dir.  We mock the actual network calls and
 only test the index plumbing.
 """
 
-import json
 import os
-import pytest
-from unittest.mock import patch, MagicMock
-from tests.conftest import write_json, read_json
-from src.utils.author_index import load_author_index, update_author_affiliation
+from unittest.mock import MagicMock, patch
+
+from tests.conftest import read_json, write_json
 
 
 class TestCSRankingsIndexIntegration:
     """Verify enrich_affiliations_csrankings updates author_index.json."""
 
     def test_enrichment_updates_index(self, tmp_website, sample_authors, sample_index):
-        from src.enrichers.enrich_affiliations_csrankings import enrich_affiliations
         from pathlib import Path
+
+        from src.enrichers.enrich_affiliations_csrankings import enrich_affiliations
 
         # Write authors.json and author_index.json
         authors_path = tmp_website / "assets" / "data" / "authors.json"
@@ -36,7 +35,7 @@ class TestCSRankingsIndexIntegration:
         }
 
         output_path = tmp_website / "assets" / "data" / "authors_out.json"
-        stats = enrich_affiliations(
+        enrich_affiliations(
             authors_file=Path(str(authors_path)),
             output_file=Path(str(output_path)),
             name_index=name_index,
@@ -45,17 +44,16 @@ class TestCSRankingsIndexIntegration:
         )
 
         # Check that author_index.json was updated
-        updated_index = read_json(
-            str(tmp_website / "assets" / "data" / "author_index.json")
-        )
+        updated_index = read_json(str(tmp_website / "assets" / "data" / "author_index.json"))
         bob = next(e for e in updated_index if e["name"] == "Bob Jones")
         assert bob["affiliation"] == "UC Berkeley"
         assert bob["affiliation_source"] == "csrankings"
 
     def test_enrichment_without_data_dir_still_works(self, tmp_website, sample_authors):
         """When data_dir is None, enrichment works but doesn't touch the index."""
-        from src.enrichers.enrich_affiliations_csrankings import enrich_affiliations
         from pathlib import Path
+
+        from src.enrichers.enrich_affiliations_csrankings import enrich_affiliations
 
         authors_path = tmp_website / "assets" / "data" / "authors.json"
         write_json(str(authors_path), sample_authors[:1])
@@ -69,9 +67,7 @@ class TestCSRankingsIndexIntegration:
         )
         assert stats["total"] == 1
         # No index file should be created
-        assert not os.path.exists(
-            str(tmp_website / "assets" / "data" / "author_index.json")
-        )
+        assert not os.path.exists(str(tmp_website / "assets" / "data" / "author_index.json"))
 
 
 class TestDblpIndexIntegration:
@@ -83,8 +79,15 @@ class TestDblpIndexIntegration:
     @patch("src.enrichers.enrich_affiliations_dblp_incremental.search_dblp_author")
     @patch("src.enrichers.enrich_affiliations_dblp_incremental.fetch_affiliation_from_dblp_page")
     def test_found_affiliation_updates_index(
-        self, mock_fetch, mock_search, mock_requests, mock_load_hist, mock_save_hist,
-        tmp_website, sample_authors, sample_index
+        self,
+        mock_fetch,
+        mock_search,
+        mock_requests,
+        mock_load_hist,
+        mock_save_hist,
+        tmp_website,
+        sample_authors,
+        sample_index,
     ):
         from src.enrichers.enrich_affiliations_dblp_incremental import enrich_affiliations
 
@@ -109,9 +112,7 @@ class TestDblpIndexIntegration:
             data_dir=str(tmp_website),
         )
 
-        updated_index = read_json(
-            str(tmp_website / "assets" / "data" / "author_index.json")
-        )
+        updated_index = read_json(str(tmp_website / "assets" / "data" / "author_index.json"))
         bob = next(e for e in updated_index if e["name"] == "Bob Jones")
         assert bob["affiliation"] == "Georgia Tech"
         assert bob["affiliation_source"] == "dblp"
@@ -153,15 +154,13 @@ class TestOpenAlexIndexIntegration:
         yml_path = tmp_website / "_data" / "authors.yml"
         yml_path.write_text("- affiliation: ''\n  name: 'Bob Jones'\n")
 
-        stats = enrich(
+        enrich(
             authors_file=str(yml_path),
             papers_file=str(tmp_website / "assets" / "data" / "papers.json"),
             data_dir=str(tmp_website),
         )
 
-        updated_index = read_json(
-            str(tmp_website / "assets" / "data" / "author_index.json")
-        )
+        updated_index = read_json(str(tmp_website / "assets" / "data" / "author_index.json"))
         bob = next(e for e in updated_index if e["name"] == "Bob Jones")
         assert bob["affiliation"] == "Carnegie Mellon University"
         assert bob["affiliation_source"] == "openalex"

@@ -25,19 +25,20 @@ Usage examples:
 """
 
 import argparse
+import json
 import re
 import sys
 import time
-import json
-import yaml
-import requests
-from bs4 import BeautifulSoup
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from .sys_sec_scrape import _read_cache, _write_cache, CACHE_TTL
+import requests
+import yaml
+from bs4 import BeautifulSoup
+
+from .sys_sec_scrape import CACHE_TTL, _read_cache, _write_cache
 
 BASE_URL = "https://www.usenix.org"
+
 
 # Map full year → short suffix used in USENIX URLs (e.g. 2025 → "25")
 def _year_suffix(year):
@@ -49,9 +50,7 @@ def get_session(session=None):
     if session is not None:
         return session
     s = requests.Session()
-    s.headers.update({
-        'User-Agent': 'ResearchArtifacts/1.0 (artifact statistics collection)'
-    })
+    s.headers.update({"User-Agent": "ResearchArtifacts/1.0 (artifact statistics collection)"})
     return s
 
 
@@ -65,7 +64,7 @@ def scrape_presentation_links(conference, year, session=None):
     url = f"{BASE_URL}/conference/{conference}{suffix}/technical-sessions"
 
     print(f"  Fetching program: {url}", file=sys.stderr)
-    cached = _read_cache(url, ttl=CACHE_TTL, namespace='usenix')
+    cached = _read_cache(url, ttl=CACHE_TTL, namespace="usenix")
     if cached is not None:
         links = cached
         print(f"  Found {len(links)} unique presentation pages (cached)", file=sys.stderr)
@@ -74,18 +73,18 @@ def scrape_presentation_links(conference, year, session=None):
     resp = sess.get(url, timeout=30)
     resp.raise_for_status()
 
-    soup = BeautifulSoup(resp.text, 'html.parser')
+    soup = BeautifulSoup(resp.text, "html.parser")
 
     # Find all links to presentation pages
     prefix = f"/conference/{conference}{suffix}/presentation/"
     links = set()
-    for a_tag in soup.find_all('a', href=True):
-        href = a_tag['href']
+    for a_tag in soup.find_all("a", href=True):
+        href = a_tag["href"]
         if href.startswith(prefix):
             links.add(href)
 
     result = sorted(links)
-    _write_cache(url, result, namespace='usenix')
+    _write_cache(url, result, namespace="usenix")
     print(f"  Found {len(result)} unique presentation pages", file=sys.stderr)
     return result
 
@@ -104,67 +103,78 @@ def scrape_paper_page(path, session=None):
     url = f"{BASE_URL}{path}"
 
     # Check cache first
-    cached = _read_cache(url, ttl=CACHE_TTL, namespace='usenix_paper')
+    cached = _read_cache(url, ttl=CACHE_TTL, namespace="usenix_paper")
     if cached is not None:
         return cached  # dict or None
 
     resp = sess.get(url, timeout=30)
     resp.raise_for_status()
 
-    soup = BeautifulSoup(resp.text, 'html.parser')
+    soup = BeautifulSoup(resp.text, "html.parser")
 
     # Extract title from <h1> with id "page-title" or class "page__title"
-    title_el = soup.find('h1', id='page-title') or soup.find('h1', class_='page__title')
+    title_el = soup.find("h1", id="page-title") or soup.find("h1", class_="page__title")
     if not title_el:
-        _write_cache(url, None, namespace='usenix_paper')
+        _write_cache(url, None, namespace="usenix_paper")
         return None
     title = title_el.get_text(strip=True)
 
     # Skip non-paper entries (keynotes, panels, etc.)
-    skip_prefixes = ('keynote', 'panel', 'workshop', 'tutorial', 'honoring',
-                     'break', 'lunch', 'closing', 'opening', 'reception',
-                     'poster session', 'work-in-progress')
+    skip_prefixes = (
+        "keynote",
+        "panel",
+        "workshop",
+        "tutorial",
+        "honoring",
+        "break",
+        "lunch",
+        "closing",
+        "opening",
+        "reception",
+        "poster session",
+        "work-in-progress",
+    )
     if any(title.lower().startswith(p) for p in skip_prefixes):
-        _write_cache(url, None, namespace='usenix_paper')
+        _write_cache(url, None, namespace="usenix_paper")
         return None
 
     # Extract authors
-    authors_div = soup.find('div', class_=re.compile(r'field-name-field-paper-people-text'))
-    authors = ''
+    authors_div = soup.find("div", class_=re.compile(r"field-name-field-paper-people-text"))
+    authors = ""
     if authors_div:
         authors = authors_div.get_text(strip=True)
 
     # Extract artifact badges
     badges = []
-    artifact_div = soup.find('div', class_=re.compile(r'field-name-field-artifact-evaluated'))
+    artifact_div = soup.find("div", class_=re.compile(r"field-name-field-artifact-evaluated"))
     if artifact_div:
-        for img in artifact_div.find_all('img'):
-            src = img.get('src', '').lower()
-            if 'available' in src:
-                badges.append('available')
-            elif 'functional' in src:
-                badges.append('functional')
-            elif 'reproduced' in src or 'replicated' in src:
-                badges.append('reproduced')
+        for img in artifact_div.find_all("img"):
+            src = img.get("src", "").lower()
+            if "available" in src:
+                badges.append("available")
+            elif "functional" in src:
+                badges.append("functional")
+            elif "reproduced" in src or "replicated" in src:
+                badges.append("reproduced")
 
     # Extract paper PDF URL
-    paper_url = ''
-    pdf_div = soup.find('div', class_=re.compile(r'field-name-field-final-paper-pdf'))
+    paper_url = ""
+    pdf_div = soup.find("div", class_=re.compile(r"field-name-field-final-paper-pdf"))
     if pdf_div:
-        pdf_link = pdf_div.find('a', href=True)
+        pdf_link = pdf_div.find("a", href=True)
         if pdf_link:
-            paper_url = pdf_link['href']
-            if paper_url.startswith('/'):
+            paper_url = pdf_link["href"]
+            if paper_url.startswith("/"):
                 paper_url = BASE_URL + paper_url
 
     result = {
-        'title': title,
-        'authors': authors,
-        'badges': badges,
-        'paper_url': paper_url,
-        'presentation_url': url,
+        "title": title,
+        "authors": authors,
+        "badges": badges,
+        "paper_url": paper_url,
+        "presentation_url": url,
     }
-    _write_cache(url, result, namespace='usenix_paper')
+    _write_cache(url, result, namespace="usenix_paper")
     return result
 
 
@@ -205,15 +215,17 @@ def scrape_conference_year(conference, year, session=None, max_workers=4, delay=
                 result = future.result()
                 if result is not None:
                     artifacts.append(result)
-                    if result['badges']:
+                    if result["badges"]:
                         papers_with_badges += 1
                     if i % 10 == 0 or i == len(paths):
                         print(f"  Scraped {i}/{len(paths)} pages...", file=sys.stderr)
             except Exception as e:
                 print(f"  Error scraping {path}: {e}", file=sys.stderr)
 
-    print(f"  {conference.upper()} {year}: {len(artifacts)} papers, "
-          f"{papers_with_badges} with artifact badges", file=sys.stderr)
+    print(
+        f"  {conference.upper()} {year}: {len(artifacts)} papers, {papers_with_badges} with artifact badges",
+        file=sys.stderr,
+    )
     return artifacts
 
 
@@ -240,7 +252,7 @@ def scrape_organizers(conference, year, session=None):
     url = f"{BASE_URL}/conference/{conference}{suffix}/call-for-artifacts"
 
     cache_key = f"{url}#organizers"
-    cached = _read_cache(cache_key, ttl=CACHE_TTL, namespace='usenix_organizers')
+    cached = _read_cache(cache_key, ttl=CACHE_TTL, namespace="usenix_organizers")
     if cached is not None:
         return cached
 
@@ -252,15 +264,15 @@ def scrape_organizers(conference, year, session=None):
         print(f"  Warning: Could not fetch organizers page: {e}", file=sys.stderr)
         return None
 
-    soup = BeautifulSoup(resp.text, 'html.parser')
+    soup = BeautifulSoup(resp.text, "html.parser")
 
     def _clean_text(html_str):
         """Remove HTML tags and clean up whitespace/entities."""
-        text = re.sub(r'&nbsp;', ' ', html_str)
-        text = re.sub(r'&quot;', '"', text)
-        text = re.sub(r'<em>', '', text)
-        text = re.sub(r'</em>', '', text)
-        text = re.sub(r'<[^>]+>', '', text)
+        text = re.sub(r"&nbsp;", " ", html_str)
+        text = re.sub(r"&quot;", '"', text)
+        text = re.sub(r"<em>", "", text)
+        text = re.sub(r"</em>", "", text)
+        text = re.sub(r"<[^>]+>", "", text)
         return text.strip()
 
     def _parse_name_affiliation(text):
@@ -269,11 +281,11 @@ def scrape_organizers(conference, year, session=None):
         if not text:
             return None
         # Split on first comma
-        if ', ' in text:
-            name, affiliation = text.split(', ', 1)
+        if ", " in text:
+            name, affiliation = text.split(", ", 1)
         else:
-            name, affiliation = text, ''
-        return {'name': name.strip(), 'affiliation': affiliation.strip()}
+            name, affiliation = text, ""
+        return {"name": name.strip(), "affiliation": affiliation.strip()}
 
     def _extract_from_structured(heading_text, exact=False):
         """Extract entries from structured <h3 class='grouping-field-heading'> sections."""
@@ -281,23 +293,20 @@ def scrape_organizers(conference, year, session=None):
         heading = None
 
         # Search via <span> child for reliable matching
-        for h3 in soup.find_all('h3', class_='grouping-field-heading'):
-            span = h3.find('span')
+        for h3 in soup.find_all("h3", class_="grouping-field-heading"):
+            span = h3.find("span")
             if span:
                 span_text = span.get_text().strip()
-                if exact and span_text == heading_text:
-                    heading = h3
-                    break
-                elif not exact and heading_text in span_text:
+                if exact and span_text == heading_text or not exact and heading_text in span_text:
                     heading = h3
                     break
 
         if heading:
             # Collect all sibling divs until next h3
             for sibling in heading.find_next_siblings():
-                if sibling.name == 'h3':
+                if sibling.name == "h3":
                     break
-                for div in sibling.find_all('div', class_=re.compile(r'field-content')):
+                for div in sibling.find_all("div", class_=re.compile(r"field-content")):
                     text = _clean_text(str(div))
                     entry = _parse_name_affiliation(text)
                     if entry:
@@ -308,7 +317,7 @@ def scrape_organizers(conference, year, session=None):
         """Extract entries from inline <p> with <br>-separated text."""
         entries = []
         # Split on <br> tags
-        lines = re.split(r'<br\s*/?>', section_html)
+        lines = re.split(r"<br\s*/?>", section_html)
         for line in lines:
             text = _clean_text(line)
             entry = _parse_name_affiliation(text)
@@ -320,42 +329,40 @@ def scrape_organizers(conference, year, session=None):
     members = []
 
     # Try structured format first (FAST 25, OSDI 25 style)
-    chairs = _extract_from_structured('Artifact Evaluation Committee Co-Chairs')
-    members = _extract_from_structured('Artifact Evaluation Committee', exact=True)
+    chairs = _extract_from_structured("Artifact Evaluation Committee Co-Chairs")
+    members = _extract_from_structured("Artifact Evaluation Committee", exact=True)
 
     # Fall back to inline format (FAST 24 style: <h2> then <p> with <br>)
     if not chairs:
-        h2_chairs = soup.find('h2', string=re.compile(r'Artifact Evaluation Committee Co-Chairs'))
+        h2_chairs = soup.find("h2", string=re.compile(r"Artifact Evaluation Committee Co-Chairs"))
         if h2_chairs:
-            p_tag = h2_chairs.find_next('p')
+            p_tag = h2_chairs.find_next("p")
             if p_tag:
                 chairs = _extract_from_inline(str(p_tag))
 
     if not members:
         # Find the <h2>Artifact Evaluation Committee</h2> (not Co-Chairs)
-        for h2 in soup.find_all('h2'):
+        for h2 in soup.find_all("h2"):
             h2_text = h2.get_text(strip=True)
-            if h2_text == 'Artifact Evaluation Committee':
+            if h2_text == "Artifact Evaluation Committee":
                 # Skip comment blocks, find the actual <p> with members
                 for sibling in h2.find_next_siblings():
-                    if sibling.name in ('h2', 'h3'):
+                    if sibling.name in ("h2", "h3"):
                         break
-                    if sibling.name == 'p' and '<br' in str(sibling):
+                    if sibling.name == "p" and "<br" in str(sibling):
                         members = _extract_from_inline(str(sibling))
                         if members:
                             break
                 break
 
     if not chairs and not members:
-        print(f"  Warning: No organizer data found for {conference.upper()} {year}",
-              file=sys.stderr)
-        _write_cache(cache_key, None, namespace='usenix_organizers')
+        print(f"  Warning: No organizer data found for {conference.upper()} {year}", file=sys.stderr)
+        _write_cache(cache_key, None, namespace="usenix_organizers")
         return None
 
-    result = {'chairs': chairs, 'members': members}
-    print(f"  Found {len(chairs)} chairs and {len(members)} committee members",
-          file=sys.stderr)
-    _write_cache(cache_key, result, namespace='usenix_organizers')
+    result = {"chairs": chairs, "members": members}
+    print(f"  Found {len(chairs)} chairs and {len(members)} committee members", file=sys.stderr)
+    _write_cache(cache_key, result, namespace="usenix_organizers")
     return result
 
 
@@ -366,62 +373,51 @@ def to_pipeline_format(artifacts):
     """
     pipeline_artifacts = []
     for a in artifacts:
-        if not a['badges']:
+        if not a["badges"]:
             continue  # Only include papers that went through AE
         entry = {
-            'title': a['title'],
-            'badges': ','.join(a['badges']),
+            "title": a["title"],
+            "badges": ",".join(a["badges"]),
         }
-        if a.get('paper_url'):
-            entry['paper_url'] = a['paper_url']
+        if a.get("paper_url"):
+            entry["paper_url"] = a["paper_url"]
         pipeline_artifacts.append(entry)
     return pipeline_artifacts
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Scrape USENIX conference pages for paper titles and artifact badges.'
-    )
+    parser = argparse.ArgumentParser(description="Scrape USENIX conference pages for paper titles and artifact badges.")
     parser.add_argument(
-        '--conference', '-c',
+        "--conference",
+        "-c",
         type=str,
         required=True,
-        help='Conference short name(s), comma-separated (e.g. fast, osdi, atc)'
+        help="Conference short name(s), comma-separated (e.g. fast, osdi, atc)",
     )
     parser.add_argument(
-        '--years', '-y',
-        type=str,
-        required=True,
-        help='Year(s) to scrape, comma-separated (e.g. 2024,2025)'
+        "--years", "-y", type=str, required=True, help="Year(s) to scrape, comma-separated (e.g. 2024,2025)"
     )
     parser.add_argument(
-        '--format', '-f',
-        choices=['json', 'yaml', 'summary'],
-        default='summary',
-        help='Output format (default: summary)'
+        "--format",
+        "-f",
+        choices=["json", "yaml", "summary"],
+        default="summary",
+        help="Output format (default: summary)",
     )
     parser.add_argument(
-        '--max-workers',
-        type=int,
-        default=4,
-        help='Max parallel requests per conference/year (default: 4)'
+        "--max-workers", type=int, default=4, help="Max parallel requests per conference/year (default: 4)"
     )
+    parser.add_argument("--delay", type=float, default=0.3, help="Delay in seconds between requests (default: 0.3)")
     parser.add_argument(
-        '--delay',
-        type=float,
-        default=0.3,
-        help='Delay in seconds between requests (default: 0.3)'
-    )
-    parser.add_argument(
-        '--all-papers',
-        action='store_true',
-        help='Include papers without badges in output (default: only badged papers)'
+        "--all-papers",
+        action="store_true",
+        help="Include papers without badges in output (default: only badged papers)",
     )
 
     args = parser.parse_args()
 
-    conferences = [c.strip().lower() for c in args.conference.split(',')]
-    years = [int(y.strip()) for y in args.years.split(',')]
+    conferences = [c.strip().lower() for c in args.conference.split(",")]
+    years = [int(y.strip()) for y in args.years.split(",")]
 
     session = get_session()
     all_results = {}
@@ -429,15 +425,11 @@ def main():
     for conf in conferences:
         for year in years:
             key = f"{conf}{year}"
-            print(f"\n{'='*60}", file=sys.stderr)
+            print(f"\n{'=' * 60}", file=sys.stderr)
             print(f"Scraping {conf.upper()} {year}", file=sys.stderr)
-            print(f"{'='*60}", file=sys.stderr)
+            print(f"{'=' * 60}", file=sys.stderr)
 
-            artifacts = scrape_conference_year(
-                conf, year, session,
-                max_workers=args.max_workers,
-                delay=args.delay
-            )
+            artifacts = scrape_conference_year(conf, year, session, max_workers=args.max_workers, delay=args.delay)
 
             if args.all_papers:
                 all_results[key] = artifacts
@@ -445,35 +437,34 @@ def main():
                 all_results[key] = to_pipeline_format(artifacts)
 
     # Output
-    if args.format == 'json':
+    if args.format == "json":
         print(json.dumps(all_results, indent=2))
-    elif args.format == 'yaml':
+    elif args.format == "yaml":
         print(yaml.dump(all_results, default_flow_style=False))
     else:
         # Summary
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("SUMMARY")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         for key, artifacts in sorted(all_results.items()):
-            conf_name, year = re.match(r'^([a-z]+)(\d{4})$', key).groups()
+            conf_name, year = re.match(r"^([a-z]+)(\d{4})$", key).groups()
             total = len(artifacts)
             if args.all_papers:
-                with_badges = sum(1 for a in artifacts if a.get('badges'))
-                avail = sum(1 for a in artifacts if 'available' in (a.get('badges') or []))
-                func = sum(1 for a in artifacts if 'functional' in (a.get('badges') or []))
-                repro = sum(1 for a in artifacts if 'reproduced' in (a.get('badges') or []))
+                with_badges = sum(1 for a in artifacts if a.get("badges"))
+                avail = sum(1 for a in artifacts if "available" in (a.get("badges") or []))
+                func = sum(1 for a in artifacts if "functional" in (a.get("badges") or []))
+                repro = sum(1 for a in artifacts if "reproduced" in (a.get("badges") or []))
             else:
                 with_badges = total
-                avail = sum(1 for a in artifacts
-                            if 'available' in a.get('badges', ''))
-                func = sum(1 for a in artifacts
-                           if 'functional' in a.get('badges', ''))
-                repro = sum(1 for a in artifacts
-                            if 'reproduced' in a.get('badges', ''))
-            print(f"  {conf_name.upper()} {year}: {total} papers"
-                  f" | {with_badges} with badges"
-                  f" (available={avail}, functional={func}, reproduced={repro})")
+                avail = sum(1 for a in artifacts if "available" in a.get("badges", ""))
+                func = sum(1 for a in artifacts if "functional" in a.get("badges", ""))
+                repro = sum(1 for a in artifacts if "reproduced" in a.get("badges", ""))
+            print(
+                f"  {conf_name.upper()} {year}: {total} papers"
+                f" | {with_badges} with badges"
+                f" (available={avail}, functional={func}, reproduced={repro})"
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -22,9 +22,9 @@ from datetime import datetime, timezone
 import yaml
 
 from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
-from ..scrapers.sys_sec_scrape import get_conferences_from_prefix
+from ..utils.conference import conf_area as _conf_area
+from ..utils.conference import parse_conf_year as _extract_conference_year
 from ..utils.test_artifact_repositories import check_artifact_exists
-from ..utils.conference import conf_area as _conf_area, parse_conf_year as _extract_conference_year
 
 URL_KEYS = ["repository_url", "artifact_url"]
 
@@ -79,16 +79,18 @@ def generate_availability(results):
                 exists_key = f"{url_key}_exists"
                 accessible = artifact.get(exists_key, False)
                 platform = _detect_platform(url)
-                records.append({
-                    "conference": conf_name,
-                    "year": year,
-                    "area": area,
-                    "title": title,
-                    "url_key": url_key,
-                    "url": url,
-                    "platform": platform,
-                    "accessible": accessible,
-                })
+                records.append(
+                    {
+                        "conference": conf_name,
+                        "year": year,
+                        "area": area,
+                        "title": title,
+                        "url_key": url_key,
+                        "url": url,
+                        "platform": platform,
+                        "accessible": accessible,
+                    }
+                )
 
     return records, counts, failed
 
@@ -151,44 +153,34 @@ def build_summary(records):
         "total_urls": total,
         "accessible_urls": accessible,
         "accessibility_pct": round(100 * accessible / total, 1) if total > 0 else 0,
-        "by_platform": {
-            k: {**v, "pct": _pct(v)} for k, v in sorted(by_platform.items())
-        },
-        "by_area": {
-            k: {**v, "pct": _pct(v)} for k, v in sorted(by_area.items())
-        },
-        "by_year": {
-            str(k): {**v, "pct": _pct(v)} for k, v in sorted(by_year.items())
-        },
+        "by_platform": {k: {**v, "pct": _pct(v)} for k, v in sorted(by_platform.items())},
+        "by_area": {k: {**v, "pct": _pct(v)} for k, v in sorted(by_area.items())},
+        "by_year": {str(k): {**v, "pct": _pct(v)} for k, v in sorted(by_year.items())},
         "by_year_area": {
-            str(y): {
-                a: {**d, "pct": _pct(d)} for a, d in sorted(data.items())
-            }
+            str(y): {a: {**d, "pct": _pct(d)} for a, d in sorted(data.items())}
             for y, data in sorted(by_year_area.items())
         },
         "by_year_platform": {
-            str(y): {
-                p: {**d, "pct": _pct(d)} for p, d in sorted(data.items())
-            }
+            str(y): {p: {**d, "pct": _pct(d)} for p, d in sorted(data.items())}
             for y, data in sorted(by_year_platform.items())
         },
-        "by_conference": {
-            k: {**v, "pct": _pct(v)} for k, v in sorted(by_conf.items())
-        },
+        "by_conference": {k: {**v, "pct": _pct(v)} for k, v in sorted(by_conf.items())},
     }
     return summary
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Check artifact URL availability and generate liveness report."
-    )
+    parser = argparse.ArgumentParser(description="Check artifact URL availability and generate liveness report.")
     parser.add_argument(
-        "--conf_regex", type=str, default=".*20[12][0-9]",
+        "--conf_regex",
+        type=str,
+        default=".*20[12][0-9]",
         help="Regular expression for conference names/years",
     )
     parser.add_argument(
-        "--output_dir", type=str, default=None,
+        "--output_dir",
+        type=str,
+        default=None,
         help="Output directory (website repo root)",
     )
     args = parser.parse_args()
@@ -197,27 +189,27 @@ def main():
     # Try loading from cache first (same as generate_repo_stats.py)
     cache_path = None
     if output_dir:
-        cache_path = os.path.join(output_dir, '_data', 'all_results_cache.yml')
+        cache_path = os.path.join(output_dir, "_data", "all_results_cache.yml")
     if not cache_path or not os.path.exists(cache_path):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         repo_root = os.path.dirname(os.path.dirname(script_dir))
-        cache_path = os.path.join(repo_root, '.cache', 'all_results_cache.yml')
+        cache_path = os.path.join(repo_root, ".cache", "all_results_cache.yml")
 
     if os.path.exists(cache_path):
         print(f"Loading cached results from {cache_path}...")
-        with open(cache_path, 'r') as f:
+        with open(cache_path, "r") as f:
             all_results = yaml.safe_load(f) or {}
-        all_results = {k: v for k, v in all_results.items()
-                       if re.search(args.conf_regex, k)}
-        print(f"Loaded {sum(len(v) for v in all_results.values())} artifacts "
-              f"across {len(all_results)} conference-years (from cache)")
+        all_results = {k: v for k, v in all_results.items() if re.search(args.conf_regex, k)}
+        print(
+            f"Loaded {sum(len(v) for v in all_results.values())} artifacts "
+            f"across {len(all_results)} conference-years (from cache)"
+        )
     else:
         print("Collecting artifact results (no cache found, scraping)...")
-        sys_results = get_ae_results(args.conf_regex, 'sys')
-        sec_results = get_ae_results(args.conf_regex, 'sec')
+        sys_results = get_ae_results(args.conf_regex, "sys")
+        sec_results = get_ae_results(args.conf_regex, "sec")
         all_results = {**sys_results, **sec_results}
-        print(f"Loaded {sum(len(v) for v in all_results.values())} artifacts from "
-              f"{len(all_results)} conference-years")
+        print(f"Loaded {sum(len(v) for v in all_results.values())} artifacts from {len(all_results)} conference-years")
 
     # Run availability checks
     records, counts, failed = generate_availability(all_results)
@@ -229,10 +221,10 @@ def main():
     print(f"\nArtifact Availability Report ({summary['checked_at']})")
     print(f"  Total URLs checked:  {summary['total_urls']}")
     print(f"  Accessible:          {summary['accessible_urls']} ({summary['accessibility_pct']}%)")
-    print(f"\n  By platform:")
+    print("\n  By platform:")
     for p, d in summary["by_platform"].items():
         print(f"    {p:12s}: {d['accessible']:4d}/{d['total']:4d} ({d['pct']}%)")
-    print(f"\n  By area:")
+    print("\n  By area:")
     for a, d in summary["by_area"].items():
         print(f"    {a:12s}: {d['accessible']:4d}/{d['total']:4d} ({d['pct']}%)")
 

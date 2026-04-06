@@ -13,22 +13,22 @@ import argparse
 import json
 import os
 import re
-import yaml
 from collections import defaultdict
 from datetime import datetime
 
+import yaml
+
 from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
-from ..scrapers.sys_sec_scrape import get_conferences_from_prefix
-from ..utils.collect_artifact_stats import github_stats, zenodo_stats, figshare_stats
+from ..utils.collect_artifact_stats import figshare_stats, github_stats, zenodo_stats
+from ..utils.conference import conf_area as _conf_area
+from ..utils.conference import parse_conf_year as extract_conference_name
 from ..utils.test_artifact_repositories import check_artifact_exists
-from ..utils.conference import conf_area as _conf_area, parse_conf_year as extract_conference_name
 
 
 def collect_stats_for_results(results, url_keys=None):
     """Collect repository stats for all artifacts."""
     if url_keys is None:
-        url_keys = ['repository_url', 'artifact_url', 'github_url',
-                     'second_repository_url', 'bitbucket_url']
+        url_keys = ["repository_url", "artifact_url", "github_url", "second_repository_url", "bitbucket_url"]
 
     # First pass: extract ALL URLs from list-valued fields and create expanded artifact entries
     # This ensures we collect stats for every artifact location, not just the first
@@ -38,36 +38,37 @@ def collect_stats_for_results(results, url_keys=None):
         for artifact in artifacts:
             # Collect all URLs from this artifact (including multi-valued fields)
             all_urls_by_key = {}
-            
+
             # Add single-valued URL fields
             for url_key in url_keys:
                 if url_key in artifact and artifact[url_key]:
                     all_urls_by_key[url_key] = [artifact[url_key]]
-            
+
             # Add URLs from list-valued fields (artifact_urls, additional_urls, etc.)
-            for list_key in ['artifact_urls', 'additional_urls']:
+            for list_key in ["artifact_urls", "additional_urls"]:
                 if list_key in artifact and isinstance(artifact[list_key], list):
                     for url in artifact[list_key]:
                         if isinstance(url, str) and url:
                             # Map back to single key: artifact_urls -> artifact_url
-                            flat_key = list_key.rstrip('s')
+                            flat_key = list_key.rstrip("s")
                             if flat_key not in all_urls_by_key:
                                 all_urls_by_key[flat_key] = []
                             if url not in all_urls_by_key[flat_key]:
                                 all_urls_by_key[flat_key].append(url)
-            
+
             # Create separate artifact entry for each URL to process
             if all_urls_by_key:
                 for url_key, urls in all_urls_by_key.items():
                     for url in urls:
-                        artifact_copy = {k: v for k, v in artifact.items() 
-                                        if k not in ['artifact_urls', 'additional_urls']}
+                        artifact_copy = {
+                            k: v for k, v in artifact.items() if k not in ["artifact_urls", "additional_urls"]
+                        }
                         artifact_copy[url_key] = url
                         expanded_artifacts[conf_year].append(artifact_copy)
             else:
                 # No URLs found, keep original artifact
                 expanded_artifacts[conf_year].append(artifact)
-    
+
     results = expanded_artifacts
 
     # Filter url_keys to only those that actually appear in the data
@@ -101,29 +102,29 @@ def collect_stats_for_results(results, url_keys=None):
         for artifact in artifacts:
             processed += 1
             for url_key in url_keys:
-                url = artifact.get(url_key, '')
-                exists_key = f'{url_key}_exists'
+                url = artifact.get(url_key, "")
+                exists_key = f"{url_key}_exists"
                 if not artifact.get(exists_key, False) or not url:
                     continue
 
                 # Deduplicate: skip if we've already collected stats for this URL
-                url_normalized = url.rstrip('/')
+                url_normalized = url.rstrip("/")
                 if url_normalized in seen_urls:
                     continue
                 seen_urls.add(url_normalized)
 
                 stats = None
-                source = 'unknown'
+                source = "unknown"
                 try:
-                    if 'github' in url:
+                    if "github" in url:
                         stats = github_stats(url)
-                        source = 'github'
-                    elif 'zenodo' in url:
+                        source = "github"
+                    elif "zenodo" in url:
                         stats = zenodo_stats(url)
-                        source = 'zenodo'
-                    elif 'figshare' in url:
+                        source = "zenodo"
+                    elif "figshare" in url:
                         stats = figshare_stats(url)
-                        source = 'figshare'
+                        source = "figshare"
                 except Exception as e:
                     print(f"  Error collecting stats for {url}: {e}")
                     continue
@@ -131,18 +132,20 @@ def collect_stats_for_results(results, url_keys=None):
                 if stats:
                     collected += 1
                     entry = {
-                        'conference': conf_name,
-                        'year': year,
-                        'title': artifact.get('title', 'Unknown'),
-                        'url': url,
-                        'source': source,
+                        "conference": conf_name,
+                        "year": year,
+                        "title": artifact.get("title", "Unknown"),
+                        "url": url,
+                        "source": source,
                     }
                     entry.update(stats)
                     all_stats.append(entry)
 
             if processed % 50 == 0 or processed == total_artifacts:
-                print(f"  Progress: {processed}/{total_artifacts} artifacts checked, "
-                      f"{collected} stats collected, {len(seen_urls)} unique URLs")
+                print(
+                    f"  Progress: {processed}/{total_artifacts} artifacts checked, "
+                    f"{collected} stats collected, {len(seen_urls)} unique URLs"
+                )
 
     return all_stats
 
@@ -150,184 +153,211 @@ def collect_stats_for_results(results, url_keys=None):
 def aggregate_stats(all_stats):
     """Aggregate per-conference and per-year statistics."""
     # Per-conference aggregates
-    by_conf = defaultdict(lambda: {
-        'github_repos': 0, 'total_stars': 0, 'total_forks': 0,
-        'max_stars': 0, 'max_forks': 0,
-        'zenodo_repos': 0, 'total_views': 0, 'total_downloads': 0,
-        'years': defaultdict(lambda: {'github_repos': 0, 'stars': 0, 'forks': 0}),
-        'all_github_entries': [],
-    })
+    by_conf = defaultdict(
+        lambda: {
+            "github_repos": 0,
+            "total_stars": 0,
+            "total_forks": 0,
+            "max_stars": 0,
+            "max_forks": 0,
+            "zenodo_repos": 0,
+            "total_views": 0,
+            "total_downloads": 0,
+            "years": defaultdict(lambda: {"github_repos": 0, "stars": 0, "forks": 0}),
+            "all_github_entries": [],
+        }
+    )
 
-    by_year = defaultdict(lambda: {
-        'github_repos': 0, 'total_stars': 0, 'total_forks': 0,
-        'max_stars': 0, 'max_forks': 0,
-        'zenodo_repos': 0, 'total_views': 0, 'total_downloads': 0,
-    })
+    by_year = defaultdict(
+        lambda: {
+            "github_repos": 0,
+            "total_stars": 0,
+            "total_forks": 0,
+            "max_stars": 0,
+            "max_forks": 0,
+            "zenodo_repos": 0,
+            "total_views": 0,
+            "total_downloads": 0,
+        }
+    )
 
     overall = {
-        'github_repos': 0, 'total_stars': 0, 'total_forks': 0,
-        'max_stars': 0, 'max_forks': 0,
-        'zenodo_repos': 0, 'total_views': 0, 'total_downloads': 0,
-        'avg_stars': 0, 'avg_forks': 0,
+        "github_repos": 0,
+        "total_stars": 0,
+        "total_forks": 0,
+        "max_stars": 0,
+        "max_forks": 0,
+        "zenodo_repos": 0,
+        "total_views": 0,
+        "total_downloads": 0,
+        "avg_stars": 0,
+        "avg_forks": 0,
     }
 
     for s in all_stats:
-        conf = s['conference']
-        year = s['year']
+        conf = s["conference"]
+        year = s["year"]
 
-        if s['source'] == 'github':
-            stars = s.get('github_stars', 0) or 0
-            forks = s.get('github_forks', 0) or 0
+        if s["source"] == "github":
+            stars = s.get("github_stars", 0) or 0
+            forks = s.get("github_forks", 0) or 0
 
-            by_conf[conf]['github_repos'] += 1
-            by_conf[conf]['total_stars'] += stars
-            by_conf[conf]['total_forks'] += forks
-            by_conf[conf]['max_stars'] = max(by_conf[conf]['max_stars'], stars)
-            by_conf[conf]['max_forks'] = max(by_conf[conf]['max_forks'], forks)
-            by_conf[conf]['years'][year]['github_repos'] += 1
-            by_conf[conf]['years'][year]['stars'] += stars
-            by_conf[conf]['years'][year]['forks'] += forks
-            by_conf[conf]['all_github_entries'].append({
-                'title': s.get('title', 'Unknown'),
-                'url': s.get('url', ''),
-                'conference': conf,
-                'year': year,
-                'area': _conf_area(conf),
-                'stars': stars,
-                'forks': forks,
-                'description': (s.get('description', '') or '')[:120],
-                'language': s.get('language', '') or '',
-                'name': s.get('name', ''),
-                'pushed_at': s.get('pushed_at', ''),
-            })
+            by_conf[conf]["github_repos"] += 1
+            by_conf[conf]["total_stars"] += stars
+            by_conf[conf]["total_forks"] += forks
+            by_conf[conf]["max_stars"] = max(by_conf[conf]["max_stars"], stars)
+            by_conf[conf]["max_forks"] = max(by_conf[conf]["max_forks"], forks)
+            by_conf[conf]["years"][year]["github_repos"] += 1
+            by_conf[conf]["years"][year]["stars"] += stars
+            by_conf[conf]["years"][year]["forks"] += forks
+            by_conf[conf]["all_github_entries"].append(
+                {
+                    "title": s.get("title", "Unknown"),
+                    "url": s.get("url", ""),
+                    "conference": conf,
+                    "year": year,
+                    "area": _conf_area(conf),
+                    "stars": stars,
+                    "forks": forks,
+                    "description": (s.get("description", "") or "")[:120],
+                    "language": s.get("language", "") or "",
+                    "name": s.get("name", ""),
+                    "pushed_at": s.get("pushed_at", ""),
+                }
+            )
 
-            by_year[year]['github_repos'] += 1
-            by_year[year]['total_stars'] += stars
-            by_year[year]['total_forks'] += forks
-            by_year[year]['max_stars'] = max(by_year[year]['max_stars'], stars)
-            by_year[year]['max_forks'] = max(by_year[year]['max_forks'], forks)
+            by_year[year]["github_repos"] += 1
+            by_year[year]["total_stars"] += stars
+            by_year[year]["total_forks"] += forks
+            by_year[year]["max_stars"] = max(by_year[year]["max_stars"], stars)
+            by_year[year]["max_forks"] = max(by_year[year]["max_forks"], forks)
 
-            overall['github_repos'] += 1
-            overall['total_stars'] += stars
-            overall['total_forks'] += forks
-            overall['max_stars'] = max(overall['max_stars'], stars)
-            overall['max_forks'] = max(overall['max_forks'], forks)
+            overall["github_repos"] += 1
+            overall["total_stars"] += stars
+            overall["total_forks"] += forks
+            overall["max_stars"] = max(overall["max_stars"], stars)
+            overall["max_forks"] = max(overall["max_forks"], forks)
 
-        elif s['source'] == 'zenodo':
-            views = s.get('zenodo_views', 0) or 0
-            downloads = s.get('zenodo_downloads', 0) or 0
+        elif s["source"] == "zenodo":
+            views = s.get("zenodo_views", 0) or 0
+            downloads = s.get("zenodo_downloads", 0) or 0
 
-            by_conf[conf]['zenodo_repos'] += 1
-            by_conf[conf]['total_views'] += views
-            by_conf[conf]['total_downloads'] += downloads
+            by_conf[conf]["zenodo_repos"] += 1
+            by_conf[conf]["total_views"] += views
+            by_conf[conf]["total_downloads"] += downloads
 
-            by_year[year]['zenodo_repos'] += 1
-            by_year[year]['total_views'] += views
-            by_year[year]['total_downloads'] += downloads
+            by_year[year]["zenodo_repos"] += 1
+            by_year[year]["total_views"] += views
+            by_year[year]["total_downloads"] += downloads
 
-            overall['zenodo_repos'] += 1
-            overall['total_views'] += views
-            overall['total_downloads'] += downloads
+            overall["zenodo_repos"] += 1
+            overall["total_views"] += views
+            overall["total_downloads"] += downloads
 
-    if overall['github_repos'] > 0:
-        overall['avg_stars'] = round(overall['total_stars'] / overall['github_repos'], 1)
-        overall['avg_forks'] = round(overall['total_forks'] / overall['github_repos'], 1)
+    if overall["github_repos"] > 0:
+        overall["avg_stars"] = round(overall["total_stars"] / overall["github_repos"], 1)
+        overall["avg_forks"] = round(overall["total_forks"] / overall["github_repos"], 1)
 
     # Convert to serializable format
     conf_stats = []
     for conf_name in sorted(by_conf.keys()):
         d = by_conf[conf_name]
-        avg_stars = round(d['total_stars'] / d['github_repos'], 1) if d['github_repos'] > 0 else 0
-        avg_forks = round(d['total_forks'] / d['github_repos'], 1) if d['github_repos'] > 0 else 0
+        avg_stars = round(d["total_stars"] / d["github_repos"], 1) if d["github_repos"] > 0 else 0
+        avg_forks = round(d["total_forks"] / d["github_repos"], 1) if d["github_repos"] > 0 else 0
         year_list = []
-        for yr in sorted(d['years'].keys()):
-            yd = d['years'][yr]
-            year_list.append({
-                'year': yr,
-                'github_repos': yd['github_repos'],
-                'stars': yd['stars'],
-                'forks': yd['forks'],
-                'avg_stars': round(yd['stars'] / yd['github_repos'], 1) if yd['github_repos'] > 0 else 0,
-                'avg_forks': round(yd['forks'] / yd['github_repos'], 1) if yd['github_repos'] > 0 else 0,
-            })
+        for yr in sorted(d["years"].keys()):
+            yd = d["years"][yr]
+            year_list.append(
+                {
+                    "year": yr,
+                    "github_repos": yd["github_repos"],
+                    "stars": yd["stars"],
+                    "forks": yd["forks"],
+                    "avg_stars": round(yd["stars"] / yd["github_repos"], 1) if yd["github_repos"] > 0 else 0,
+                    "avg_forks": round(yd["forks"] / yd["github_repos"], 1) if yd["github_repos"] > 0 else 0,
+                }
+            )
         # Top 5 repos by stars
-        top_repos = sorted(d['all_github_entries'], key=lambda x: x['stars'], reverse=True)[:5]
-        conf_stats.append({
-            'name': conf_name,
-            'github_repos': d['github_repos'],
-            'total_stars': d['total_stars'],
-            'total_forks': d['total_forks'],
-            'avg_stars': avg_stars,
-            'avg_forks': avg_forks,
-            'max_stars': d['max_stars'],
-            'max_forks': d['max_forks'],
-            'years': year_list,
-            'top_repos': top_repos,
-        })
+        top_repos = sorted(d["all_github_entries"], key=lambda x: x["stars"], reverse=True)[:5]
+        conf_stats.append(
+            {
+                "name": conf_name,
+                "github_repos": d["github_repos"],
+                "total_stars": d["total_stars"],
+                "total_forks": d["total_forks"],
+                "avg_stars": avg_stars,
+                "avg_forks": avg_forks,
+                "max_stars": d["max_stars"],
+                "max_forks": d["max_forks"],
+                "years": year_list,
+                "top_repos": top_repos,
+            }
+        )
 
     year_stats = []
     for yr in sorted(by_year.keys()):
         d = by_year[yr]
-        avg_stars = round(d['total_stars'] / d['github_repos'], 1) if d['github_repos'] > 0 else 0
-        avg_forks = round(d['total_forks'] / d['github_repos'], 1) if d['github_repos'] > 0 else 0
-        year_stats.append({
-            'year': yr,
-            'github_repos': d['github_repos'],
-            'total_stars': d['total_stars'],
-            'total_forks': d['total_forks'],
-            'avg_stars': avg_stars,
-            'avg_forks': avg_forks,
-            'max_stars': d['max_stars'],
-            'max_forks': d['max_forks'],
-        })
+        avg_stars = round(d["total_stars"] / d["github_repos"], 1) if d["github_repos"] > 0 else 0
+        avg_forks = round(d["total_forks"] / d["github_repos"], 1) if d["github_repos"] > 0 else 0
+        year_stats.append(
+            {
+                "year": yr,
+                "github_repos": d["github_repos"],
+                "total_stars": d["total_stars"],
+                "total_forks": d["total_forks"],
+                "avg_stars": avg_stars,
+                "avg_forks": avg_forks,
+                "max_stars": d["max_stars"],
+                "max_forks": d["max_forks"],
+            }
+        )
 
-    overall['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')
+    overall["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
 
     # Per-repo detail: all GitHub entries with individual star/fork counts
     all_github_detail = []
     for conf_name in sorted(by_conf.keys()):
-        all_github_detail.extend(by_conf[conf_name]['all_github_entries'])
+        all_github_detail.extend(by_conf[conf_name]["all_github_entries"])
 
     return {
-        'overall': overall,
-        'by_conference': conf_stats,
-        'by_year': year_stats,
-        'all_github_repos': all_github_detail,
+        "overall": overall,
+        "by_conference": conf_stats,
+        "by_year": year_stats,
+        "all_github_repos": all_github_detail,
     }
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate repository statistics.')
-    parser.add_argument('--conf_regex', type=str, default='.*20[12][0-9]',
-                        help='Regex for conference names/years')
-    parser.add_argument('--output_dir', type=str, default=None,
-                        help='Website repo root directory')
-    parser.add_argument('--refresh', action='store_true',
-                        help='Re-fetch all stats instead of only new artifacts')
+    parser = argparse.ArgumentParser(description="Generate repository statistics.")
+    parser.add_argument("--conf_regex", type=str, default=".*20[12][0-9]", help="Regex for conference names/years")
+    parser.add_argument("--output_dir", type=str, default=None, help="Website repo root directory")
+    parser.add_argument("--refresh", action="store_true", help="Re-fetch all stats instead of only new artifacts")
     args = parser.parse_args()
 
     # Try to load the cached results written by generate_statistics.py to
     # avoid re-scraping every results.md file.
     cache_path = None
     if args.output_dir:
-        cache_path = os.path.join(args.output_dir, '_data', 'all_results_cache.yml')
+        cache_path = os.path.join(args.output_dir, "_data", "all_results_cache.yml")
     if not cache_path or not os.path.exists(cache_path):
         # Fallback: repo root .cache directory
         script_dir = os.path.dirname(os.path.abspath(__file__))
         repo_root = os.path.dirname(script_dir)
-        cache_path = os.path.join(repo_root, '.cache', 'all_results_cache.yml')
+        cache_path = os.path.join(repo_root, ".cache", "all_results_cache.yml")
 
     if os.path.exists(cache_path):
         print(f"Loading cached results from {cache_path}...")
-        with open(cache_path, 'r') as f:
+        with open(cache_path, "r") as f:
             all_results = yaml.safe_load(f) or {}
         # Filter by conf_regex (cache may contain more conferences)
         all_results = {k: v for k, v in all_results.items() if re.search(args.conf_regex, k)}
-        print(f"Loaded {sum(len(v) for v in all_results.values())} artifacts across {len(all_results)} conference-years (from cache)")
+        print(
+            f"Loaded {sum(len(v) for v in all_results.values())} artifacts across {len(all_results)} conference-years (from cache)"
+        )
     else:
         print("Collecting artifact results (no cache found, scraping)...")
-        sys_results = get_ae_results(args.conf_regex, 'sys')
-        sec_results = get_ae_results(args.conf_regex, 'sec')
+        sys_results = get_ae_results(args.conf_regex, "sys")
+        sec_results = get_ae_results(args.conf_regex, "sec")
         all_results = {**sys_results, **sec_results}
         print(f"Found {sum(len(v) for v in all_results.values())} artifacts across {len(all_results)} conference-years")
 
@@ -337,28 +367,28 @@ def main():
     existing_stats = []
     existing_urls = set()
     if not args.refresh and args.output_dir:
-        detail_path = os.path.join(args.output_dir, 'assets', 'data', 'repo_stats_detail.json')
+        detail_path = os.path.join(args.output_dir, "assets", "data", "repo_stats_detail.json")
         if os.path.exists(detail_path):
-            with open(detail_path, 'r') as f:
+            with open(detail_path, "r") as f:
                 raw_existing = json.load(f)
             # Normalize existing entries to the format collect_stats_for_results produces
             for entry in raw_existing:
-                if 'source' not in entry:
-                    url_lower = (entry.get('url', '') or '').lower()
-                    if 'github' in url_lower:
-                        entry['source'] = 'github'
-                    elif 'zenodo' in url_lower:
-                        entry['source'] = 'zenodo'
-                    elif 'figshare' in url_lower:
-                        entry['source'] = 'figshare'
+                if "source" not in entry:
+                    url_lower = (entry.get("url", "") or "").lower()
+                    if "github" in url_lower:
+                        entry["source"] = "github"
+                    elif "zenodo" in url_lower:
+                        entry["source"] = "zenodo"
+                    elif "figshare" in url_lower:
+                        entry["source"] = "figshare"
                     else:
-                        entry['source'] = 'github'  # detail JSON is GitHub-only
-                if 'github_stars' not in entry and 'stars' in entry:
-                    entry['github_stars'] = entry['stars']
-                if 'github_forks' not in entry and 'forks' in entry:
-                    entry['github_forks'] = entry['forks']
+                        entry["source"] = "github"  # detail JSON is GitHub-only
+                if "github_stars" not in entry and "stars" in entry:
+                    entry["github_stars"] = entry["stars"]
+                if "github_forks" not in entry and "forks" in entry:
+                    entry["github_forks"] = entry["forks"]
             existing_stats = raw_existing
-            existing_urls = {s.get('url', '').rstrip('/') for s in existing_stats}
+            existing_urls = {s.get("url", "").rstrip("/") for s in existing_stats}
             print(f"Loaded {len(existing_stats)} existing repo stats ({len(existing_urls)} unique URLs)")
 
     if args.refresh:
@@ -374,10 +404,15 @@ def main():
             if not args.refresh:
                 # Check all URL fields for this artifact
                 has_existing = False
-                for url_key in ['repository_url', 'artifact_url', 'github_url',
-                                'second_repository_url', 'bitbucket_url']:
-                    url = art.get(url_key, '')
-                    if url and url.rstrip('/') in existing_urls:
+                for url_key in [
+                    "repository_url",
+                    "artifact_url",
+                    "github_url",
+                    "second_repository_url",
+                    "bitbucket_url",
+                ]:
+                    url = art.get(url_key, "")
+                    if url and url.rstrip("/") in existing_urls:
                         has_existing = True
                         break
                 if has_existing:
@@ -387,7 +422,9 @@ def main():
             new_results[conf_year] = new_arts
 
     new_count = sum(len(v) for v in new_results.values())
-    print(f"Total artifacts: {total_artifacts}, already have stats: {total_artifacts - new_count}, new to fetch: {new_count}")
+    print(
+        f"Total artifacts: {total_artifacts}, already have stats: {total_artifacts - new_count}, new to fetch: {new_count}"
+    )
 
     if new_count > 0:
         print(f"Collecting repository statistics for {new_count} artifacts...")
@@ -401,94 +438,100 @@ def main():
     print("Aggregating statistics...")
     aggregated = aggregate_stats(all_stats)
 
-    print(f"Overall: {aggregated['overall']['github_repos']} GitHub repos, "
-          f"{aggregated['overall']['total_stars']} total stars, "
-          f"{aggregated['overall']['total_forks']} total forks")
+    print(
+        f"Overall: {aggregated['overall']['github_repos']} GitHub repos, "
+        f"{aggregated['overall']['total_stars']} total stars, "
+        f"{aggregated['overall']['total_forks']} total forks"
+    )
 
     if args.output_dir:
-        data_dir = os.path.join(args.output_dir, '_data')
-        assets_dir = os.path.join(args.output_dir, 'assets', 'data')
+        data_dir = os.path.join(args.output_dir, "_data")
+        assets_dir = os.path.join(args.output_dir, "assets", "data")
         os.makedirs(data_dir, exist_ok=True)
         os.makedirs(assets_dir, exist_ok=True)
-        out_path = os.path.join(data_dir, 'repo_stats.yml')
-        with open(out_path, 'w') as f:
-            yaml.dump({k: v for k, v in aggregated.items() if k != 'all_github_repos'},
-                      f, default_flow_style=False, sort_keys=False)
+        out_path = os.path.join(data_dir, "repo_stats.yml")
+        with open(out_path, "w") as f:
+            yaml.dump(
+                {k: v for k, v in aggregated.items() if k != "all_github_repos"},
+                f,
+                default_flow_style=False,
+                sort_keys=False,
+            )
         print(f"Written to {out_path}")
 
         # Write per-repo detail JSON for CDF generation
-        detail_path = os.path.join(assets_dir, 'repo_stats_detail.json')
-        with open(detail_path, 'w') as f:
-            json.dump(aggregated.get('all_github_repos', []), f, indent=2)
+        detail_path = os.path.join(assets_dir, "repo_stats_detail.json")
+        with open(detail_path, "w") as f:
+            json.dump(aggregated.get("all_github_repos", []), f, indent=2)
         print(f"Written per-repo detail ({len(aggregated.get('all_github_repos', []))} repos) to {detail_path}")
 
         # ---- Historical time-series tracking ----
         # Append a dated snapshot for each fetched artifact so we can track
         # stars/forks/views/downloads over time across monthly runs.
-        today = datetime.now().strftime('%Y-%m-%d')
-        history_path = os.path.join(assets_dir, 'repo_stats_history.json')
+        today = datetime.now().strftime("%Y-%m-%d")
+        history_path = os.path.join(assets_dir, "repo_stats_history.json")
 
         # Load existing history
         history = {}
         if os.path.exists(history_path):
-            with open(history_path, 'r') as f:
+            with open(history_path, "r") as f:
                 history = json.load(f)
             print(f"Loaded history for {len(history)} URLs")
 
         # Build snapshots from the raw all_stats (which have full metric detail)
         updated = 0
         for s in all_stats:
-            url = s.get('url', '').rstrip('/')
+            url = s.get("url", "").rstrip("/")
             if not url:
                 continue
 
-            source = s.get('source', '')
+            source = s.get("source", "")
             if not source:
                 url_lower = url.lower()
-                if 'github' in url_lower:
-                    source = 'github'
-                elif 'zenodo' in url_lower:
-                    source = 'zenodo'
-                elif 'figshare' in url_lower:
-                    source = 'figshare'
+                if "github" in url_lower:
+                    source = "github"
+                elif "zenodo" in url_lower:
+                    source = "zenodo"
+                elif "figshare" in url_lower:
+                    source = "figshare"
                 else:
-                    source = 'unknown'
+                    source = "unknown"
 
             # Build the snapshot — only time-varying metrics
-            snapshot = {'date': today}
-            if source == 'github':
-                snapshot['stars'] = s.get('github_stars', s.get('stars', 0)) or 0
-                snapshot['forks'] = s.get('github_forks', s.get('forks', 0)) or 0
-            elif source in ('zenodo', 'figshare'):
-                snapshot['views'] = s.get('zenodo_views', s.get('views', 0)) or 0
-                snapshot['downloads'] = s.get('zenodo_downloads', s.get('downloads', 0)) or 0
+            snapshot = {"date": today}
+            if source == "github":
+                snapshot["stars"] = s.get("github_stars", s.get("stars", 0)) or 0
+                snapshot["forks"] = s.get("github_forks", s.get("forks", 0)) or 0
+            elif source in ("zenodo", "figshare"):
+                snapshot["views"] = s.get("zenodo_views", s.get("views", 0)) or 0
+                snapshot["downloads"] = s.get("zenodo_downloads", s.get("downloads", 0)) or 0
 
             if url not in history:
                 history[url] = {
-                    'meta': {
-                        'conference': s.get('conference', ''),
-                        'year': s.get('year', 0),
-                        'area': _conf_area(s.get('conference', '')),
-                        'title': s.get('title', ''),
-                        'source': source,
+                    "meta": {
+                        "conference": s.get("conference", ""),
+                        "year": s.get("year", 0),
+                        "area": _conf_area(s.get("conference", "")),
+                        "title": s.get("title", ""),
+                        "source": source,
                     },
-                    'snapshots': [],
+                    "snapshots": [],
                 }
 
-            snapshots = history[url]['snapshots']
+            snapshots = history[url]["snapshots"]
             # Replace if we already have a snapshot for today, otherwise append
-            if snapshots and snapshots[-1].get('date') == today:
+            if snapshots and snapshots[-1].get("date") == today:
                 snapshots[-1] = snapshot
             else:
                 snapshots.append(snapshot)
             updated += 1
 
-        with open(history_path, 'w') as f:
+        with open(history_path, "w") as f:
             json.dump(history, f, indent=2)
         print(f"Written history ({len(history)} URLs, {updated} snapshots updated) to {history_path}")
 
     return aggregated
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -30,7 +30,6 @@ new DBLP API calls.
 import argparse
 import json
 import os
-import re
 from collections import defaultdict
 from gzip import GzipFile
 
@@ -81,7 +80,7 @@ def extract_dblp(dblp_file):
 
     # Re-use cached files if the DBLP dump hasn't changed
     if _is_fresh(dblp_file, extract_dir):
-        print(f"DBLP extraction cache is fresh — skipping parse")
+        print("DBLP extraction cache is fresh — skipping parse")
         return papers_path, affiliations_path
 
     print(f"Parsing DBLP XML ({dblp_file}) …")
@@ -137,12 +136,14 @@ def extract_dblp(dblp_file):
                 authors = [a.text for a in elem.findall("author") if a.text]
                 dblp_key = elem.get("key", "")
 
-                papers[conf][year_str].append({
-                    "title": title,
-                    "authors": authors,
-                    "doi": doi,
-                    "dblp_key": dblp_key,
-                })
+                papers[conf][year_str].append(
+                    {
+                        "title": title,
+                        "authors": authors,
+                        "doi": doi,
+                        "dblp_key": dblp_key,
+                    }
+                )
 
         iteration += 1
         if iteration % 2_000_000 == 0:
@@ -151,16 +152,8 @@ def extract_dblp(dblp_file):
 
     dblp_stream.close()
 
-    total_papers = sum(
-        len(plist)
-        for conf_years in papers.values()
-        for plist in conf_years.values()
-    )
-    print(
-        f"  Done — {iteration} elements, "
-        f"{total_papers} conference papers, "
-        f"{len(affiliations)} author affiliations"
-    )
+    total_papers = sum(len(plist) for conf_years in papers.values() for plist in conf_years.values())
+    print(f"  Done — {iteration} elements, {total_papers} conference papers, {len(affiliations)} author affiliations")
 
     # Write JSON files
     with open(papers_path, "w") as f:
@@ -181,6 +174,7 @@ def extract_dblp(dblp_file):
 
 
 # ── Public lookup helpers ────────────────────────────────────────────────────
+
 
 def load_papers_by_venue(repo_root=None):
     """Load the pre-extracted papers index.
@@ -248,10 +242,9 @@ def paper_count_by_venue_year(repo_root=None):
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
 
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="Pre-extract DBLP XML data to JSON lookup files"
-    )
+    parser = argparse.ArgumentParser(description="Pre-extract DBLP XML data to JSON lookup files")
     parser.add_argument(
         "--dblp_file",
         type=str,

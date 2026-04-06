@@ -10,16 +10,15 @@ Simulates the full workflow:
 This test uses synthetic fixture data and doesn't require DBLP or the network.
 """
 
-import json
-import os
 import pytest
-from tests.conftest import write_json, read_json
+
 from src.generators.generate_author_index import build_index, load_existing_index
 from src.utils.author_index import (
     load_author_index,
     save_author_index,
     update_author_affiliation,
 )
+from tests.conftest import read_json, write_json
 
 
 @pytest.mark.integration
@@ -98,12 +97,14 @@ class TestEndToEndPipeline:
         assert final["Bob Jones"]["affiliation"] == "Google Research"
 
         # ── Phase 6: New author appears
-        new_authors = updated_authors + [{
-            "name": "Dave Lee",
-            "display_name": "Dave Lee",
-            "affiliation": "KAIST",
-            "category": "security",
-        }]
+        new_authors = updated_authors + [
+            {
+                "name": "Dave Lee",
+                "display_name": "Dave Lee",
+                "affiliation": "KAIST",
+                "category": "security",
+            }
+        ]
         write_json(authors_path, new_authors)
 
         _, existing_by_name, max_id = load_existing_index(index_path)

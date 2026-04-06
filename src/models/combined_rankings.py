@@ -6,8 +6,6 @@ Variants: ``systems_combined_rankings.json``, ``security_combined_rankings.json`
 
 from __future__ import annotations
 
-from typing import Optional
-
 from pydantic import BaseModel, Field
 
 
@@ -15,8 +13,9 @@ class AuthorRanking(BaseModel):
     """Ranking entry for a single author combining artifact contributions and AE committee service."""
 
     rank: int = Field(ge=1, description="Ranking position (with ties).")
-    author_id: Optional[int] = Field(
-        default=None, ge=1,
+    author_id: int | None = Field(
+        default=None,
+        ge=1,
         description="Stable integer identifier referencing the canonical author_index.",
     )
     name: str = Field(description="Full author name including DBLP disambiguation suffix.")
@@ -36,7 +35,7 @@ class AuthorRanking(BaseModel):
     ae_memberships: int = Field(ge=0, description="Number of AE committee memberships.")
     chair_count: int = Field(ge=0, description="Number of AE chair roles.")
     ae_score: int = Field(ge=0, description="Points from AE service: memberships * 3 + chairs * 2.")
-    ae_ratio: Optional[float] = Field(
+    ae_ratio: float | None = Field(
         default=None,
         description="Artifact score / AE score ratio. Null if ae_score is 0.",
     )
@@ -49,7 +48,7 @@ class AuthorRanking(BaseModel):
     badges_reproducible: int = Field(ge=0, description="Count of 'reproduced' badges.")
     conferences: list[str] = Field(description="Conferences where the author has contributed.")
     years: dict[str, int] = Field(description="Year-to-activity-count mapping.")
-    first_year: Optional[int] = Field(default=None, description="Earliest year of activity.")
-    last_year: Optional[int] = Field(default=None, description="Most recent year of activity.")
+    first_year: int | None = Field(default=None, description="Earliest year of activity.")
+    last_year: int | None = Field(default=None, description="Most recent year of activity.")
 
     model_config = {"extra": "forbid"}

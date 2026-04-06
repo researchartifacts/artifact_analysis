@@ -17,15 +17,14 @@ Usage:
     python3 verify_artifact_citations.py --data_dir ../researchartifacts.github.io
 """
 
+import argparse
 import json
 import os
 import re
 import sys
 import time
-import argparse
-import urllib.request
 import urllib.parse
-
+import urllib.request
 
 # Artifact DOI prefixes we recognise
 ARTIFACT_DOI_PREFIXES = ("10.5281/zenodo.", "10.6084/m9.figshare.")
@@ -177,12 +176,14 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
         citing_s2 = art.get("citing_dois_semantic_scholar", [])
         all_citing = list(set(citing_oa + citing_s2))
         if all_citing:
-            cited_artifacts.append({
-                "title": art.get("title", ""),
-                "doi": doi,
-                "cited_by_count": art.get("cited_by_count") or 0,
-                "citing_dois": all_citing,
-            })
+            cited_artifacts.append(
+                {
+                    "title": art.get("title", ""),
+                    "doi": doi,
+                    "cited_by_count": art.get("cited_by_count") or 0,
+                    "citing_dois": all_citing,
+                }
+            )
 
     if not cited_artifacts:
         log("No artifacts with citing DOIs found.")
@@ -190,7 +191,7 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
 
     total_citing = sum(len(a["citing_dois"]) for a in cited_artifacts)
     log(f"Found {len(cited_artifacts)} artifacts with {total_citing} citing DOIs to verify")
-    log(f"Strategy: check Crossref reference lists for artifact DOIs")
+    log("Strategy: check Crossref reference lists for artifact DOIs")
     log("=" * 70)
 
     # Test Crossref connectivity
@@ -215,7 +216,7 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
         artifact_title = art["title"]
         citing_dois = art["citing_dois"]
 
-        log(f"\n{'─'*70}")
+        log(f"\n{'─' * 70}")
         log(f"Artifact: {artifact_title[:70]}")
         log(f"  DOI: {artifact_doi}")
         log(f"  Citing DOIs to check: {len(citing_dois)}")
@@ -230,23 +231,27 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
             artifact_authors = fetch_figshare_authors(artifact_doi)
             time.sleep(0.3)
         if artifact_authors:
-            log(f"  Artifact authors: {', '.join(a[:30] for a in artifact_authors[:5])}{'...' if len(artifact_authors) > 5 else ''}")
+            log(
+                f"  Artifact authors: {', '.join(a[:30] for a in artifact_authors[:5])}{'...' if len(artifact_authors) > 5 else ''}"
+            )
         else:
-            log(f"  Artifact authors: (could not fetch)")
+            log("  Artifact authors: (could not fetch)")
 
         for cdoi in citing_dois:
             log(f"\n  Checking: {cdoi}")
 
             # Special case: citing DOI is the artifact DOI itself
             if cdoi.lower() == artifact_doi.lower():
-                log(f"    → SELF_CITATION: citing DOI is the artifact itself")
-                results.append({
-                    "artifact_doi": artifact_doi,
-                    "artifact_title": artifact_title,
-                    "citing_doi": cdoi,
-                    "verdict": "SELF_CITATION",
-                    "reason": "citing DOI matches artifact DOI",
-                })
+                log("    → SELF_CITATION: citing DOI is the artifact itself")
+                results.append(
+                    {
+                        "artifact_doi": artifact_doi,
+                        "artifact_title": artifact_title,
+                        "citing_doi": cdoi,
+                        "verdict": "SELF_CITATION",
+                        "reason": "citing DOI matches artifact DOI",
+                    }
+                )
                 total_self_citation += 1
                 continue
 
@@ -255,14 +260,16 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
             time.sleep(0.5)  # Rate limit courtesy
 
             if refs is None:
-                log(f"    → UNKNOWN: Crossref lookup failed")
-                results.append({
-                    "artifact_doi": artifact_doi,
-                    "artifact_title": artifact_title,
-                    "citing_doi": cdoi,
-                    "verdict": "UNKNOWN",
-                    "reason": "Crossref lookup failed",
-                })
+                log("    → UNKNOWN: Crossref lookup failed")
+                results.append(
+                    {
+                        "artifact_doi": artifact_doi,
+                        "artifact_title": artifact_title,
+                        "citing_doi": cdoi,
+                        "verdict": "UNKNOWN",
+                        "reason": "Crossref lookup failed",
+                    }
+                )
                 total_unknown += 1
                 continue
 
@@ -279,12 +286,14 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
                 # by comparing authors of artifact and citing paper
                 citing_authors = fetch_crossref_authors(cdoi)
                 time.sleep(0.3)
-                has_overlap, common = authors_overlap(artifact_authors, citing_authors) if artifact_authors else (False, [])
+                has_overlap, common = (
+                    authors_overlap(artifact_authors, citing_authors) if artifact_authors else (False, [])
+                )
 
                 if has_overlap:
                     log(f"    → SELF_CITATION: refs contain artifact DOI, but authors overlap: {common}")
                     verdict = "SELF_CITATION"
-                    reason = f"paper cites its own artifact (shared authors: {', '.join(common)})" 
+                    reason = f"paper cites its own artifact (shared authors: {', '.join(common)})"
                     total_self_citation += 1
                 else:
                     log(f"    → GENUINE: reference list contains artifact DOI {artifact_doi}")
@@ -302,16 +311,18 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
                 reason = f"no artifact-repository DOIs in {len(refs)} Crossref references"
                 total_false_positive += 1
 
-            results.append({
-                "artifact_doi": artifact_doi,
-                "artifact_title": artifact_title,
-                "citing_doi": cdoi,
-                "crossref_ref_count": len(refs),
-                "has_exact_artifact_doi": has_exact,
-                "artifact_dois_found": any_artifact_dois,
-                "verdict": verdict,
-                "reason": reason,
-            })
+            results.append(
+                {
+                    "artifact_doi": artifact_doi,
+                    "artifact_title": artifact_title,
+                    "citing_doi": cdoi,
+                    "crossref_ref_count": len(refs),
+                    "has_exact_artifact_doi": has_exact,
+                    "artifact_dois_found": any_artifact_dois,
+                    "verdict": verdict,
+                    "reason": reason,
+                }
+            )
 
     # Summary
     log("\n" + "=" * 70)
@@ -356,6 +367,7 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
     verified_output = output_file.replace(".json", "_genuine.txt") if output_file else None
     if verified_output:
         from collections import defaultdict
+
         genuine_map = defaultdict(list)
         for r in results:
             if r["verdict"] in ("GENUINE", "GENUINE_SIMILAR"):
@@ -369,6 +381,7 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
     fp_output = output_file.replace(".json", "_false_positives.txt") if output_file else None
     if fp_output:
         from collections import defaultdict
+
         fp_map = defaultdict(list)
         for r in results:
             if r["verdict"] == "FALSE_POSITIVE":

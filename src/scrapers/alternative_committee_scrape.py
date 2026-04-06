@@ -11,6 +11,7 @@ Supported sources:
 
 import re
 import sys
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -20,20 +21,20 @@ from bs4 import BeautifulSoup
 # Key: lowercase conference name as used in sysartifacts (e.g. "fast", "osdi")
 # Value: USENIX slug prefix (year suffix is appended as 2-digit)
 USENIX_CONF_SLUGS = {
-    'fast': 'fast',
-    'osdi': 'osdi',
-    'atc': 'atc',
-    'usenixsec': 'usenixsecurity',
-    'woot': 'woot',
+    "fast": "fast",
+    "osdi": "osdi",
+    "atc": "atc",
+    "usenixsec": "usenixsecurity",
+    "woot": "woot",
 }
 
 # Known years where USENIX call-for-artifacts pages exist
 USENIX_KNOWN_YEARS = {
-    'fast': range(2024, 2026),       # 2024, 2025
-    'osdi': range(2020, 2026),       # 2020-2025  (some may 404)
-    'atc': range(2020, 2026),        # 2020-2025  (some may 404)
-    'usenixsec': range(2020, 2026),  # 2020-2025
-    'woot': range(2024, 2026),       # 2024 (2025 may exist)
+    "fast": range(2024, 2026),  # 2024, 2025
+    "osdi": range(2020, 2026),  # 2020-2025  (some may 404)
+    "atc": range(2020, 2026),  # 2020-2025  (some may 404)
+    "usenixsec": range(2020, 2026),  # 2020-2025
+    "woot": range(2024, 2026),  # 2024 (2025 may exist)
 }
 
 BASE_USENIX = "https://www.usenix.org"
@@ -42,9 +43,7 @@ BASE_USENIX = "https://www.usenix.org"
 def _get_session():
     """Return a requests session with a polite user-agent."""
     s = requests.Session()
-    s.headers.update({
-        'User-Agent': 'ResearchArtifacts/1.0 (artifact statistics collection)'
-    })
+    s.headers.update({"User-Agent": "ResearchArtifacts/1.0 (artifact statistics collection)"})
     return s
 
 
@@ -59,30 +58,30 @@ def _parse_usenix_views_rows(heading):
     """
     members = []
     for sib in heading.next_siblings:
-        if not hasattr(sib, 'name'):
+        if not hasattr(sib, "name"):
             continue
         # Stop at next heading
-        if sib.name in ('h2', 'h3', 'h4'):
+        if sib.name in ("h2", "h3", "h4"):
             break
-        if sib.name == 'div' and 'views-row' in ' '.join(sib.get('class', [])):
+        if sib.name == "div" and "views-row" in " ".join(sib.get("class", [])):
             # Find field-content div
-            fc = sib.find('div', class_='field-content')
+            fc = sib.find("div", class_="field-content")
             if fc:
                 # Parse "Name, <em>Affiliation</em>"
-                em = fc.find('em')
-                affiliation = em.get_text().strip() if em else ''
+                em = fc.find("em")
+                affiliation = em.get_text().strip() if em else ""
                 # Name is the text before the <em>
                 name_parts = []
                 for child in fc.children:
-                    if hasattr(child, 'name') and child.name == 'em':
+                    if hasattr(child, "name") and child.name == "em":
                         break
-                    text = str(child) if not hasattr(child, 'name') else child.get_text()
+                    text = str(child) if not hasattr(child, "name") else child.get_text()
                     name_parts.append(text)
-                name = ''.join(name_parts).strip().rstrip(',').strip()
-                name = re.sub(r'\s+', ' ', name).strip('*_').strip()
-                affiliation = re.sub(r'\s+', ' ', affiliation).strip('*_').strip()
+                name = "".join(name_parts).strip().rstrip(",").strip()
+                name = re.sub(r"\s+", " ", name).strip("*_").strip()
+                affiliation = re.sub(r"\s+", " ", affiliation).strip("*_").strip()
                 if name and len(name) > 1:
-                    members.append({'name': name, 'affiliation': affiliation, 'role': 'member'})
+                    members.append({"name": name, "affiliation": affiliation, "role": "member"})
     return members
 
 
@@ -105,12 +104,9 @@ def _parse_usenix_committee_html(soup):
     # We want the one that is exactly "Artifact Evaluation Committee"
     # (not "Co-Chairs", not "Membership")
     target_heading = None
-    for h in soup.find_all(['h2', 'h3', 'h4']):
+    for h in soup.find_all(["h2", "h3", "h4"]):
         txt = h.get_text().strip().lower()
-        if txt == 'artifact evaluation committee':
-            target_heading = h
-            # Don't break — prefer the LAST match (the sub-heading for members)
-        elif txt == 'artifact evaluation committee (aec)':
+        if txt == "artifact evaluation committee" or txt == "artifact evaluation committee (aec)":
             target_heading = h
 
     if target_heading is None:
@@ -123,18 +119,22 @@ def _parse_usenix_committee_html(soup):
     next_sib = target_heading.find_next_sibling()
 
     # Check if Format B (views-row divs)
-    if next_sib and hasattr(next_sib, 'name') and next_sib.name == 'div' and \
-       'views-row' in ' '.join(next_sib.get('class', [])):
+    if (
+        next_sib
+        and hasattr(next_sib, "name")
+        and next_sib.name == "div"
+        and "views-row" in " ".join(next_sib.get("class", []))
+    ):
         return _parse_usenix_views_rows(target_heading)
 
     # Format A: find the next <p> sibling
-    p_tag = target_heading.find_next_sibling('p')
+    p_tag = target_heading.find_next_sibling("p")
     if p_tag is None:
         for sib in target_heading.next_siblings:
-            if hasattr(sib, 'name') and sib.name == 'p':
+            if hasattr(sib, "name") and sib.name == "p":
                 p_tag = sib
                 break
-            elif hasattr(sib, 'name') and sib.name in ('h2', 'h3', 'h4'):
+            if hasattr(sib, "name") and sib.name in ("h2", "h3", "h4"):
                 break
 
     if p_tag is None:
@@ -145,20 +145,18 @@ def _parse_usenix_committee_html(soup):
     current_parts = []
 
     for child in p_tag.children:
-        if hasattr(child, 'name') and child.name == 'br':
+        if hasattr(child, "name") and child.name == "br":
             if current_parts:
-                lines.append(''.join(current_parts).strip())
+                lines.append("".join(current_parts).strip())
                 current_parts = []
-        elif hasattr(child, 'name') and child.name == 'em':
-            current_parts.append(child.get_text())
-        elif hasattr(child, 'name') and child.name == 'a':
+        elif hasattr(child, "name") and child.name == "em" or hasattr(child, "name") and child.name == "a":
             current_parts.append(child.get_text())
         else:
-            text = str(child) if not hasattr(child, 'name') else child.get_text()
+            text = str(child) if not hasattr(child, "name") else child.get_text()
             current_parts.append(text)
 
     if current_parts:
-        last = ''.join(current_parts).strip()
+        last = "".join(current_parts).strip()
         if last:
             lines.append(last)
 
@@ -167,25 +165,25 @@ def _parse_usenix_committee_html(soup):
         if not line:
             continue
         # Skip non-member lines
-        if line.startswith('http') or '@' in line or line.startswith('['):
+        if line.startswith(("http", "[")) or "@" in line:
             continue
 
         # Parse "Name, Affiliation"
         # The affiliation was in <em> tags, so it's already extracted as plain text
-        if ',' in line:
-            parts = line.split(',', 1)
+        if "," in line:
+            parts = line.split(",", 1)
             name = parts[0].strip()
             affiliation = parts[1].strip()
         else:
             name = line
-            affiliation = ''
+            affiliation = ""
 
         # Clean up
-        name = re.sub(r'\s+', ' ', name).strip().strip('*_').strip()
-        affiliation = re.sub(r'\s+', ' ', affiliation).strip().strip('*_').strip()
+        name = re.sub(r"\s+", " ", name).strip().strip("*_").strip()
+        affiliation = re.sub(r"\s+", " ", affiliation).strip().strip("*_").strip()
 
         if name and len(name) > 1:
-            members.append({'name': name, 'affiliation': affiliation, 'role': 'member'})
+            members.append({"name": name, "affiliation": affiliation, "role": "member"})
 
     return members
 
@@ -197,49 +195,53 @@ def _parse_usenix_cochairs_html(soup):
     """
     members = []
 
-    for h in soup.find_all(['h2', 'h3', 'h4']):
+    for h in soup.find_all(["h2", "h3", "h4"]):
         txt = h.get_text().strip().lower()
-        if 'co-chair' in txt and 'artifact' in txt:
+        if "co-chair" in txt and "artifact" in txt:
             # Check for views-row format first
             next_sib = h.find_next_sibling()
-            if next_sib and hasattr(next_sib, 'name') and next_sib.name == 'div' and \
-               'views-row' in ' '.join(next_sib.get('class', [])):
+            if (
+                next_sib
+                and hasattr(next_sib, "name")
+                and next_sib.name == "div"
+                and "views-row" in " ".join(next_sib.get("class", []))
+            ):
                 members.extend(_parse_usenix_views_rows(h))
                 break
-            p_tag = h.find_next_sibling('p')
+            p_tag = h.find_next_sibling("p")
             if p_tag:
                 # Parse same format
                 lines = []
                 current_parts = []
                 for child in p_tag.children:
-                    if hasattr(child, 'name') and child.name == 'br':
+                    if hasattr(child, "name") and child.name == "br":
                         if current_parts:
-                            lines.append(''.join(current_parts).strip())
+                            lines.append("".join(current_parts).strip())
                             current_parts = []
-                    elif hasattr(child, 'name') and child.name == 'em':
+                    elif hasattr(child, "name") and child.name == "em":
                         current_parts.append(child.get_text())
                     else:
-                        text = str(child) if not hasattr(child, 'name') else child.get_text()
+                        text = str(child) if not hasattr(child, "name") else child.get_text()
                         current_parts.append(text)
                 if current_parts:
-                    last = ''.join(current_parts).strip()
+                    last = "".join(current_parts).strip()
                     if last:
                         lines.append(last)
                 for line in lines:
                     line = line.strip()
-                    if not line or '@' in line:
+                    if not line or "@" in line:
                         continue
-                    if ',' in line:
-                        parts = line.split(',', 1)
+                    if "," in line:
+                        parts = line.split(",", 1)
                         name = parts[0].strip()
                         affiliation = parts[1].strip()
                     else:
                         name = line
-                        affiliation = ''
-                    name = re.sub(r'\s+', ' ', name).strip().strip('*_').strip()
-                    affiliation = re.sub(r'\s+', ' ', affiliation).strip().strip('*_').strip()
+                        affiliation = ""
+                    name = re.sub(r"\s+", " ", name).strip().strip("*_").strip()
+                    affiliation = re.sub(r"\s+", " ", affiliation).strip().strip("*_").strip()
                     if name and len(name) > 1:
-                        members.append({'name': name, 'affiliation': affiliation, 'role': 'chair'})
+                        members.append({"name": name, "affiliation": affiliation, "role": "chair"})
             break  # only process first co-chair heading
 
     return members
@@ -277,7 +279,7 @@ def scrape_usenix_committee(conference, year, session=None):
         print(f"  Warning: Failed to fetch {url}: {e}", file=sys.stderr)
         return None
 
-    soup = BeautifulSoup(resp.text, 'html.parser')
+    soup = BeautifulSoup(resp.text, "html.parser")
 
     # Parse co-chairs and regular committee members
     chairs = _parse_usenix_cochairs_html(soup)
@@ -285,17 +287,17 @@ def scrape_usenix_committee(conference, year, session=None):
 
     # Mark roles
     for m in chairs:
-        m['role'] = 'chair'
+        m["role"] = "chair"
     for m in members:
-        m['role'] = 'member'
+        m["role"] = "member"
 
     # Combine (chairs + members, dedup by name)
     all_members = chairs + members
     seen = set()
     deduped = []
     for m in all_members:
-        if m['name'].lower() not in seen:
-            seen.add(m['name'].lower())
+        if m["name"].lower() not in seen:
+            seen.add(m["name"].lower())
             deduped.append(m)
 
     if deduped:
@@ -321,23 +323,25 @@ def _scrape_ches_chairs_html(soup):
     Returns list of {name, affiliation, role:'chair'} dicts.
     """
     chairs = []
-    for h3 in soup.find_all('h3'):
+    for h3 in soup.find_all("h3"):
         txt = h3.get_text().strip().lower()
-        if 'chair' in txt and 'artifact' in txt:
-            row_div = h3.find_next_sibling('div', class_='row')
+        if "chair" in txt and "artifact" in txt:
+            row_div = h3.find_next_sibling("div", class_="row")
             if row_div:
-                for aside in row_div.find_all('aside'):
-                    h4 = aside.find('h4')
-                    p = aside.find('p')
+                for aside in row_div.find_all("aside"):
+                    h4 = aside.find("h4")
+                    p = aside.find("p")
                     if h4:
-                        name = re.sub(r'\s+', ' ', h4.get_text()).strip()
-                        affiliation = re.sub(r'\s+', ' ', p.get_text()).strip() if p else ''
+                        name = re.sub(r"\s+", " ", h4.get_text()).strip()
+                        affiliation = re.sub(r"\s+", " ", p.get_text()).strip() if p else ""
                         if name and len(name) > 1:
-                            chairs.append({
-                                'name': name,
-                                'affiliation': affiliation,
-                                'role': 'chair',
-                            })
+                            chairs.append(
+                                {
+                                    "name": name,
+                                    "affiliation": affiliation,
+                                    "role": "chair",
+                                }
+                            )
             break  # only process the first matching heading
     return chairs
 
@@ -356,27 +360,29 @@ def _scrape_ches_members_html(soup):
     Returns list of {name, affiliation, role:'member'} dicts.
     """
     members = []
-    for h3 in soup.find_all('h3'):
+    for h3 in soup.find_all("h3"):
         txt = h3.get_text().strip().lower()
-        if 'committee member' in txt and 'artifact' in txt:
-            ul = h3.find_next_sibling('ul')
+        if "committee member" in txt and "artifact" in txt:
+            ul = h3.find_next_sibling("ul")
             if ul:
-                for li in ul.find_all('li'):
+                for li in ul.find_all("li"):
                     text = li.get_text().strip()
                     # Parse "Name (Affiliation, Country)"
-                    m = re.match(r'^(.+?)\s*\((.+)\)\s*$', text)
+                    m = re.match(r"^(.+?)\s*\((.+)\)\s*$", text)
                     if m:
-                        name = re.sub(r'\s+', ' ', m.group(1)).strip()
-                        affiliation = re.sub(r'\s+', ' ', m.group(2)).strip()
+                        name = re.sub(r"\s+", " ", m.group(1)).strip()
+                        affiliation = re.sub(r"\s+", " ", m.group(2)).strip()
                     else:
-                        name = re.sub(r'\s+', ' ', text).strip()
-                        affiliation = ''
+                        name = re.sub(r"\s+", " ", text).strip()
+                        affiliation = ""
                     if name and len(name) > 1:
-                        members.append({
-                            'name': name,
-                            'affiliation': affiliation,
-                            'role': 'member',
-                        })
+                        members.append(
+                            {
+                                "name": name,
+                                "affiliation": affiliation,
+                                "role": "member",
+                            }
+                        )
             break
     return members
 
@@ -402,11 +408,11 @@ def scrape_ches_committee(year, session=None):
         resp = sess.get(json_url, timeout=30)
         if resp.status_code == 200:
             data = resp.json()
-            for entry in data.get('committee', []):
-                name = re.sub(r'\s+', ' ', entry.get('name', '')).strip()
-                affiliation = re.sub(r'\s+', ' ', entry.get('affiliation', '')).strip()
+            for entry in data.get("committee", []):
+                name = re.sub(r"\s+", " ", entry.get("name", "")).strip()
+                affiliation = re.sub(r"\s+", " ", entry.get("affiliation", "")).strip()
                 if name and len(name) > 1:
-                    members.append({'name': name, 'affiliation': affiliation, 'role': 'member'})
+                    members.append({"name": name, "affiliation": affiliation, "role": "member"})
     except (requests.RequestException, ValueError, KeyError):
         pass
 
@@ -415,7 +421,7 @@ def scrape_ches_committee(year, session=None):
     try:
         resp = sess.get(html_url, timeout=30)
         if resp.status_code == 200:
-            soup = BeautifulSoup(resp.text, 'html.parser')
+            soup = BeautifulSoup(resp.text, "html.parser")
 
             # Parse chairs from HTML
             chairs = _scrape_ches_chairs_html(soup)
@@ -429,16 +435,15 @@ def scrape_ches_committee(year, session=None):
             seen = set()
             deduped = []
             for m in all_members:
-                key = m['name'].lower()
+                key = m["name"].lower()
                 if key not in seen:
                     seen.add(key)
                     deduped.append(m)
 
             if deduped:
-                chair_count = sum(1 for m in deduped if m['role'] == 'chair')
+                chair_count = sum(1 for m in deduped if m["role"] == "chair")
                 member_count = len(deduped) - chair_count
-                print(f"  CHES: Found {member_count} members + {chair_count} chair(s) for ches{year}",
-                      file=sys.stderr)
+                print(f"  CHES: Found {member_count} members + {chair_count} chair(s) for ches{year}", file=sys.stderr)
             return deduped if deduped else None
     except requests.RequestException as e:
         print(f"  Warning: Failed to fetch {html_url}: {e}", file=sys.stderr)
@@ -482,14 +487,14 @@ def scrape_pets_committee(year, session=None):
         print(f"  Warning: Failed to fetch {url}: {e}", file=sys.stderr)
         return None
 
-    soup = BeautifulSoup(resp.text, 'html.parser')
+    soup = BeautifulSoup(resp.text, "html.parser")
     members = []
 
     # Find the <dt> element containing "Artifact Review Committee"
     arc_dt = None
-    for dt in soup.find_all('dt'):
+    for dt in soup.find_all("dt"):
         txt = dt.get_text().lower()
-        if 'artifact' in txt and 'committee' in txt:
+        if "artifact" in txt and "committee" in txt:
             arc_dt = dt
             break
 
@@ -498,26 +503,26 @@ def scrape_pets_committee(year, session=None):
 
     # Collect all <dd> siblings following the <dt> until the next <dt>
     for sib in arc_dt.next_siblings:
-        if not hasattr(sib, 'name'):
+        if not hasattr(sib, "name"):
             continue
-        if sib.name == 'dt':
+        if sib.name == "dt":
             break  # reached the next definition term
-        if sib.name == 'dd':
+        if sib.name == "dd":
             text = sib.get_text().strip()
             if not text or len(text) < 3:
                 continue
             # Parse "Name, Affiliation"
-            if ',' in text:
-                parts = text.split(',', 1)
+            if "," in text:
+                parts = text.split(",", 1)
                 name = parts[0].strip()
                 affiliation = parts[1].strip()
             else:
                 name = text
-                affiliation = ''
-            name = re.sub(r'\s+', ' ', name).strip().strip('*_').strip()
-            affiliation = re.sub(r'\s+', ' ', affiliation).strip().strip('*_').strip()
+                affiliation = ""
+            name = re.sub(r"\s+", " ", name).strip().strip("*_").strip()
+            affiliation = re.sub(r"\s+", " ", affiliation).strip().strip("*_").strip()
             if name and len(name) > 2:
-                members.append({'name': name, 'affiliation': affiliation, 'role': 'member'})
+                members.append({"name": name, "affiliation": affiliation, "role": "member"})
 
     if members:
         print(f"  PETS: Found {len(members)} members for pets{year}", file=sys.stderr)
@@ -525,6 +530,7 @@ def scrape_pets_committee(year, session=None):
 
 
 # ── Public API ───────────────────────────────────────────────────────────────
+
 
 def get_alternative_committees(conferences_needed):
     """Fetch committees from alternative sources for conferences not in sysartifacts/secartifacts.
@@ -542,8 +548,8 @@ def get_alternative_committees(conferences_needed):
     results = {}
     sess = _get_session()
 
-    for conf_year_str, area in conferences_needed.items():
-        m = re.match(r'^([a-zA-Z]+)(\d{4})$', conf_year_str)
+    for conf_year_str, _area in conferences_needed.items():
+        m = re.match(r"^([a-zA-Z]+)(\d{4})$", conf_year_str)
         if not m:
             continue
         conf = m.group(1).lower()
@@ -556,11 +562,11 @@ def get_alternative_committees(conferences_needed):
             committee = scrape_usenix_committee(conf, year, session=sess)
 
         # Try CHES website
-        elif conf == 'ches':
+        elif conf == "ches":
             committee = scrape_ches_committee(year, session=sess)
 
         # Try PETS website
-        elif conf == 'pets':
+        elif conf == "pets":
             committee = scrape_pets_committee(year, session=sess)
 
         if committee and len(committee) > 0:
@@ -598,15 +604,15 @@ def get_all_usenix_committees(conf_regex=None):
 
 # ── CLI for testing ──────────────────────────────────────────────────────────
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='Scrape AE committees from alternative sources')
-    parser.add_argument('--conference', type=str, help='Conference name (fast, osdi, usenixsec, woot, ches, pets)')
-    parser.add_argument('--year', type=int, help='Year (e.g. 2024)')
-    parser.add_argument('--all-usenix', action='store_true', help='Scrape all known USENIX committees')
-    parser.add_argument('--all-ches', action='store_true', help='Scrape all CHES years 2021-2025')
-    parser.add_argument('--all-pets', action='store_true', help='Scrape all PETS years 2020-2025')
+    parser = argparse.ArgumentParser(description="Scrape AE committees from alternative sources")
+    parser.add_argument("--conference", type=str, help="Conference name (fast, osdi, usenixsec, woot, ches, pets)")
+    parser.add_argument("--year", type=int, help="Year (e.g. 2024)")
+    parser.add_argument("--all-usenix", action="store_true", help="Scrape all known USENIX committees")
+    parser.add_argument("--all-ches", action="store_true", help="Scrape all CHES years 2021-2025")
+    parser.add_argument("--all-pets", action="store_true", help="Scrape all PETS years 2020-2025")
     args = parser.parse_args()
 
     if args.all_usenix:
@@ -633,9 +639,9 @@ if __name__ == '__main__':
         conf = args.conference.lower()
         if conf in USENIX_CONF_SLUGS:
             result = scrape_usenix_committee(conf, args.year)
-        elif conf == 'ches':
+        elif conf == "ches":
             result = scrape_ches_committee(args.year)
-        elif conf == 'pets':
+        elif conf == "pets":
             result = scrape_pets_committee(args.year)
         else:
             print(f"Unknown conference: {conf}")
