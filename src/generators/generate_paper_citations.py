@@ -37,6 +37,8 @@ import re
 import time
 from pathlib import Path
 
+from src.utils.cache import read_cache, write_cache
+
 logger = logging.getLogger(__name__)
 # ── Configuration ────────────────────────────────────────────────────────────
 CACHE_DIR = Path(__file__).resolve().parent.parent.parent / ".cache" / "paper_citations"
@@ -64,33 +66,6 @@ def _normalize_title(title: str) -> str:
 
 def _cache_key(title: str) -> str:
     return hashlib.sha256(_normalize_title(title).encode()).hexdigest()
-
-
-def _cache_path(title: str) -> Path:
-    ns_dir = CACHE_DIR / CACHE_NS
-    ns_dir.mkdir(parents=True, exist_ok=True)
-    return ns_dir / _cache_key(title)
-
-
-def _read_cache(title: str, ttl: int):
-    """Returns cached body (dict or empty string) or None on miss."""
-    path = _cache_path(title)
-    if not path.exists():
-        return None
-    try:
-        with open(path) as f:
-            entry = json.load(f)
-        if time.time() - entry.get("ts", 0) < ttl:
-            return entry.get("body")
-    except (json.JSONDecodeError, KeyError, OSError):
-        pass
-    return None
-
-
-def _write_cache(title: str, body) -> None:
-    path = _cache_path(title)
-    with open(path, "w") as f:
-        json.dump({"ts": time.time(), "body": body}, f)
 
 
 # ── Google Scholar lookup ────────────────────────────────────────────────────
@@ -189,7 +164,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
     cached_miss_neg = 0  # negative cache (empty string = looked up, not found)
     uncached = 0
     for a in unique:
-        c = _read_cache(a["title"], cache_ttl)
+        c = read_cache(str(CACHE_DIR), _cache_key(a["title"]), cache_ttl, CACHE_NS)
         if c is None:
             uncached += 1
         elif c == "":
@@ -218,7 +193,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
         norm = _normalize_title(title)
 
         # Try cache first
-        cached = _read_cache(title, cache_ttl)
+        cached = read_cache(str(CACHE_DIR), _cache_key(title), cache_ttl, CACHE_NS)
         if cached is not None and cached != "":
             # Cache hit with data
             entry = {
@@ -278,7 +253,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
             new_queries += 1
 
             if result:
-                _write_cache(title, result)
+                write_cache(str(CACHE_DIR), _cache_key(title), json.dumps(result), CACHE_NS)
                 entry = {
                     "title": title,
                     "normalized_title": norm,
@@ -293,7 +268,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
                 entries.append(entry)
                 found += 1
             else:
-                _write_cache(title, "")  # negative cache
+                write_cache(str(CACHE_DIR), _cache_key(title), json.dumps(""), CACHE_NS)  # negative cache
                 entry = {
                     "title": title,
                     "normalized_title": norm,
@@ -365,7 +340,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
                 errors += 1
             else:
                 log(f"  [Scholar] Error: {type(e).__name__}: {e}")
-                _write_cache(title, "")
+                write_cache(str(CACHE_DIR), _cache_key(title), json.dumps(""), CACHE_NS)
                 entry = {
                     "title": title,
                     "normalized_title": norm,

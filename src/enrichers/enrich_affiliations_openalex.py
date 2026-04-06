@@ -21,7 +21,6 @@ Usage:
 """
 
 import argparse
-import hashlib
 import json
 import logging
 import os
@@ -33,6 +32,9 @@ from typing import Optional
 from urllib.parse import quote
 
 import requests
+
+from src.utils.cache import read_cache as _read_cache
+from src.utils.cache import write_cache as _write_cache
 
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
@@ -49,30 +51,7 @@ CROSSREF_DELAY = 0.25
 DBLP_DELAY = 0.25
 
 
-def _cache_path(key: str, namespace: str = "default") -> Path:
-    ns_dir = CACHE_DIR / namespace
-    ns_dir.mkdir(parents=True, exist_ok=True)
-    hashed = hashlib.sha256(key.encode()).hexdigest()
-    return ns_dir / hashed
-
-
-def _read_cache(key: str, namespace: str = "default") -> Optional[str]:
-    path = _cache_path(key, namespace)
-    if not path.exists():
-        return None
-    try:
-        entry = json.loads(path.read_text(encoding="utf-8"))
-        if time.time() - entry["ts"] < CACHE_TTL:
-            return entry["body"]
-    except (json.JSONDecodeError, KeyError, OSError):
-        pass
-    return None
-
-
-def _write_cache(key: str, body: str, namespace: str = "default") -> None:
-    path = _cache_path(key, namespace)
-    entry = {"ts": time.time(), "body": body}
-    path.write_text(json.dumps(entry), encoding="utf-8")
+# Cache functions imported from src.utils.cache
 
 
 # ---------------------------------------------------------------------------
@@ -124,7 +103,7 @@ def _openalex_affiliation_by_title(
 ) -> Optional[str]:
     """Search OpenAlex for a paper title and return the matching author's affiliation."""
     cache_key = f"oa_title:{_normalise_name(title)}:{_normalise_name(author_name)}"
-    cached = _read_cache(cache_key, "openalex_title")
+    cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "openalex_title")
     if cached is not None:
         return cached if cached else None
 
@@ -152,13 +131,13 @@ def _openalex_affiliation_by_title(
                         if inst_name:
                             if verbose:
                                 logger.info(f"      OA-title: {inst_name}")
-                            _write_cache(cache_key, inst_name, "openalex_title")
+                            _write_cache(str(CACHE_DIR), cache_key, inst_name, "openalex_title")
                             return inst_name
     except Exception as e:
         if verbose:
             logger.error(f"      OA-title error: {e}")
 
-    _write_cache(cache_key, "", "openalex_title")
+    _write_cache(str(CACHE_DIR), cache_key, "", "openalex_title")
     return None
 
 
@@ -173,7 +152,7 @@ def _crossref_affiliation_by_title(
 ) -> Optional[str]:
     """Search CrossRef for a paper title and return the matching author's affiliation."""
     cache_key = f"cr_title:{_normalise_name(title)}:{_normalise_name(author_name)}"
-    cached = _read_cache(cache_key, "crossref_title")
+    cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "crossref_title")
     if cached is not None:
         return cached if cached else None
 
@@ -201,13 +180,13 @@ def _crossref_affiliation_by_title(
                         if name_str:
                             if verbose:
                                 logger.info(f"      CR-title: {name_str}")
-                            _write_cache(cache_key, name_str, "crossref_title")
+                            _write_cache(str(CACHE_DIR), cache_key, name_str, "crossref_title")
                             return name_str
     except Exception as e:
         if verbose:
             logger.error(f"      CR-title error: {e}")
 
-    _write_cache(cache_key, "", "crossref_title")
+    _write_cache(str(CACHE_DIR), cache_key, "", "crossref_title")
     return None
 
 
@@ -234,7 +213,7 @@ def _crossref_affiliation_by_doi(
         return None
 
     cache_key = f"cr_doi:{doi_url}:{_normalise_name(author_name)}"
-    cached = _read_cache(cache_key, "crossref_doi")
+    cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "crossref_doi")
     if cached is not None:
         return cached if cached else None
 
@@ -259,13 +238,13 @@ def _crossref_affiliation_by_doi(
                     if name_str:
                         if verbose:
                             logger.info(f"      CR-doi: {name_str}")
-                        _write_cache(cache_key, name_str, "crossref_doi")
+                        _write_cache(str(CACHE_DIR), cache_key, name_str, "crossref_doi")
                         return name_str
     except Exception as e:
         if verbose:
             logger.error(f"      CR-doi error: {e}")
 
-    _write_cache(cache_key, "", "crossref_doi")
+    _write_cache(str(CACHE_DIR), cache_key, "", "crossref_doi")
     return None
 
 
@@ -281,7 +260,7 @@ def _dblp_affiliation(
     clean = re.sub(r"\s+\d{4}$", "", author_name).strip()
 
     cache_key = f"dblp:{_normalise_name(clean)}"
-    cached = _read_cache(cache_key, "dblp")
+    cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "dblp")
     if cached is not None:
         return cached if cached else None
 
@@ -295,10 +274,10 @@ def _dblp_affiliation(
     if affil:
         if verbose:
             logger.info(f"      DBLP-local: {affil}")
-        _write_cache(cache_key, affil, "dblp")
+        _write_cache(str(CACHE_DIR), cache_key, affil, "dblp")
         return affil
 
-    _write_cache(cache_key, "", "dblp")
+    _write_cache(str(CACHE_DIR), cache_key, "", "dblp")
     return None
 
 

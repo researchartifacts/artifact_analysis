@@ -1,4 +1,3 @@
-import hashlib
 import json
 import logging
 import os
@@ -8,6 +7,19 @@ from typing import Any
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+from src.utils.cache import (
+    read_cache as _read_cache,
+)
+from src.utils.cache import (
+    read_cache_entry as _read_cache_entry,
+)
+from src.utils.cache import (
+    refresh_cache_ts as _refresh_cache_ts,
+)
+from src.utils.cache import (
+    write_cache as _write_cache,
+)
 
 logger = logging.getLogger(__name__)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -63,62 +75,7 @@ github_urls = {
 }
 
 
-def _cache_path(key, namespace="default"):
-    """Return path to cache file for a given key and namespace."""
-    ns_dir = os.path.join(CACHE_DIR, namespace)
-    os.makedirs(ns_dir, exist_ok=True)
-    hashed = hashlib.sha256(key.encode()).hexdigest()
-    return os.path.join(ns_dir, hashed)
-
-
-def _read_cache(key: str, ttl: int = CACHE_TTL, namespace: str = "default") -> str | None:
-    """Return cached value if fresh, else None."""
-    path = _cache_path(key, namespace)
-    if not os.path.exists(path):
-        return None
-    try:
-        with open(path, "r") as f:
-            entry = json.load(f)
-        if time.time() - entry["ts"] < ttl:
-            return entry["body"]
-    except (json.JSONDecodeError, KeyError, OSError):
-        pass
-    return None
-
-
-def _read_cache_entry(key, namespace="default"):
-    """Return the full cache entry dict (body, ts, etag) regardless of TTL, or None."""
-    path = _cache_path(key, namespace)
-    if not os.path.exists(path):
-        return None
-    try:
-        with open(path, "r") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, KeyError, OSError):
-        return None
-
-
-def _write_cache(key: str, body: str, namespace: str = "default", etag: str | None = None) -> None:
-    """Write value to cache, optionally storing an ETag for conditional requests."""
-    path = _cache_path(key, namespace)
-    entry = {"ts": time.time(), "body": body}
-    if etag:
-        entry["etag"] = etag
-    with open(path, "w") as f:
-        json.dump(entry, f)
-
-
-def _refresh_cache_ts(key, namespace="default"):
-    """Touch the cache entry timestamp without changing its data (used after 304)."""
-    path = _cache_path(key, namespace)
-    try:
-        with open(path, "r") as f:
-            entry = json.load(f)
-        entry["ts"] = time.time()
-        with open(path, "w") as f:
-            json.dump(entry, f)
-    except (json.JSONDecodeError, KeyError, OSError):
-        pass
+# Cache functions imported from src.utils.cache
 
 
 def check_url_cached(url: str, ttl: int = CACHE_TTL_URL) -> bool:
@@ -128,11 +85,11 @@ def check_url_cached(url: str, ttl: int = CACHE_TTL_URL) -> bool:
     negative results are cached for CACHE_TTL_URL_NEG (shorter) so they
     are re-checked periodically without hammering every run.
     """
-    cached = _read_cache(url, ttl=ttl, namespace="url_exists")
+    cached = _read_cache(CACHE_DIR, url, ttl=ttl, namespace="url_exists")
     if cached is True:
         return True  # positive hit – trust it
     # Check negative cache (shorter TTL)
-    cached_neg = _read_cache(url, ttl=CACHE_TTL_URL_NEG, namespace="url_exists")
+    cached_neg = _read_cache(CACHE_DIR, url, ttl=CACHE_TTL_URL_NEG, namespace="url_exists")
     if cached_neg is False:
         return False  # recently confirmed non-existent
 
@@ -148,7 +105,7 @@ def check_url_cached(url: str, ttl: int = CACHE_TTL_URL) -> bool:
         # transient — do NOT cache them as negative results.
         return False
 
-    _write_cache(url, exists, namespace="url_exists")
+    _write_cache(CACHE_DIR, url, exists, namespace="url_exists")
     return exists
 
 
@@ -159,7 +116,7 @@ def cached_github_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
     count against the GitHub API rate limit.  This effectively makes re-runs
     free for repos whose data hasn't changed.
     """
-    cached = _read_cache(url, ttl=ttl, namespace="github_stats")
+    cached = _read_cache(CACHE_DIR, url, ttl=ttl, namespace="github_stats")
     if cached is not None:
         return cached  # dict or None — still fresh
 
@@ -172,7 +129,7 @@ def cached_github_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
     headers = _github_headers()
 
     # Use stored ETag for conditional request (304 = free, no rate cost)
-    entry = _read_cache_entry(url, namespace="github_stats")
+    entry = _read_cache_entry(CACHE_DIR, url, namespace="github_stats")
     if entry and entry.get("etag"):
         headers["If-None-Match"] = entry["etag"]
 
@@ -186,7 +143,7 @@ def cached_github_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
 
     if resp.status_code == 304 and entry:
         # Data unchanged — refresh timestamp, return cached data (free!)
-        _refresh_cache_ts(url, namespace="github_stats")
+        _refresh_cache_ts(CACHE_DIR, url, namespace="github_stats")
         return entry.get("body")
     if resp.status_code == 200:
         d = resp.json()
@@ -203,17 +160,17 @@ def cached_github_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
             "topics": d.get("topics", []),
         }
         etag = resp.headers.get("ETag")
-        _write_cache(url, result, namespace="github_stats", etag=etag)
+        _write_cache(CACHE_DIR, url, result, namespace="github_stats", etag=etag)
         return result
     logger.info(f"  Could not collect GitHub stats for {url} (HTTP {resp.status_code})")
     result = None
-    _write_cache(url, result, namespace="github_stats")
+    _write_cache(CACHE_DIR, url, result, namespace="github_stats")
     return result
 
 
 def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
     """Fetch Zenodo record stats with caching."""
-    cached = _read_cache(url, ttl=ttl, namespace="zenodo_stats")
+    cached = _read_cache(CACHE_DIR, url, ttl=ttl, namespace="zenodo_stats")
     if cached is not None:
         return cached
 
@@ -242,13 +199,13 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
         logger.error(f"  Zenodo request error for {url}: {e}")
         result = None
 
-    _write_cache(url, result, namespace="zenodo_stats")
+    _write_cache(CACHE_DIR, url, result, namespace="zenodo_stats")
     return result
 
 
 def cached_figshare_stats(url, ttl=CACHE_TTL_STATS):
     """Fetch Figshare article stats with caching."""
-    cached = _read_cache(url, ttl=ttl, namespace="figshare_stats")
+    cached = _read_cache(CACHE_DIR, url, ttl=ttl, namespace="figshare_stats")
     if cached is not None:
         return cached
 
@@ -284,7 +241,7 @@ def cached_figshare_stats(url, ttl=CACHE_TTL_STATS):
         "updated_at": updated,
         "created_at": created,
     }
-    _write_cache(url, result, namespace="figshare_stats")
+    _write_cache(CACHE_DIR, url, result, namespace="figshare_stats")
     return result
 
 
@@ -294,7 +251,7 @@ def _cached_get(url):
     For GitHub API URLs, sends If-None-Match so that 304 responses are free
     (do not count against rate limits).
     """
-    cached = _read_cache(url, ttl=CACHE_TTL, namespace="http_get")
+    cached = _read_cache(CACHE_DIR, url, ttl=CACHE_TTL, namespace="http_get")
     if cached is not None:
         return cached
 
@@ -302,7 +259,7 @@ def _cached_get(url):
     headers = _github_headers() if is_github_api else {}
 
     # Use stored ETag for conditional request if available
-    entry = _read_cache_entry(url, namespace="http_get")
+    entry = _read_cache_entry(CACHE_DIR, url, namespace="http_get")
     if entry and entry.get("etag"):
         headers["If-None-Match"] = entry["etag"]
 
@@ -317,13 +274,13 @@ def _cached_get(url):
 
     if response.status_code == 304 and entry:
         # Data unchanged — refresh timestamp, return cached data (free!)
-        _refresh_cache_ts(url, namespace="http_get")
+        _refresh_cache_ts(CACHE_DIR, url, namespace="http_get")
         return entry.get("body")
 
     response.raise_for_status()
     body = response.text
     etag = response.headers.get("ETag")
-    _write_cache(url, body, namespace="http_get", etag=etag)
+    _write_cache(CACHE_DIR, url, body, namespace="http_get", etag=etag)
     return body
 
 
