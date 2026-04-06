@@ -33,7 +33,7 @@ jobs:
 
       - name: Install docs dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r requirements-ci.txt
           pip install -r requirements-docs.txt
 
       - name: Build documentation
