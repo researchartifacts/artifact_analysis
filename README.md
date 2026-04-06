@@ -50,7 +50,6 @@ Scripts are organized into functional categories:
 | `src/generators/generate_combined_rankings.py` | Combined multi-source rankings |
 | `src/generators/generate_institution_rankings.py` | Per-institution rankings |
 | `src/generators/generate_author_profiles.py` | Detailed author profile data |
-| `src/generators/generate_geographic_statistics.py` | Geographic distribution analysis |
 | `src/generators/generate_artifact_sources_table.py` | Artifact source tables |
 | `src/generators/generate_artifact_sources_timeline.py` | Artifact source timelines |
 | `src/generators/generate_cited_artifacts_list.py` | Lists of cited artifacts |
@@ -63,7 +62,6 @@ Scripts are organized into functional categories:
 | `src/scrapers/usenix_scrape.py` | Scrapes USENIX conference pages for badges |
 | `src/scrapers/generate_sysartifacts_results.py` | Generates sysartifacts-compatible results.md |
 | `src/scrapers/sys_sec_scrape.py` | GitHub API fetching with caching |
-| `src/scrapers/sys_sec_scrape_no_api.py` | GitHub fetching without API (raw HTML) |
 | `src/scrapers/sys_sec_artifacts_results_scrape.py` | Parses artifact YAML front-matter |
 | `src/scrapers/sys_sec_committee_scrape.py` | Committee member scraping |
 | `src/scrapers/alternative_committee_scrape.py` | Alternative committee scraping |
@@ -72,22 +70,18 @@ Scripts are organized into functional categories:
 
 | Script | Purpose |
 |--------|---------|
-| `src/enrichers/enrich_affiliations.py` | Generic affiliation enrichment |
-| `src/enrichers/enrich_affiliations_dblp.py` | DBLP-based affiliation enrichment |
 | `src/enrichers/enrich_affiliations_dblp_incremental.py` | Incremental DBLP enrichment with caching |
 | `src/enrichers/enrich_affiliations_csrankings.py` | CSRankings-based enrichment |
-| `src/enrichers/add_top_repos.py` | Adds top repositories to profiles |
+| `src/enrichers/enrich_affiliations_openalex.py` | OpenAlex-based enrichment |
 
 ### Utilities
 
 | Script | Purpose |
 |--------|---------|
 | `src/utils/dblp_extract.py` | Pre-extracts DBLP XML into JSON lookup files (papers, affiliations) |
-| `src/utils/parse_dlbp.py` | DBLP XML parsing |
 | `src/utils/collect_artifact_stats.py` | Artifact stats collector |
 | `src/utils/committee_statistics.py` | Committee analysis utilities |
 | `src/utils/test_artifact_repositories.py` | Repository accessibility testing |
-| `src/utils/get_conferences_by_year.py` | Conference discovery utilities |
 
 ## Output
 

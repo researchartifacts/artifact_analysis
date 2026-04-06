@@ -42,7 +42,6 @@ MODULES = [
     ("src.enrichers.enrich_affiliations_dblp", "enrich_affiliations_dblp", "Enrichers", None),
     ("src.enrichers.enrich_affiliations_dblp_incremental", "enrich_affiliations_dblp_incremental", "Enrichers", None),
     ("src.enrichers.enrich_affiliations_openalex", "enrich_affiliations_openalex", "Enrichers", None),
-    ("src.enrichers.enrich_affiliations", "enrich_affiliations", "Enrichers", None),
     # Scrapers
     ("src.scrapers.usenix_scrape", "usenix_scrape", "Scrapers", None),
     ("src.scrapers.acm_scrape", "acm_scrape", "Scrapers", None),
@@ -52,7 +51,6 @@ MODULES = [
     ("src.scrapers.alternative_committee_scrape", "alternative_committee_scrape", "Scrapers", None),
     # Utils
     ("src.utils.dblp_extract", "dblp_extract", "Utilities", "1b"),
-    ("src.utils.eurosys_plot", "eurosys_plot", "Utilities", None),
     ("src.utils.committee_statistics", "committee_statistics", "Utilities", None),
     ("src.utils.test_artifact_repositories", "test_artifact_repositories", "Utilities", None),
     ("src.utils.collect_artifact_stats", "collect_artifact_stats", "Utilities", None),
