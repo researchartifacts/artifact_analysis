@@ -145,17 +145,6 @@ jobs:
             echo "⚠️ No recent DBLP analysis results found (pipeline runs separately)"
           fi
       
-      - name: Add run metadata to website
-        run: |
-          cd website
-          cat > _data/pipeline_metadata.yml <<EOF
-          last_run: "${{ env.RUN_TIMESTAMP }}"
-          status: "success"
-          workflow: "GitHub Actions"
-          EOF
-          echo "Pipeline metadata created:"
-          cat _data/pipeline_metadata.yml
-      
       - name: Verify generated files
         run: |
           echo "Checking generated files..."

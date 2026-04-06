@@ -4,5 +4,8 @@ requests==2.32.3
 beautifulsoup4==4.13.3
 matplotlib==3.10.1
 numpy==2.2.4
+PyTrie==0.4.0
+thefuzz==0.22.1
+urllib3==2.6.3
 pydantic>=2.0
 pytest>=8.0

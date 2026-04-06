@@ -424,9 +424,6 @@ def generate_statistics(conf_regex='.*20[12][0-9]', output_dir=None):
         with open(os.path.join(output_dir, '_data/artifacts_by_year.yml'), 'w') as f:
             yaml.dump(artifacts_by_year, f, default_flow_style=False)
         
-        with open(os.path.join(output_dir, '_data/coverage.yml'), 'w') as f:
-            yaml.dump(coverage, f, default_flow_style=False)
-        
         # Write JSON files for download
         with open(os.path.join(output_dir, 'assets/data/artifacts.json'), 'w') as f:
             json.dump(all_artifacts, f, indent=2)
