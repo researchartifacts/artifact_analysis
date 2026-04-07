@@ -99,6 +99,27 @@ jobs:
             --output_dir ../website \
             $REFRESH_FLAG || echo "⚠️ Repository stats generation skipped"
       
+      - name: Download DBLP author analysis artifact (if available)
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: dblp-author-analysis.yml
+          workflow_conclusion: success
+          name: dblp-analysis-results
+          path: dblp-results/
+          skip_unpack: false
+        continue-on-error: true
+      
+      - name: Merge DBLP results if available
+        run: |
+          if [ -d "dblp-results" ] && [ "$(ls -A dblp-results)" ]; then
+            echo "Found DBLP analysis results, merging into website..."
+            cp -r dblp-results/_data/* website/_data/ 2>/dev/null || true
+            cp -r dblp-results/assets/data/* website/assets/data/ 2>/dev/null || true
+            echo "DBLP results merged successfully"
+          else
+            echo "⚠️ No recent DBLP analysis results found (pipeline runs separately)"
+          fi
+      
       - name: Generate per-area author data
         run: |
           cd reprodb-pipeline
@@ -128,27 +149,6 @@ jobs:
         run: |
           cd reprodb-pipeline
           python -m src.generators.generate_ranking_history --data_dir ../website
-      
-      - name: Download DBLP author analysis artifact (if available)
-        uses: dawidd6/action-download-artifact@v3
-        with:
-          workflow: dblp-author-analysis.yml
-          workflow_conclusion: success
-          name: dblp-analysis-results
-          path: dblp-results/
-          skip_unpack: false
-        continue-on-error: true
-      
-      - name: Merge DBLP results if available
-        run: |
-          if [ -d "dblp-results" ] && [ "$(ls -A dblp-results)" ]; then
-            echo "Found DBLP analysis results, merging into website..."
-            cp -r dblp-results/_data/* website/_data/ 2>/dev/null || true
-            cp -r dblp-results/assets/data/* website/assets/data/ 2>/dev/null || true
-            echo "DBLP results merged successfully"
-          else
-            echo "⚠️ No recent DBLP analysis results found (pipeline runs separately)"
-          fi
       
       - name: Verify generated files
         run: |

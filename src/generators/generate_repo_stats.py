@@ -111,7 +111,7 @@ def collect_stats_for_results(results, url_keys=None):
                 seen_urls.add(url_normalized)
                 jobs.append((url, conf_name, year, artifact.get("title", "Unknown")))
 
-    logger.info(f"  Collecting stats for {len(jobs)} unique URLs (8 workers)")
+    logger.info(f"  Collecting stats for {len(jobs)} unique URLs (4 workers)")
 
     def _fetch_stats(url):
         """Fetch stats for a single URL (thread-safe via disk cache)."""
@@ -128,7 +128,7 @@ def collect_stats_for_results(results, url_keys=None):
 
     all_stats = []
     collected = 0
-    with ThreadPoolExecutor(max_workers=8) as pool:
+    with ThreadPoolExecutor(max_workers=4) as pool:
         future_to_job = {pool.submit(_fetch_stats, url): (url, conf, yr, title) for url, conf, yr, title in jobs}
         for i, future in enumerate(as_completed(future_to_job), 1):
             url, conf_name, year, title = future_to_job[future]

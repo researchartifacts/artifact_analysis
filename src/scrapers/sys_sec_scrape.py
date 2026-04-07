@@ -165,7 +165,7 @@ def cached_github_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
 
 
 def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
-    """Fetch Zenodo record stats with caching."""
+    """Fetch Zenodo record stats with caching and 429 retry."""
     cached = _read_cache(CACHE_DIR, url, ttl=ttl, namespace="zenodo_stats")
     if cached is not _MISSING:
         return cached
@@ -178,23 +178,30 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
         logger.info(f"  Could not parse Zenodo URL {url}")
         return None
 
+    result = None
     try:
-        resp = _session.get(f"https://zenodo.org/api/records/{rec}", timeout=_session.default_timeout)
-        if resp.status_code == 200:
-            record = resp.json()
-            stats = record.get("stats", {})
-            result = {
-                "zenodo_views": stats.get("unique_views", 0),
-                "zenodo_downloads": stats.get("unique_downloads", 0),
-                "updated_at": record.get("updated", ""),
-                "created_at": record.get("created", ""),
-            }
-        else:
-            logger.info(f"  Could not collect Zenodo stats for {url} (HTTP {resp.status_code})")
-            result = None
+        for attempt in range(4):  # up to 3 retries on 429
+            resp = _session.get(f"https://zenodo.org/api/records/{rec}", timeout=_session.default_timeout)
+            if resp.status_code == 200:
+                record = resp.json()
+                stats = record.get("stats", {})
+                result = {
+                    "zenodo_views": stats.get("unique_views", 0),
+                    "zenodo_downloads": stats.get("unique_downloads", 0),
+                    "updated_at": record.get("updated", ""),
+                    "created_at": record.get("created", ""),
+                }
+                break
+            if resp.status_code == 429:
+                retry_after = int(resp.headers.get("Retry-After", 0))
+                wait = max(retry_after, 2 ** (attempt + 1))  # exponential backoff: 2, 4, 8s
+                logger.info(f"  Zenodo 429 for {url}, waiting {wait}s (attempt {attempt + 1}/4)")
+                time.sleep(wait)
+            else:
+                logger.info(f"  Could not collect Zenodo stats for {url} (HTTP {resp.status_code})")
+                break
     except requests.RequestException as e:
         logger.error(f"  Zenodo request error for {url}: {e}")
-        result = None
 
     _write_cache(CACHE_DIR, url, result, namespace="zenodo_stats")
     return result
