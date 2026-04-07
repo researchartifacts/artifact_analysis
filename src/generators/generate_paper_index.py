@@ -13,17 +13,10 @@ import argparse
 import json
 import logging
 import os
-import re
+
+from src.utils.conference import normalize_title
 
 logger = logging.getLogger(__name__)
-
-
-def normalize_title(title):
-    """Normalize title for dedup matching (same logic as generate_author_stats)."""
-    if not title:
-        return ""
-    normalized = re.sub(r"[^\w\s]", "", title.lower())
-    return " ".join(normalized.split())
 
 
 def load_existing_index(path):

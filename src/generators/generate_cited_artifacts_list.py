@@ -19,18 +19,11 @@ import argparse
 import json
 import logging
 import os
-import re
 from collections import defaultdict
 
+from src.utils.conference import normalize_title
+
 logger = logging.getLogger(__name__)
-
-
-def normalize_title(title: str) -> str:
-    """Normalize title for matching"""
-    if not title:
-        return ""
-    normalized = re.sub(r"[^\w\s]", "", title.lower())
-    return " ".join(normalized.split())
 
 
 def generate(data_dir: str) -> None:

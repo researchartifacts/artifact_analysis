@@ -10,7 +10,8 @@ import re
 logger = logging.getLogger(__name__)
 
 
-def normalize_title(t: str) -> str:
+def _title_key(t: str) -> str:
+    """Strict title key: lowercase, alphanumeric only (no spaces)."""
     return re.sub(r"[^a-z0-9]", "", t.lower())
 
 
@@ -42,13 +43,13 @@ def generate_search_data(data_dir: str) -> list:
     # Build paper_authors lookup by normalized title
     pa_lookup = {}
     for pa in paper_authors:
-        key = normalize_title(pa["title"])
+        key = _title_key(pa["title"])
         pa_lookup[key] = pa
 
     # Merge
     merged = []
     for art in artifacts:
-        key = normalize_title(art["title"])
+        key = _title_key(art["title"])
         pa = pa_lookup.get(key, {})
         authors_list = pa.get("authors", [])
         clean_authors = [re.sub(r"\s+\d{4}$", "", a) for a in authors_list]

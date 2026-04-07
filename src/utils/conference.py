@@ -102,3 +102,15 @@ def normalize_name(name: str) -> str:
     name = re.sub(r"\s+\d{4}$", "", name)
     name = re.sub(r"\s+", " ", name).strip()
     return name
+
+
+def normalize_title(title: str) -> str:
+    """Normalize a paper title for fuzzy matching.
+
+    Lower-cases, strips punctuation (keeping word chars and spaces),
+    and collapses whitespace.  Used for deduplication and cross-source
+    title matching.
+    """
+    if not title:
+        return ""
+    return " ".join(re.sub(r"[^\w\s]", "", title.lower()).split())

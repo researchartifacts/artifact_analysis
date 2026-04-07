@@ -20,6 +20,8 @@ import urllib.parse
 import urllib.request
 from collections import defaultdict
 
+from src.utils.conference import normalize_title
+
 logger = logging.getLogger(__name__)
 DOI_REGEX = re.compile(r"10\.[0-9]{4,9}/[-._;()/:A-Za-z0-9]+")
 # Only accept DOIs from artifact repositories (Zenodo, Figshare)
@@ -64,13 +66,6 @@ def is_artifact_doi(doi: str) -> bool:
     if not doi:
         return False
     return doi.lower().startswith(ALLOWED_ARTIFACT_DOI_PREFIXES)
-
-
-def normalize_title(title: str) -> str:
-    if not title:
-        return ""
-    normalized = re.sub(r"[^\w\s]", "", title.lower())
-    return " ".join(normalized.split())
 
 
 def extract_doi(url) -> str:

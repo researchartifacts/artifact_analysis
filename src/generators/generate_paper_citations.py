@@ -33,11 +33,11 @@ import hashlib
 import json
 import logging
 import os
-import re
 import time
 from pathlib import Path
 
 from src.utils.cache import _MISSING, read_cache, write_cache
+from src.utils.conference import normalize_title
 
 logger = logging.getLogger(__name__)
 # ── Configuration ────────────────────────────────────────────────────────────
@@ -55,17 +55,11 @@ def log(msg: str) -> None:
     logger.info(msg, flush=True)
 
 
-def _normalize_title(title: str) -> str:
-    if not title:
-        return ""
-    return " ".join(re.sub(r"[^\w\s]", "", title.lower()).split())
-
-
 # ── Disk Cache ───────────────────────────────────────────────────────────────
 
 
 def _cache_key(title: str) -> str:
-    return hashlib.sha256(_normalize_title(title).encode()).hexdigest()
+    return hashlib.sha256(normalize_title(title).encode()).hexdigest()
 
 
 # ── Google Scholar lookup ────────────────────────────────────────────────────
@@ -115,8 +109,8 @@ def scholar_lookup(title: str) -> dict | None:
     # Verify match quality (Jaccard ≥ 0.5 on word sets)
     bib = pub.get("bib", {})
     pub_title = bib.get("title", "")
-    norm_q = set(_normalize_title(title).split())
-    norm_r = set(_normalize_title(pub_title).split())
+    norm_q = set(normalize_title(title).split())
+    norm_r = set(normalize_title(pub_title).split())
     if norm_q and norm_r:
         jaccard = len(norm_q & norm_r) / len(norm_q | norm_r)
         if jaccard < 0.5:
@@ -153,7 +147,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
     seen: set[str] = set()
     unique: list[dict] = []
     for a in artifacts:
-        norm = _normalize_title(a.get("title", ""))
+        norm = normalize_title(a.get("title", ""))
         if norm and norm not in seen:
             seen.add(norm)
             unique.append(a)
@@ -190,7 +184,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
 
     for i, a in enumerate(unique):
         title = a.get("title", "")
-        norm = _normalize_title(title)
+        norm = normalize_title(title)
 
         # Try cache first
         cached = read_cache(str(CACHE_DIR), _cache_key(title), cache_ttl, CACHE_NS)
@@ -308,7 +302,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
                     entries.append(
                         {
                             "title": rem.get("title", ""),
-                            "normalized_title": _normalize_title(rem.get("title", "")),
+                            "normalized_title": normalize_title(rem.get("title", "")),
                             "conference": rem.get("conference", ""),
                             "year": rem.get("year", 0),
                             "category": rem.get("category", ""),
