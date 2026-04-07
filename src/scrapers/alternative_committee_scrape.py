@@ -447,7 +447,7 @@ def scrape_ches_committee(year, session=None):
                 chair_count = sum(1 for m in deduped if m["role"] == "chair")
                 member_count = len(deduped) - chair_count
                 logger.info(
-                    f"  CHES: Found {member_count} members + {chair_count} chair(s) for ches{year}", file=sys.stderr
+                    f"  CHES: Found {member_count} members + {chair_count} chair(s) for ches{year}"
                 )
             return deduped if deduped else None
     except requests.RequestException as e:

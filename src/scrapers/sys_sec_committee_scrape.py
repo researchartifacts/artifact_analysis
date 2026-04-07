@@ -2,8 +2,6 @@ import argparse
 import logging
 import re
 
-import requests
-
 from .sys_sec_scrape import download_file, get_conferences_from_prefix, github_urls
 
 logger = logging.getLogger(__name__)
@@ -78,14 +76,12 @@ def _parse_member_line(line):
 def get_committee_for_conference(conference: str, prefix: str) -> dict | None:
     base_url = github_urls[prefix]["raw_base_url"] + conference
     # committee files are either named committee.md or organizers.md
-    try:
-        response = download_file(base_url + "/committee.md")
-    except requests.exceptions.HTTPError:
-        try:
-            response = download_file(base_url + "/organizers.md")
-        except requests.exceptions.HTTPError:
-            logger.info(f"couldn't get committee for {conference}")
-            return None
+    response = download_file(base_url + "/committee.md")
+    if response is None:
+        response = download_file(base_url + "/organizers.md")
+    if response is None:
+        logger.info(f"couldn't get committee for {conference}")
+        return None
 
     # --- Parse chairs and members separately ---
     # Look for chair sections before the AEC section
