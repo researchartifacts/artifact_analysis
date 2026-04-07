@@ -19,6 +19,7 @@ import json
 import logging
 import os
 import re
+import unicodedata
 from collections import defaultdict
 from pathlib import Path
 
@@ -418,7 +419,7 @@ def generate_combined_rankings(data_dir: str) -> None:
     all_authors = _load_json("authors.json")
     sys_authors = _load_json("systems_authors.json")
     sec_authors = _load_json("security_authors.json")
-    _load_json("ae_members.json")
+    all_ae_members = _load_json("ae_members.json")
     sys_members = _load_json("systems_ae_members.json")
     sec_members = _load_json("security_ae_members.json")
 
@@ -587,6 +588,69 @@ def generate_combined_rankings(data_dir: str) -> None:
         with open(path, "w") as f:
             json.dump(data, f, ensure_ascii=False)
         logger.info(f"  Wrote {path} ({len(data)} entries)")
+
+    # ── Per-conference combined rankings ──────────────────────────────────
+    # Discover conferences from existing {conf}_conf_authors.json files
+    import glob
+
+    conf_author_files = glob.glob(os.path.join(assets_data, "*_conf_authors.json"))
+    for conf_author_path in sorted(conf_author_files):
+        conf_lower = os.path.basename(conf_author_path).replace("_conf_authors.json", "")
+        conf_upper = conf_lower.upper()
+
+        # Load per-conference authors (already filtered & scored for this conf)
+        with open(conf_author_path) as f:
+            conf_authors_data = json.load(f)
+
+        # Add citation data
+        _add_citations_to_authors(conf_authors_data)
+
+        # Filter AE members to this conference, recompute per-conf AE stats
+        conf_ae_members = []
+        for m in all_ae_members:
+            entries = [c for c in (m.get("conferences") or []) if isinstance(c, list) and c[0] == conf_upper]
+            if not entries:
+                continue
+            conf_m = {
+                "name": m["name"],
+                "display_name": m.get("display_name", m["name"]),
+                "affiliation": m.get("affiliation", ""),
+                "total_memberships": len(entries),
+                "chair_count": sum(1 for e in entries if e[2] == "chair"),
+                "conferences": entries,
+                "years": {},
+            }
+            for e in entries:
+                yr = str(e[1])
+                conf_m["years"][yr] = conf_m["years"].get(yr, 0) + 1
+            conf_ae_members.append(conf_m)
+
+        # Merge using the same logic as area-level rankings
+        conf_combined = _merge_rankings(conf_authors_data, conf_ae_members)
+        conf_combined = [c for c in conf_combined if c["combined_score"] >= 3]
+
+        # Re-rank
+        rank = 1
+        for i, c in enumerate(conf_combined):
+            if i > 0 and c["combined_score"] < conf_combined[i - 1]["combined_score"]:
+                rank = i + 1
+            c["rank"] = rank
+
+        # Inject author_id
+        try:
+            if name_to_id:
+                for entry in conf_combined:
+                    aid = name_to_id.get(entry["name"])
+                    if aid is not None:
+                        entry["author_id"] = aid
+        except NameError:
+            pass
+
+        fname = f"{conf_lower}_combined_rankings.json"
+        path = os.path.join(assets_data, fname)
+        with open(path, "w") as f:
+            json.dump(conf_combined, f, ensure_ascii=False)
+        logger.info(f"  Wrote {path} ({len(conf_combined)} entries)")
 
     # Summary YAML
     # Count people who have both artifacts AND AE service
