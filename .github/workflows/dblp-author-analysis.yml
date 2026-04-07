@@ -101,7 +101,7 @@ jobs:
           fi
           python -m src.enrichers.enrich_affiliations_dblp_incremental \
             --data_dir website \
-            --max_searches 100 \
+            --max_searches 5000 \
             --verbose $RECHECK_FLAG || {
             echo "⚠️ DBLP enrichment did not complete (rate limited or timed out)"
             echo "Continuing with existing affiliations..."
@@ -112,7 +112,7 @@ jobs:
         run: |
           echo "Enriching affiliations from OpenAlex/CrossRef..."
           RECHECK_FLAG=""
-          MAX_AUTHORS=200
+          MAX_AUTHORS=2000
           if [ "${{ env.RECHECK }}" = "true" ]; then
             RECHECK_FLAG="--recheck"
             MAX_AUTHORS=10000
