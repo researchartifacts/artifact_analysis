@@ -44,7 +44,8 @@ logger = logging.getLogger(__name__)
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent.parent  # artifact_analysis/
 CACHE_DIR = REPO_ROOT / ".cache" / "openalex"
-CACHE_TTL = 86400 * 90  # 90 days
+_SECONDS_PER_DAY = 86400
+CACHE_TTL = _SECONDS_PER_DAY * 90  # 90 days
 
 REQUEST_DELAY = 0.15  # polite delay between API calls
 OPENALEX_DELAY = 0.12  # OpenAlex asks for 10 req/s max

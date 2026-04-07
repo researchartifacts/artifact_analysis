@@ -70,7 +70,7 @@ def should_search_author(author_name, history):
 
     # Calculate backoff period for unsuccessful searches
     backoff_days = min(BACKOFF_DEFAULT * (BACKOFF_MULTIPLIER**attempt_count), BACKOFF_MAX)
-    backoff_seconds = backoff_days * 86400
+    backoff_seconds = backoff_days * 86_400  # seconds per day
 
     time_since_search = time.time() - last_search
 

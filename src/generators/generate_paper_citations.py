@@ -408,7 +408,7 @@ def main() -> None:
         help="Only use cached results — no API calls",
     )
     args = parser.parse_args()
-    generate(args.data_dir, args.cache_ttl_days * 86400, args.cache_only)
+    generate(args.data_dir, args.cache_ttl_days * 86_400, args.cache_only)
 
 
 if __name__ == "__main__":
