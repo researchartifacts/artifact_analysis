@@ -125,16 +125,12 @@ class TestBuildArtifactEntry:
 
     def test_appendix_url_sec(self):
         art = {"title": "T", "badges": [], "appendix_url": "results.html"}
-        entry = _build_artifact_entry(
-            art, "usenix", "security", 2023, "usenixsec2023", {"usenixsec2023": {}}, {}
-        )
+        entry = _build_artifact_entry(art, "usenix", "security", 2023, "usenixsec2023", {"usenixsec2023": {}}, {})
         assert entry["appendix_url"] == "https://secartifacts.github.io/usenixsec2023/results.html"
 
     def test_appendix_url_sys(self):
         art = {"title": "T", "badges": [], "appendix_url": "results.html"}
-        entry = _build_artifact_entry(
-            art, "osdi", "systems", 2023, "osdi2023", {}, {"osdi2023": {}}
-        )
+        entry = _build_artifact_entry(art, "osdi", "systems", 2023, "osdi2023", {}, {"osdi2023": {}})
         assert entry["appendix_url"] == "https://sysartifacts.github.io/osdi2023/results.html"
 
     def test_appendix_url_absolute_unchanged(self):

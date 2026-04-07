@@ -426,7 +426,9 @@ def generate(data_dir: str) -> None:
                         "error": "disabled_after_connect_failures",
                     }
                 else:
-                    semantic_entry = fetch_semantic_scholar_citations(doi, semantic_scholar_cache, semantic_citing_limit)
+                    semantic_entry = fetch_semantic_scholar_citations(
+                        doi, semantic_scholar_cache, semantic_citing_limit
+                    )
                 openalex_count = openalex_entry.get("count")
                 semantic_count = semantic_entry.get("count")
                 openalex_citing_dois = openalex_entry.get("citing_dois", [])
@@ -440,7 +442,9 @@ def generate(data_dir: str) -> None:
                     semantic_failures += 1
                     if semantic_failures >= 5 and not semantic_disabled:
                         semantic_disabled = True
-                        log("[SemanticScholar] disabled for this run after 5 timeout failures (network/connectivity issue)")
+                        log(
+                            "[SemanticScholar] disabled for this run after 5 timeout failures (network/connectivity issue)"
+                        )
 
                 counts = [c for c in [openalex_count, semantic_count] if isinstance(c, int)]
                 cited_by = max(counts) if counts else None
