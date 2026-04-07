@@ -36,7 +36,9 @@ import requests
 import yaml
 from bs4 import BeautifulSoup
 
-from .sys_sec_scrape import CACHE_TTL, _read_cache, _write_cache
+from src.utils.cache import _MISSING
+
+from .sys_sec_scrape import CACHE_DIR, CACHE_TTL, _read_cache, _write_cache
 
 logger = logging.getLogger(__name__)
 BASE_URL = "https://www.usenix.org"
@@ -66,8 +68,8 @@ def scrape_presentation_links(conference: str, year: int, session: requests.Sess
     url = f"{BASE_URL}/conference/{conference}{suffix}/technical-sessions"
 
     logger.info(f"  Fetching program: {url}", file=sys.stderr)
-    cached = _read_cache(url, ttl=CACHE_TTL, namespace="usenix")
-    if cached is not None:
+    cached = _read_cache(CACHE_DIR, url, ttl=CACHE_TTL, namespace="usenix")
+    if cached is not _MISSING:
         links = cached
         logger.info(f"  Found {len(links)} unique presentation pages (cached)", file=sys.stderr)
         return links
@@ -86,7 +88,7 @@ def scrape_presentation_links(conference: str, year: int, session: requests.Sess
             links.add(href)
 
     result = sorted(links)
-    _write_cache(url, result, namespace="usenix")
+    _write_cache(CACHE_DIR, url, result, namespace="usenix")
     logger.info(f"  Found {len(result)} unique presentation pages", file=sys.stderr)
     return result
 
@@ -105,8 +107,8 @@ def scrape_paper_page(path: str, session: requests.Session | None = None) -> dic
     url = f"{BASE_URL}{path}"
 
     # Check cache first
-    cached = _read_cache(url, ttl=CACHE_TTL, namespace="usenix_paper")
-    if cached is not None:
+    cached = _read_cache(CACHE_DIR, url, ttl=CACHE_TTL, namespace="usenix_paper")
+    if cached is not _MISSING:
         return cached  # dict or None
 
     resp = sess.get(url, timeout=30)
@@ -117,7 +119,7 @@ def scrape_paper_page(path: str, session: requests.Session | None = None) -> dic
     # Extract title from <h1> with id "page-title" or class "page__title"
     title_el = soup.find("h1", id="page-title") or soup.find("h1", class_="page__title")
     if not title_el:
-        _write_cache(url, None, namespace="usenix_paper")
+        _write_cache(CACHE_DIR, url, None, namespace="usenix_paper")
         return None
     title = title_el.get_text(strip=True)
 
@@ -137,7 +139,7 @@ def scrape_paper_page(path: str, session: requests.Session | None = None) -> dic
         "work-in-progress",
     )
     if any(title.lower().startswith(p) for p in skip_prefixes):
-        _write_cache(url, None, namespace="usenix_paper")
+        _write_cache(CACHE_DIR, url, None, namespace="usenix_paper")
         return None
 
     # Extract authors
@@ -176,7 +178,7 @@ def scrape_paper_page(path: str, session: requests.Session | None = None) -> dic
         "paper_url": paper_url,
         "presentation_url": url,
     }
-    _write_cache(url, result, namespace="usenix_paper")
+    _write_cache(CACHE_DIR, url, result, namespace="usenix_paper")
     return result
 
 
@@ -256,8 +258,8 @@ def scrape_organizers(conference: str, year: int, session: requests.Session | No
     url = f"{BASE_URL}/conference/{conference}{suffix}/call-for-artifacts"
 
     cache_key = f"{url}#organizers"
-    cached = _read_cache(cache_key, ttl=CACHE_TTL, namespace="usenix_organizers")
-    if cached is not None:
+    cached = _read_cache(CACHE_DIR, cache_key, ttl=CACHE_TTL, namespace="usenix_organizers")
+    if cached is not _MISSING:
         return cached
 
     logger.info(f"  Fetching organizers: {url}", file=sys.stderr)
@@ -361,12 +363,12 @@ def scrape_organizers(conference: str, year: int, session: requests.Session | No
 
     if not chairs and not members:
         logger.warning(f"  Warning: No organizer data found for {conference.upper()} {year}", file=sys.stderr)
-        _write_cache(cache_key, None, namespace="usenix_organizers")
+        _write_cache(CACHE_DIR, cache_key, None, namespace="usenix_organizers")
         return None
 
     result = {"chairs": chairs, "members": members}
     logger.info(f"  Found {len(chairs)} chairs and {len(members)} committee members", file=sys.stderr)
-    _write_cache(cache_key, result, namespace="usenix_organizers")
+    _write_cache(CACHE_DIR, cache_key, result, namespace="usenix_organizers")
     return result
 
 

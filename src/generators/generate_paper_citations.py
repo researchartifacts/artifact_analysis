@@ -37,7 +37,7 @@ import re
 import time
 from pathlib import Path
 
-from src.utils.cache import read_cache, write_cache
+from src.utils.cache import _MISSING, read_cache, write_cache
 
 logger = logging.getLogger(__name__)
 # ── Configuration ────────────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
     uncached = 0
     for a in unique:
         c = read_cache(str(CACHE_DIR), _cache_key(a["title"]), cache_ttl, CACHE_NS)
-        if c is None:
+        if c is _MISSING:
             uncached += 1
         elif c == "":
             cached_miss_neg += 1
@@ -194,7 +194,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
 
         # Try cache first
         cached = read_cache(str(CACHE_DIR), _cache_key(title), cache_ttl, CACHE_NS)
-        if cached is not None and cached != "":
+        if cached is not _MISSING and cached != "":
             # Cache hit with data
             entry = {
                 "title": title,

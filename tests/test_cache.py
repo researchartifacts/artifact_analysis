@@ -4,6 +4,7 @@ import json
 import time
 
 from src.utils.cache import (
+    _MISSING,
     cache_path,
     read_cache,
     read_cache_entry,
@@ -47,10 +48,10 @@ class TestWriteAndReadCache:
         entry["ts"] = time.time() - 120
         with open(path, "w") as f:
             json.dump(entry, f)
-        assert read_cache(d, "k", ttl=60) is None
+        assert read_cache(d, "k", ttl=60) is _MISSING
 
     def test_miss(self, tmp_path):
-        assert read_cache(str(tmp_path), "nonexistent", ttl=60) is None
+        assert read_cache(str(tmp_path), "nonexistent", ttl=60) is _MISSING
 
     def test_etag_stored(self, tmp_path):
         d = str(tmp_path)

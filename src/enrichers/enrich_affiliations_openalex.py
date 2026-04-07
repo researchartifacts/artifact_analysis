@@ -33,6 +33,7 @@ from urllib.parse import quote
 
 import requests
 
+from src.utils.cache import _MISSING
 from src.utils.cache import read_cache as _read_cache
 from src.utils.cache import write_cache as _write_cache
 
@@ -104,7 +105,7 @@ def _openalex_affiliation_by_title(
     """Search OpenAlex for a paper title and return the matching author's affiliation."""
     cache_key = f"oa_title:{_normalise_name(title)}:{_normalise_name(author_name)}"
     cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "openalex_title")
-    if cached is not None:
+    if cached is not _MISSING:
         return cached if cached else None
 
     clean_title = re.sub(r"\.$", "", title).strip()  # remove trailing period
@@ -153,7 +154,7 @@ def _crossref_affiliation_by_title(
     """Search CrossRef for a paper title and return the matching author's affiliation."""
     cache_key = f"cr_title:{_normalise_name(title)}:{_normalise_name(author_name)}"
     cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "crossref_title")
-    if cached is not None:
+    if cached is not _MISSING:
         return cached if cached else None
 
     clean_title = re.sub(r"\.$", "", title).strip()
@@ -214,7 +215,7 @@ def _crossref_affiliation_by_doi(
 
     cache_key = f"cr_doi:{doi_url}:{_normalise_name(author_name)}"
     cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "crossref_doi")
-    if cached is not None:
+    if cached is not _MISSING:
         return cached if cached else None
 
     # Normalise DOI URL → DOI string
@@ -261,7 +262,7 @@ def _dblp_affiliation(
 
     cache_key = f"dblp:{_normalise_name(clean)}"
     cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "dblp")
-    if cached is not None:
+    if cached is not _MISSING:
         return cached if cached else None
 
     try:

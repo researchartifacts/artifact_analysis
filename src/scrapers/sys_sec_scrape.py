@@ -9,6 +9,9 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from src.utils.cache import (
+    _MISSING,
+)
+from src.utils.cache import (
     read_cache as _read_cache,
 )
 from src.utils.cache import (
@@ -117,7 +120,7 @@ def cached_github_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
     free for repos whose data hasn't changed.
     """
     cached = _read_cache(CACHE_DIR, url, ttl=ttl, namespace="github_stats")
-    if cached is not None:
+    if cached is not _MISSING:
         return cached  # dict or None — still fresh
 
     repo = url.split("github.com/")[1]
@@ -171,7 +174,7 @@ def cached_github_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
 def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
     """Fetch Zenodo record stats with caching."""
     cached = _read_cache(CACHE_DIR, url, ttl=ttl, namespace="zenodo_stats")
-    if cached is not None:
+    if cached is not _MISSING:
         return cached
 
     if "/records/" in url:
@@ -206,7 +209,7 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
 def cached_figshare_stats(url, ttl=CACHE_TTL_STATS):
     """Fetch Figshare article stats with caching."""
     cached = _read_cache(CACHE_DIR, url, ttl=ttl, namespace="figshare_stats")
-    if cached is not None:
+    if cached is not _MISSING:
         return cached
 
     clean = url
@@ -252,7 +255,7 @@ def _cached_get(url):
     (do not count against rate limits).
     """
     cached = _read_cache(CACHE_DIR, url, ttl=CACHE_TTL, namespace="http_get")
-    if cached is not None:
+    if cached is not _MISSING:
         return cached
 
     is_github_api = "api.github.com" in url

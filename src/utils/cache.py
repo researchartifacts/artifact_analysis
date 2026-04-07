@@ -2,6 +2,9 @@
 
 Every cached value is stored as ``{"ts": <unix-epoch>, "body": <payload>}``,
 optionally with an ``"etag"`` field for conditional HTTP requests.
+
+The *body* may be any JSON-serialisable Python value (``str``, ``dict``,
+``list``, ``bool``, ``int``, ``float``, or ``None``).
 """
 
 from __future__ import annotations
@@ -11,6 +14,7 @@ import json
 import logging
 import os
 import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,32 +27,40 @@ def cache_path(base_dir: str, key: str, namespace: str = "default") -> str:
     return os.path.join(ns_dir, hashed)
 
 
-def read_cache(base_dir: str, key: str, ttl: int, namespace: str = "default") -> str | None:
-    """Return cached body if fresh (younger than *ttl* seconds), else ``None``."""
+_MISSING = object()  # sentinel – distinguishes "body not in entry" from "body is None"
+
+
+def read_cache(base_dir: str, key: str, ttl: int, namespace: str = "default") -> Any:
+    """Return cached body if fresh (younger than *ttl* seconds), else ``_MISSING``.
+
+    Returns the *original* Python value that was stored (dict, list, str, …).
+    Returns the module-level sentinel ``_MISSING`` on cache miss so callers
+    can distinguish a miss from a cached ``None``.
+    """
     path = cache_path(base_dir, key, namespace)
     if not os.path.exists(path):
-        return None
+        return _MISSING
     try:
         with open(path) as f:
-            entry: dict[str, object] = json.load(f)
-        ts = float(entry.get("ts", 0))  # type: ignore[arg-type]
+            entry = json.load(f)
+        ts = float(entry.get("ts", 0))
         if time.time() - ts < ttl:
-            return str(entry["body"]) if "body" in entry else None
+            return entry.get("body", _MISSING)
     except (json.JSONDecodeError, KeyError, OSError):
         pass
-    return None
+    return _MISSING
 
 
 def write_cache(
     base_dir: str,
     key: str,
-    body: str,
+    body: Any,
     namespace: str = "default",
     etag: str | None = None,
 ) -> None:
     """Write *body* to the cache, optionally storing an HTTP ETag."""
     path = cache_path(base_dir, key, namespace)
-    entry: dict = {"ts": time.time(), "body": body}
+    entry: dict[str, Any] = {"ts": time.time(), "body": body}
     if etag:
         entry["etag"] = etag
     with open(path, "w") as f:

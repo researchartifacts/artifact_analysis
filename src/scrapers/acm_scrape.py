@@ -33,7 +33,10 @@ import requests
 import yaml
 from bs4 import BeautifulSoup
 
+from src.utils.cache import _MISSING
+
 from .sys_sec_scrape import (
+    CACHE_DIR,
     CACHE_TTL,
     _read_cache,
     _session_with_retries,
@@ -147,8 +150,8 @@ def _scrape_acm_paper_badges(doi, session=None):
         return None
 
     cache_key = f"acm_badges:{doi}"
-    cached = _read_cache(cache_key, ttl=CACHE_TTL, namespace="acm_badges")
-    if cached is not None:
+    cached = _read_cache(CACHE_DIR, cache_key, ttl=CACHE_TTL, namespace="acm_badges")
+    if cached is not _MISSING:
         return cached  # list of badges (possibly empty) or None
 
     sess = session or _session_with_retries()
@@ -172,7 +175,7 @@ def _scrape_acm_paper_badges(doi, session=None):
         # Cloudflare block – cannot scrape
         return None
     if resp.status_code != 200:
-        _write_cache(cache_key, None, namespace="acm_badges")
+        _write_cache(CACHE_DIR, cache_key, None, namespace="acm_badges")
         return None
 
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -201,7 +204,7 @@ def _scrape_acm_paper_badges(doi, session=None):
             seen.add(b)
             deduped.append(b)
 
-    _write_cache(cache_key, deduped, namespace="acm_badges")
+    _write_cache(CACHE_DIR, cache_key, deduped, namespace="acm_badges")
     return deduped
 
 
