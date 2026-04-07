@@ -210,24 +210,28 @@ def load_affiliations(repo_root: str | None = None) -> dict[str, str]:
         return result
 
 
+# In-memory cache for find_affiliation (avoid re-reading JSON on every call)
+_affiliations_cache: dict[str, str] | None = None
+_affiliations_lower_cache: dict[str, str] | None = None
+
+
 def find_affiliation(name, repo_root=None):
     """Look up an author's affiliation from the pre-extracted DBLP data.
 
     Tries exact match, then case-insensitive.  Returns the affiliation
     string or *None*.
     """
-    affiliations = load_affiliations(repo_root)
-    if not affiliations:
+    global _affiliations_cache, _affiliations_lower_cache
+    if _affiliations_cache is None:
+        _affiliations_cache = load_affiliations(repo_root)
+        _affiliations_lower_cache = {k.lower(): v for k, v in _affiliations_cache.items()}
+    if not _affiliations_cache:
         return None
     # Exact match
-    if name in affiliations:
-        return affiliations[name]
+    if name in _affiliations_cache:
+        return _affiliations_cache[name]
     # Case-insensitive fallback
-    lower = name.lower()
-    for aname, affil in affiliations.items():
-        if aname.lower() == lower:
-            return affil
-    return None
+    return _affiliations_lower_cache.get(name.lower())
 
 
 def papers_for_venue_year(conf: str, year: int, repo_root: str | None = None) -> list[dict]:

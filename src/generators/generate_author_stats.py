@@ -295,6 +295,21 @@ def parse_dblp_for_authors(
     logger.info(f"Total artifact papers matched: {len(papers_found)}")
     logger.info(f"Total papers tracked at conference venues: {total_venue} (author-paper pairs)")
     logger.info(f"Total DBLP affiliations extracted: {len(affiliations)}")
+
+    # Write affiliations cache for downstream enrichment layers
+    # (enrich_affiliations_dblp_incremental reads this file)
+    try:
+        from ..utils.dblp_extract import _extract_dir
+
+        extract_dir = _extract_dir()
+        os.makedirs(extract_dir, exist_ok=True)
+        affil_cache = os.path.join(extract_dir, "affiliations.json")
+        with open(affil_cache, "w") as f:
+            json.dump(affiliations, f, separators=(",", ":"))
+        logger.info(f"Affiliations cache written: {affil_cache} ({len(affiliations)} entries)")
+    except Exception as e:
+        logger.warning(f"Could not write affiliations cache: {e}")
+
     return papers_found, venue_papers, affiliations
 
 
