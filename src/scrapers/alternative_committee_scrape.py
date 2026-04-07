@@ -152,7 +152,7 @@ def _parse_usenix_committee_html(soup):
             if current_parts:
                 lines.append("".join(current_parts).strip())
                 current_parts = []
-        elif hasattr(child, "name") and child.name == "em" or hasattr(child, "name") and child.name == "a":
+        elif hasattr(child, "name") and child.name in ("em", "a"):
             current_parts.append(child.get_text())
         else:
             text = str(child) if not hasattr(child, "name") else child.get_text()
