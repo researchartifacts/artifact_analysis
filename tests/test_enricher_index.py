@@ -6,7 +6,7 @@ only test the index plumbing.
 """
 
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from tests.conftest import read_json, write_json
 
@@ -68,55 +68,6 @@ class TestCSRankingsIndexIntegration:
         assert stats["total"] == 1
         # No index file should be created
         assert not os.path.exists(str(tmp_website / "assets" / "data" / "author_index.json"))
-
-
-class TestDblpIndexIntegration:
-    """Verify enrich_affiliations_dblp_incremental updates author_index.json."""
-
-    @patch("src.enrichers.enrich_affiliations_dblp_incremental.save_search_history")
-    @patch("src.enrichers.enrich_affiliations_dblp_incremental.load_search_history", return_value={})
-    @patch("src.enrichers.enrich_affiliations_dblp_incremental.create_session")
-    @patch("src.enrichers.enrich_affiliations_dblp_incremental.search_dblp_author")
-    @patch("src.enrichers.enrich_affiliations_dblp_incremental.fetch_affiliation_from_dblp_page")
-    def test_found_affiliation_updates_index(
-        self,
-        mock_fetch,
-        mock_search,
-        mock_create_session,
-        mock_load_hist,
-        mock_save_hist,
-        tmp_website,
-        sample_authors,
-        sample_index,
-    ):
-        from src.enrichers.enrich_affiliations_dblp_incremental import enrich_affiliations
-
-        # Mock session
-        mock_create_session.return_value = MagicMock()
-
-        # Write author_index.json
-        write_json(
-            str(tmp_website / "assets" / "data" / "author_index.json"),
-            sample_index,
-        )
-
-        # Bob has no affiliation — will be searched
-        mock_search.return_value = "j/BJones"
-        mock_fetch.return_value = "Georgia Tech"
-
-        authors_path = tmp_website / "assets" / "data" / "authors.json"
-        enriched, stats = enrich_affiliations(
-            [sample_authors[1]],  # Bob only
-            output_path=str(authors_path),
-            max_searches=1,
-            data_dir=str(tmp_website),
-        )
-
-        updated_index = read_json(str(tmp_website / "assets" / "data" / "author_index.json"))
-        bob = next(e for e in updated_index if e["name"] == "Bob Jones")
-        assert bob["affiliation"] == "Georgia Tech"
-        assert bob["affiliation_source"] == "dblp"
-        assert bob["external_ids"]["dblp_pid"] == "j/BJones"
 
 
 class TestOpenAlexIndexIntegration:

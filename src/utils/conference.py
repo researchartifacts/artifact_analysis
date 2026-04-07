@@ -129,6 +129,49 @@ _MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\([^)]*\)")
 _BR_TAG = re.compile(r"<br\s*/?>$")
 
 
+# ── DBLP venue → conference mapping ──────────────────────────────────────────
+
+DBLP_VENUE_MAP = {
+    "EuroSys": "EUROSYS",
+    "SOSP": "SOSP",
+    "SC ": "SC",  # space after to avoid false matches
+    "Supercomputing": "SC",
+    "FAST": "FAST",
+    "USENIX Security": "USENIXSEC",
+    "ACSAC": "ACSAC",
+    "PoPETs": "PETS",
+    "Privacy Enhancing": "PETS",
+    "Priv. Enhancing Technol": "PETS",  # DBLP journal abbreviation
+    "CHES": "CHES",
+    "IACR Trans. Cryptogr. Hardw. Embed. Syst": "CHES",  # DBLP journal form (post-2017)
+    "NDSS": "NDSS",
+    "WOOT": "WOOT",
+    "SysTEX": "SYSTEX",
+    "OSDI": "OSDI",
+    "ATC": "ATC",
+    "NSDI": "NSDI",
+}
+
+
+def venue_to_conference(booktitle: str) -> str | None:
+    """Map a DBLP booktitle to our conference identifier, or None."""
+    if not booktitle:
+        return None
+    bt = booktitle.strip()
+
+    # Handle SC explicitly to avoid false positives (e.g., matching inside "ACSAC")
+    if bt == "SC" or bt.startswith("SC "):
+        return "SC"
+
+    for pattern, conf in DBLP_VENUE_MAP.items():
+        if pattern in booktitle:
+            return conf
+    return None
+
+
+# ── Committee member cleaning ────────────────────────────────────────────────
+
+
 def clean_member_name(raw_name: str) -> str | None:
     """Clean a committee member name.
 

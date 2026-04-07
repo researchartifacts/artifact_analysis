@@ -11,10 +11,8 @@ import logging
 import os
 from collections import defaultdict
 from datetime import datetime
-from gzip import GzipFile
 from pathlib import Path
 
-import lxml.etree as ET
 import yaml
 
 from ..utils.conference import clean_name as clean_display_name
@@ -26,44 +24,6 @@ from .generate_combined_rankings import _normalize_affiliation
 
 
 logger = logging.getLogger(__name__)
-# Mapping from DBLP booktitle substrings to our conference identifiers.
-# Used to count ALL papers by an author at tracked conferences (not just artifact papers).
-DBLP_VENUE_MAP = {
-    "EuroSys": "EUROSYS",
-    "SOSP": "SOSP",
-    "SC ": "SC",  # space after to avoid false matches
-    "Supercomputing": "SC",
-    "FAST": "FAST",
-    "USENIX Security": "USENIXSEC",
-    "ACSAC": "ACSAC",
-    "PoPETs": "PETS",
-    "Privacy Enhancing": "PETS",
-    "Priv. Enhancing Technol": "PETS",  # DBLP journal abbreviation
-    "CHES": "CHES",
-    "IACR Trans. Cryptogr. Hardw. Embed. Syst": "CHES",  # DBLP journal form (post-2017)
-    "NDSS": "NDSS",
-    "WOOT": "WOOT",
-    "SysTEX": "SYSTEX",
-    "OSDI": "OSDI",
-    "ATC": "ATC",
-    "NSDI": "NSDI",
-}
-
-
-def venue_to_conference(booktitle):
-    """Map a DBLP booktitle to our conference identifier, or None."""
-    if not booktitle:
-        return None
-    bt = booktitle.strip()
-
-    # Handle SC explicitly to avoid false positives (e.g., matching inside "ACSAC")
-    if bt == "SC" or bt.startswith("SC "):
-        return "SC"
-
-    for pattern, conf in DBLP_VENUE_MAP.items():
-        if pattern in booktitle:
-            return conf
-    return None
 
 
 def load_artifacts(data_dir: str) -> list[dict] | None:
@@ -159,20 +119,20 @@ def parse_dblp_for_authors(
     dblp_file: str, paper_titles: set[str], title_to_artifact: dict[str, dict]
 ) -> tuple[list[dict], dict, dict]:
     """
-    Parse DBLP XML and find authors for artifact papers.
-    Also collects ALL papers at tracked conference venues so we can later
-    compute per-author total-publication counts (the denominator for
-    artifact rate).
+    Find authors for artifact papers using pre-extracted DBLP cache.
+
+    Calls ``extract_dblp()`` to ensure the cache exists, then reads from
+    the JSON lookup files rather than re-parsing the 3 GB XML.
 
     Args:
-        dblp_file: Path to dblp.xml.gz file
+        dblp_file: Path to dblp.xml.gz file (passed to extract_dblp)
         paper_titles: Set of normalized paper titles to find
         title_to_artifact: Mapping from title to artifact metadata
 
     Returns:
         Tuple of:
           - List of papers with author information (artifact papers)
-          - Dict mapping (author, conference) -> set of normalized titles
+          - Dict mapping (author, conference) -> {year: set of normalized titles}
             for ALL papers at tracked venues (venue_papers)
           - Dict mapping author_name -> affiliation string (from DBLP <www> entries)
     """
@@ -181,95 +141,49 @@ def parse_dblp_for_authors(
         logger.info("Please download from: https://dblp.org/xml/dblp.xml.gz")
         return [], {}, {}
 
-    logger.info("Parsing DBLP XML file (this may take several minutes)...")
+    from ..utils.dblp_extract import extract_dblp, load_affiliations, load_papers_by_venue
+
+    logger.info("Extracting DBLP data (cached if unchanged)...")
+    extract_dblp(dblp_file)
+
+    affiliations = load_affiliations()
+    papers_by_venue = load_papers_by_venue()
+
+    logger.info(f"Loaded {len(affiliations)} affiliations, {len(papers_by_venue)} venue groups from cache")
 
     papers_found = []
     titles_to_find = paper_titles.copy()
     # (author_name, conference) -> {year: set of normalized_title}
     venue_papers = defaultdict(lambda: defaultdict(set))
-    # author_name -> affiliation (extracted from DBLP <www> person records)
-    affiliations = {}
 
-    try:
-        dblp_stream = GzipFile(filename=dblp_file)
-        iteration = 0
-
-        for _event, elem in ET.iterparse(
-            dblp_stream,
-            events=("end",),
-            tag=("inproceedings", "article", "www"),
-            load_dtd=True,
-            recover=True,
-            huge_tree=True,
-        ):
-            # --- Extract affiliations from <www> person records ---
-            if elem.tag == "www":
-                authors_elems = elem.findall("author")
-                if authors_elems:
-                    # Extract affiliation from <note type="affiliation">
-                    affil = None
-                    for note in elem.findall("note"):
-                        if note.get("type") == "affiliation" and note.text:
-                            affil = note.text.strip()
-                            break
-                    if affil:
-                        # Store affiliation under ALL name variants (aliases)
-                        # DBLP <www> entries list canonical name first, then aliases
-                        for author_elem in authors_elems:
-                            name = author_elem.text
-                            if name and name not in affiliations:
-                                affiliations[name] = affil
-                elem.clear()
-                continue
-
-            title = elem.findtext("title")
-            if title:
-                # Remove trailing period from DBLP titles
+    for conf, years in papers_by_venue.items():
+        for year_str, paper_list in years.items():
+            year = int(year_str) if year_str else 0
+            for paper in paper_list:
+                title = paper.get("title", "")
                 normalized = normalize_title(title.rstrip("."))
+                authors = paper.get("authors", [])
 
-                # --- Track all papers at tracked conference venues ---
-                booktitle = elem.findtext("booktitle") or elem.findtext("journal") or ""
-                mapped_conf = venue_to_conference(booktitle)
-                if mapped_conf:
-                    paper_year_str = elem.findtext("year")
-                    paper_year = int(paper_year_str) if paper_year_str else None
-                    authors = [a.text for a in elem.findall("author") if a.text]
-                    for author in authors:
-                        if paper_year:
-                            venue_papers[(author, mapped_conf)][paper_year].add(normalized)
-                        else:
-                            venue_papers[(author, mapped_conf)][0].add(normalized)
+                # Track all venue papers (for total-papers denominator)
+                for author in authors:
+                    if author:
+                        venue_papers[(author, conf)][year].add(normalized)
 
-                # --- Match artifact titles (existing behaviour) ---
+                # Match artifact titles
                 if normalized in titles_to_find:
-                    if not mapped_conf:
-                        authors = [a.text for a in elem.findall("author") if a.text]
-                    year = elem.findtext("year")
-                    venue = booktitle
-
                     artifact_meta = title_to_artifact.get(normalized, {})
 
-                    # Extract DOI URL from <ee> elements (prefer doi.org, fall back to any ee)
-                    doi_url = ""
-                    any_ee = ""
-                    for ee in elem.findall("ee"):
-                        if ee.text:
-                            url = ee.text.strip()
-                            if not any_ee:
-                                any_ee = url
-                            if "doi.org" in url:
-                                doi_url = url
-                                break
-                    if not doi_url:
-                        doi_url = any_ee
+                    # Build DOI URL from extracted DOI
+                    doi = paper.get("doi", "")
+                    doi_url = f"https://doi.org/{doi}" if doi else ""
 
                     paper_info = {
                         "title": title,
                         "normalized_title": normalized,
                         "authors": authors,
-                        "year": int(year) if year else artifact_meta.get("year"),
+                        "year": year if year else artifact_meta.get("year"),
                         "artifact_year": artifact_meta.get("year"),
-                        "venue": venue,
+                        "venue": conf,
                         "conference": artifact_meta.get("conference", ""),
                         "category": artifact_meta.get("category", "unknown"),
                         "badges": artifact_meta.get("badges", []),
@@ -279,15 +193,6 @@ def parse_dblp_for_authors(
                     papers_found.append(paper_info)
                     titles_to_find.remove(normalized)
 
-            iteration += 1
-            elem.clear()  # Clear to save memory
-
-        dblp_stream.close()
-
-    except Exception as e:
-        logger.error(f"Error parsing DBLP: {e}")
-        return papers_found, venue_papers, affiliations
-
     if titles_to_find:
         logger.warning(f"Warning: {len(titles_to_find)} papers not found in DBLP")
 
@@ -295,20 +200,6 @@ def parse_dblp_for_authors(
     logger.info(f"Total artifact papers matched: {len(papers_found)}")
     logger.info(f"Total papers tracked at conference venues: {total_venue} (author-paper pairs)")
     logger.info(f"Total DBLP affiliations extracted: {len(affiliations)}")
-
-    # Write affiliations cache for downstream enrichment layers
-    # (enrich_affiliations_dblp_incremental reads this file)
-    try:
-        from ..utils.dblp_extract import _extract_dir
-
-        extract_dir = _extract_dir()
-        os.makedirs(extract_dir, exist_ok=True)
-        affil_cache = os.path.join(extract_dir, "affiliations.json")
-        with open(affil_cache, "w") as f:
-            json.dump(affiliations, f, separators=(",", ":"))
-        logger.info(f"Affiliations cache written: {affil_cache} ({len(affiliations)} entries)")
-    except Exception as e:
-        logger.warning(f"Could not write affiliations cache: {e}")
 
     return papers_found, venue_papers, affiliations
 

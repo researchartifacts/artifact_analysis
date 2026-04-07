@@ -90,24 +90,7 @@ jobs:
             echo "Continuing with existing affiliations..."
           }
 
-      - name: "Enrichment layer 2: DBLP local XML"
-        continue-on-error: true
-        run: |
-          echo "Enriching affiliations from DBLP..."
-          RECHECK_FLAG=""
-          if [ "${{ env.RECHECK }}" = "true" ]; then
-            RECHECK_FLAG="--recheck"
-            echo "Full recheck mode: re-querying all authors"
-          fi
-          python -m src.enrichers.enrich_affiliations_dblp_incremental \
-            --data_dir website \
-            --max_searches 5000 \
-            --verbose $RECHECK_FLAG || {
-            echo "⚠️ DBLP enrichment did not complete (rate limited or timed out)"
-            echo "Continuing with existing affiliations..."
-          }
-
-      - name: "Enrichment layer 3: OpenAlex paper disambiguation"
+      - name: "Enrichment layer 2: OpenAlex paper disambiguation"
         continue-on-error: true
         timeout-minutes: 30
         run: |

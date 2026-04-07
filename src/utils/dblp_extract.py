@@ -39,7 +39,7 @@ from pathlib import Path
 
 import lxml.etree as ET
 
-from ..generators.generate_author_stats import venue_to_conference
+from .conference import venue_to_conference
 
 logger = logging.getLogger(__name__)
 # Where we write the extracted JSON files
