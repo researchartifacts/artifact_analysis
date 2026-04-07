@@ -13,6 +13,7 @@ import json
 import logging
 import os
 import re
+import sys
 import time
 from collections import defaultdict
 from pathlib import Path
@@ -27,6 +28,7 @@ REPO_ROOT = SCRIPT_DIR.parent
 CACHE_DIR = REPO_ROOT / ".cache" / "csrankings"
 CACHE_FILE = CACHE_DIR / "csrankings.csv"
 CACHE_TTL_DAYS = 30  # CSRankings data changes monthly
+_SECONDS_PER_DAY = 86400
 
 
 def download_csrankings(force_refresh: bool = False, verbose: bool = False) -> Path:
@@ -35,7 +37,7 @@ def download_csrankings(force_refresh: bool = False, verbose: bool = False) -> P
 
     # Check cache freshness
     if CACHE_FILE.exists() and not force_refresh:
-        age_days = (time.time() - CACHE_FILE.stat().st_mtime) / 86400
+        age_days = (time.time() - CACHE_FILE.stat().st_mtime) / _SECONDS_PER_DAY
         if age_days < CACHE_TTL_DAYS:
             if verbose:
                 logger.info(f"Using cached CSRankings data (age: {age_days:.1f} days)")
@@ -63,7 +65,7 @@ def download_csrankings(force_refresh: bool = False, verbose: bool = False) -> P
         return CACHE_FILE
     except Exception as e:
         if CACHE_FILE.exists():
-            logger.warning(f"Download failed ({e}), using stale cache")
+            logger.error(f"Warning: Download failed ({e}), using stale cache", file=sys.stderr)
             return CACHE_FILE
         raise
 

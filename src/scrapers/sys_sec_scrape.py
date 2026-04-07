@@ -10,17 +10,9 @@ from urllib3.util.retry import Retry
 
 from src.utils.cache import (
     _MISSING,
-)
-from src.utils.cache import (
     read_cache as _read_cache,
-)
-from src.utils.cache import (
     read_cache_entry as _read_cache_entry,
-)
-from src.utils.cache import (
     refresh_cache_ts as _refresh_cache_ts,
-)
-from src.utils.cache import (
     write_cache as _write_cache,
 )
 
@@ -28,10 +20,11 @@ logger = logging.getLogger(__name__)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(SCRIPT_DIR)
 CACHE_DIR = os.path.join(REPO_ROOT, ".cache")
-CACHE_TTL = 86400 * 30  # 30 days – conference listings & raw file downloads
-CACHE_TTL_URL = 86400 * 90  # 90 days – URL existence checks (positive)
-CACHE_TTL_URL_NEG = 86400 * 7  # 7 days  – URL non-existence checks (re-check weekly)
-CACHE_TTL_STATS = 86400 * 30  # 30 days – GitHub/Zenodo/Figshare stats
+_SECONDS_PER_DAY = 86400
+CACHE_TTL = _SECONDS_PER_DAY * 30  # 30 days – conference listings & raw file downloads
+CACHE_TTL_URL = _SECONDS_PER_DAY * 90  # 90 days – URL existence checks (positive)
+CACHE_TTL_URL_NEG = _SECONDS_PER_DAY * 7  # 7 days  – URL non-existence checks (re-check weekly)
+CACHE_TTL_STATS = _SECONDS_PER_DAY * 30  # 30 days – GitHub/Zenodo/Figshare stats
 
 
 def _github_headers():
@@ -103,7 +96,7 @@ def check_url_cached(url: str, ttl: int = CACHE_TTL_URL) -> bool:
             resp = _session.head(url, allow_redirects=True, timeout=10)
         exists = 200 <= resp.status_code < 300
     except requests.RequestException as e:
-        logger.warning(f"  Request error for {url}: {e}")
+        logger.error(f"  Request error for {url}: {e}")
         # Network errors (timeouts, DNS failures, connection refused) are
         # transient — do NOT cache them as negative results.
         return False
@@ -137,7 +130,9 @@ def cached_github_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
         headers["If-None-Match"] = entry["etag"]
 
     try:
-        resp = _session.get(f"https://api.github.com/repos/{repo}", headers=headers, timeout=_session._default_timeout)
+        resp = _session.get(
+            f"https://api.github.com/repos/{repo}", headers=headers, timeout=_session._default_timeout
+        )
         if resp.status_code == 403 and "rate limit" in resp.text.lower():
             reset_time = int(resp.headers.get("X-RateLimit-Reset", 0))
             wait = max(reset_time - int(time.time()), 0) + 5
@@ -204,7 +199,7 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
             logger.info(f"  Could not collect Zenodo stats for {url} (HTTP {resp.status_code})")
             result = None
     except requests.RequestException as e:
-        logger.warning(f"  Zenodo request error for {url}: {e}")
+        logger.error(f"  Zenodo request error for {url}: {e}")
         result = None
 
     _write_cache(CACHE_DIR, url, result, namespace="zenodo_stats")
@@ -241,7 +236,7 @@ def cached_figshare_stats(url, ttl=CACHE_TTL_STATS):
             updated = d["modified_date"]
             created = d["created_date"]
     except requests.RequestException as e:
-        logger.warning(f"  Figshare request error for {url}: {e}")
+        logger.error(f"  Figshare request error for {url}: {e}")
 
     result = {
         "figshare_views": views,

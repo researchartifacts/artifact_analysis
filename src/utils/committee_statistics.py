@@ -98,7 +98,6 @@ def classify_aec_by_country(results):
 
             if university:
                 uni = university[0]
-                # print(f'{affiliation} in {uni["country"]} matched')
                 per_year_country_stats[conf][uni["country"]] = (
                     per_year_country_stats[conf].get(uni["country"], 0) + 1
                 )
@@ -112,7 +111,6 @@ def classify_aec_by_country(results):
                         best_match = name_index[name]
 
                 if best_match_ratio > 80 and best_match is not None:
-                    # print(f'{affiliation} in {best_match["country"]} with ratio {best_match_ratio}')
                     per_year_country_stats[conf][best_match["country"]] = (
                         per_year_country_stats[conf].get(best_match["country"], 0) + 1
                     )
