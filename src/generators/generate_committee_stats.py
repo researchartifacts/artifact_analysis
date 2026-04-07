@@ -36,7 +36,9 @@ from src.scrapers.alternative_committee_scrape import (
 from src.scrapers.sys_sec_committee_scrape import get_committees
 from src.scrapers.sys_sec_scrape import download_file
 from src.utils.conference import (
+    PLACEHOLDER_NAMES,
     SYSTEMS_CONFS,
+    clean_member_name,
 )
 from src.utils.conference import (
     clean_name as _display_name,
@@ -355,9 +357,6 @@ def _top_n(d, n=20):
 # PETS secartifacts has only 3 (chairs); real committees have 13-172 members.
 MIN_COMMITTEE_SIZE = 5
 
-# Known placeholder names to filter out
-PLACEHOLDER_NAMES = {"you?", "you", "tba", "tbd", "n/a", "", "title: organizers"}
-
 
 def _compute_recurring_members(all_results, conf_to_area, classified):
     """Compute statistics for recurring AE committee members.
@@ -644,20 +643,9 @@ def _clean_committee(members):
     """Remove placeholder members and clean up names."""
     cleaned = []
     for m in members:
-        name = m.get("name", "").strip()
-        # Strip markdown link syntax [name](url)
-        link_match = re.match(r"\[([^\]]+)\]\([^)]*\)", name)
-        if link_match:
-            name = link_match.group(1)
-        # Strip trailing <br> tags
-        name = re.sub(r"<br\s*/?>$", "", name).strip()
-        # Skip placeholders
-        if name.lower() in PLACEHOLDER_NAMES or len(name) <= 1:
+        name = clean_member_name(m.get("name", ""))
+        if name is None:
             continue
-        # Skip lines that look like contact info rather than people
-        if "contact" in name.lower() or "reach" in name.lower() or "mailto:" in name.lower():
-            continue
-        name = _display_name(name)
         affiliation = m.get("affiliation", "").strip()
         affiliation = re.sub(r"<br\s*/?>$", "", affiliation).strip()
         affiliation = affiliation.strip("*_").strip()  # remove markdown bold/italic markers

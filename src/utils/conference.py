@@ -114,3 +114,29 @@ def normalize_title(title: str) -> str:
     if not title:
         return ""
     return " ".join(re.sub(r"[^\w\s]", "", title.lower()).split())
+
+
+# ── Committee member cleaning ────────────────────────────────────────────────
+
+PLACEHOLDER_NAMES = frozenset({"you?", "you", "tba", "tbd", "n/a", "", "title: organizers"})
+
+_MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\([^)]*\)")
+_BR_TAG = re.compile(r"<br\s*/?>$")
+
+
+def clean_member_name(raw_name: str) -> str | None:
+    """Clean a committee member name.
+
+    Strips markdown links, trailing ``<br>`` tags, and skips placeholder names.
+    Returns the cleaned name, or ``None`` if the entry should be dropped.
+    """
+    name = raw_name.strip()
+    link_match = _MARKDOWN_LINK.match(name)
+    if link_match:
+        name = link_match.group(1)
+    name = _BR_TAG.sub("", name).strip()
+    if name.lower() in PLACEHOLDER_NAMES or len(name) <= 1:
+        return None
+    if "contact" in name.lower() or "reach" in name.lower() or "mailto:" in name.lower():
+        return None
+    return clean_name(name)

@@ -22,10 +22,7 @@ from src.scrapers.alternative_committee_scrape import (
     get_alternative_committees,
 )
 from src.scrapers.sys_sec_committee_scrape import get_committees
-from src.utils.conference import SECURITY_CONFS, SYSTEMS_CONFS
-from src.utils.conference import (
-    clean_name as _display_name,
-)
+from src.utils.conference import SECURITY_CONFS, SYSTEMS_CONFS, clean_member_name
 from src.utils.conference import (
     conf_area as _conf_area,
 )
@@ -39,22 +36,14 @@ from src.utils.conference import (
 logger = logging.getLogger(__name__)
 
 MIN_COMMITTEE_SIZE = 5
-PLACEHOLDER_NAMES = {"you?", "you", "tba", "tbd", "n/a", "", "title: organizers"}
 
 
 def _clean_committee(members):
     cleaned = []
     for m in members:
-        name = m.get("name", "").strip()
-        link_match = re.match(r"\[([^\]]+)\]\([^)]*\)", name)
-        if link_match:
-            name = link_match.group(1)
-        name = re.sub(r"<br\s*/?>$", "", name).strip()
-        if name.lower() in PLACEHOLDER_NAMES or len(name) <= 1:
+        name = clean_member_name(m.get("name", ""))
+        if name is None:
             continue
-        if "contact" in name.lower() or "reach" in name.lower() or "mailto:" in name.lower():
-            continue
-        name = _display_name(name)
         cleaned.append({"name": name, "affiliation": m.get("affiliation", "")})
     return cleaned
 
