@@ -42,7 +42,9 @@ def create_session(
         allowed_methods=["HEAD", "GET"],
         raise_on_status=False,
     )
-    adapter = HTTPAdapter(max_retries=retry)
+    adapter = HTTPAdapter(
+        max_retries=retry, pool_connections=20, pool_maxsize=20
+    )
     session.mount("http://", adapter)
     session.mount("https://", adapter)
     session.headers["User-Agent"] = USER_AGENT
