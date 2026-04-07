@@ -90,7 +90,20 @@ jobs:
             echo "Continuing with existing affiliations..."
           }
 
-      - name: "Enrichment layer 2: OpenAlex paper disambiguation"
+      - name: "Enrichment layer 2: AE committee members (offline)"
+        continue-on-error: true
+        run: |
+          echo "Enriching affiliations from AE committee data..."
+          python -m src.enrichers.enrich_affiliations_ae_members \
+            --authors_file website/assets/data/authors.json \
+            --output website/assets/data/authors.json \
+            --data_dir website \
+            --verbose || {
+            echo "⚠️ AE-member enrichment failed"
+            echo "Continuing with existing affiliations..."
+          }
+
+      - name: "Enrichment layer 3: OpenAlex/S2/CrossRef paper disambiguation"
         continue-on-error: true
         timeout-minutes: 30
         run: |

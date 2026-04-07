@@ -70,6 +70,79 @@ class TestCSRankingsIndexIntegration:
         assert not os.path.exists(str(tmp_website / "assets" / "data" / "author_index.json"))
 
 
+class TestAEMemberIndexIntegration:
+    """Verify enrich_affiliations_ae_members updates author_index.json."""
+
+    def test_ae_member_fills_missing_affiliation(self, tmp_website, sample_authors, sample_index):
+        from pathlib import Path
+
+        from src.enrichers.enrich_affiliations_ae_members import enrich_affiliations
+
+        # Write authors.json (Bob has no affiliation)
+        authors_path = tmp_website / "assets" / "data" / "authors.json"
+        write_json(str(authors_path), sample_authors[:2])  # Alice + Bob
+
+        # Write author_index.json
+        write_json(
+            str(tmp_website / "assets" / "data" / "author_index.json"),
+            sample_index,
+        )
+
+        # Write ae_members.json with Bob's affiliation
+        ae_members = [
+            {"name": "Bob Jones", "affiliation": "Georgia Tech", "conferences": [["ATC", 2024, "member"]]},
+            {"name": "Eve Unknown", "affiliation": "CMU", "conferences": [["OSDI", 2024, "member"]]},
+        ]
+        write_json(str(tmp_website / "assets" / "data" / "ae_members.json"), ae_members)
+
+        output_path = tmp_website / "assets" / "data" / "authors_out.json"
+        stats = enrich_affiliations(
+            authors_file=Path(str(authors_path)),
+            output_file=Path(str(output_path)),
+            data_dir=str(tmp_website),
+        )
+
+        assert stats["enriched"] == 1  # Bob filled in
+
+        # Check authors.json output
+        enriched = read_json(str(output_path))
+        bob = next(a for a in enriched if a["name"] == "Bob Jones")
+        assert bob["affiliation"] == "Georgia Tech"
+
+        # Alice should keep her existing affiliation
+        alice = next(a for a in enriched if a["name"] == "Alice Smith")
+        assert alice["affiliation"] == "MIT"
+
+        # Check author_index.json was updated
+        updated_index = read_json(str(tmp_website / "assets" / "data" / "author_index.json"))
+        bob_idx = next(e for e in updated_index if e["name"] == "Bob Jones")
+        assert bob_idx["affiliation"] == "Georgia Tech"
+        assert bob_idx["affiliation_source"] == "ae_committee"
+
+    def test_ae_member_does_not_overwrite_existing(self, tmp_website, sample_authors):
+        """AE member enrichment should NOT overwrite existing affiliations."""
+        from pathlib import Path
+
+        from src.enrichers.enrich_affiliations_ae_members import enrich_affiliations
+
+        authors_path = tmp_website / "assets" / "data" / "authors.json"
+        write_json(str(authors_path), sample_authors[:1])  # Alice only (has MIT)
+
+        ae_members = [{"name": "Alice Smith", "affiliation": "Stanford", "conferences": []}]
+        write_json(str(tmp_website / "assets" / "data" / "ae_members.json"), ae_members)
+
+        output_path = tmp_website / "assets" / "data" / "authors_out.json"
+        stats = enrich_affiliations(
+            authors_file=Path(str(authors_path)),
+            output_file=Path(str(output_path)),
+            data_dir=str(tmp_website),
+        )
+
+        assert stats["enriched"] == 0
+        enriched = read_json(str(output_path))
+        assert enriched[0]["affiliation"] == "MIT"  # unchanged
+
+
 class TestOpenAlexIndexIntegration:
     """Verify enrich_affiliations_openalex updates author_index.json."""
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Paper-based affiliation enrichment using OpenAlex, CrossRef, and DBLP.
+Paper-based affiliation enrichment using OpenAlex, Semantic Scholar, CrossRef, and DBLP.
 
 Disambiguation strategy: instead of searching by author name alone (which
 returns wrong matches for common names), we look up the author's *known papers*
@@ -8,9 +8,10 @@ by title, then extract the affiliation from the matching author entry on that
 specific paper.
 
 Sources queried (in priority order):
-  1. OpenAlex  – works search by title → authorships → institutions
-  2. CrossRef  – works search by title → author → affiliation
-  3. DBLP API  – author search → person page scrape
+  1. CrossRef  – DOI lookup → author → affiliation (highest precision)
+  2. OpenAlex  – works search by title → authorships → institutions
+  3. Semantic Scholar – paper title match → authors → affiliations
+  4. CrossRef  – works search by title → author → affiliation
 
 Usage:
     python -m src.enrichers.enrich_affiliations_openalex \
@@ -51,7 +52,7 @@ CACHE_TTL = _SECONDS_PER_DAY * 90  # 90 days
 REQUEST_DELAY = 0.15  # polite delay between API calls
 OPENALEX_DELAY = 0.12  # OpenAlex asks for 10 req/s max
 CROSSREF_DELAY = 0.25
-DBLP_DELAY = 0.25
+S2_DELAY = 0.12  # Semantic Scholar: 100 req/s with key, 1 req/s without
 HTTP_TIMEOUT = 10  # seconds per request (prevent hangs)
 
 
@@ -253,35 +254,58 @@ def _crossref_affiliation_by_doi(
 
 
 # ---------------------------------------------------------------------------
-# DBLP: author search → person page scrape (unchanged from existing code)
+# Semantic Scholar: search paper by title, extract author affiliation
 # ---------------------------------------------------------------------------
-def _dblp_affiliation(
+def _s2_affiliation_by_title(
     session: requests.Session,
     author_name: str,
+    title: str,
     verbose: bool = False,
 ) -> Optional[str]:
-    """Look up affiliation from pre-extracted DBLP XML data."""
-    clean = re.sub(r"\s+\d{4}$", "", author_name).strip()
-
-    cache_key = f"dblp:{_normalise_name(clean)}"
-    cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "dblp")
+    """Search Semantic Scholar for a paper by title and return the matching author's affiliation."""
+    cache_key = f"s2_title:{_normalise_name(title)}:{_normalise_name(author_name)}"
+    cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "s2_title")
     if cached is not _MISSING:
         return cached if cached else None
 
+    clean_title = re.sub(r"\.$", "", title).strip()
+    url = f"https://api.semanticscholar.org/graph/v1/paper/search/match?query={quote(clean_title)}&fields=title,authors.name,authors.affiliations"
+
+    headers = {}
+    s2_api_key = os.environ.get("S2_API_KEY", "")
+    if s2_api_key:
+        headers["x-api-key"] = s2_api_key
+
     try:
-        from ..utils.dblp_extract import find_affiliation
+        time.sleep(S2_DELAY)
+        resp = session.get(url, timeout=HTTP_TIMEOUT, headers=headers)
+        if resp.status_code == 404:
+            # "Title match not found"
+            _write_cache(str(CACHE_DIR), cache_key, "", "s2_title")
+            return None
+        resp.raise_for_status()
+        data = resp.json()
 
-        affil = find_affiliation(clean)
-    except (ImportError, Exception):
-        affil = None
-
-    if affil:
+        for paper in data.get("data", []):
+            paper_title = (paper.get("title") or "").strip().rstrip(".")
+            if _normalise_name(paper_title) != _normalise_name(clean_title):
+                continue
+            for author in paper.get("authors", []):
+                display = author.get("name", "")
+                if _names_match(author_name, display):
+                    affiliations = author.get("affiliations") or []
+                    if affiliations:
+                        inst_name = affiliations[0]
+                        if inst_name:
+                            if verbose:
+                                logger.info(f"      S2-title: {inst_name}")
+                            _write_cache(str(CACHE_DIR), cache_key, inst_name, "s2_title")
+                            return inst_name
+    except Exception as e:
         if verbose:
-            logger.info(f"      DBLP-local: {affil}")
-        _write_cache(str(CACHE_DIR), cache_key, affil, "dblp")
-        return affil
+            logger.error(f"      S2-title error: {e}")
 
-    _write_cache(str(CACHE_DIR), cache_key, "", "dblp")
+    _write_cache(str(CACHE_DIR), cache_key, "", "s2_title")
     return None
 
 
@@ -300,11 +324,10 @@ def find_affiliation_for_author(
     Strategy (two passes):
       Pass 1 – papers with real DOIs (highest confidence):
         CrossRef DOI lookup for exact author match.
-      Pass 2 – title-based search across remaining papers (up to 5):
-        OpenAlex title search, then CrossRef title search.
+      Pass 2 – title-based search across papers (up to 5):
+        OpenAlex, Semantic Scholar, then CrossRef title search.
     Papers are tried newest-first for the most current affiliation.
-    Note: DBLP lookup is handled by enrichment layer 2 (upstream),
-    so this enricher focuses on external API sources only.
+    Note: DBLP affiliations are already applied in step 0 (generate_author_stats).
     """
     sorted_papers = sorted(papers, key=lambda p: p.get("year", 0), reverse=True)
 
@@ -335,6 +358,11 @@ def find_affiliation_for_author(
         affil = _openalex_affiliation_by_title(session, author_name, title, verbose)
         if affil:
             return affil, "openalex_title"
+
+        # Semantic Scholar by title
+        affil = _s2_affiliation_by_title(session, author_name, title, verbose)
+        if affil:
+            return affil, "s2_title"
 
         # CrossRef by title
         affil = _crossref_affiliation_by_title(session, author_name, title, verbose)
@@ -578,7 +606,7 @@ def enrich(
 # CLI
 # ---------------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(description="Paper-based affiliation enrichment (OpenAlex + CrossRef + DBLP)")
+    parser = argparse.ArgumentParser(description="Paper-based affiliation enrichment (OpenAlex + S2 + CrossRef + DBLP)")
     parser.add_argument("--authors_file", required=True, help="Path to authors.yml")
     parser.add_argument("--papers_file", required=True, help="Path to paper_authors_map.json")
     parser.add_argument("--output_file", default=None, help="Output path (default: overwrite authors_file)")
