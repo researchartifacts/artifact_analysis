@@ -79,7 +79,7 @@ def load_artifact_citations(data_dir: str) -> dict[str, int]:
     """
     citations_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
     if not os.path.exists(citations_path):
-        logger.warning(f"Warning: {citations_path} not found, skipping citation enrichment")
+        logger.info("Artifact citation data not available (collection disabled — see generate_artifact_citations.py)")
         return {}
 
     with open(citations_path, "r") as f:
