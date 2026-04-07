@@ -16,11 +16,12 @@ DBLP_FILE="$DATA_DIR/dblp/dblp.xml.gz"
 mkdir -p "$LOG_DIR"
 cd "$SCRIPT_DIR"
 
-OUTPUT_DIR="../reprodb.github.io"
+OUTPUT_DIR=""
 CONF_REGEX=".*20[12][0-9]"
 SAVE_RESULTS=false
 RESULTS_DIR="../reprodb-pipeline-results"
 DO_PUSH=false
+DEPLOY=false
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -31,9 +32,33 @@ while [ $# -gt 0 ]; do
         --save-results) SAVE_RESULTS=true; shift ;;
         --results_dir)  RESULTS_DIR="$2";  shift 2 ;;
         --push)         DO_PUSH=true;      shift ;;
+        --deploy)       DEPLOY=true;       shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
+
+# Default output directory: local staging (not the live website)
+# Use --deploy to write directly to the live website repo, or
+# use --output_dir to override.
+if [ -z "$OUTPUT_DIR" ]; then
+    if [ "$DEPLOY" = true ]; then
+        OUTPUT_DIR="../reprodb.github.io"
+        echo "Mode: DEPLOY — writing directly to reprodb.github.io"
+    else
+        OUTPUT_DIR="output/staging"
+        echo "Mode: LOCAL — writing to $OUTPUT_DIR (use --deploy to write to live website)"
+    fi
+fi
+
+# For local staging, seed from live website data so generators
+# that read existing files (e.g. ranking_history) work correctly
+if [[ "$OUTPUT_DIR" == "output/staging" ]] && [ -d "../reprodb.github.io" ]; then
+    echo "Seeding staging directory from reprodb.github.io..."
+    mkdir -p "$OUTPUT_DIR/_data" "$OUTPUT_DIR/assets/data" "$OUTPUT_DIR/assets/charts"
+    # Copy existing data files (don't overwrite if staging already has them)
+    cp -rn ../reprodb.github.io/_data/* "$OUTPUT_DIR/_data/" 2>/dev/null || true
+    cp -rn ../reprodb.github.io/assets/data/* "$OUTPUT_DIR/assets/data/" 2>/dev/null || true
+fi
 
 [ -n "$http_proxy" ] && echo "http_proxy: $http_proxy"
 [ -n "$https_proxy" ] && echo "https_proxy: $https_proxy"
