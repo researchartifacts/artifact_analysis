@@ -13,6 +13,7 @@ import hashlib
 import json
 import logging
 import os
+import tempfile
 import time
 from typing import Any
 
@@ -58,13 +59,24 @@ def write_cache(
     namespace: str = "default",
     etag: str | None = None,
 ) -> None:
-    """Write *body* to the cache, optionally storing an HTTP ETag."""
+    """Write *body* to the cache, optionally storing an HTTP ETag.
+
+    Uses atomic write (temp file + ``os.replace``) to avoid partial/corrupt
+    cache files when multiple processes run concurrently.
+    """
     path = cache_path(base_dir, key, namespace)
     entry: dict[str, Any] = {"ts": time.time(), "body": body}
     if etag:
         entry["etag"] = etag
-    with open(path, "w") as f:
-        json.dump(entry, f)
+    dir_name = os.path.dirname(path)
+    fd, tmp_path = tempfile.mkstemp(dir=dir_name, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(entry, f)
+        os.replace(tmp_path, path)
+    except BaseException:
+        os.unlink(tmp_path)
+        raise
 
 
 def read_cache_entry(base_dir: str, key: str, namespace: str = "default") -> dict | None:
