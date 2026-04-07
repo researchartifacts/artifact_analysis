@@ -119,6 +119,7 @@ def scrape_paper_page(path: str, session: requests.Session | None = None) -> dic
     # Extract title from <h1> with id "page-title" or class "page__title"
     title_el = soup.find("h1", id="page-title") or soup.find("h1", class_="page__title")
     if not title_el:
+        logger.warning(f"Could not find title element in {url} — page structure may have changed")
         _write_cache(CACHE_DIR, url, None, namespace="usenix_paper")
         return None
     title = title_el.get_text(strip=True)

@@ -172,9 +172,10 @@ def _scrape_acm_paper_badges(doi, session=None):
         return None
 
     if resp.status_code == 403:
-        # Cloudflare block – cannot scrape
+        logger.warning(f"  Cloudflare block for {url} — cannot scrape")
         return None
     if resp.status_code != 200:
+        logger.warning(f"  HTTP {resp.status_code} for {url}")
         _write_cache(CACHE_DIR, cache_key, None, namespace="acm_badges")
         return None
 

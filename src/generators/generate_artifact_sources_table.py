@@ -13,9 +13,9 @@ import argparse
 import csv
 import logging
 import os
-from pathlib import Path
 import re
 from collections import defaultdict
+from pathlib import Path
 
 import yaml
 from sys_sec_artifacts_results_scrape import get_ae_results

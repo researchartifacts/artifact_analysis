@@ -13,10 +13,10 @@ import argparse
 import json
 import logging
 import os
-from pathlib import Path
 import re
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 
 import yaml
 
