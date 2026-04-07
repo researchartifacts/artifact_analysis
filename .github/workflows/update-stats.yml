@@ -7,6 +7,11 @@ on:
   
   # Allow manual trigger
   workflow_dispatch:
+    inputs:
+      refresh_repo_stats:
+        description: 'Re-fetch stats for ALL repos (needed for historical snapshots)'
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -83,11 +88,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
         run: |
+          REFRESH_FLAG=""
+          # Scheduled runs always refresh; manual runs use the input toggle
+          if [[ "${{ github.event_name }}" == "schedule" ]] || [[ "${{ inputs.refresh_repo_stats }}" == "true" ]]; then
+            REFRESH_FLAG="--refresh"
+          fi
           cd reprodb-pipeline
           python -m src.generators.generate_repo_stats \
             --conf_regex '.*20[12][0-9]' \
             --output_dir ../website \
-            --refresh || echo "⚠️ Repository stats generation skipped"
+            $REFRESH_FLAG || echo "⚠️ Repository stats generation skipped"
       
       - name: Generate per-area author data
         run: |

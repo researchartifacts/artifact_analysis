@@ -15,6 +15,7 @@ import logging
 import os
 import re
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 
@@ -91,65 +92,60 @@ def collect_stats_for_results(results, url_keys=None):
     # Check which URLs exist
     results, _, _ = check_artifact_exists(results, url_keys)
 
-    all_stats = []
+    # Build deduplicated list of (url, conf_name, year, title) jobs
+    jobs = []
     seen_urls = set()
-
-    total_artifacts = sum(len(arts) for arts in results.values())
-    processed = 0
-    collected = 0
-
     for conf_year, artifacts in results.items():
         conf_name, year = extract_conference_name(conf_year)
         if year is None:
             continue
-
         for artifact in artifacts:
-            processed += 1
             for url_key in url_keys:
                 url = artifact.get(url_key, "")
                 exists_key = f"{url_key}_exists"
                 if not artifact.get(exists_key, False) or not url:
                     continue
-
-                # Deduplicate: skip if we've already collected stats for this URL
                 url_normalized = url.rstrip("/")
                 if url_normalized in seen_urls:
                     continue
                 seen_urls.add(url_normalized)
+                jobs.append((url, conf_name, year, artifact.get("title", "Unknown")))
 
-                stats = None
-                source = "unknown"
-                try:
-                    if "github" in url:
-                        stats = github_stats(url)
-                        source = "github"
-                    elif "zenodo" in url:
-                        stats = zenodo_stats(url)
-                        source = "zenodo"
-                    elif "figshare" in url:
-                        stats = figshare_stats(url)
-                        source = "figshare"
-                except Exception as e:
-                    logger.error(f"  Error collecting stats for {url}: {e}")
-                    continue
+    logger.info(f"  Collecting stats for {len(jobs)} unique URLs (8 workers)")
 
-                if stats:
-                    collected += 1
-                    entry = {
-                        "conference": conf_name,
-                        "year": year,
-                        "title": artifact.get("title", "Unknown"),
-                        "url": url,
-                        "source": source,
-                    }
-                    entry.update(stats)
-                    all_stats.append(entry)
+    def _fetch_stats(url):
+        """Fetch stats for a single URL (thread-safe via disk cache)."""
+        try:
+            if "github" in url:
+                return github_stats(url), "github"
+            if "zenodo" in url:
+                return zenodo_stats(url), "zenodo"
+            if "figshare" in url:
+                return figshare_stats(url), "figshare"
+        except Exception as e:
+            logger.error(f"  Error collecting stats for {url}: {e}")
+        return None, "unknown"
 
-            if processed % 50 == 0 or processed == total_artifacts:
-                logger.info(
-                    f"  Progress: {processed}/{total_artifacts} artifacts checked, "
-                    f"{collected} stats collected, {len(seen_urls)} unique URLs"
-                )
+    all_stats = []
+    collected = 0
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        future_to_job = {pool.submit(_fetch_stats, url): (url, conf, yr, title) for url, conf, yr, title in jobs}
+        for i, future in enumerate(as_completed(future_to_job), 1):
+            url, conf_name, year, title = future_to_job[future]
+            stats, source = future.result()
+            if stats:
+                collected += 1
+                entry = {
+                    "conference": conf_name,
+                    "year": year,
+                    "title": title,
+                    "url": url,
+                    "source": source,
+                }
+                entry.update(stats)
+                all_stats.append(entry)
+            if i % 100 == 0 or i == len(jobs):
+                logger.info(f"  Progress: {i}/{len(jobs)} URLs fetched, {collected} stats collected")
 
     return all_stats
 
