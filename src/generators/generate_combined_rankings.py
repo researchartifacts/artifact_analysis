@@ -128,14 +128,21 @@ def _normalize_name(name: str) -> str:
 def _merge_rankings(authors: list, ae_members: list) -> list:
     """Merge author and AE-member lists into a combined ranking.
 
-    Matching is done on normalised names.  Every person appearing in *either*
-    list gets an entry.  Fields from both sources are combined.
-
-    When multiple DBLP authors share the same normalised name as an AE member
-    (common for East-Asian names with DBLP disambiguation suffixes), conference
-    overlap is used to pick the best match.  Only the winning author receives
-    the AE member's committee data; others keep their paper data alone.  If no
-    clear winner can be determined, the AE member appears as a standalone entry.
+    Algorithm:
+      1. **Index** AE members by normalised name (dedup by highest memberships).
+      2. **Group** DBLP authors by normalised name.
+      3. **Disambiguate** — when multiple DBLP authors share the same normalised
+         name as an AE member (common for East-Asian names with DBLP suffixes),
+         pick the best match via conference overlap:
+         - If one candidate has strictly more overlapping conferences → winner.
+         - If tied or no overlap → ambiguous; AE member appears standalone.
+      4. **Walk authors** — for each DBLP author, attach AE data only if they
+         are the designated winner for that normalised name. Merge years (max of
+         both), merge conferences (union).
+      5. **Walk unlinked AE members** — emit standalone entries for members not
+         matched to any DBLP author.
+      6. **Score** every entry via ``_build_entry`` (see scoring weights below),
+         sort by combined_score descending, and assign dense ranks with ties.
 
     Returns a list of dicts sorted by combined_score descending.
     """
