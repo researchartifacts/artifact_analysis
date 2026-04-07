@@ -1,4 +1,4 @@
-# Artifact Analysis — Copilot Instructions
+# ReproDB Pipeline — Copilot Instructions
 
 ## Data Schema Awareness
 
@@ -92,12 +92,59 @@ per workflow. Workflows that use it:
 - DBLP extracted data lives in `.cache/dblp_extracted/` and is invalidated by mtime of the XML file.
 - Never commit `.cache/` — it is gitignored.
 
+## Shared Utilities — Do Not Duplicate
+
+The following utilities exist in `src/utils/` and **must** be reused — never create
+local copies in generators, scrapers, or enrichers:
+
+| Utility | Module | Purpose |
+|---------|--------|---------|
+| `normalize_name(name)` | `src/utils/conference.py` | Canonicalize author names for matching |
+| `normalize_title(title)` | `src/utils/conference.py` | Canonicalize paper titles for deduplication |
+| `clean_member_name(name)` | `src/utils/conference.py` | Strip affiliations/roles from committee names |
+| `PLACEHOLDER_NAMES` | `src/utils/conference.py` | Names to filter out ("TBD", "TBA", etc.) |
+| `conf_area(conf)` | `src/utils/conference.py` | Map conference name → area ("systems"/"security") |
+| `_normalize_affiliation(name)` | `src/generators/generate_combined_rankings.py` | YAML-driven affiliation canonicalization (uses `data/affiliation_rules.yaml`) |
+| `_read_cache()` / `_write_cache()` | `src/utils/cache.py` | Atomic disk cache with TTL |
+| `setup_logging()` | `src/utils/logging_config.py` | Centralized log configuration |
+
+When adding normalization for a new entity, add it to the shared module — not inline.
+
+## Logging
+
+- Every module must use `logger = logging.getLogger(__name__)` at module level.
+- Call `setup_logging()` from `src/utils/logging_config.py` in every `__main__` block.
+- **Never use `print()`** — ruff rule T20 enforces this. Use `logger.info()` instead.
+- Do not pass `flush=True` to logger methods — it is silently ignored.
+- Use appropriate levels: `DEBUG` for verbose detail, `INFO` for progress,
+  `WARNING` for recoverable issues, `ERROR` for actual failures only.
+- Include identifying context in log messages (author name, conference, URL, count).
+
+## Linting & Type Checking
+
+- **ruff** is configured in `pyproject.toml` with `line-length = 120` and rules:
+  `E, W, F, I, UP, B, SIM, PIE, RET, LOG, T20`.
+- **mypy** is configured with `python_version = "3.10"` and `explicit_package_bases = true`.
+- **pre-commit** hooks run ruff lint + format automatically on commit.
+- Run `ruff check src/` and `ruff format --check src/` before committing.
+
+## Secrets & Credentials
+
+- **Never commit API keys, tokens, or credentials** to the repository.
+- Use environment variables (`os.environ.get("KEY")`) with graceful fallback when missing.
+- `.env.local` is gitignored — never track it. If it appears in git history, the key
+  must be revoked immediately.
+- CI secrets use `secrets.CROSS_REPO_TOKEN` (see CI Secrets section).
+
 ## Error Handling
 
 - Network errors: retry with exponential backoff (reuse `_session_with_retries()`).
-- Missing optional input files: warn with `print("⚠️ ...")` and skip gracefully.
+- Missing optional input files: log a warning with `logger.warning()` and skip gracefully.
 - Output directories: always create with `os.makedirs(path, exist_ok=True)`.
 - Pipeline steps that can fail: use `|| echo "⚠️ <step> skipped"` in bash; in Python, catch exceptions and continue.
+- Wrap `.json()` and `json.load()` calls in `try/except (ValueError, JSONDecodeError)`.
+- In enricher loops over authors/artifacts, isolate errors per item — one failure must
+  not stop the entire batch.
 
 ## Testing
 
@@ -159,3 +206,6 @@ packages). When adding a new import to test code, ensure it's in `requirements-c
 - CLI arguments: `--snake_case` with sensible defaults
 - Conference names: always uppercase (`OSDI`, `ACSAC`, `USENIXSEC`)
 - Years: integers in Python, strings only when used as YAML/JSON keys
+- All functions use snake_case; all JSON keys use snake_case
+- Return `None` for single-value lookups that may fail; return empty `list`/`dict`
+  for collection-producing functions
