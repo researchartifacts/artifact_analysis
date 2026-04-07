@@ -88,10 +88,12 @@ def clean_name(name: str) -> str:
     return name
 
 
-def normalize_name(name: str) -> str:
+def normalize_name(name: str, *, strip_initials: bool = False) -> str:
     """Aggressive normalisation for cross-source matching.
 
     Lower-cases, strips accents, removes dots, collapses whitespace.
+    Optionally strips single-letter initials (e.g. "J. Doe" → "Doe")
+    and leading underscores for ranking deduplication.
     """
     if not name:
         return ""
@@ -100,6 +102,9 @@ def normalize_name(name: str) -> str:
     name = "".join(c for c in name if not unicodedata.combining(c))
     name = re.sub(r"\.", "", name)
     name = re.sub(r"\s+\d{4}$", "", name)
+    if strip_initials:
+        name = re.sub(r"\b[a-z]\s+", "", name)
+        name = name.lstrip("_").strip()
     name = re.sub(r"\s+", " ", name).strip()
     return name
 

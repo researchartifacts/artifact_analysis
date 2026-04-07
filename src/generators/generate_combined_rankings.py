@@ -19,19 +19,22 @@ import json
 import logging
 import os
 import re
-import unicodedata
 from collections import defaultdict
 from pathlib import Path
 
 import yaml
 
+from src.utils.conference import normalize_name as _base_normalize_name
+
 # ── Name normalisation ────────────────────────────────────────────────────────
 
 
 logger = logging.getLogger(__name__)
-_DBLP_SUFFIX = re.compile(r"\s+\d{4}$")  # e.g. "Haibo Chen 0001"
-_INITIALS = re.compile(r"\b[A-Z]\.\s*")  # e.g. "J. Doe"
-_MULTI_SPACE = re.compile(r"\s+")
+
+
+def _normalize_name(name: str) -> str:
+    """Normalise a name for cross-dataset matching (strips initials)."""
+    return _base_normalize_name(name, strip_initials=True)
 
 
 # ── Affiliation normalization rules (loaded from YAML) ────────────────────────
@@ -103,23 +106,6 @@ def _normalize_affiliation(affiliation: str) -> str:
             return core
 
     return aff
-
-
-def _normalize_name(name: str) -> str:
-    """Normalise a name for cross-dataset matching.
-
-    Steps: NFKD unicode → lower-case → strip DBLP disambiguation suffix →
-    strip single-letter initials → collapse whitespace → strip.
-    """
-    name = unicodedata.normalize("NFKD", name)
-    name = re.sub(r"[\t\n\r]+", " ", name)  # tabs/newlines → space
-    name = name.lower()
-    name = _DBLP_SUFFIX.sub("", name)
-    name = _INITIALS.sub("", name)
-    name = _MULTI_SPACE.sub(" ", name).strip()
-    # Strip leading underscores (artefact of some scraping)
-    name = name.lstrip("_").strip()
-    return name
 
 
 # ── Merge logic ───────────────────────────────────────────────────────────────
