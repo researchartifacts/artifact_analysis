@@ -231,3 +231,28 @@
 - canonical: Singapore Management University
   patterns:
     - 'Singapore\s+Management\s+University'
+
+- canonical: Technical University of Munich
+  patterns:
+    - '\bTU\s*Munich\b'
+    - '\bTUM\b'
+    - 'Technical\s+University\s+(of\s+)?Munich'
+
+- canonical: Sun Yat-sen University
+  patterns:
+    - 'Sun\s+Yat'
+
+- canonical: "Universit\u00E9 Catholique de Louvain"
+  patterns:
+    - 'Catholique.*Louvain'
+    - 'UCLouvain'
+
+- canonical: Shanghai Jiao Tong University
+  patterns:
+    - 'Shanghai\s+Jiao\s*Tong'
+    - 'Jiaotong'
+    - '\bSJTU\b'
+
+- canonical: University of Pennsylvania
+  patterns:
+    - 'Pennsylvani'
