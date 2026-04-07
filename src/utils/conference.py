@@ -6,6 +6,8 @@ its own ``SYSTEMS_CONFS``, ``SECURITY_CONFS``, ``_conf_area()``,
 ``_extract_conf_year()``, or name-cleaning functions.
 """
 
+from __future__ import annotations
+
 import re
 import unicodedata
 

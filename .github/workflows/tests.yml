@@ -37,8 +37,8 @@ jobs:
       - name: Ruff format check
         run: ruff format --check src/ tests/
 
-      - name: mypy (src/models only)
-        run: mypy src/models/ --ignore-missing-imports
+      - name: mypy (models + utils)
+        run: mypy --follow-imports=silent src/models/ src/utils/
 
   test:
     runs-on: ubuntu-latest

@@ -27,6 +27,8 @@ should use the extracted JSON files produced by this module.  Do NOT add
 new DBLP API calls.
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import logging
@@ -88,7 +90,7 @@ def extract_dblp(dblp_file: str) -> tuple[str, str]:
     logger.info(f"Parsing DBLP XML ({dblp_file}) …")
 
     # {conf -> {year_str -> [paper_dict]}}
-    papers = defaultdict(lambda: defaultdict(list))
+    papers: defaultdict[str, defaultdict[str, list[dict]]] = defaultdict(lambda: defaultdict(list))
     # {author_name -> affiliation}
     affiliations = {}
 
@@ -180,7 +182,7 @@ def extract_dblp(dblp_file: str) -> tuple[str, str]:
 # ── Public lookup helpers ────────────────────────────────────────────────────
 
 
-def load_papers_by_venue(repo_root: str | None = None) -> dict[str, dict[int, list[dict]]]:
+def load_papers_by_venue(repo_root: str | None = None) -> dict[str, dict[str, list[dict]]]:
     """Load the pre-extracted papers index.
 
     Returns dict: conf (str) → year_str (str) → list of paper dicts.
@@ -190,7 +192,8 @@ def load_papers_by_venue(repo_root: str | None = None) -> dict[str, dict[int, li
     if not os.path.exists(path):
         return {}
     with open(path) as f:
-        return json.load(f)
+        result: dict[str, dict[str, list[dict]]] = json.load(f)
+        return result
 
 
 def load_affiliations(repo_root: str | None = None) -> dict[str, str]:
@@ -202,7 +205,8 @@ def load_affiliations(repo_root: str | None = None) -> dict[str, str]:
     if not os.path.exists(path):
         return {}
     with open(path) as f:
-        return json.load(f)
+        result: dict[str, str] = json.load(f)
+        return result
 
 
 def find_affiliation(name, repo_root=None):

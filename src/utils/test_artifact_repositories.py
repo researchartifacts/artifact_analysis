@@ -27,7 +27,7 @@ def _normalise_url(val):
 
 def check_artifact_exists(results, url_keys):
 
-    counts = {}
+    counts: dict[str, dict[str, dict[str, int]]] = {}
     failed = []
 
     for url_key in url_keys:

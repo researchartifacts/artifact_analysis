@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import json
 import logging
@@ -10,8 +12,8 @@ from thefuzz import fuzz
 logger = logging.getLogger(__name__)
 
 
-def calculate_affiliation_stats(results: dict[str, list[dict]]) -> dict[str, int]:
-    affiliation_stats = {}
+def calculate_affiliation_stats(results: dict[str, list[dict]]) -> dict[str, list[dict]]:
+    affiliation_stats: dict[str, list[dict]] = {}
     for name in results:
         for member in results[name]:
             affiliation = member["affiliation"]
@@ -24,8 +26,8 @@ def calculate_affiliation_stats(results: dict[str, list[dict]]) -> dict[str, int
     return affiliation_stats
 
 
-def calculate_affiliation_stats_per_year(results):
-    affiliation_stats = {}
+def calculate_affiliation_stats_per_year(results: dict[str, list[dict]]) -> dict[str, dict[str, list[dict]]]:
+    affiliation_stats: dict[str, dict[str, list[dict]]] = {}
     for name in results:
         for member in results[name]:
             affiliation = member["affiliation"]
@@ -38,22 +40,22 @@ def calculate_affiliation_stats_per_year(results):
     return affiliation_stats
 
 
-def aec_retention(results: dict[str, list[dict]]) -> dict[str, list]:
-    conf_mem_set = {}
+def aec_retention(results: dict[str, list[dict]]) -> None:
+    conf_mem_set: dict[str, dict[str, bool]] = {}
     for conf in results:
         conf_mem_set[conf] = {}
         for member in results[conf]:
             conf_mem_set[conf][member["name"]] = True
 
-    retention_counts = {}
+    retention_counts: dict[str, dict[str, int]] = {}
     for name in results:
         for comp_name in results:
             if name not in retention_counts:
                 retention_counts[name] = {}
             retention_counts[name][comp_name] = 0
 
-            for member in conf_mem_set[name]:
-                retention_counts[name][comp_name] += 1 if member in conf_mem_set[comp_name] else 0
+            for mem_name in conf_mem_set[name]:
+                retention_counts[name][comp_name] += 1 if mem_name in conf_mem_set[comp_name] else 0
 
     # print table header
     logger.info(f"conferences;{';'.join(results.keys())}")
@@ -123,7 +125,7 @@ def classify_aec_by_country(results):
                     name_index[" ".join(splitted[s_cnt:]).lower()] = uni
 
     prefix_tree = Trie(**name_index)
-    per_year_country_stats = {}
+    per_year_country_stats: dict[str, dict[str, int]] = {}
     failed = []
     for conf, members in results.items():
         per_year_country_stats[conf] = {}
@@ -132,13 +134,11 @@ def classify_aec_by_country(results):
             university = prefix_tree.values(prefix=affiliation)
 
             if university:
-                university = university[0]
-                # print(f'{affiliation} in {university["country"]} matched')
-                per_year_country_stats[conf][university["country"]] = (
-                    per_year_country_stats[conf].get(university["country"], 0) + 1
-                )
+                uni = university[0]
+                # print(f'{affiliation} in {uni["country"]} matched')
+                per_year_country_stats[conf][uni["country"]] = per_year_country_stats[conf].get(uni["country"], 0) + 1
             else:
-                best_match = None
+                best_match: dict | None = None
                 best_match_ratio = 0
                 for name in name_index:
                     ratio = fuzz.ratio(name, affiliation)
@@ -146,14 +146,15 @@ def classify_aec_by_country(results):
                         best_match_ratio = ratio
                         best_match = name_index[name]
 
-                if best_match_ratio > 80:
+                if best_match_ratio > 80 and best_match is not None:
                     # print(f'{affiliation} in {best_match["country"]} with ratio {best_match_ratio}')
                     per_year_country_stats[conf][best_match["country"]] = (
                         per_year_country_stats[conf].get(best_match["country"], 0) + 1
                     )
                 else:
+                    country_info = best_match["country"] if best_match else "unknown"
                     failed.append(affiliation)
-                    logger.error(f"Failed {affiliation} in {best_match['country']} with ratio {best_match_ratio}")
+                    logger.error(f"Failed {affiliation} in {country_info} with ratio {best_match_ratio}")
 
     return per_year_country_stats, failed
 
@@ -168,14 +169,16 @@ def aec_by_country(results):
             countries.add(country)
 
     # print table header
-    logger.info(f"countries;{';'.join(results.keys())};sum")
+    logger.info("countries;%s;sum", ";".join(results.keys()))
     for country in sorted(countries):
-        logger.info(f"{country};", end="")
-        sum = 0
+        parts = [country]
+        total = 0
         for conf in per_year_country_stats:
-            logger.info(f"{per_year_country_stats[conf].get(country, 0)}", end=";")
-            sum += per_year_country_stats[conf].get(country, 0)
-        logger.info(f"{sum}")
+            count = per_year_country_stats[conf].get(country, 0)
+            parts.append(str(count))
+            total += count
+        parts.append(str(total))
+        logger.info(";".join(parts))
 
     logger.error(f"Number failed to identify {len(failed)}")
     logger.error(f"List of failed affiliations:{', '.join(failed)}")
@@ -217,18 +220,18 @@ def main():
             logger.info(f"{affiliation}; {len(affiliation_stats[affiliation])}")
 
     if args.analyze_affiliation_per_conference:
-        affiliation_stats = calculate_affiliation_stats_per_year(results)
+        affiliation_stats_by_year = calculate_affiliation_stats_per_year(results)
         # print table header
         logger.info(f"Affiliation;{';'.join(results.keys())};sum")
 
-        for affiliation in sorted(affiliation_stats.items()):
+        for aff_name, aff_data in sorted(affiliation_stats_by_year.items()):
             counts = []
             for conference in results:
-                if conference in affiliation_stats[affiliation[0]]:
-                    counts.append(len(affiliation_stats[affiliation[0]][conference]))
+                if conference in aff_data:
+                    counts.append(len(aff_data[conference]))
                 else:
                     counts.append(0)
-            logger.info(f"{affiliation[0]};{';'.join(str(i) for i in counts)};{sum(counts)}")
+            logger.info(f"{aff_name};{';'.join(str(i) for i in counts)};{sum(counts)}")
 
     if args.analyze_aec_retention:
         aec_retention(results)

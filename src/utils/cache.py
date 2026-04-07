@@ -4,6 +4,8 @@ Every cached value is stored as ``{"ts": <unix-epoch>, "body": <payload>}``,
 optionally with an ``"etag"`` field for conditional HTTP requests.
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
@@ -28,11 +30,12 @@ def read_cache(base_dir: str, key: str, ttl: int, namespace: str = "default") ->
         return None
     try:
         with open(path) as f:
-            entry = json.load(f)
-        if time.time() - entry.get("ts", 0) < ttl:
-            return entry.get("body")
+            entry: dict[str, object] = json.load(f)
+        ts = float(entry.get("ts", 0))  # type: ignore[arg-type]
+        if time.time() - ts < ttl:
+            return str(entry["body"]) if "body" in entry else None
     except (json.JSONDecodeError, KeyError, OSError):
-        logger.debug("Cache miss or corruption for key %s in namespace %s", key, namespace)
+        pass
     return None
 
 
@@ -59,7 +62,8 @@ def read_cache_entry(base_dir: str, key: str, namespace: str = "default") -> dic
         return None
     try:
         with open(path) as f:
-            return json.load(f)
+            result: dict = json.load(f)
+            return result
     except (json.JSONDecodeError, KeyError, OSError):
         return None
 
@@ -74,4 +78,4 @@ def refresh_cache_ts(base_dir: str, key: str, namespace: str = "default") -> Non
         with open(path, "w") as f:
             json.dump(entry, f)
     except (json.JSONDecodeError, KeyError, OSError):
-        logger.debug("Failed to refresh cache timestamp for key %s", key)
+        pass
