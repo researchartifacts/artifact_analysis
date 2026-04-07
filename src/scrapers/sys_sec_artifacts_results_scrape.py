@@ -184,10 +184,13 @@ def get_ae_results(conference_regex, prefix):
             for filename in RESULTS_FILENAMES:
                 file_url = github_urls[prefix]["raw_base_url"] + name + "/" + filename
                 try:
-                    results[name] = download_file(file_url)
-                    logger.info(f"got {name}/{filename}")
-                    downloaded = True
-                    break
+                    content = download_file(file_url)
+                    if content is not None:
+                        results[name] = content
+                        logger.info(f"got {name}/{filename}")
+                        downloaded = True
+                        break
+                    logger.debug("download_file returned None for %s/%s", name, filename)
                 except requests.exceptions.HTTPError:
                     logger.debug("HTTPError downloading %s, trying next source", filename if filename else "file")
                     continue

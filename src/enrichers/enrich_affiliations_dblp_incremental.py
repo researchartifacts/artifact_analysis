@@ -124,7 +124,6 @@ def enrich_affiliations(
     Returns:
         Tuple of (enriched_authors_data, stats_dict)
     """
-
     session = create_session()
 
     # Add proxy support

@@ -417,8 +417,13 @@ def main():
                     "bitbucket_url",
                 ]:
                     url = art.get(url_key, "")
-                    if url and url.rstrip("/") in existing_urls:
-                        has_existing = True
+                    # Handle list-valued URL fields (e.g. artifact_url can be a list)
+                    urls = url if isinstance(url, list) else [url] if url else []
+                    for u in urls:
+                        if isinstance(u, str) and u.rstrip("/") in existing_urls:
+                            has_existing = True
+                            break
+                    if has_existing:
                         break
                 if has_existing:
                     continue

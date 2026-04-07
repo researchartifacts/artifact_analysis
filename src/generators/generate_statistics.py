@@ -29,6 +29,8 @@ from ..scrapers.sys_sec_scrape import get_conferences_from_prefix
 from ..scrapers.usenix_scrape import scrape_conference_year, to_pipeline_format
 from ..utils.conference import parse_conf_year as extract_conference_name
 
+logger = logging.getLogger(__name__)
+
 # Workshops (as opposed to conferences) — used for visual distinction
 WORKSHOPS = {"woot", "systex"}
 

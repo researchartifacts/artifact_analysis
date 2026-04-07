@@ -28,7 +28,6 @@ import argparse
 import json
 import logging
 import re
-import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -231,7 +230,6 @@ def scrape_conference_year(
 
     logger.info(
         f"  {conference.upper()} {year}: {len(artifacts)} papers, {papers_with_badges} with artifact badges",
-        file=sys.stderr,
     )
     return artifacts
 
