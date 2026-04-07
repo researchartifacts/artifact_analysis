@@ -2,7 +2,6 @@
 
 import json
 
-import pytest
 import yaml
 
 from src.utils.io import load_json, load_yaml, save_json, save_yaml
