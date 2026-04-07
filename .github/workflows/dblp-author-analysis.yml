@@ -131,18 +131,6 @@ jobs:
           python -m src.generators.generate_author_index \
             --data_dir website
 
-      - name: Regenerate stats with enriched data
-        run: |
-          echo "Regenerating author stats with enriched data..."
-          python -m src.generators.generate_author_stats \
-            --dblp_file data/dblp/dblp.xml.gz \
-            --data_dir website \
-            --output_dir website || echo "Stats regeneration skipped"
-      
-      - name: Generate per-area author data
-        run: |
-          python -m src.generators.generate_area_authors --data_dir website
-      
       - name: Upload DBLP analysis results
         uses: actions/upload-artifact@v4
         with:
@@ -150,12 +138,8 @@ jobs:
           path: |
             website/_data/authors.yml
             website/_data/author_summary.yml
-            website/_data/systems_authors.yml
-            website/_data/security_authors.yml
             website/assets/data/authors.json
             website/assets/data/author_index.json
-            website/assets/data/systems_authors.json
-            website/assets/data/security_authors.json
           retention-days: 7
       
       - name: Summary
@@ -164,13 +148,12 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ DBLP database processed" >> $GITHUB_STEP_SUMMARY
           echo "✅ Author index maintained (stable IDs)" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Author statistics generated" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Per-area author data created" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Affiliations enriched" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Affiliation Enrichment Layers" >> $GITHUB_STEP_SUMMARY
           echo "1. **CSRankings** — offline faculty match (overwrites if found)" >> $GITHUB_STEP_SUMMARY
-          echo "2. **DBLP** — local XML search (incremental, 100/run)" >> $GITHUB_STEP_SUMMARY
-          echo "3. **OpenAlex** — paper-based disambiguation (200/run)" >> $GITHUB_STEP_SUMMARY
+          echo "2. **AE committee** — offline member affiliation match" >> $GITHUB_STEP_SUMMARY
+          echo "3. **OpenAlex/S2/CrossRef** — paper-based disambiguation" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ env.RECHECK }}" = "true" ]; then
             echo "🔄 **Full recheck mode** — re-queried all authors" >> $GITHUB_STEP_SUMMARY
