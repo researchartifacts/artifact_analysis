@@ -302,8 +302,9 @@ def find_affiliation_for_author(
         CrossRef DOI lookup for exact author match.
       Pass 2 – title-based search across remaining papers (up to 5):
         OpenAlex title search, then CrossRef title search.
-      Fallback – DBLP author page scrape (no paper disambiguation).
     Papers are tried newest-first for the most current affiliation.
+    Note: DBLP lookup is handled by enrichment layer 2 (upstream),
+    so this enricher focuses on external API sources only.
     """
     sorted_papers = sorted(papers, key=lambda p: p.get("year", 0), reverse=True)
 
@@ -339,11 +340,6 @@ def find_affiliation_for_author(
         affil = _crossref_affiliation_by_title(session, author_name, title, verbose)
         if affil:
             return affil, "crossref_title"
-
-    # Pass 3: DBLP author page scrape (fallback, no paper disambiguation)
-    affil = _dblp_affiliation(session, author_name, verbose)
-    if affil:
-        return affil, "dblp"
 
     return None, ""
 

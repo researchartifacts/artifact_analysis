@@ -290,9 +290,11 @@ def enrich_affiliations(
     logger.info("\n📊 Summary:")
     logger.info(f"   Searches performed: {stats['searches_performed']}")
     logger.info(f"   New affiliations found: {stats['new_affiliations']}")
-    logger.info(
-        f"   Success rate: {stats['affiliations_found']}/{stats['searches_performed']} ({stats['affiliations_found'] / stats['searches_performed'] * 100:.1f}% if stats['searches_performed'] > 0 else 0)"
-    )
+    if stats["searches_performed"] > 0:
+        rate = stats["affiliations_found"] / stats["searches_performed"] * 100
+        logger.info(f"   Success rate: {stats['affiliations_found']}/{stats['searches_performed']} ({rate:.1f}%)")
+    else:
+        logger.info("   Success rate: N/A (no searches)")
     logger.info(f"   Search history saved: {SEARCH_HISTORY_FILE}")
 
     return enriched_data, stats
