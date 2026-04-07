@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
+from src.generators.generate_combined_rankings import _normalize_affiliation
 from src.scrapers.alternative_committee_scrape import (
     CHES_KNOWN_YEARS,
     PETS_KNOWN_YEARS,
@@ -49,8 +50,6 @@ from src.utils.conference import (
 from src.utils.conference import (
     parse_conf_year as _extract_conf_year,
 )
-
-from .generate_combined_rankings import _normalize_affiliation
 
 # ── Country → Continent mapping ──────────────────────────────────────────────
 

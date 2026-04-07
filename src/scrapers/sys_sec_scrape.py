@@ -10,9 +10,17 @@ from urllib3.util.retry import Retry
 
 from src.utils.cache import (
     _MISSING,
+)
+from src.utils.cache import (
     read_cache as _read_cache,
+)
+from src.utils.cache import (
     read_cache_entry as _read_cache_entry,
+)
+from src.utils.cache import (
     refresh_cache_ts as _refresh_cache_ts,
+)
+from src.utils.cache import (
     write_cache as _write_cache,
 )
 
@@ -130,9 +138,7 @@ def cached_github_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
         headers["If-None-Match"] = entry["etag"]
 
     try:
-        resp = _session.get(
-            f"https://api.github.com/repos/{repo}", headers=headers, timeout=_session._default_timeout
-        )
+        resp = _session.get(f"https://api.github.com/repos/{repo}", headers=headers, timeout=_session._default_timeout)
         if resp.status_code == 403 and "rate limit" in resp.text.lower():
             reset_time = int(resp.headers.get("X-RateLimit-Reset", 0))
             wait = max(reset_time - int(time.time()), 0) + 5

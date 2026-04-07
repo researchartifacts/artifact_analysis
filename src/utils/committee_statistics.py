@@ -98,9 +98,7 @@ def classify_aec_by_country(results):
 
             if university:
                 uni = university[0]
-                per_year_country_stats[conf][uni["country"]] = (
-                    per_year_country_stats[conf].get(uni["country"], 0) + 1
-                )
+                per_year_country_stats[conf][uni["country"]] = per_year_country_stats[conf].get(uni["country"], 0) + 1
             else:
                 best_match: dict | None = None
                 best_match_ratio = 0

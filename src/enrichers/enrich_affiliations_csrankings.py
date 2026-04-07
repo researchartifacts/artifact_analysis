@@ -267,7 +267,7 @@ def enrich_affiliations(
 
     stats["enriched"] = enriched_count
     stats["remaining"] = sum(1 for a in authors if not a.get("affiliation") or a.get("affiliation") == "Unknown")
-    stats["final_coverage"] = 100 * (stats["total"] - stats["remaining"]) / stats["total"]
+    stats["final_coverage"] = 100 * (stats["total"] - stats["remaining"]) / stats["total"] if stats["total"] else 0
 
     # Save results
     if not dry_run:
@@ -342,9 +342,10 @@ def main():
         logger.info(f"Match rate:                 {match_rate:.1f}%")
 
     logger.info(f"Final coverage:             {stats['final_coverage']:.1f}%")
-    logger.info(
-        f"Still missing:              {stats['remaining']:,} ({100 * stats['remaining'] / stats['total']:.1f}%)"
-    )
+    if stats["total"] > 0:
+        logger.info(
+            f"Still missing:              {stats['remaining']:,} ({100 * stats['remaining'] / stats['total']:.1f}%)"
+        )
     logger.info("=" * 60)
 
 
