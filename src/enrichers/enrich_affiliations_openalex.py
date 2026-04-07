@@ -52,6 +52,7 @@ REQUEST_DELAY = 0.15  # polite delay between API calls
 OPENALEX_DELAY = 0.12  # OpenAlex asks for 10 req/s max
 CROSSREF_DELAY = 0.25
 DBLP_DELAY = 0.25
+HTTP_TIMEOUT = 10  # seconds per request (prevent hangs)
 
 
 # Cache functions imported from src.utils.cache
@@ -115,7 +116,7 @@ def _openalex_affiliation_by_title(
 
     try:
         time.sleep(OPENALEX_DELAY)
-        resp = session.get(url, timeout=15)
+        resp = session.get(url, timeout=HTTP_TIMEOUT)
         resp.raise_for_status()
         data = resp.json()
 
@@ -164,7 +165,7 @@ def _crossref_affiliation_by_title(
 
     try:
         time.sleep(CROSSREF_DELAY)
-        resp = session.get(url, timeout=15)
+        resp = session.get(url, timeout=HTTP_TIMEOUT)
         resp.raise_for_status()
         data = resp.json()
 
@@ -226,7 +227,7 @@ def _crossref_affiliation_by_doi(
 
     try:
         time.sleep(CROSSREF_DELAY)
-        resp = session.get(url, timeout=15)
+        resp = session.get(url, timeout=HTTP_TIMEOUT)
         resp.raise_for_status()
         data = resp.json()
 

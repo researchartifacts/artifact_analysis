@@ -109,13 +109,14 @@ jobs:
 
       - name: "Enrichment layer 3: OpenAlex paper disambiguation"
         continue-on-error: true
+        timeout-minutes: 30
         run: |
           echo "Enriching affiliations from OpenAlex/CrossRef..."
           RECHECK_FLAG=""
-          MAX_AUTHORS=2000
+          MAX_AUTHORS=500
           if [ "${{ env.RECHECK }}" = "true" ]; then
             RECHECK_FLAG="--recheck"
-            MAX_AUTHORS=10000
+            MAX_AUTHORS=2000
             echo "Full recheck mode: re-querying all authors (max $MAX_AUTHORS)"
           fi
           python -m src.enrichers.enrich_affiliations_openalex \
