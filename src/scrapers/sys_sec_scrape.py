@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import time
+from pathlib import Path
 from typing import Any
 
 import requests
@@ -25,9 +26,8 @@ from src.utils.cache import (
 )
 
 logger = logging.getLogger(__name__)
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT = os.path.dirname(SCRIPT_DIR)
-CACHE_DIR = os.path.join(REPO_ROOT, ".cache")
+_SCRIPT_DIR = Path(__file__).resolve().parent
+CACHE_DIR = str(_SCRIPT_DIR.parent / ".cache")
 _SECONDS_PER_DAY = 86400
 CACHE_TTL = _SECONDS_PER_DAY * 30  # 30 days – conference listings & raw file downloads
 CACHE_TTL_URL = _SECONDS_PER_DAY * 90  # 90 days – URL existence checks (positive)

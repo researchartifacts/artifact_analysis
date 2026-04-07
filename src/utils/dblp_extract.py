@@ -35,6 +35,7 @@ import logging
 import os
 from collections import defaultdict
 from gzip import GzipFile
+from pathlib import Path
 
 import lxml.etree as ET
 
@@ -45,12 +46,13 @@ logger = logging.getLogger(__name__)
 _EXTRACT_DIR_NAME = "dblp_extracted"
 
 
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
 def _extract_dir(repo_root=None):
     """Return the directory where extracted JSON files are stored."""
-    if repo_root is None:
-        # __file__ = src/utils/dblp_extract.py → dirname x3 = repo root
-        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    return os.path.join(repo_root, ".cache", _EXTRACT_DIR_NAME)
+    root = Path(repo_root) if repo_root else _REPO_ROOT
+    return str(root / ".cache" / _EXTRACT_DIR_NAME)
 
 
 def _mtime_file(extract_dir):
@@ -75,8 +77,7 @@ def extract_dblp(dblp_file: str) -> tuple[str, str]:
 
     Returns (papers_path, affiliations_path).
     """
-    repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    extract_dir = _extract_dir(repo_root)
+    extract_dir = _extract_dir()
     os.makedirs(extract_dir, exist_ok=True)
 
     papers_path = os.path.join(extract_dir, "papers_by_venue.json")

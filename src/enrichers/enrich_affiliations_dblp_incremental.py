@@ -22,10 +22,9 @@ import requests
 
 logger = logging.getLogger(__name__)
 # Cache configuration
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT = os.path.dirname(SCRIPT_DIR)
-CACHE_DIR = os.path.join(REPO_ROOT, ".cache")
-SEARCH_HISTORY_FILE = os.path.join(CACHE_DIR, "dblp_search_history.json")
+_SCRIPT_DIR = Path(__file__).resolve().parent
+CACHE_DIR = str(_SCRIPT_DIR.parent / ".cache")
+SEARCH_HISTORY_FILE = str(Path(CACHE_DIR) / "dblp_search_history.json")
 
 # Exponential backoff configuration (in days)
 BACKOFF_DEFAULT = 1  # Search unsuccessful authors again after 1 day

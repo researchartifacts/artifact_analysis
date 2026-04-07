@@ -13,6 +13,7 @@ import argparse
 import json
 import logging
 import os
+from pathlib import Path
 import re
 from collections import defaultdict
 from datetime import datetime
@@ -344,8 +345,7 @@ def main():
         cache_path = os.path.join(args.output_dir, "_data", "all_results_cache.yml")
     if not cache_path or not os.path.exists(cache_path):
         # Fallback: repo root .cache directory
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        repo_root = os.path.dirname(script_dir)
+        repo_root = str(Path(__file__).resolve().parents[1])
         cache_path = os.path.join(repo_root, ".cache", "all_results_cache.yml")
 
     if os.path.exists(cache_path):

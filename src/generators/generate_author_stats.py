@@ -9,6 +9,8 @@ import argparse
 import json
 import logging
 import os
+from pathlib import Path
+import re
 from collections import defaultdict
 from datetime import datetime
 from gzip import GzipFile
@@ -16,8 +18,7 @@ from gzip import GzipFile
 import lxml.etree as ET
 import yaml
 
-from ..utils.conference import clean_name as clean_display_name
-from ..utils.conference import normalize_title
+from ..utils.conference import clean_name as clean_display_name, normalize_title
 from .generate_combined_rankings import _normalize_affiliation
 
 # Conference categorization is derived from the source (sys vs sec artifacts)
@@ -63,6 +64,9 @@ def venue_to_conference(booktitle):
         if pattern in booktitle:
             return conf
     return None
+
+
+
 
 
 def load_artifacts(data_dir: str) -> list[dict] | None:
@@ -739,8 +743,7 @@ def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> Non
 
 def main():
     parser = argparse.ArgumentParser(description="Generate author statistics from DBLP")
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    repo_root = os.path.dirname(script_dir)
+    repo_root = str(Path(__file__).resolve().parents[1])
     default_dblp = os.path.join(repo_root, "data", "dblp", "dblp.xml.gz")
     parser.add_argument(
         "--dblp_file",
