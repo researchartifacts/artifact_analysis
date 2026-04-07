@@ -21,6 +21,7 @@ import os
 import re
 import unicodedata
 from collections import defaultdict
+from pathlib import Path
 
 import yaml
 
@@ -33,167 +34,23 @@ _INITIALS = re.compile(r"\b[A-Z]\.\s*")  # e.g. "J. Doe"
 _MULTI_SPACE = re.compile(r"\s+")
 
 
-# Mapping: compiled regex  →  canonical name
-# Order matters: more specific patterns must come before broader ones.
-_AFFILIATION_RULES: list[tuple[re.Pattern, str]] = [
-    # ── Short-form abbreviations → full canonical names ─────────────────────
-    # MIT
-    (
-        re.compile(
-            r"^MIT\b|\bMIT\b.*\b(Cambridge|CSAIL|Lincoln)\b|\bMassachusetts\s+Institute\s+of\s+Technology\b|\bMassachusetts\s+Inst\.?\s+of\s+Technology\b",
-            re.I,
-        ),
-        "Massachusetts Institute of Technology",
-    ),
-    # EPFL
-    (
-        re.compile(
-            r"^EPFL\b|\bEPFL\b|\bSwiss\s+Federal\s+Institute\s+of\s+Technology\s+in\s+Lausanne\b|\bEcole\s+Polytechnique\s+Federale\s+de\s+Lausanne\b|\bÉcole\s+Polytechnique\s+Fédérale\s+de\s+Lausanne\b",
-            re.I,
-        ),
-        "EPFL",
-    ),
-    # ETH Zurich  (careful not to match "Netherlands", "Eindhoven" etc.)
-    (
-        re.compile(
-            r"^ETH\b|^ETH\s+Z|\bETH\s+Zurich\b|\bETH\s+Zrich\b|\bETH\s+Zürich\b|\bETHZ\b|^Department\s+of\s+Computer\s+Science,\s+ETH",
-            re.I,
-        ),
-        "ETH Zurich",
-    ),
-    # ── Max Planck institutes ──────────────────────────────────────────────
-    (
-        re.compile(r"Max\s+Planck.*Software\s+Systems|\bMPI[- ]?SWS\b", re.I),
-        "Max Planck Institute for Software Systems",
-    ),
-    (
-        re.compile(r"Max\s+Planck.*Security\s+and\s+Privacy|\bMPI[- ]?SP\b", re.I),
-        "Max Planck Institute for Security and Privacy",
-    ),
-    (re.compile(r"Max\s+Planck.*Informatics\b", re.I), "Max Planck Institute for Informatics"),
-    # ── CISPA ──────────────────────────────────────────────────────────────
-    (re.compile(r"^CISPA\b|\bCISPA\s+Helmholtz\b", re.I), "CISPA Helmholtz Center for Information Security"),
-    # ── UC campuses ────────────────────────────────────────────────────────
-    (
-        re.compile(
-            r"UC\s+Berkeley|University\s+of\s+California,?\s+Berkeley|University\s+of\s+California\s+at\s+Berkeley",
-            re.I,
-        ),
-        "University of California, Berkeley",
-    ),
-    (
-        re.compile(r"UC\s+San\s+Diego|UCSD|University\s+of\s+California,?\s+San\s+Diego", re.I),
-        "University of California, San Diego",
-    ),
-    (
-        re.compile(r"UC\s+Santa\s+Barbara|UCSB|University\s+of\s+California,?\s+Santa\s+Barbara", re.I),
-        "University of California, Santa Barbara",
-    ),
-    (
-        re.compile(r"UC\s+Santa\s+Cruz|University\s+of\s+California,?\s+Santa\s+Cruz", re.I),
-        "University of California, Santa Cruz",
-    ),
-    (re.compile(r"UC\s+Davis|University\s+of\s+California,?\s+Davis", re.I), "University of California, Davis"),
-    (
-        re.compile(r"UC\s+Irvine|University\s+of\s+California,?\s+Irvine|University\s+of\s+California\s+Irvine", re.I),
-        "University of California, Irvine",
-    ),
-    (
-        re.compile(r"UC\s+Riverside|University\s+of\s+California,?\s+Riverside", re.I),
-        "University of California, Riverside",
-    ),
-    (
-        re.compile(r"UC\s+Los\s+Angeles|UCLA|University\s+of\s+California,?\s+Los\s+Angeles", re.I),
-        "University of California, Los Angeles",
-    ),
-    (re.compile(r"UC\s+Merced|University\s+of\s+California,?\s+Merced", re.I), "University of California, Merced"),
-    # ── Lawrence Berkeley National Laboratory ─────────────────────────────
-    (
-        re.compile(r"Lawrence\s+Berkeley\s+National\s+Laboratory|\bLBNL\b", re.I),
-        "Lawrence Berkeley National Laboratory",
-    ),
-    # ── UIUC / Illinois ───────────────────────────────────────────────────
-    (
-        re.compile(
-            r"\bUIUC\b|Univ\.?\s+of\s+Illinois\s+at\s+Urbana|University\s+of\s+Illinois\s+at\s+Urbana|University\s+of\s+Illinois\s+Urbana|University\s+of\s+Illinois,\s+Urbana",
-            re.I,
-        ),
-        "University of Illinois Urbana-Champaign",
-    ),
-    # ── UCL London (not UCLouvain) ────────────────────────────────────────
-    (re.compile(r"^UCL$|^UCL,|\bUniversity\s+College\s+London\b", re.I), "University College London"),
-    # ── VU Amsterdam ──────────────────────────────────────────────────────
-    (re.compile(r"\bVU\s+Amsterdam\b|\bVrije\s+Universiteit\b|\bVUSec\b", re.I), "Vrije Universiteit Amsterdam"),
-    # ── Ruhr University Bochum ────────────────────────────────────────────
-    (
-        re.compile(r"Ruhr[- ]Universit(?:y|ät)\s+(?:of\s+)?Bochum|Ruhr\s+University\s+Bochum", re.I),
-        "Ruhr University Bochum",
-    ),
-    # ── University of Wisconsin-Madison ───────────────────────────────────
-    (
-        re.compile(r"University\s+of\s+Wisconsin[\s–—-]+Madison|\bUW\s*[-–—]?\s*Madison\b|\bUW\s*[-–—]?\s*Mad\b", re.I),
-        "University of Wisconsin-Madison",
-    ),
-    # ── University of Michigan ───────────────────────────────────────────
-    (
-        re.compile(r"\bU\s+Michigan\b|\bUMich\b|\bUMichigan\b|University\s+of\s+Michigan", re.I),
-        "University of Michigan",
-    ),
-    # ── TU Delft / Delft University ───────────────────────────────────────
-    (re.compile(r"\bTU\s+Delft\b|\bDelft\s+University\s+of\s+Technology\b", re.I), "TU Delft"),
-    # ── University of Texas at Austin ────────────────────────────────────
-    (re.compile(r"\bUT\s+Austin\b|University\s+of\s+Texas\s+at\s+Austin", re.I), "University of Texas at Austin"),
-    # ── KIT ───────────────────────────────────────────────────────────────
-    (re.compile(r"Karlsruhe\s+Institute\s+of\s+Technology|\bKIT\b", re.I), "Karlsruhe Institute of Technology"),
-    # ── Graz University of Technology (TU Graz) ───────────────────────────
-    (re.compile(r"\bTU\s+Graz\b|Graz\s+University\s+of\s+Technology", re.I), "Graz University of Technology"),
-    # ── KAIST ─────────────────────────────────────────────────────────────
-    (re.compile(r"^KAIST\b|\bKAIST\b|Korea\s+Advanced\s+Institute\s+of\s+Science", re.I), "KAIST"),
-    # ── NUS ───────────────────────────────────────────────────────────────
-    (re.compile(r"National\s+University\s+of\s+Singapore|^NUS\b", re.I), "National University of Singapore"),
-    # ── NTU Singapore vs Taiwan ───────────────────────────────────────────
-    (re.compile(r"Nanyang\s+Technological\s+University|\bNTU\b.*Singapore", re.I), "Nanyang Technological University"),
-    # ── SUTD ──────────────────────────────────────────────────────────────
-    (
-        re.compile(r"Singapore\s+University\s+of\s+Technology\s+and\s+Design|\bSUTD\b", re.I),
-        "Singapore University of Technology and Design",
-    ),
-    # ── HKUST ─────────────────────────────────────────────────────────────
-    (
-        re.compile(r"Hong\s+Kong\s+University\s+of\s+Science\s+and\s+Technology|\bHKUST\b", re.I),
-        "Hong Kong University of Science and Technology",
-    ),
-    # ── CUHK ──────────────────────────────────────────────────────────────
-    (re.compile(r"Chinese\s+University\s+of\s+Hong\s+Kong|\bCUHK\b", re.I), "Chinese University of Hong Kong"),
-    # ── KU Leuven / DistriNet ─────────────────────────────────────────────
-    (
-        re.compile(r"\bKU\s+Leuven\b|Katholieke\s+Universiteit\s+Leuven|DistriNet|imec\s*-?\s*DistriNet", re.I),
-        "KU Leuven",
-    ),
-    # ── Oregon State (case fix) ───────────────────────────────────────────
-    (re.compile(r"Oregon\s+State\s+[Uu]niversity", re.I), "Oregon State University"),
-    # ── Georgia Tech ──────────────────────────────────────────────────────
-    (
-        re.compile(r"Georgia\s+Institute\s+of\s+Technology|Georgia\s+Tech|\bGaTech\b", re.I),
-        "Georgia Institute of Technology",
-    ),
-    # ── Purdue University ────────────────────────────────────────────────
-    (re.compile(r"\bPurdue\b|Purdue\s+University", re.I), "Purdue University"),
-    # ── CMU ───────────────────────────────────────────────────────────────
-    (re.compile(r"Carnegie\s+Mellon\s+University|\bCMU\b", re.I), "Carnegie Mellon University"),
-    # ── Microsoft Research ───────────────────────────────────────────────
-    (
-        re.compile(r"Microsoft\s+Research(\s+Asia|\s+Cambridge|\s+Redmond|\s+India)?|\bMSR\b", re.I),
-        "Microsoft Research",
-    ),
-    # ── USTC ──────────────────────────────────────────────────────────────
-    (
-        re.compile(r"University\s+of\s+Science\s+and\s+Technology\s+of\s+China|\bUSTC\b", re.I),
-        "University of Science and Technology of China",
-    ),
-    # ── SMU Singapore ─────────────────────────────────────────────────────
-    (re.compile(r"Singapore\s+Management\s+University", re.I), "Singapore Management University"),
-]
+# ── Affiliation normalization rules (loaded from YAML) ────────────────────────
+
+_RULES_PATH = Path(__file__).resolve().parents[2] / "data" / "affiliation_rules.yaml"
+
+
+def _load_affiliation_rules(path: Path = _RULES_PATH) -> list[tuple[re.Pattern, str]]:
+    """Load affiliation regex rules from a YAML data file."""
+    with open(path) as fh:
+        entries = yaml.safe_load(fh)
+    rules: list[tuple[re.Pattern, str]] = []
+    for entry in entries:
+        combined = "|".join(entry["patterns"])
+        rules.append((re.compile(combined, re.I), entry["canonical"]))
+    return rules
+
+
+_AFFILIATION_RULES = _load_affiliation_rules()
 
 
 def _normalize_affiliation(affiliation: str) -> str:

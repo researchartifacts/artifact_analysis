@@ -1,0 +1,233 @@
+# Affiliation normalization rules.
+# Each entry maps a set of regex patterns (OR'd) to a canonical institution name.
+# Order matters: more specific patterns must come before broader ones.
+# All patterns are matched case-insensitively.
+
+- canonical: Massachusetts Institute of Technology
+  patterns:
+    - '^MIT\b'
+    - '\bMIT\b.*\b(Cambridge|CSAIL|Lincoln)\b'
+    - '\bMassachusetts\s+Institute\s+of\s+Technology\b'
+    - '\bMassachusetts\s+Inst\.?\s+of\s+Technology\b'
+
+- canonical: EPFL
+  patterns:
+    - '^EPFL\b'
+    - '\bEPFL\b'
+    - '\bSwiss\s+Federal\s+Institute\s+of\s+Technology\s+in\s+Lausanne\b'
+    - '\bEcole\s+Polytechnique\s+Federale\s+de\s+Lausanne\b'
+    - '\bÉcole\s+Polytechnique\s+Fédérale\s+de\s+Lausanne\b'
+
+- canonical: ETH Zurich
+  patterns:
+    - '^ETH\b'
+    - '^ETH\s+Z'
+    - '\bETH\s+Zurich\b'
+    - '\bETH\s+Zrich\b'
+    - '\bETH\s+Zürich\b'
+    - '\bETHZ\b'
+    - '^Department\s+of\s+Computer\s+Science,\s+ETH'
+
+- canonical: Max Planck Institute for Software Systems
+  patterns:
+    - 'Max\s+Planck.*Software\s+Systems'
+    - '\bMPI[- ]?SWS\b'
+
+- canonical: Max Planck Institute for Security and Privacy
+  patterns:
+    - 'Max\s+Planck.*Security\s+and\s+Privacy'
+    - '\bMPI[- ]?SP\b'
+
+- canonical: Max Planck Institute for Informatics
+  patterns:
+    - 'Max\s+Planck.*Informatics\b'
+
+- canonical: CISPA Helmholtz Center for Information Security
+  patterns:
+    - '^CISPA\b'
+    - '\bCISPA\s+Helmholtz\b'
+
+- canonical: University of California, Berkeley
+  patterns:
+    - 'UC\s+Berkeley'
+    - 'University\s+of\s+California,?\s+Berkeley'
+    - 'University\s+of\s+California\s+at\s+Berkeley'
+
+- canonical: University of California, San Diego
+  patterns:
+    - 'UC\s+San\s+Diego'
+    - 'UCSD'
+    - 'University\s+of\s+California,?\s+San\s+Diego'
+
+- canonical: University of California, Santa Barbara
+  patterns:
+    - 'UC\s+Santa\s+Barbara'
+    - 'UCSB'
+    - 'University\s+of\s+California,?\s+Santa\s+Barbara'
+
+- canonical: University of California, Santa Cruz
+  patterns:
+    - 'UC\s+Santa\s+Cruz'
+    - 'University\s+of\s+California,?\s+Santa\s+Cruz'
+
+- canonical: University of California, Davis
+  patterns:
+    - 'UC\s+Davis'
+    - 'University\s+of\s+California,?\s+Davis'
+
+- canonical: University of California, Irvine
+  patterns:
+    - 'UC\s+Irvine'
+    - 'University\s+of\s+California,?\s+Irvine'
+    - 'University\s+of\s+California\s+Irvine'
+
+- canonical: University of California, Riverside
+  patterns:
+    - 'UC\s+Riverside'
+    - 'University\s+of\s+California,?\s+Riverside'
+
+- canonical: University of California, Los Angeles
+  patterns:
+    - 'UC\s+Los\s+Angeles'
+    - 'UCLA'
+    - 'University\s+of\s+California,?\s+Los\s+Angeles'
+
+- canonical: University of California, Merced
+  patterns:
+    - 'UC\s+Merced'
+    - 'University\s+of\s+California,?\s+Merced'
+
+- canonical: Lawrence Berkeley National Laboratory
+  patterns:
+    - 'Lawrence\s+Berkeley\s+National\s+Laboratory'
+    - '\bLBNL\b'
+
+- canonical: University of Illinois Urbana-Champaign
+  patterns:
+    - '\bUIUC\b'
+    - 'Univ\.?\s+of\s+Illinois\s+at\s+Urbana'
+    - 'University\s+of\s+Illinois\s+at\s+Urbana'
+    - 'University\s+of\s+Illinois\s+Urbana'
+    - 'University\s+of\s+Illinois,\s+Urbana'
+
+- canonical: University College London
+  patterns:
+    - '^UCL$'
+    - '^UCL,'
+    - '\bUniversity\s+College\s+London\b'
+
+- canonical: Vrije Universiteit Amsterdam
+  patterns:
+    - '\bVU\s+Amsterdam\b'
+    - '\bVrije\s+Universiteit\b'
+    - '\bVUSec\b'
+
+- canonical: Ruhr University Bochum
+  patterns:
+    - 'Ruhr[- ]Universit(?:y|ät)\s+(?:of\s+)?Bochum'
+    - 'Ruhr\s+University\s+Bochum'
+
+- canonical: University of Wisconsin-Madison
+  patterns:
+    - 'University\s+of\s+Wisconsin[\s–—-]+Madison'
+    - '\bUW\s*[-–—]?\s*Madison\b'
+    - '\bUW\s*[-–—]?\s*Mad\b'
+
+- canonical: University of Michigan
+  patterns:
+    - '\bU\s+Michigan\b'
+    - '\bUMich\b'
+    - '\bUMichigan\b'
+    - 'University\s+of\s+Michigan'
+
+- canonical: TU Delft
+  patterns:
+    - '\bTU\s+Delft\b'
+    - '\bDelft\s+University\s+of\s+Technology\b'
+
+- canonical: University of Texas at Austin
+  patterns:
+    - '\bUT\s+Austin\b'
+    - 'University\s+of\s+Texas\s+at\s+Austin'
+
+- canonical: Karlsruhe Institute of Technology
+  patterns:
+    - 'Karlsruhe\s+Institute\s+of\s+Technology'
+    - '\bKIT\b'
+
+- canonical: Graz University of Technology
+  patterns:
+    - '\bTU\s+Graz\b'
+    - 'Graz\s+University\s+of\s+Technology'
+
+- canonical: KAIST
+  patterns:
+    - '^KAIST\b'
+    - '\bKAIST\b'
+    - 'Korea\s+Advanced\s+Institute\s+of\s+Science'
+
+- canonical: National University of Singapore
+  patterns:
+    - 'National\s+University\s+of\s+Singapore'
+    - '^NUS\b'
+
+- canonical: Nanyang Technological University
+  patterns:
+    - 'Nanyang\s+Technological\s+University'
+    - '\bNTU\b.*Singapore'
+
+- canonical: Singapore University of Technology and Design
+  patterns:
+    - 'Singapore\s+University\s+of\s+Technology\s+and\s+Design'
+    - '\bSUTD\b'
+
+- canonical: Hong Kong University of Science and Technology
+  patterns:
+    - 'Hong\s+Kong\s+University\s+of\s+Science\s+and\s+Technology'
+    - '\bHKUST\b'
+
+- canonical: Chinese University of Hong Kong
+  patterns:
+    - 'Chinese\s+University\s+of\s+Hong\s+Kong'
+    - '\bCUHK\b'
+
+- canonical: KU Leuven
+  patterns:
+    - '\bKU\s+Leuven\b'
+    - 'Katholieke\s+Universiteit\s+Leuven'
+    - 'DistriNet'
+    - 'imec\s*-?\s*DistriNet'
+
+- canonical: Oregon State University
+  patterns:
+    - 'Oregon\s+State\s+[Uu]niversity'
+
+- canonical: Georgia Institute of Technology
+  patterns:
+    - 'Georgia\s+Institute\s+of\s+Technology'
+    - 'Georgia\s+Tech'
+    - '\bGaTech\b'
+
+- canonical: Purdue University
+  patterns:
+    - '\bPurdue\b'
+    - 'Purdue\s+University'
+
+- canonical: Carnegie Mellon University
+  patterns:
+    - 'Carnegie\s+Mellon\s+University'
+    - '\bCMU\b'
+
+- canonical: Microsoft Research
+  patterns:
+    - 'Microsoft\s+Research(\s+Asia|\s+Cambridge|\s+Redmond|\s+India)?'
+    - '\bMSR\b'
+
+- canonical: University of Science and Technology of China
+  patterns:
+    - 'University\s+of\s+Science\s+and\s+Technology\s+of\s+China'
+    - '\bUSTC\b'
+
+- canonical: Singapore Management University
+  patterns:
+    - 'Singapore\s+Management\s+University'
