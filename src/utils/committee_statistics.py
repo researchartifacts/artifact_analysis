@@ -3,13 +3,17 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+from pathlib import Path
 
+import yaml
 from pytrie import Trie
 from sys_sec_committee_scrape import get_committees
 from sys_sec_scrape import download_file
 from thefuzz import fuzz
 
 logger = logging.getLogger(__name__)
+
+_OVERRIDES_PATH = Path(__file__).resolve().parents[2] / "data" / "university_country_overrides.yaml"
 
 
 def calculate_affiliation_stats(results: dict[str, list[dict]]) -> dict[str, list[dict]]:
@@ -69,49 +73,8 @@ def classify_aec_by_country(results):
             "https://github.com/Hipo/university-domains-list/raw/refs/heads/master/world_universities_and_domains.json"
         )
     )
-    university_info.extend(
-        [
-            {"name": "télécom sudparis", "country": "France"},
-            {"name": "ku leuven", "country": "Belgium"},
-            {"name": "imec-distrinet, ku leuven", "country": "Belgium"},
-            {"name": "university of crete", "country": "Greece"},
-            {"name": "ucla", "country": "United States"},
-            {"name": "tu munich", "country": "Germany"},
-            {"name": "inesc-id & ist u. lisboa in Portugal", "country": "Portugal"},
-            {"name": "ist lisbon & inesc-id", "country": "Portugal"},
-            {"name": "mpi-sws", "country": "Germany"},
-            {"name": "hkust", "country": "Hong Kong"},
-            {"name": "uc irvine", "country": "United States"},
-            {"name": "uiuc", "country": "United States"},
-            {"name": "school of computer science, university college dublin", "country": "Ireland"},
-            {"name": "imdea software institute", "country": "Spain"},
-            {"name": "university of chinese academy of sciences", "country": "China"},
-            {"name": "zhengqing", "country": "China"},
-            {"name": "the university of utah", "country": "United States"},
-            {
-                "name": "institute of parallel and distributed systems, shanghai jiao tong university",
-                "country": "China",
-            },
-            {"name": "computing and imaging institute - the university of utah", "country": "United States"},
-            {"name": "university of crete & ics-forth", "country": "Greece"},
-            {"name": "ics-forth", "country": "Greece"},
-            {"name": "kaust", "country": "Saudi Arabia"},
-            {"name": "lrz", "country": "Germany"},
-            {"name": "ensta bretagne", "country": "France"},
-            {"name": "institute of computing technology chinese academy of sciences", "country": "China"},
-            {"name": "imdea networks institute & uc3m", "country": "Spain"},
-            {"name": "hasso plattner institute", "country": "Germany"},
-            {"name": "unist", "country": "South Korea"},
-            {"name": "niccolò cusano university", "country": "Italy"},
-            {"name": "uc irvine & mpi-sp", "country": "United States"},
-            {"name": "univ. toulouse iii, irit", "country": "France"},
-            {"name": "university of telepegaso,rome,italy", "country": "Italy"},
-            {"name": "leibniz supercomputing center", "country": "Germany"},
-            {"name": "inesc tec & u. minho", "country": "Portugal"},
-            {"name": "barkhausen institut", "country": "Germany"},
-            {"name": "the ohio state university", "country": "United States"},
-        ]
-    )
+    with open(_OVERRIDES_PATH) as fh:
+        university_info.extend(yaml.safe_load(fh))
 
     name_index = {}
     for uni in university_info:
@@ -136,7 +99,9 @@ def classify_aec_by_country(results):
             if university:
                 uni = university[0]
                 # print(f'{affiliation} in {uni["country"]} matched')
-                per_year_country_stats[conf][uni["country"]] = per_year_country_stats[conf].get(uni["country"], 0) + 1
+                per_year_country_stats[conf][uni["country"]] = (
+                    per_year_country_stats[conf].get(uni["country"], 0) + 1
+                )
             else:
                 best_match: dict | None = None
                 best_match_ratio = 0

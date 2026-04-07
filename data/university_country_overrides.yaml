@@ -1,0 +1,76 @@
+# Additional university → country overrides.
+# These supplement the Hipo/university-domains-list dataset with abbreviations,
+# research institutes, and joint affiliations that are not in the public list.
+
+- name: "télécom sudparis"
+  country: France
+- name: "ku leuven"
+  country: Belgium
+- name: "imec-distrinet, ku leuven"
+  country: Belgium
+- name: "university of crete"
+  country: Greece
+- name: "ucla"
+  country: United States
+- name: "tu munich"
+  country: Germany
+- name: "inesc-id & ist u. lisboa in Portugal"
+  country: Portugal
+- name: "ist lisbon & inesc-id"
+  country: Portugal
+- name: "mpi-sws"
+  country: Germany
+- name: "hkust"
+  country: Hong Kong
+- name: "uc irvine"
+  country: United States
+- name: "uiuc"
+  country: United States
+- name: "school of computer science, university college dublin"
+  country: Ireland
+- name: "imdea software institute"
+  country: Spain
+- name: "university of chinese academy of sciences"
+  country: China
+- name: "zhengqing"
+  country: China
+- name: "the university of utah"
+  country: United States
+- name: "institute of parallel and distributed systems, shanghai jiao tong university"
+  country: China
+- name: "computing and imaging institute - the university of utah"
+  country: United States
+- name: "university of crete & ics-forth"
+  country: Greece
+- name: "ics-forth"
+  country: Greece
+- name: "kaust"
+  country: Saudi Arabia
+- name: "lrz"
+  country: Germany
+- name: "ensta bretagne"
+  country: France
+- name: "institute of computing technology chinese academy of sciences"
+  country: China
+- name: "imdea networks institute & uc3m"
+  country: Spain
+- name: "hasso plattner institute"
+  country: Germany
+- name: "unist"
+  country: South Korea
+- name: "niccolò cusano university"
+  country: Italy
+- name: "uc irvine & mpi-sp"
+  country: United States
+- name: "univ. toulouse iii, irit"
+  country: France
+- name: "university of telepegaso,rome,italy"
+  country: Italy
+- name: "leibniz supercomputing center"
+  country: Germany
+- name: "inesc tec & u. minho"
+  country: Portugal
+- name: "barkhausen institut"
+  country: Germany
+- name: "the ohio state university"
+  country: United States
