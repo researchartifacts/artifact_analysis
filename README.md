@@ -1,4 +1,4 @@
-# Research Artifacts Analysis
+# ReproDB Pipeline
 
 [![Tests](https://github.com/reprodb/reprodb-pipeline/actions/workflows/tests.yml/badge.svg)](https://github.com/reprodb/reprodb-pipeline/actions/workflows/tests.yml)
 [![Docs](https://github.com/reprodb/reprodb-pipeline/actions/workflows/deploy-docs.yml/badge.svg)](https://reprodb.github.io/reprodb-pipeline/)
