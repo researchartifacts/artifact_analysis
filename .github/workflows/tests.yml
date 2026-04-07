@@ -29,7 +29,7 @@ jobs:
           cache: 'pip'
 
       - name: Install linters
-        run: pip install ruff black mypy pydantic
+        run: pip install ruff black mypy pydantic types-PyYAML types-requests
 
       - name: Ruff check
         run: ruff check src/ tests/

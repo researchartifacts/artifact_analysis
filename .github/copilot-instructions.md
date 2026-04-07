@@ -128,6 +128,19 @@ When adding normalization for a new entity, add it to the shared module — not 
 - **pre-commit** hooks run ruff lint + format automatically on commit.
 - Run `ruff check src/` and `ruff format --check src/` before committing.
 
+### Pre-push gate
+
+**Before every `git push`**, run the full lint suite **and** the test suite, and fix any errors:
+
+```bash
+ruff check src/ tests/
+ruff format --check src/ tests/
+mypy --follow-imports=silent src/models/ src/utils/
+pytest tests/ -x -q
+```
+
+Do **not** push if any of these commands fail. Fix the issues first, then push.
+
 ## Secrets & Credentials
 
 - **Never commit API keys, tokens, or credentials** to the repository.
