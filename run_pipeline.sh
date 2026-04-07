@@ -16,10 +16,10 @@ DBLP_FILE="$DATA_DIR/dblp/dblp.xml.gz"
 mkdir -p "$LOG_DIR"
 cd "$SCRIPT_DIR"
 
-OUTPUT_DIR="../researchartifacts.github.io"
+OUTPUT_DIR="../reprodb.github.io"
 CONF_REGEX=".*20[12][0-9]"
 SAVE_RESULTS=false
-RESULTS_DIR="../artifact_analysis_results"
+RESULTS_DIR="../reprodb-pipeline-results"
 DO_PUSH=false
 
 while [ $# -gt 0 ]; do

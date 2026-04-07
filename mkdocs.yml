@@ -1,8 +1,8 @@
-site_name: Artifact Analysis
-site_description: Documentation for the researchartifacts artifact analysis pipeline
-site_url: https://researchartifacts.github.io/artifact_analysis/
-repo_url: https://github.com/researchartifacts/artifact_analysis
-repo_name: researchartifacts/artifact_analysis
+site_name: ReproDB Pipeline
+site_description: Documentation for the ReproDB ReproDB pipeline
+site_url: https://reprodb.github.io/reprodb-pipeline/
+repo_url: https://github.com/reprodb/reprodb-pipeline
+repo_name: reprodb-pipeline
 
 theme:
   name: material
@@ -51,7 +51,7 @@ plugins:
 nav:
   - Home: index.md
   - CLI Reference: cli/
-  - Data Schemas: https://researchartifacts.github.io/data-schemas/
+  - Data Schemas: https://reprodb.github.io/data-schemas/
   - API Reference: reference/
 
 extra:

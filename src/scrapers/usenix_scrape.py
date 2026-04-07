@@ -54,7 +54,7 @@ def get_session(session=None):
     if session is not None:
         return session
     s = requests.Session()
-    s.headers.update({"User-Agent": "ResearchArtifacts/1.0 (artifact statistics collection)"})
+    s.headers.update({"User-Agent": "ReproDB/1.0 (artifact statistics collection)"})
     return s
 
 

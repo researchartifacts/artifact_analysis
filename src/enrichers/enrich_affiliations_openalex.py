@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 # Cache
 # ---------------------------------------------------------------------------
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent.parent  # artifact_analysis/
+REPO_ROOT = SCRIPT_DIR.parent.parent  # reprodb-pipeline/
 CACHE_DIR = REPO_ROOT / ".cache" / "openalex"
 _SECONDS_PER_DAY = 86400
 CACHE_TTL = _SECONDS_PER_DAY * 90  # 90 days
@@ -486,9 +486,7 @@ def enrich(
 
     # HTTP session
     session = requests.Session()
-    session.headers.update(
-        {"User-Agent": "ResearchArtifacts-Enricher/2.0 (https://github.com/researchartifacts/artifact_analysis)"}
-    )
+    session.headers.update({"User-Agent": "ReproDB-Enricher/2.0 (https://github.com/reprodb/reprodb-pipeline)"})
     http_proxy = os.environ.get("http_proxy") or os.environ.get("HTTP_PROXY", "")
     https_proxy = os.environ.get("https_proxy") or os.environ.get("HTTPS_PROXY", "")
     if https_proxy or http_proxy:

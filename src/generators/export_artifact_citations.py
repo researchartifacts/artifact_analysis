@@ -3,8 +3,8 @@
 Export artifact citations in a simple format showing artifact DOI and citing DOIs.
 
 Usage:
-    python3 export_artifact_citations.py --data_dir ../researchartifacts.github.io
-    python3 export_artifact_citations.py --data_dir ../researchartifacts.github.io --output citations_export.txt
+    python3 export_artifact_citations.py --data_dir ../reprodb.github.io
+    python3 export_artifact_citations.py --data_dir ../reprodb.github.io --output citations_export.txt
 """
 
 import argparse
@@ -89,18 +89,18 @@ def main():
         epilog="""
 Examples:
   # Output to stdout
-  python3 export_artifact_citations.py --data_dir ../researchartifacts.github.io
+  python3 export_artifact_citations.py --data_dir ../reprodb.github.io
 
   # Output to file
-  python3 export_artifact_citations.py --data_dir ../researchartifacts.github.io --output citations.txt
+  python3 export_artifact_citations.py --data_dir ../reprodb.github.io --output citations.txt
 
   # Pipe to other tools
-  python3 export_artifact_citations.py --data_dir ../researchartifacts.github.io | grep "10.5281/zenodo"
+  python3 export_artifact_citations.py --data_dir ../reprodb.github.io | grep "10.5281/zenodo"
         """,
     )
 
     parser.add_argument(
-        "--data_dir", required=True, help="Path to the website data directory (e.g., ../researchartifacts.github.io)"
+        "--data_dir", required=True, help="Path to the website data directory (e.g., ../reprodb.github.io)"
     )
 
     parser.add_argument("--output", "-o", help="Output file path (default: stdout)")

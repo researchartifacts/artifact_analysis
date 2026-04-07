@@ -19,24 +19,24 @@ jobs:
       SKIP_USENIX_SCRAPE: "1"
     
     steps:
-      - name: Checkout artifact_analysis repository
+      - name: Checkout reprodb-pipeline repository
         uses: actions/checkout@v4
         with:
-          path: artifact_analysis
+          path: reprodb-pipeline
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Checkout researchartifacts.github.io repository
+      - name: Checkout reprodb.github.io repository
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/researchartifacts.github.io
+          repository: ${{ github.repository_owner }}/reprodb.github.io
           path: website
           ref: main
           token: ${{ secrets.CROSS_REPO_TOKEN }}
       
-      - name: Checkout artifact_analysis_results repository
+      - name: Checkout reprodb-pipeline-results repository
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/artifact_analysis_results
+          repository: ${{ github.repository_owner }}/reprodb-pipeline-results
           path: results_archive
           token: ${{ secrets.CROSS_REPO_TOKEN }}
       
@@ -55,7 +55,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          cd artifact_analysis
+          cd reprodb-pipeline
           pip install -r requirements-ci.txt
           pip install jsonschema
       
@@ -73,7 +73,7 @@ jobs:
       
       - name: Generate statistics
         run: |
-          cd artifact_analysis
+          cd reprodb-pipeline
           python -m src.generators.generate_statistics \
             --conf_regex '.*20[12][0-9]' \
             --output_dir ../website
@@ -83,7 +83,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
         run: |
-          cd artifact_analysis
+          cd reprodb-pipeline
           python -m src.generators.generate_repo_stats \
             --conf_regex '.*20[12][0-9]' \
             --output_dir ../website \
@@ -91,32 +91,32 @@ jobs:
       
       - name: Generate per-area author data
         run: |
-          cd artifact_analysis
+          cd reprodb-pipeline
           python -m src.generators.generate_area_authors --data_dir ../website
       
       - name: Generate combined rankings
         run: |
-          cd artifact_analysis
+          cd reprodb-pipeline
           python -m src.generators.generate_combined_rankings --data_dir ../website
       
       - name: Generate institution rankings
         run: |
-          cd artifact_analysis
+          cd reprodb-pipeline
           python -m src.generators.generate_institution_rankings --data_dir ../website
       
       - name: Generate author profiles
         run: |
-          cd artifact_analysis
+          cd reprodb-pipeline
           python -m src.generators.generate_author_profiles --data_dir ../website
       
       - name: Generate search data
         run: |
-          cd artifact_analysis
+          cd reprodb-pipeline
           python -m src.generators.generate_search_data --data_dir ../website
       
       - name: Update ranking history
         run: |
-          cd artifact_analysis
+          cd reprodb-pipeline
           python -m src.generators.generate_ranking_history --data_dir ../website
       
       - name: Download DBLP author analysis artifact (if available)
@@ -261,14 +261,14 @@ jobs:
           echo "✅ Visualizations created" >> $GITHUB_STEP_SUMMARY
           echo "✅ Per-area author data generated" >> $GITHUB_STEP_SUMMARY
           echo "✅ Ranked data compiled" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Results archived to artifact_analysis_results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Results archived to reprodb-pipeline-results" >> $GITHUB_STEP_SUMMARY
           echo "✅ Debug branch updated" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Repositories Updated" >> $GITHUB_STEP_SUMMARY
-          echo "- 📦 artifact_analysis_results: Timestamped archive" >> $GITHUB_STEP_SUMMARY
-          echo "- 🌐 researchartifacts.github.io (debug branch): Website data" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 reprodb-pipeline-results: Timestamped archive" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌐 reprodb.github.io (debug branch): Website data" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔍 Review changes in [debug branch](https://github.com/${{ github.repository_owner }}/researchartifacts.github.io/tree/debug)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔍 Review changes in [debug branch](https://github.com/${{ github.repository_owner }}/reprodb.github.io/tree/debug)" >> $GITHUB_STEP_SUMMARY
           echo "- ✔️ Test website rendering at debug branch deploy preview" >> $GITHUB_STEP_SUMMARY
-          echo "- 📊 View archived data in [artifact_analysis_results](https://github.com/${{ github.repository_owner }}/artifact_analysis_results)" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 View archived data in [reprodb-pipeline-results](https://github.com/${{ github.repository_owner }}/reprodb-pipeline-results)" >> $GITHUB_STEP_SUMMARY

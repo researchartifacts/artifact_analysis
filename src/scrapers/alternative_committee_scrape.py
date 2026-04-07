@@ -46,7 +46,7 @@ BASE_USENIX = "https://www.usenix.org"
 def _get_session():
     """Return a requests session with a polite user-agent."""
     s = requests.Session()
-    s.headers.update({"User-Agent": "ResearchArtifacts/1.0 (artifact statistics collection)"})
+    s.headers.update({"User-Agent": "ReproDB/1.0 (artifact statistics collection)"})
     return s
 
 

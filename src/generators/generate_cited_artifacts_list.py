@@ -12,7 +12,7 @@ Outputs:
   assets/data/cited_artifacts_list.json - List of all cited artifacts with creator info
 
 Usage:
-  python generate_cited_artifacts_list.py --data_dir ../researchartifacts.github.io
+  python generate_cited_artifacts_list.py --data_dir ../reprodb.github.io
 """
 
 import argparse
@@ -218,7 +218,7 @@ def generate(data_dir: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate mapping of cited artifacts to authors/institutions")
-    parser.add_argument("--data_dir", type=str, required=True, help="Path to researchartifacts.github.io")
+    parser.add_argument("--data_dir", type=str, required=True, help="Path to reprodb.github.io")
     args = parser.parse_args()
     generate(args.data_dir)
 

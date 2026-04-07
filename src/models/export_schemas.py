@@ -34,7 +34,7 @@ SCHEMA_REGISTRY: list[tuple[str, bool, str, str]] = [
     ("summary.schema.json", False, "src.models.summary", "Summary"),
 ]
 
-BASE_URL = "https://researchartifacts.github.io/data-schemas/schemas"
+BASE_URL = "https://reprodb.github.io/data-schemas/schemas"
 
 
 def _import_class(module_path: str, class_name: str):

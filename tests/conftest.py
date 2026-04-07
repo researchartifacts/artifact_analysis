@@ -1,4 +1,4 @@
-"""Shared test fixtures for the artifact_analysis test suite."""
+"""Shared test fixtures for the ReproDB pipeline test suite."""
 
 import json
 import os

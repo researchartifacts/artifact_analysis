@@ -28,10 +28,10 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Checkout researchartifacts.github.io repository
+      - name: Checkout reprodb.github.io repository
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/researchartifacts.github.io
+          repository: ${{ github.repository_owner }}/reprodb.github.io
           path: website
           ref: main
           token: ${{ secrets.CROSS_REPO_TOKEN || secrets.GITHUB_TOKEN }}

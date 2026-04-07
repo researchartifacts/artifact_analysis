@@ -152,14 +152,14 @@ def aggregate_by_institution(combined_data):
 def main():
     """Generate institution ranking JSON files."""
     parser = argparse.ArgumentParser(description="Generate institution rankings")
-    parser.add_argument("--data_dir", type=str, default=None, help="Path to website root (researchartifacts.github.io)")
+    parser.add_argument("--data_dir", type=str, default=None, help="Path to website root (reprodb.github.io)")
     args = parser.parse_args()
 
     if args.data_dir:
         website_path = Path(args.data_dir)
     else:
         base_path = Path(__file__).parent
-        website_path = base_path.parent.parent.parent / "researchartifacts.github.io"
+        website_path = base_path.parent.parent.parent / "reprodb.github.io"
     data_dir = website_path / "assets" / "data"
 
     # Process overall combined ranking

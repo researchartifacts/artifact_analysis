@@ -12,7 +12,7 @@ import re
 import unicodedata
 
 # ── Conference → area classification ────────────────────────────────────────
-# Canonical source: researchartifacts.github.io/_data/summary.yml
+# Canonical source: reprodb.github.io/_data/summary.yml
 # SysTEX is a security workshop co-located with systems venues.
 
 SYSTEMS_CONFS = frozenset(

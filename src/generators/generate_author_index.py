@@ -13,7 +13,7 @@ Writes:
   - assets/data/author_index.json
 
 Usage:
-  python -m src.generators.generate_author_index --data_dir ../researchartifacts.github.io
+  python -m src.generators.generate_author_index --data_dir ../reprodb.github.io
 """
 
 import argparse

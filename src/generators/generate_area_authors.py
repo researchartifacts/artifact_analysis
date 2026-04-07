@@ -6,7 +6,7 @@ Reads _data/authors.yml and _data/summary.yml, outputs:
   - _data/security_authors.yml
 
 Usage:
-  python generate_area_authors.py --data_dir ../researchartifacts.github.io
+  python generate_area_authors.py --data_dir ../reprodb.github.io
 """
 
 import argparse
@@ -321,7 +321,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--data_dir",
         type=str,
-        default="../researchartifacts.github.io",
+        default="../reprodb.github.io",
         help="Path to the website repo root (containing _data/)",
     )
     args = parser.parse_args()

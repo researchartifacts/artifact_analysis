@@ -7,7 +7,7 @@ for each, and writes repo_stats_detail.json with per-repo data.
 
 Usage:
     python -m src.generators.collect_repo_detail \
-        --cache_yml ../researchartifacts.github.io/_data/all_results_cache.yml \
+        --cache_yml ../reprodb.github.io/_data/all_results_cache.yml \
         --output repo_stats_detail.json
 """
 

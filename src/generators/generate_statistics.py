@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate comprehensive statistics and data files for the researchartifacts website.
+Generate comprehensive statistics and data files for the ReproDB website.
 This script collects data from both sysartifacts and secartifacts, processes it,
 and generates YAML/JSON files for Jekyll to render.
 """

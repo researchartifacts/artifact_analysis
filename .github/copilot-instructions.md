@@ -3,7 +3,7 @@
 ## Data Schema Awareness
 
 All JSON/YAML data structures produced by this pipeline are formally documented in
-**[researchartifacts/data-schemas](https://github.com/researchartifacts/data-schemas)**.
+**[reprodb/data-schemas](https://github.com/reprodb/data-schemas)**.
 
 When modifying any generator in `src/generators/`, check whether the change affects
 the output schema (adding/removing/renaming fields, changing types, changing nesting).
@@ -40,7 +40,7 @@ cd ../data-schemas
 .venv/bin/python -c "
 import json, jsonschema, pathlib
 schema = json.load(open('schemas/artifacts.schema.json'))
-data = json.load(open('../artifact_analysis_results/output/artifacts.json'))
+data = json.load(open('../reprodb-pipeline-results/output/artifacts.json'))
 jsonschema.validate(data, schema)
 print('OK')
 "
@@ -77,11 +77,11 @@ Any new or modified generator **must** be added to the monthly CI pipeline in
 ## CI Secrets
 
 All cross-repo workflows use `secrets.CROSS_REPO_TOKEN` (a PAT with push access to
-sibling repos under the `researchartifacts` org). Do **not** create separate tokens
+sibling repos under the `reprodb` org). Do **not** create separate tokens
 per workflow. Workflows that use it:
 
-- `update-stats.yml` — pushes to `researchartifacts.github.io` and `artifact_analysis_results`
-- `dblp-author-analysis.yml` — pushes to `researchartifacts.github.io`
+- `update-stats.yml` — pushes to `reprodb.github.io` and `reprodb-pipeline-results`
+- `dblp-author-analysis.yml` — pushes to `reprodb.github.io`
 - `export-schemas.yml` — pushes to `data-schemas`
 
 ## Caching Conventions

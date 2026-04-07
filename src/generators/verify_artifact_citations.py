@@ -14,7 +14,7 @@ This is more reliable than OpenAlex title matching because:
 
 Usage:
     HTTP_PROXY=http://proxy-dmz.intel.com:912 HTTPS_PROXY=http://proxy-dmz.intel.com:912 \
-    python3 verify_artifact_citations.py --data_dir ../researchartifacts.github.io
+    python3 verify_artifact_citations.py --data_dir ../reprodb.github.io
 """
 
 import argparse
@@ -37,7 +37,7 @@ def log(msg: str) -> None:
 
 
 def fetch_json(url: str, timeout: int = 20, headers: dict = None) -> dict:
-    hdrs = {"User-Agent": "researchartifacts-verify/0.1 (mailto:researchartifacts@example.com)"}
+    hdrs = {"User-Agent": "reprodb-verify/0.1 (mailto:reprodb@example.com)"}
     if headers:
         hdrs.update(headers)
     req = urllib.request.Request(url, headers=hdrs)
@@ -108,7 +108,7 @@ def fetch_zenodo_authors(record_id: str) -> list[str]:
     url = f"https://zenodo.org/api/records/{record_id}"
     try:
         # Follow redirects (some records redirect to a newer version)
-        req = urllib.request.Request(url, headers={"User-Agent": "researchartifacts-verify/0.1"})
+        req = urllib.request.Request(url, headers={"User-Agent": "reprodb-verify/0.1"})
         resp = urllib.request.urlopen(req, timeout=20)
         # Handle redirects manually if needed
         data = json.loads(resp.read())

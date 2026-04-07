@@ -17,15 +17,15 @@ Outputs:
 Usage:
   # Full run (will stop gracefully if blocked):
   python3 -m src.generators.generate_paper_citations \\
-      --data_dir ../researchartifacts.github.io
+      --data_dir ../reprodb.github.io
 
   # Report what's cached without making any API calls:
   python3 -m src.generators.generate_paper_citations \\
-      --data_dir ../researchartifacts.github.io --cache_only
+      --data_dir ../reprodb.github.io --cache_only
 
   # Custom cache TTL (default: 90 days):
   python3 -m src.generators.generate_paper_citations \\
-      --data_dir ../researchartifacts.github.io --cache_ttl_days 90
+      --data_dir ../reprodb.github.io --cache_ttl_days 90
 """
 
 import argparse
@@ -387,7 +387,7 @@ def main() -> None:
         "--data_dir",
         type=str,
         required=True,
-        help="Path to researchartifacts.github.io",
+        help="Path to reprodb.github.io",
     )
     parser.add_argument(
         "--cache_ttl_days",

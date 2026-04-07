@@ -10,7 +10,7 @@ Output:
   suitable for client-side rendering of individual author profile pages.
 
 Usage:
-  python generate_author_profiles.py --data_dir ../researchartifacts.github.io
+  python generate_author_profiles.py --data_dir ../reprodb.github.io
 """
 
 import argparse
@@ -159,7 +159,7 @@ def generate_profiles(data_dir: str) -> None:
 
 def main():
     parser = argparse.ArgumentParser(description="Generate author profile JSON for the website")
-    parser.add_argument("--data_dir", type=str, required=True, help="Path to the researchartifacts.github.io directory")
+    parser.add_argument("--data_dir", type=str, required=True, help="Path to the reprodb.github.io directory")
     args = parser.parse_args()
     generate_profiles(args.data_dir)
 

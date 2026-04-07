@@ -7,7 +7,7 @@ Outputs:
   assets/data/artifact_citations_summary.json
 
 Usage:
-  python generate_artifact_citations.py --data_dir ../researchartifacts.github.io
+  python generate_artifact_citations.py --data_dir ../reprodb.github.io
 """
 
 import argparse
@@ -102,7 +102,7 @@ def fetch_json(url: str, timeout: int = 20) -> dict:
 
 
 def fetch_json_with_headers(url: str, timeout: int = 20, headers: dict | None = None) -> dict:
-    req_headers = {"User-Agent": "researchartifacts-citations/0.1"}
+    req_headers = {"User-Agent": "reprodb-citations/0.1"}
     if headers:
         req_headers.update(headers)
     req = urllib.request.Request(url, headers=req_headers)
@@ -515,7 +515,7 @@ def generate(data_dir: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate artifact citation stats via OpenAlex and Semantic Scholar")
-    parser.add_argument("--data_dir", type=str, required=True, help="Path to researchartifacts.github.io")
+    parser.add_argument("--data_dir", type=str, required=True, help="Path to reprodb.github.io")
     parser.add_argument(
         "--enable-citations",
         action="store_true",

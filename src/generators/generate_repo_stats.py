@@ -6,7 +6,7 @@ Collects stats from GitHub/Zenodo/Figshare for all scraped artifacts and writes:
   - assets/data/repo_stats_detail.json — per-repo detail (for analysis/figures)
 
 Usage:
-  python generate_repo_stats.py --conf_regex '.*20[12][0-9]' --output_dir ../researchartifacts.github.io
+  python generate_repo_stats.py --conf_regex '.*20[12][0-9]' --output_dir ../reprodb.github.io
 """
 
 import argparse

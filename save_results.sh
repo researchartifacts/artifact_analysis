@@ -1,5 +1,5 @@
 #!/bin/bash
-# Save pipeline run results to the artifact_analysis_results repository.
+# Save pipeline run results to the reprodb-pipeline-results repository.
 #
 # Usage: ./save_results.sh [--results_dir DIR] [--output_dir DIR] [--message MSG]
 #                          [--push] [--https_proxy URL]
@@ -16,8 +16,8 @@ LOG_DIR="$SCRIPT_DIR/logs"
 DBLP_FILE="$DATA_DIR/dblp/dblp.xml.gz"
 CACHE_VERSION_FILE="$SCRIPT_DIR/config/cache-version.txt"
 
-RESULTS_DIR="../artifact_analysis_results"
-OUTPUT_DIR="../researchartifacts.github.io"
+RESULTS_DIR="../reprodb-pipeline-results"
+OUTPUT_DIR="../reprodb.github.io"
 EXTRA_MSG=""
 DO_PUSH=false
 
@@ -110,7 +110,7 @@ fi
 {
     echo "timestamp: $RUN_TIMESTAMP"
     echo ""
-    echo "artifact_analysis:"
+    echo "reprodb-pipeline:"
     echo "  commit: $(cd "$SCRIPT_DIR" && git rev-parse HEAD 2>/dev/null || echo 'unknown')"
     echo "  branch: $(cd "$SCRIPT_DIR" && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')"
     echo "  dirty: $(cd "$SCRIPT_DIR" && git diff --quiet 2>/dev/null && echo 'false' || echo 'true')"
@@ -149,7 +149,7 @@ if [ "$DO_PUSH" = true ]; then
     if [ -x "$_gh" ]; then
         TOKEN="$("$_gh" auth token 2>/dev/null || true)"
         if [ -n "$TOKEN" ]; then
-            git push "https://vahldiek:${TOKEN}@github.com/researchartifacts/artifact_analysis_results.git" main --force 2>&1 \
+            git push "https://vahldiek:${TOKEN}@github.com/reprodb/reprodb-pipeline-results.git" main --force 2>&1 \
                 || echo "  ⚠️  Push failed (repo may not exist on GitHub yet)"
         else
             git push origin main 2>&1 || echo "  ⚠️  Push failed"

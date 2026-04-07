@@ -1,4 +1,4 @@
-"""Centralized logging configuration for the artifact analysis pipeline."""
+"""Centralized logging configuration for the ReproDB pipeline."""
 
 import logging
 import sys

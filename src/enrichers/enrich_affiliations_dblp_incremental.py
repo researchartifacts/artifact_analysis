@@ -126,9 +126,7 @@ def enrich_affiliations(
     """
     session = requests.Session()
     session.headers.update(
-        {
-            "User-Agent": "ResearchArtifacts-Affiliation-Enricher/1.0 (contact: https://github.com/researchartifacts/artifact_analysis)"
-        }
+        {"User-Agent": "ReproDB-Affiliation-Enricher/1.0 (contact: https://github.com/reprodb/reprodb-pipeline)"}
     )
 
     # Add proxy support
@@ -305,7 +303,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Incremental DBLP affiliation enrichment with smart prioritization")
-    parser.add_argument("--data_dir", default="../researchartifacts.github.io", help="Path to website data directory")
+    parser.add_argument("--data_dir", default="../reprodb.github.io", help="Path to website data directory")
     parser.add_argument(
         "--max_searches", type=int, default=None, help="Maximum number of searches to perform (for rate limiting)"
     )

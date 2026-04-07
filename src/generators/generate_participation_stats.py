@@ -16,7 +16,7 @@ Writes:
 Usage:
   python -m src.generators.generate_participation_stats \
       --dblp_file data/dblp/dblp.xml.gz \
-      --output_dir ../researchartifacts.github.io
+      --output_dir ../reprodb.github.io
 """
 
 import argparse

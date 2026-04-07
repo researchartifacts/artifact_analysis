@@ -9,7 +9,7 @@ Writes:
 
 Usage:
   python -m src.generators.generate_artifact_availability \
-      --conf_regex '.*20[12][0-9]' --output_dir ../researchartifacts.github.io
+      --conf_regex '.*20[12][0-9]' --output_dir ../reprodb.github.io
 """
 
 import argparse

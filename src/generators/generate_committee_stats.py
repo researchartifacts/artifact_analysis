@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate committee statistics for the researchartifacts website.
+Generate committee statistics for the ReproDB website.
 
 Scrapes AE committee member data from sysartifacts and secartifacts,
 classifies members by country, continent, and institution, and outputs
@@ -1176,7 +1176,7 @@ def main():
         "--output_dir",
         type=str,
         default=None,
-        help="Output directory (website root, e.g. ../researchartifacts.github.io)",
+        help="Output directory (website root, e.g. ../reprodb.github.io)",
     )
     args = parser.parse_args()
 

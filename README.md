@@ -1,12 +1,12 @@
 # Research Artifacts Analysis
 
-[![Tests](https://github.com/researchartifacts/artifact_analysis/actions/workflows/tests.yml/badge.svg)](https://github.com/researchartifacts/artifact_analysis/actions/workflows/tests.yml)
-[![Docs](https://github.com/researchartifacts/artifact_analysis/actions/workflows/deploy-docs.yml/badge.svg)](https://researchartifacts.github.io/artifact_analysis/)
-[![Schemas](https://github.com/researchartifacts/artifact_analysis/actions/workflows/export-schemas.yml/badge.svg)](https://researchartifacts.github.io/data-schemas/)
+[![Tests](https://github.com/reprodb/reprodb-pipeline/actions/workflows/tests.yml/badge.svg)](https://github.com/reprodb/reprodb-pipeline/actions/workflows/tests.yml)
+[![Docs](https://github.com/reprodb/reprodb-pipeline/actions/workflows/deploy-docs.yml/badge.svg)](https://reprodb.github.io/reprodb-pipeline/)
+[![Schemas](https://github.com/reprodb/reprodb-pipeline/actions/workflows/export-schemas.yml/badge.svg)](https://reprodb.github.io/data-schemas/)
 
-Scrapes artifact evaluation data from [sysartifacts](https://sysartifacts.github.io), [secartifacts](https://secartifacts.github.io), and [USENIX](https://www.usenix.org) conference pages, then generates statistics, visualizations, and author rankings for [researchartifacts.github.io](https://researchartifacts.github.io).
+Scrapes artifact evaluation data from [sysartifacts](https://sysartifacts.github.io), [secartifacts](https://secartifacts.github.io), and [USENIX](https://www.usenix.org) conference pages, then generates statistics, visualizations, and author rankings for [reprodb.github.io](https://reprodb.github.io).
 
-**[Documentation](https://researchartifacts.github.io/artifact_analysis/)** · **[Data Schemas](https://researchartifacts.github.io/data-schemas/)**
+**[Documentation](https://reprodb.github.io/reprodb-pipeline/)** · **[Data Schemas](https://reprodb.github.io/data-schemas/)**
 
 ## Quick Start
 
@@ -26,7 +26,7 @@ The pipeline runs six steps:
 ### Options
 
 ```bash
-./run_pipeline.sh --output_dir ../researchartifacts.github.io  # default
+./run_pipeline.sh --output_dir ../reprodb.github.io  # default
 ./run_pipeline.sh --conf_regex 'osdi202[3-4]'                  # filter conferences
 ./run_pipeline.sh --http_proxy http://proxy:8080                # use proxy
 ```
@@ -102,7 +102,7 @@ Statistics and data go to `_data/` and `assets/` in the output directory:
 ## Repository Layout
 
 ```
-artifact_analysis/
+reprodb-pipeline/
 ├── src/
 │   ├── scrapers/          — Data collection (GitHub, ACM, USENIX, etc.)
 │   ├── enrichers/         — Data enhancement (affiliations, repositories)

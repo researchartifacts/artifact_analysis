@@ -22,7 +22,7 @@ Only authors/institutions that appear in the current rankings are tracked.
 The "date" is year-month (YYYY-MM) to give monthly granularity.
 
 Usage:
-  python -m src.generators.generate_ranking_history --data_dir ../researchartifacts.github.io
+  python -m src.generators.generate_ranking_history --data_dir ../reprodb.github.io
 """
 
 import argparse
@@ -149,7 +149,7 @@ def generate_ranking_history(data_dir: str, force: bool = False) -> None:
 
 def main():
     parser = argparse.ArgumentParser(description="Generate/update ranking history snapshots")
-    parser.add_argument("--data_dir", type=str, required=True, help="Path to the researchartifacts.github.io directory")
+    parser.add_argument("--data_dir", type=str, required=True, help="Path to the reprodb.github.io directory")
     parser.add_argument("--force", action="store_true", help="Overwrite existing snapshot for the current month")
     args = parser.parse_args()
     generate_ranking_history(args.data_dir, force=args.force)

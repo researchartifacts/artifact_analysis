@@ -11,7 +11,7 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # Run the full pipeline
-./run_pipeline.sh --output_dir ../researchartifacts.github.io
+./run_pipeline.sh --output_dir ../reprodb.github.io
 
 # Run tests
 pytest tests/ -v
@@ -20,5 +20,5 @@ pytest tests/ -v
 ## Documentation Sections
 
 - **[CLI Reference](cli/)** — Command-line arguments for all 40 scripts
-- **[Data Schemas](https://researchartifacts.github.io/data-schemas/)** — JSON Schema definitions for all output formats
+- **[Data Schemas](https://reprodb.github.io/data-schemas/)** — JSON Schema definitions for all output formats
 - **[API Reference](reference/)** — Python module documentation
