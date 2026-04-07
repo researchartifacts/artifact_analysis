@@ -53,9 +53,9 @@ def get_session(session=None):
     """Return a requests.Session, optionally reusing an existing one."""
     if session is not None:
         return session
-    s = requests.Session()
-    s.headers.update({"User-Agent": "ReproDB/1.0 (artifact statistics collection)"})
-    return s
+    from src.utils.http import create_session
+
+    return create_session()
 
 
 def scrape_presentation_links(conference: str, year: int, session: requests.Session | None = None) -> list[str]:

@@ -100,7 +100,7 @@ def main():
 
     _, counts, failed = check_artifact_exists(results, args.url_keys)
 
-    logger.error("url_key, name, total, exists, failed, percentage")
+    logger.info("url_key, name, total, exists, failed, percentage")
     for url_key, key_counts in counts.items():
         for name, count in key_counts.items():
             percentage = (count["exists"] / count["total"]) * 100 if count["total"] > 0 else 0
@@ -109,7 +109,7 @@ def main():
             )
 
     if args.print_failed:
-        logger.error("Failed:")
+        logger.info("Failed:")
         for f in failed:
             logger.info(f)
 

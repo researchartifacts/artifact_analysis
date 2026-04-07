@@ -45,9 +45,9 @@ BASE_USENIX = "https://www.usenix.org"
 
 def _get_session():
     """Return a requests session with a polite user-agent."""
-    s = requests.Session()
-    s.headers.update({"User-Agent": "ReproDB/1.0 (artifact statistics collection)"})
-    return s
+    from src.utils.http import create_session
+
+    return create_session()
 
 
 def _parse_usenix_views_rows(heading):

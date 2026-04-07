@@ -18,7 +18,7 @@ import re
 import time
 from pathlib import Path
 
-import requests
+from src.utils.http import create_session
 
 logger = logging.getLogger(__name__)
 # Cache configuration
@@ -124,10 +124,8 @@ def enrich_affiliations(
     Returns:
         Tuple of (enriched_authors_data, stats_dict)
     """
-    session = requests.Session()
-    session.headers.update(
-        {"User-Agent": "ReproDB-Affiliation-Enricher/1.0 (contact: https://github.com/reprodb/reprodb-pipeline)"}
-    )
+
+    session = create_session()
 
     # Add proxy support
     if os.environ.get("https_proxy"):
@@ -223,54 +221,57 @@ def enrich_affiliations(
             enriched_data.append(author)
             continue
 
-        stats["searches_performed"] += 1
+        try:
+            stats["searches_performed"] += 1
 
-        # Progress indicator
-        if stats["searches_performed"] % 10 == 0 or verbose:
-            found_rate = (
-                stats["affiliations_found"] / stats["searches_performed"] * 100
-                if stats["searches_performed"] > 0
-                else 0
-            )
-            logger.info(
-                f"  [{stats['searches_performed']}/{len(to_search)}] Found: {stats['affiliations_found']} ({found_rate:.1f}%)"
-            )
+            # Progress indicator
+            if stats["searches_performed"] % 10 == 0 or verbose:
+                found_rate = (
+                    stats["affiliations_found"] / stats["searches_performed"] * 100
+                    if stats["searches_performed"] > 0
+                    else 0
+                )
+                logger.info(
+                    f"  [{stats['searches_performed']}/{len(to_search)}] Found: {stats['affiliations_found']} ({found_rate:.1f}%)"
+                )
 
-        if verbose:
-            logger.info(f"    Searching: {name}")
-
-        # Search for author's PID
-        pid = search_dblp_author(name, session, verbose=verbose)
-        found_affil = False
-
-        if pid:
             if verbose:
-                logger.info(f"      Found PID: {pid}")
+                logger.info(f"    Searching: {name}")
 
-            # Fetch affiliation from person page
-            affil = fetch_affiliation_from_dblp_page(pid, session, verbose=verbose)
+            # Search for author's PID
+            pid = search_dblp_author(name, session, verbose=verbose)
+            found_affil = False
 
-            if affil:
-                stats["affiliations_found"] += 1
-                stats["new_affiliations"] += 1
-                author["affiliation"] = affil
-                # Update author index
-                if name in index_by_name and _update_index_fn:
-                    _update_index_fn(
-                        index_by_name[name], affil, "dblp", external_id_key="dblp_pid", external_id_value=pid
-                    )
-                found_affil = True
-                logger.info(f"    ✓ {name} → {affil}")
-            elif verbose:
-                logger.info("      No affiliation found on page")
+            if pid:
+                if verbose:
+                    logger.info(f"      Found PID: {pid}")
 
-        # Update search history
-        if name not in history:
-            history[name] = {"attempt_count": 0}
+                # Fetch affiliation from person page
+                affil = fetch_affiliation_from_dblp_page(pid, session, verbose=verbose)
 
-        history[name]["last_search_ts"] = time.time()
-        history[name]["found"] = found_affil
-        history[name]["attempt_count"] = history[name].get("attempt_count", 0) + 1
+                if affil:
+                    stats["affiliations_found"] += 1
+                    stats["new_affiliations"] += 1
+                    author["affiliation"] = affil
+                    # Update author index
+                    if name in index_by_name and _update_index_fn:
+                        _update_index_fn(
+                            index_by_name[name], affil, "dblp", external_id_key="dblp_pid", external_id_value=pid
+                        )
+                    found_affil = True
+                    logger.info(f"    ✓ {name} → {affil}")
+                elif verbose:
+                    logger.info("      No affiliation found on page")
+
+            # Update search history
+            if name not in history:
+                history[name] = {"attempt_count": 0}
+
+            history[name]["last_search_ts"] = time.time()
+            history[name]["found"] = found_affil
+            history[name]["attempt_count"] = history[name].get("attempt_count", 0) + 1
+        except Exception:
+            logger.warning(f"    Error enriching {name}, skipping", exc_info=True)
 
         enriched_data.append(author)
 

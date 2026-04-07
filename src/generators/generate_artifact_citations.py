@@ -33,7 +33,7 @@ ALLOWED_ARTIFACT_DOI_PREFIXES = (
 
 
 def log(msg: str) -> None:
-    logger.info(msg, flush=True)
+    logger.info(msg)
 
 
 def short_url(url: str, max_len: int = 120) -> str:
@@ -317,24 +317,24 @@ def generate(data_dir: str) -> None:
     local_env_path = os.path.join(repo_root, ".env.local")
     load_local_env_file(local_env_path)
 
-    logger.info("=" * 60, flush=True)
-    logger.info("Starting artifact citation generation...", flush=True)
-    logger.info("=" * 60, flush=True)
+    logger.info("=" * 60)
+    logger.info("Starting artifact citation generation...")
+    logger.info("=" * 60)
 
     artifacts_path = os.path.join(data_dir, "assets", "data", "artifacts.json")
     out_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
     summary_path = os.path.join(data_dir, "assets", "data", "artifact_citations_summary.json")
 
-    logger.info(f"Loading artifacts from: {artifacts_path}", flush=True)
+    logger.info(f"Loading artifacts from: {artifacts_path}")
 
     if not os.path.exists(artifacts_path):
-        logger.error(f"Error: {artifacts_path} not found. Run generate_statistics.py first.", flush=True)
+        logger.error(f"Error: {artifacts_path} not found. Run generate_statistics.py first.")
         return
 
     with open(artifacts_path, "r") as f:
         artifacts = json.load(f)
 
-    logger.info(f"✓ Loaded {len(artifacts)} artifacts", flush=True)
+    logger.info(f"✓ Loaded {len(artifacts)} artifacts")
 
     zenodo_cache = {}
     openalex_cache = {}
@@ -342,10 +342,10 @@ def generate(data_dir: str) -> None:
     openalex_citing_limit = int(os.environ.get("OPENALEX_CITING_DOI_LIMIT", "200"))
     semantic_citing_limit = int(os.environ.get("SEMANTIC_SCHOLAR_CITING_DOI_LIMIT", "200"))
 
-    logger.info(f"Processing {len(artifacts)} artifacts...", flush=True)
-    logger.info(f"OpenAlex citing DOI limit: {openalex_citing_limit}", flush=True)
-    logger.info(f"Semantic Scholar citing DOI limit: {semantic_citing_limit}", flush=True)
-    logger.info(flush=True)
+    logger.info(f"Processing {len(artifacts)} artifacts...")
+    logger.info(f"OpenAlex citing DOI limit: {openalex_citing_limit}")
+    logger.info(f"Semantic Scholar citing DOI limit: {semantic_citing_limit}")
+    logger.info("")
 
     entries = []
     seen_doi = set()
@@ -366,105 +366,107 @@ def generate(data_dir: str) -> None:
         title = artifact.get("title", "")
         if not title:
             continue
-        urls = artifact.get("artifact_urls", [])
-        if not urls:
-            # Legacy fallback
-            urls = [artifact.get("artifact_url", ""), artifact.get("repository_url", "")]
+        try:
+            urls = artifact.get("artifact_urls", [])
+            if not urls:
+                # Legacy fallback
+                urls = [artifact.get("artifact_url", ""), artifact.get("repository_url", "")]
 
-        doi = ""
-        source = ""
-
-        # First priority: Try to get DOI from Zenodo API for Zenodo records
-        # This ensures we get the artifact DOI, not a paper DOI embedded in the page
-        for url in urls:
-            record_id = extract_zenodo_record_id(url)
-            if record_id:
-                doi = fetch_zenodo_doi(record_id, zenodo_cache)
-                if doi:
-                    source = "zenodo_api"
-                    break
-
-        # Fallback: Extract DOI directly from URL (for non-Zenodo artifacts)
-        if not doi:
-            for url in urls:
-                doi = extract_doi(url)
-                if doi:
-                    source = "url"
-                    break
-
-        # Filter: Only keep artifact DOIs (Zenodo, Figshare), drop paper DOIs (ACM, IEEE, etc.)
-        if doi and not is_artifact_doi(doi):
-            dois_filtered += 1
             doi = ""
             source = ""
-        elif doi:
-            dois_found += 1
 
-        # Progress indicator
-        if idx % 50 == 0:
-            logger.info(
-                f"Progress: {idx}/{len(artifacts)} artifacts processed, {dois_found} DOIs found, {dois_filtered} filtered",
-                flush=True,
-            )
+            # First priority: Try to get DOI from Zenodo API for Zenodo records
+            # This ensures we get the artifact DOI, not a paper DOI embedded in the page
+            for url in urls:
+                record_id = extract_zenodo_record_id(url)
+                if record_id:
+                    doi = fetch_zenodo_doi(record_id, zenodo_cache)
+                    if doi:
+                        source = "zenodo_api"
+                        break
 
-        cited_by = None
-        openalex_err = ""
-        semantic_err = ""
-        openalex_count = None
-        semantic_count = None
-        openalex_citing_dois = []
-        semantic_citing_dois = []
-        openalex_truncated = False
-        semantic_truncated = False
-        if doi:
-            openalex_entry = fetch_openalex_citations(doi, openalex_cache, openalex_citing_limit)
-            if semantic_disabled:
-                semantic_entry = {
-                    "count": None,
-                    "citing_dois": [],
-                    "truncated": False,
-                    "error": "disabled_after_connect_failures",
+            # Fallback: Extract DOI directly from URL (for non-Zenodo artifacts)
+            if not doi:
+                for url in urls:
+                    doi = extract_doi(url)
+                    if doi:
+                        source = "url"
+                        break
+
+            # Filter: Only keep artifact DOIs (Zenodo, Figshare), drop paper DOIs (ACM, IEEE, etc.)
+            if doi and not is_artifact_doi(doi):
+                dois_filtered += 1
+                doi = ""
+                source = ""
+            elif doi:
+                dois_found += 1
+
+            # Progress indicator
+            if idx % 50 == 0:
+                logger.info(
+                    f"Progress: {idx}/{len(artifacts)} artifacts processed, {dois_found} DOIs found, {dois_filtered} filtered",
+                )
+
+            cited_by = None
+            openalex_err = ""
+            semantic_err = ""
+            openalex_count = None
+            semantic_count = None
+            openalex_citing_dois = []
+            semantic_citing_dois = []
+            openalex_truncated = False
+            semantic_truncated = False
+            if doi:
+                openalex_entry = fetch_openalex_citations(doi, openalex_cache, openalex_citing_limit)
+                if semantic_disabled:
+                    semantic_entry = {
+                        "count": None,
+                        "citing_dois": [],
+                        "truncated": False,
+                        "error": "disabled_after_connect_failures",
+                    }
+                else:
+                    semantic_entry = fetch_semantic_scholar_citations(doi, semantic_scholar_cache, semantic_citing_limit)
+                openalex_count = openalex_entry.get("count")
+                semantic_count = semantic_entry.get("count")
+                openalex_citing_dois = openalex_entry.get("citing_dois", [])
+                semantic_citing_dois = semantic_entry.get("citing_dois", [])
+                openalex_truncated = bool(openalex_entry.get("truncated"))
+                semantic_truncated = bool(semantic_entry.get("truncated"))
+                openalex_err = openalex_entry.get("error", "")
+                semantic_err = semantic_entry.get("error", "")
+
+                if semantic_err and "timed out" in semantic_err.lower():
+                    semantic_failures += 1
+                    if semantic_failures >= 5 and not semantic_disabled:
+                        semantic_disabled = True
+                        log("[SemanticScholar] disabled for this run after 5 timeout failures (network/connectivity issue)")
+
+                counts = [c for c in [openalex_count, semantic_count] if isinstance(c, int)]
+                cited_by = max(counts) if counts else None
+                seen_doi.add(doi)
+
+            entries.append(
+                {
+                    "title": title,
+                    "normalized_title": normalize_title(title),
+                    "conference": artifact.get("conference", ""),
+                    "year": artifact.get("year", ""),
+                    "doi": doi,
+                    "doi_source": source,
+                    "cited_by_count": cited_by,
+                    "citations_openalex": openalex_count,
+                    "citations_semantic_scholar": semantic_count,
+                    "citing_dois_openalex": openalex_citing_dois,
+                    "citing_dois_semantic_scholar": semantic_citing_dois,
+                    "citing_dois_openalex_truncated": openalex_truncated,
+                    "citing_dois_semantic_scholar_truncated": semantic_truncated,
+                    "openalex_error": openalex_err,
+                    "semantic_scholar_error": semantic_err,
                 }
-            else:
-                semantic_entry = fetch_semantic_scholar_citations(doi, semantic_scholar_cache, semantic_citing_limit)
-            openalex_count = openalex_entry.get("count")
-            semantic_count = semantic_entry.get("count")
-            openalex_citing_dois = openalex_entry.get("citing_dois", [])
-            semantic_citing_dois = semantic_entry.get("citing_dois", [])
-            openalex_truncated = bool(openalex_entry.get("truncated"))
-            semantic_truncated = bool(semantic_entry.get("truncated"))
-            openalex_err = openalex_entry.get("error", "")
-            semantic_err = semantic_entry.get("error", "")
-
-            if semantic_err and "timed out" in semantic_err.lower():
-                semantic_failures += 1
-                if semantic_failures >= 5 and not semantic_disabled:
-                    semantic_disabled = True
-                    log("[SemanticScholar] disabled for this run after 5 timeout failures (network/connectivity issue)")
-
-            counts = [c for c in [openalex_count, semantic_count] if isinstance(c, int)]
-            cited_by = max(counts) if counts else None
-            seen_doi.add(doi)
-
-        entries.append(
-            {
-                "title": title,
-                "normalized_title": normalize_title(title),
-                "conference": artifact.get("conference", ""),
-                "year": artifact.get("year", ""),
-                "doi": doi,
-                "doi_source": source,
-                "cited_by_count": cited_by,
-                "citations_openalex": openalex_count,
-                "citations_semantic_scholar": semantic_count,
-                "citing_dois_openalex": openalex_citing_dois,
-                "citing_dois_semantic_scholar": semantic_citing_dois,
-                "citing_dois_openalex_truncated": openalex_truncated,
-                "citing_dois_semantic_scholar_truncated": semantic_truncated,
-                "openalex_error": openalex_err,
-                "semantic_scholar_error": semantic_err,
-            }
-        )
+            )
+        except Exception:
+            logger.warning(f"Error processing artifact '{title}', skipping", exc_info=True)
 
     # Summaries
     total = len(entries)
@@ -502,15 +504,15 @@ def generate(data_dir: str) -> None:
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
 
-    logger.info(flush=True)
-    logger.info("✓ Processing complete!", flush=True)
-    logger.info(f"  Total artifacts: {len(artifacts)}", flush=True)
-    logger.info(f"  Artifact DOIs found: {dois_found}", flush=True)
-    logger.info(f"  Paper DOIs filtered: {dois_filtered}", flush=True)
-    logger.info(f"  Artifacts with citations: {cited}", flush=True)
-    logger.info(flush=True)
-    logger.info(f"Wrote {out_path} ({len(entries)} entries)", flush=True)
-    logger.info(f"Wrote {summary_path}", flush=True)
+    logger.info("")
+    logger.info("✓ Processing complete!")
+    logger.info(f"  Total artifacts: {len(artifacts)}")
+    logger.info(f"  Artifact DOIs found: {dois_found}")
+    logger.info(f"  Paper DOIs filtered: {dois_filtered}")
+    logger.info(f"  Artifacts with citations: {cited}")
+    logger.info("")
+    logger.info(f"Wrote {out_path} ({len(entries)} entries)")
+    logger.info(f"Wrote {summary_path}")
 
 
 def main() -> None:
@@ -525,22 +527,22 @@ def main() -> None:
     args = parser.parse_args()
 
     if not args.enable_citations:
-        logger.info("=" * 78, flush=True)
-        logger.warning("WARNING: Citation collection is DISABLED by default.", flush=True)
-        logger.info("", flush=True)
-        logger.info("OpenAlex citation counts for artifact DOIs are UNRELIABLE.", flush=True)
-        logger.info("Verification (March 2026) found that ALL 43 reported citing DOIs", flush=True)
-        logger.info("were false positives (paper DOI cited instead of artifact DOI),", flush=True)
-        logger.info("self-citations, or unresolvable. Zero genuine third-party artifact", flush=True)
-        logger.info("citations exist in the current dataset.", flush=True)
-        logger.info("", flush=True)
-        logger.info("If you still want to run citation collection (e.g., for research", flush=True)
-        logger.info("or to check whether the situation has improved), pass:", flush=True)
-        logger.info("  --enable-citations", flush=True)
-        logger.info("", flush=True)
-        logger.info("After collection, run verify_artifact_citations.py to validate", flush=True)
-        logger.info("whether any reported citations are genuine.", flush=True)
-        logger.info("=" * 78, flush=True)
+        logger.info("=" * 78)
+        logger.warning("WARNING: Citation collection is DISABLED by default.")
+        logger.info("")
+        logger.info("OpenAlex citation counts for artifact DOIs are UNRELIABLE.")
+        logger.info("Verification (March 2026) found that ALL 43 reported citing DOIs")
+        logger.info("were false positives (paper DOI cited instead of artifact DOI),")
+        logger.info("self-citations, or unresolvable. Zero genuine third-party artifact")
+        logger.info("citations exist in the current dataset.")
+        logger.info("")
+        logger.info("If you still want to run citation collection (e.g., for research")
+        logger.info("or to check whether the situation has improved), pass:")
+        logger.info("  --enable-citations")
+        logger.info("")
+        logger.info("After collection, run verify_artifact_citations.py to validate")
+        logger.info("whether any reported citations are genuine.")
+        logger.info("=" * 78)
         return
 
     generate(args.data_dir)

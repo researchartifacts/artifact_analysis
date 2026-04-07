@@ -33,7 +33,7 @@ ARTIFACT_DOI_PREFIXES = ("10.5281/zenodo.", "10.6084/m9.figshare.")
 
 
 def log(msg: str) -> None:
-    logger.info(msg, flush=True)
+    logger.info(msg)
 
 
 def fetch_json(url: str, timeout: int = 20, headers: dict = None) -> dict:

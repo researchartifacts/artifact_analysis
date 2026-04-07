@@ -22,6 +22,7 @@ import yaml
 from ..scrapers.sys_sec_scrape import _github_headers
 from ..utils.conference import conf_area
 from ..utils.conference import parse_conf_year as _parse_conf_year
+from ..utils.http import create_session
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +48,7 @@ def collect(cache_path: str, output_path: str) -> None:
         data = yaml.safe_load(f)
 
     headers = _github_headers()
-    session = requests.Session()
-    session.headers.update(headers)
+    session = create_session(extra_headers=headers)
 
     # Collect all unique (repo, conf, year, title) tuples
     entries = []
@@ -101,13 +101,13 @@ def collect(cache_path: str, output_path: str) -> None:
     errors = 0
     for i, entry in enumerate(entries):
         if (i + 1) % 100 == 0:
-            logger.error(f"  Progress: {i + 1}/{len(entries)} ({errors} errors)")
+            logger.info(f"  Progress: {i + 1}/{len(entries)} ({errors} errors)")
         repo = entry["repo"]
         api_url = f"https://api.github.com/repos/{repo}"
         try:
             resp = session.get(api_url, timeout=30)
         except requests.RequestException as e:
-            logger.error(f"  Network error for {repo}: {e}")
+            logger.warning(f"  Network error for {repo}: {e}")
             errors += 1
             continue
 
@@ -155,7 +155,7 @@ def collect(cache_path: str, output_path: str) -> None:
             logger.info(f"  HTTP {resp.status_code} for {repo}")
             errors += 1
 
-    logger.error(f"\nDone: {len(results)} repos collected, {errors} errors")
+    logger.info(f"\nDone: {len(results)} repos collected, {errors} errors")
 
     with open(output_path, "w") as f:
         json.dump(results, f, indent=2)

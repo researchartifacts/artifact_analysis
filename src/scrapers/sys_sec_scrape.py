@@ -6,8 +6,6 @@ from pathlib import Path
 from typing import Any
 
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
 from src.utils.cache import (
     _MISSING,
@@ -46,20 +44,9 @@ def _github_headers():
 
 def _session_with_retries(retries: int = 3, backoff: float = 1.0, timeout: int = 30) -> requests.Session:
     """Create a requests.Session with automatic retries and timeouts."""
-    session = requests.Session()
-    retry = Retry(
-        total=retries,
-        backoff_factor=backoff,
-        status_forcelist=[429, 500, 502, 503, 504],
-        allowed_methods=["HEAD", "GET"],
-        raise_on_status=False,
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
-    # Store default timeout on session for convenience
-    session._default_timeout = timeout
-    return session
+    from src.utils.http import create_session
+
+    return create_session(retries=retries, backoff=backoff, timeout=timeout)
 
 
 # Module-level session reused across calls (connection pooling)
@@ -138,14 +125,14 @@ def cached_github_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
         headers["If-None-Match"] = entry["etag"]
 
     try:
-        resp = _session.get(f"https://api.github.com/repos/{repo}", headers=headers, timeout=_session._default_timeout)
+        resp = _session.get(f"https://api.github.com/repos/{repo}", headers=headers, timeout=_session.default_timeout)
         if resp.status_code == 403 and "rate limit" in resp.text.lower():
             reset_time = int(resp.headers.get("X-RateLimit-Reset", 0))
             wait = max(reset_time - int(time.time()), 0) + 5
             logger.info(f"  Rate limited. Waiting {wait}s for reset...")
             time.sleep(wait)
             resp = _session.get(
-                f"https://api.github.com/repos/{repo}", headers=headers, timeout=_session._default_timeout
+                f"https://api.github.com/repos/{repo}", headers=headers, timeout=_session.default_timeout
             )
 
         if resp.status_code == 304 and entry:
@@ -192,7 +179,7 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
         return None
 
     try:
-        resp = _session.get(f"https://zenodo.org/api/records/{rec}", timeout=_session._default_timeout)
+        resp = _session.get(f"https://zenodo.org/api/records/{rec}", timeout=_session.default_timeout)
         if resp.status_code == 200:
             record = resp.json()
             stats = record.get("stats", {})
@@ -228,16 +215,16 @@ def cached_figshare_stats(url, ttl=CACHE_TTL_STATS):
     updated = created = "NA"
     try:
         r = _session.get(
-            f"https://stats.figshare.com/total/views/article/{article_id}", timeout=_session._default_timeout
+            f"https://stats.figshare.com/total/views/article/{article_id}", timeout=_session.default_timeout
         )
         if r.status_code == 200:
             views = r.json().get("totals", -1)
         r = _session.get(
-            f"https://stats.figshare.com/total/downloads/article/{article_id}", timeout=_session._default_timeout
+            f"https://stats.figshare.com/total/downloads/article/{article_id}", timeout=_session.default_timeout
         )
         if r.status_code == 200:
             downloads = r.json().get("totals", -1)
-        r = _session.get(f"https://api.figshare.com/v2/articles/{article_id}", timeout=_session._default_timeout)
+        r = _session.get(f"https://api.figshare.com/v2/articles/{article_id}", timeout=_session.default_timeout)
         if r.status_code == 200:
             d = r.json()
             updated = d.get("modified_date", "NA")
@@ -274,14 +261,14 @@ def _cached_get(url):
         headers["If-None-Match"] = entry["etag"]
 
     try:
-        response = _session.get(url, headers=headers, allow_redirects=True, timeout=_session._default_timeout)
+        response = _session.get(url, headers=headers, allow_redirects=True, timeout=_session.default_timeout)
         # Handle rate limiting with retry
         if response.status_code == 403 and "rate limit" in response.text.lower():
             reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
             wait = max(reset_time - int(time.time()), 0) + 5
             logger.info(f"  Rate limited. Waiting {wait}s for reset...")
             time.sleep(wait)
-            response = _session.get(url, headers=headers, allow_redirects=True, timeout=_session._default_timeout)
+            response = _session.get(url, headers=headers, allow_redirects=True, timeout=_session.default_timeout)
 
         if response.status_code == 304 and entry:
             # Data unchanged — refresh timestamp, return cached data (free!)

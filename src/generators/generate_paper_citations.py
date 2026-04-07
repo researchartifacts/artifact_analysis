@@ -52,7 +52,7 @@ MAX_CONSECUTIVE_ERRORS = 3  # stop after this many errors in a row
 
 
 def log(msg: str) -> None:
-    logger.info(msg, flush=True)
+    logger.info(msg)
 
 
 # ── Disk Cache ───────────────────────────────────────────────────────────────

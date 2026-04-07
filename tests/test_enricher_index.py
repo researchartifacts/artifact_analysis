@@ -75,14 +75,14 @@ class TestDblpIndexIntegration:
 
     @patch("src.enrichers.enrich_affiliations_dblp_incremental.save_search_history")
     @patch("src.enrichers.enrich_affiliations_dblp_incremental.load_search_history", return_value={})
-    @patch("src.enrichers.enrich_affiliations_dblp_incremental.requests")
+    @patch("src.enrichers.enrich_affiliations_dblp_incremental.create_session")
     @patch("src.enrichers.enrich_affiliations_dblp_incremental.search_dblp_author")
     @patch("src.enrichers.enrich_affiliations_dblp_incremental.fetch_affiliation_from_dblp_page")
     def test_found_affiliation_updates_index(
         self,
         mock_fetch,
         mock_search,
-        mock_requests,
+        mock_create_session,
         mock_load_hist,
         mock_save_hist,
         tmp_website,
@@ -92,7 +92,7 @@ class TestDblpIndexIntegration:
         from src.enrichers.enrich_affiliations_dblp_incremental import enrich_affiliations
 
         # Mock session
-        mock_requests.Session.return_value = MagicMock()
+        mock_create_session.return_value = MagicMock()
 
         # Write author_index.json
         write_json(

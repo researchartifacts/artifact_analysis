@@ -36,6 +36,7 @@ import requests
 from src.utils.cache import _MISSING
 from src.utils.cache import read_cache as _read_cache
 from src.utils.cache import write_cache as _write_cache
+from src.utils.http import create_session
 
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
@@ -485,8 +486,7 @@ def enrich(
         logger.info(f"  Processing first {len(candidates)} (--max_authors)")
 
     # HTTP session
-    session = requests.Session()
-    session.headers.update({"User-Agent": "ReproDB-Enricher/2.0 (https://github.com/reprodb/reprodb-pipeline)"})
+    session = create_session()
     http_proxy = os.environ.get("http_proxy") or os.environ.get("HTTP_PROXY", "")
     https_proxy = os.environ.get("https_proxy") or os.environ.get("HTTPS_PROXY", "")
     if https_proxy or http_proxy:
@@ -531,27 +531,31 @@ def enrich(
         if not name:
             continue
 
-        papers = author_papers.get(name, [])
-        paper_count = len(papers)
+        try:
+            papers = author_papers.get(name, [])
+            paper_count = len(papers)
 
-        if verbose:
-            logger.info(f"[{idx}/{len(candidates)}] {name}  ({paper_count} papers)")
+            if verbose:
+                logger.info(f"[{idx}/{len(candidates)}] {name}  ({paper_count} papers)")
 
-        affiliation, source = find_affiliation_for_author(session, name, papers, verbose=verbose)
+            affiliation, source = find_affiliation_for_author(session, name, papers, verbose=verbose)
 
-        if affiliation:
-            stats["found"] += 1
-            stats["by_source"][source] = stats["by_source"].get(source, 0) + 1
-            updates[name] = affiliation
-            # Update author index
-            if name in index_by_name and _update_index_fn:
-                _update_index_fn(index_by_name[name], affiliation, source)
-            if not verbose:
-                logger.info(f"[{idx}/{len(candidates)}] {name:40s}  +  {affiliation[:50]}  ({source})")
-        else:
-            stats["not_found"] += 1
-            if not verbose:
-                logger.info(f"[{idx}/{len(candidates)}] {name:40s}  -")
+            if affiliation:
+                stats["found"] += 1
+                stats["by_source"][source] = stats["by_source"].get(source, 0) + 1
+                updates[name] = affiliation
+                # Update author index
+                if name in index_by_name and _update_index_fn:
+                    _update_index_fn(index_by_name[name], affiliation, source)
+                if not verbose:
+                    logger.info(f"[{idx}/{len(candidates)}] {name:40s}  +  {affiliation[:50]}  ({source})")
+            else:
+                stats["not_found"] += 1
+                if not verbose:
+                    logger.info(f"[{idx}/{len(candidates)}] {name:40s}  -")
+        except Exception:
+            stats["errors"] = stats.get("errors", 0) + 1
+            logger.warning(f"[{idx}/{len(candidates)}] {name}: error during enrichment", exc_info=True)
 
     logger.info("=" * 70)
     logger.info(f"\nResults:  found {stats['found']}, not found {stats['not_found']}")

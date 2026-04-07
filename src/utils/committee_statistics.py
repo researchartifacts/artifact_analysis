@@ -115,7 +115,7 @@ def classify_aec_by_country(results):
                 else:
                     country_info = best_match["country"] if best_match else "unknown"
                     failed.append(affiliation)
-                    logger.error(f"Failed {affiliation} in {country_info} with ratio {best_match_ratio}")
+                    logger.warning(f"Failed {affiliation} in {country_info} with ratio {best_match_ratio}")
 
     return per_year_country_stats, failed
 
@@ -141,8 +141,8 @@ def aec_by_country(results):
         parts.append(str(total))
         logger.info(";".join(parts))
 
-    logger.error(f"Number failed to identify {len(failed)}")
-    logger.error(f"List of failed affiliations:{', '.join(failed)}")
+    logger.warning(f"Number failed to identify {len(failed)}")
+    logger.warning(f"List of failed affiliations:{', '.join(failed)}")
 
 
 def main():
