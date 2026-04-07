@@ -195,11 +195,12 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
         resp = _session.get(f"https://zenodo.org/api/records/{rec}", timeout=_session._default_timeout)
         if resp.status_code == 200:
             record = resp.json()
+            stats = record.get("stats", {})
             result = {
-                "zenodo_views": record["stats"]["unique_views"],
-                "zenodo_downloads": record["stats"]["unique_downloads"],
-                "updated_at": record["updated"],
-                "created_at": record["created"],
+                "zenodo_views": stats.get("unique_views", 0),
+                "zenodo_downloads": stats.get("unique_downloads", 0),
+                "updated_at": record.get("updated", ""),
+                "created_at": record.get("created", ""),
             }
         else:
             logger.info(f"  Could not collect Zenodo stats for {url} (HTTP {resp.status_code})")
@@ -230,17 +231,17 @@ def cached_figshare_stats(url, ttl=CACHE_TTL_STATS):
             f"https://stats.figshare.com/total/views/article/{article_id}", timeout=_session._default_timeout
         )
         if r.status_code == 200:
-            views = r.json()["totals"]
+            views = r.json().get("totals", -1)
         r = _session.get(
             f"https://stats.figshare.com/total/downloads/article/{article_id}", timeout=_session._default_timeout
         )
         if r.status_code == 200:
-            downloads = r.json()["totals"]
+            downloads = r.json().get("totals", -1)
         r = _session.get(f"https://api.figshare.com/v2/articles/{article_id}", timeout=_session._default_timeout)
         if r.status_code == 200:
             d = r.json()
-            updated = d["modified_date"]
-            created = d["created_date"]
+            updated = d.get("modified_date", "NA")
+            created = d.get("created_date", "NA")
     except requests.RequestException as e:
         logger.error(f"  Figshare request error for {url}: {e}")
 

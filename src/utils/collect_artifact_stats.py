@@ -26,21 +26,23 @@ def get_all_artifact_stats(results, url_keys):
         for url_key in url_keys:
             logger.info(f"Getting stats for {len(artifacts)}")
             for artifact in artifacts:
-                if url_key + "_exists" in artifact and artifact[url_key + "_exists"]:
-                    if "zenodo" in artifact[url_key]:
-                        stats = zenodo_stats(artifact[url_key])
-                    elif "figshare" in artifact[url_key]:
-                        stats = figshare_stats(artifact[url_key])
-                    elif "github" in artifact[url_key]:
-                        stats = github_stats(artifact[url_key])
-                    else:  # needed since stats doesn't exist otherwise
-                        logger.info(f"No stats for {artifact[url_key]} at {name} titled {artifact['title']}")
-                        continue
+                url = artifact.get(url_key, "")
+                if not url or not artifact.get(url_key + "_exists"):
+                    logger.info(f"{url_key} does not exist for {artifact.get('title', '?')} at {name}")
+                    continue
 
-                    if stats:
-                        artifact["stats"] = {**stats, **artifact.get("stats", {})}
+                if "zenodo" in url:
+                    stats = zenodo_stats(url)
+                elif "figshare" in url:
+                    stats = figshare_stats(url)
+                elif "github" in url:
+                    stats = github_stats(url)
                 else:
-                    logger.info(f"{url_key} does not exist for {artifact['title']} at {name}")
+                    logger.info(f"No stats for {url} at {name} titled {artifact.get('title', '?')}")
+                    continue
+
+                if stats:
+                    artifact["stats"] = {**stats, **artifact.get("stats", {})}
 
     return results
 
