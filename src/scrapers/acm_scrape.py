@@ -129,7 +129,7 @@ def _dblp_papers(dblp_key, year, session=None):
                 "dblp_url": "",
             }
         )
-    logger.info(f"  Got {len(papers)} papers from DBLP extraction cache", file=sys.stderr)
+    logger.info(f"  Got {len(papers)} papers from DBLP extraction cache")
     return papers
 
 
@@ -168,7 +168,7 @@ def _scrape_acm_paper_badges(doi, session=None):
             },
         )
     except requests.RequestException as e:
-        logger.error(f"  Request error for {url}: {e}", file=sys.stderr)
+        logger.warning(f"  Request error for {url}: {e}")
         return None
 
     if resp.status_code == 403:
@@ -223,7 +223,7 @@ def scrape_acm_proceedings(conference, year, session=None, max_workers=4, delay=
     """
     conf_meta = ACM_CONFERENCES.get(conference)
     if not conf_meta:
-        logger.info(f"  Unknown ACM conference: {conference}", file=sys.stderr)
+        logger.info(f"  Unknown ACM conference: {conference}")
         return [], False
 
     dblp_key = conf_meta["dblp_key"]
@@ -264,7 +264,7 @@ def scrape_acm_proceedings(conference, year, session=None, max_workers=4, delay=
             }
             results.append(paper_out)
             if i % 20 == 0 or i == len(papers):
-                logger.info(f"  Processed {i}/{len(papers)} papers …", file=sys.stderr)
+                logger.info(f"  Processed {i}/{len(papers)} papers …")
 
     with_badges = sum(1 for r in results if r["badges"])
     logger.info(
@@ -346,9 +346,9 @@ def main():
     for conf in conferences:
         for year in years:
             key = f"{conf}{year}"
-            logger.info(f"\n{'=' * 60}", file=sys.stderr)
-            logger.info(f"Processing {conf.upper()} {year}", file=sys.stderr)
-            logger.info(f"{'=' * 60}", file=sys.stderr)
+            logger.info(f"\n{'=' * 60}")
+            logger.info(f"Processing {conf.upper()} {year}")
+            logger.info(f"{'=' * 60}")
 
             artifacts = scrape_conference_year(conf, year, max_workers=args.max_workers, delay=args.delay)
             if args.all_papers:

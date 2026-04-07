@@ -279,7 +279,7 @@ def scrape_usenix_committee(conference, year, session=None):
             return None
         resp.raise_for_status()
     except requests.RequestException as e:
-        logger.error(f"  Warning: Failed to fetch {url}: {e}", file=sys.stderr)
+        logger.warning(f"  Failed to fetch {url}: {e}")
         return None
 
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -304,7 +304,7 @@ def scrape_usenix_committee(conference, year, session=None):
             deduped.append(m)
 
     if deduped:
-        logger.info(f"  USENIX: Found {len(deduped)} members for {conference}{year}", file=sys.stderr)
+        logger.info(f"  USENIX: Found {len(deduped)} members for {conference}{year}")
     return deduped if deduped else None
 
 
@@ -451,11 +451,11 @@ def scrape_ches_committee(year, session=None):
                 )
             return deduped if deduped else None
     except requests.RequestException as e:
-        logger.error(f"  Warning: Failed to fetch {html_url}: {e}", file=sys.stderr)
+        logger.warning(f"  Failed to fetch {html_url}: {e}")
 
     # If only JSON members were found (HTML failed), return those
     if members:
-        logger.info(f"  CHES: Found {len(members)} members for ches{year} (JSON only)", file=sys.stderr)
+        logger.info(f"  CHES: Found {len(members)} members for ches{year} (JSON only)")
         return members
 
     return None
@@ -489,7 +489,7 @@ def scrape_pets_committee(year, session=None):
             return None
         resp.raise_for_status()
     except requests.RequestException as e:
-        logger.error(f"  Warning: Failed to fetch {url}: {e}", file=sys.stderr)
+        logger.warning(f"  Failed to fetch {url}: {e}")
         return None
 
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -530,7 +530,7 @@ def scrape_pets_committee(year, session=None):
                 members.append({"name": name, "affiliation": affiliation, "role": "member"})
 
     if members:
-        logger.info(f"  PETS: Found {len(members)} members for pets{year}", file=sys.stderr)
+        logger.info(f"  PETS: Found {len(members)} members for pets{year}")
     return members if members else None
 
 

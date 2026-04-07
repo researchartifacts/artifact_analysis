@@ -23,8 +23,8 @@ def export_citations(data_dir: str, output_file: str = None) -> None:
     citations_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
 
     if not os.path.exists(citations_path):
-        logger.error(f"Error: {citations_path} not found.", file=sys.stderr)
-        logger.info("Run generate_artifact_citations.py first.", file=sys.stderr)
+        logger.error(f"Error: {citations_path} not found.")
+        logger.info("Run generate_artifact_citations.py first.")
         sys.exit(1)
 
     with open(citations_path, "r") as f:
@@ -73,13 +73,13 @@ def export_citations(data_dir: str, output_file: str = None) -> None:
                 out.write(f"{doi}: {citing_dois_str}\n")
 
         # Print summary to stderr so it doesn't interfere with output
-        logger.info("\n# Summary:", file=sys.stderr)
-        logger.info(f"# Total artifacts with DOIs: {sum(1 for a in artifacts if a.get('doi'))}", file=sys.stderr)
-        logger.info(f"# Artifacts with citing DOIs: {artifacts_with_citations}", file=sys.stderr)
-        logger.info(f"# Total citing DOIs collected: {total_citing_dois}", file=sys.stderr)
+        logger.info("\n# Summary:")
+        logger.info(f"# Total artifacts with DOIs: {sum(1 for a in artifacts if a.get('doi'))}")
+        logger.info(f"# Artifacts with citing DOIs: {artifacts_with_citations}")
+        logger.info(f"# Total citing DOIs collected: {total_citing_dois}")
 
     if output_file:
-        logger.info(f"\nWrote citations export to: {output_file}", file=sys.stderr)
+        logger.info(f"\nWrote citations export to: {output_file}")
 
 
 def main():

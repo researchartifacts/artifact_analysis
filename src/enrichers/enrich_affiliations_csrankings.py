@@ -13,7 +13,6 @@ import json
 import logging
 import os
 import re
-import sys
 import time
 from collections import defaultdict
 from pathlib import Path
@@ -64,7 +63,7 @@ def download_csrankings(force_refresh: bool = False, verbose: bool = False) -> P
         return CACHE_FILE
     except Exception as e:
         if CACHE_FILE.exists():
-            logger.error(f"Warning: Download failed ({e}), using stale cache", file=sys.stderr)
+            logger.warning(f"Download failed ({e}), using stale cache")
             return CACHE_FILE
         raise
 

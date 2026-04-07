@@ -213,9 +213,9 @@ def main():
 
     for year in years:
         conf_label = f"{conference.upper()} {year}"
-        logger.info(f"\n{'=' * 60}", file=sys.stderr)
-        logger.info(f"Scraping {conf_label} from USENIX...", file=sys.stderr)
-        logger.info(f"{'=' * 60}", file=sys.stderr)
+        logger.info(f"\n{'=' * 60}")
+        logger.info(f"Scraping {conf_label} from USENIX...")
+        logger.info(f"{'=' * 60}")
 
         all_papers = scrape_conference_year(conference, year, max_workers=args.max_workers, delay=args.delay)
 
@@ -223,7 +223,7 @@ def main():
         papers_with_badges = [p for p in all_papers if p.get("badges")]
 
         if not papers_with_badges:
-            logger.warning(f"WARNING: No papers with badges found for {conf_label}", file=sys.stderr)
+            logger.warning(f"WARNING: No papers with badges found for {conf_label}")
             continue
 
         logger.info(
@@ -245,7 +245,7 @@ def main():
                 logger.info(f"\n--- {dir_prefix}{year}/organizers.md ---")
                 logger.info(organizers_content)
             else:
-                logger.info(f"\n  (no organizers found for {conf_label})", file=sys.stderr)
+                logger.info(f"\n  (no organizers found for {conf_label})")
         else:
             out_dir = args.output_dir or "."
             conf_dir = os.path.join(out_dir, f"{dir_prefix}{year}")
@@ -253,17 +253,17 @@ def main():
             out_path = os.path.join(conf_dir, "results.md")
             with open(out_path, "w") as f:
                 f.write(content)
-            logger.info(f"Written: {out_path}", file=sys.stderr)
+            logger.info(f"Written: {out_path}")
 
             if organizers_content:
                 org_path = os.path.join(conf_dir, "organizers.md")
                 with open(org_path, "w") as f:
                     f.write(organizers_content)
-                logger.info(f"Written: {org_path}", file=sys.stderr)
+                logger.info(f"Written: {org_path}")
             else:
-                logger.warning(f"  Skipped organizers.md (no data) for {conf_label}", file=sys.stderr)
+                logger.warning(f"  Skipped organizers.md (no data) for {conf_label}")
 
-    logger.info("\nDone!", file=sys.stderr)
+    logger.info("\nDone!")
 
 
 if __name__ == "__main__":

@@ -103,7 +103,7 @@ def check_url_cached(url: str, ttl: int = CACHE_TTL_URL) -> bool:
             resp = _session.head(url, allow_redirects=True, timeout=10)
         exists = 200 <= resp.status_code < 300
     except requests.RequestException as e:
-        logger.error(f"  Request error for {url}: {e}")
+        logger.warning(f"  Request error for {url}: {e}")
         # Network errors (timeouts, DNS failures, connection refused) are
         # transient — do NOT cache them as negative results.
         return False
@@ -136,36 +136,41 @@ def cached_github_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
     if entry and entry.get("etag"):
         headers["If-None-Match"] = entry["etag"]
 
-    resp = _session.get(f"https://api.github.com/repos/{repo}", headers=headers, timeout=_session._default_timeout)
-    if resp.status_code == 403 and "rate limit" in resp.text.lower():
-        reset_time = int(resp.headers.get("X-RateLimit-Reset", 0))
-        wait = max(reset_time - int(time.time()), 0) + 5
-        logger.info(f"  Rate limited. Waiting {wait}s for reset...")
-        time.sleep(wait)
+    try:
         resp = _session.get(f"https://api.github.com/repos/{repo}", headers=headers, timeout=_session._default_timeout)
+        if resp.status_code == 403 and "rate limit" in resp.text.lower():
+            reset_time = int(resp.headers.get("X-RateLimit-Reset", 0))
+            wait = max(reset_time - int(time.time()), 0) + 5
+            logger.info(f"  Rate limited. Waiting {wait}s for reset...")
+            time.sleep(wait)
+            resp = _session.get(
+                f"https://api.github.com/repos/{repo}", headers=headers, timeout=_session._default_timeout
+            )
 
-    if resp.status_code == 304 and entry:
-        # Data unchanged — refresh timestamp, return cached data (free!)
-        _refresh_cache_ts(CACHE_DIR, url, namespace="github_stats")
-        return entry.get("body")
-    if resp.status_code == 200:
-        d = resp.json()
-        result = {
-            "github_forks": d.get("forks_count", 0),
-            "github_stars": d.get("stargazers_count", 0),
-            "updated_at": d.get("updated_at", "NA"),
-            "created_at": d.get("created_at", "NA"),
-            "pushed_at": d.get("pushed_at", "NA"),
-            "name": d.get("full_name", "NA"),
-            "description": d.get("description", ""),
-            "language": d.get("language", ""),
-            "license": (d.get("license") or {}).get("spdx_id", ""),
-            "topics": d.get("topics", []),
-        }
-        etag = resp.headers.get("ETag")
-        _write_cache(CACHE_DIR, url, result, namespace="github_stats", etag=etag)
-        return result
-    logger.info(f"  Could not collect GitHub stats for {url} (HTTP {resp.status_code})")
+        if resp.status_code == 304 and entry:
+            # Data unchanged — refresh timestamp, return cached data (free!)
+            _refresh_cache_ts(CACHE_DIR, url, namespace="github_stats")
+            return entry.get("body")
+        if resp.status_code == 200:
+            d = resp.json()
+            result = {
+                "github_forks": d.get("forks_count", 0),
+                "github_stars": d.get("stargazers_count", 0),
+                "updated_at": d.get("updated_at", "NA"),
+                "created_at": d.get("created_at", "NA"),
+                "pushed_at": d.get("pushed_at", "NA"),
+                "name": d.get("full_name", "NA"),
+                "description": d.get("description", ""),
+                "language": d.get("language", ""),
+                "license": (d.get("license") or {}).get("spdx_id", ""),
+                "topics": d.get("topics", []),
+            }
+            etag = resp.headers.get("ETag")
+            _write_cache(CACHE_DIR, url, result, namespace="github_stats", etag=etag)
+            return result
+        logger.warning(f"  Could not collect GitHub stats for {url} (HTTP {resp.status_code})")
+    except requests.RequestException as e:
+        logger.warning(f"  GitHub request error for {url}: {e}")
     result = None
     _write_cache(CACHE_DIR, url, result, namespace="github_stats")
     return result
@@ -199,7 +204,7 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
             logger.info(f"  Could not collect Zenodo stats for {url} (HTTP {resp.status_code})")
             result = None
     except requests.RequestException as e:
-        logger.error(f"  Zenodo request error for {url}: {e}")
+        logger.warning(f"  Zenodo request error for {url}: {e}")
         result = None
 
     _write_cache(CACHE_DIR, url, result, namespace="zenodo_stats")
@@ -236,7 +241,7 @@ def cached_figshare_stats(url, ttl=CACHE_TTL_STATS):
             updated = d["modified_date"]
             created = d["created_date"]
     except requests.RequestException as e:
-        logger.error(f"  Figshare request error for {url}: {e}")
+        logger.warning(f"  Figshare request error for {url}: {e}")
 
     result = {
         "figshare_views": views,
@@ -266,21 +271,25 @@ def _cached_get(url):
     if entry and entry.get("etag"):
         headers["If-None-Match"] = entry["etag"]
 
-    response = _session.get(url, headers=headers, allow_redirects=True, timeout=_session._default_timeout)
-    # Handle rate limiting with retry
-    if response.status_code == 403 and "rate limit" in response.text.lower():
-        reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
-        wait = max(reset_time - int(time.time()), 0) + 5
-        logger.info(f"  Rate limited. Waiting {wait}s for reset...")
-        time.sleep(wait)
+    try:
         response = _session.get(url, headers=headers, allow_redirects=True, timeout=_session._default_timeout)
+        # Handle rate limiting with retry
+        if response.status_code == 403 and "rate limit" in response.text.lower():
+            reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
+            wait = max(reset_time - int(time.time()), 0) + 5
+            logger.info(f"  Rate limited. Waiting {wait}s for reset...")
+            time.sleep(wait)
+            response = _session.get(url, headers=headers, allow_redirects=True, timeout=_session._default_timeout)
 
-    if response.status_code == 304 and entry:
-        # Data unchanged — refresh timestamp, return cached data (free!)
-        _refresh_cache_ts(CACHE_DIR, url, namespace="http_get")
-        return entry.get("body")
+        if response.status_code == 304 and entry:
+            # Data unchanged — refresh timestamp, return cached data (free!)
+            _refresh_cache_ts(CACHE_DIR, url, namespace="http_get")
+            return entry.get("body")
 
-    response.raise_for_status()
+        response.raise_for_status()
+    except requests.RequestException as e:
+        logger.warning(f"  HTTP request error for {url}: {e}")
+        return None
     body = response.text
     etag = response.headers.get("ETag")
     _write_cache(CACHE_DIR, url, body, namespace="http_get", etag=etag)

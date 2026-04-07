@@ -67,11 +67,11 @@ def scrape_presentation_links(conference: str, year: int, session: requests.Sess
     suffix = _year_suffix(year)
     url = f"{BASE_URL}/conference/{conference}{suffix}/technical-sessions"
 
-    logger.info(f"  Fetching program: {url}", file=sys.stderr)
+    logger.info(f"  Fetching program: {url}")
     cached = _read_cache(CACHE_DIR, url, ttl=CACHE_TTL, namespace="usenix")
     if cached is not _MISSING:
         links = cached
-        logger.info(f"  Found {len(links)} unique presentation pages (cached)", file=sys.stderr)
+        logger.info(f"  Found {len(links)} unique presentation pages (cached)")
         return links
 
     resp = sess.get(url, timeout=30)
@@ -89,7 +89,7 @@ def scrape_presentation_links(conference: str, year: int, session: requests.Sess
 
     result = sorted(links)
     _write_cache(CACHE_DIR, url, result, namespace="usenix")
-    logger.info(f"  Found {len(result)} unique presentation pages", file=sys.stderr)
+    logger.info(f"  Found {len(result)} unique presentation pages")
     return result
 
 
@@ -202,7 +202,7 @@ def scrape_conference_year(
     paths = scrape_presentation_links(conference, year, sess)
 
     if not paths:
-        logger.info(f"  No presentation pages found for {conference.upper()} {year}", file=sys.stderr)
+        logger.info(f"  No presentation pages found for {conference.upper()} {year}")
         return []
 
     artifacts = []
@@ -224,9 +224,9 @@ def scrape_conference_year(
                     if result["badges"]:
                         papers_with_badges += 1
                     if i % 10 == 0 or i == len(paths):
-                        logger.info(f"  Scraped {i}/{len(paths)} pages...", file=sys.stderr)
+                        logger.info(f"  Scraped {i}/{len(paths)} pages...")
             except Exception as e:
-                logger.error(f"  Error scraping {path}: {e}", file=sys.stderr)
+                logger.warning(f"  Error scraping {path}: {e}")
 
     logger.info(
         f"  {conference.upper()} {year}: {len(artifacts)} papers, {papers_with_badges} with artifact badges",
@@ -262,12 +262,12 @@ def scrape_organizers(conference: str, year: int, session: requests.Session | No
     if cached is not _MISSING:
         return cached
 
-    logger.info(f"  Fetching organizers: {url}", file=sys.stderr)
+    logger.info(f"  Fetching organizers: {url}")
     try:
         resp = sess.get(url, timeout=30)
         resp.raise_for_status()
     except Exception as e:
-        logger.warning(f"  Warning: Could not fetch organizers page: {e}", file=sys.stderr)
+        logger.warning(f"  Warning: Could not fetch organizers page: {e}")
         return None
 
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -362,12 +362,12 @@ def scrape_organizers(conference: str, year: int, session: requests.Session | No
                 break
 
     if not chairs and not members:
-        logger.warning(f"  Warning: No organizer data found for {conference.upper()} {year}", file=sys.stderr)
+        logger.warning(f"  Warning: No organizer data found for {conference.upper()} {year}")
         _write_cache(CACHE_DIR, cache_key, None, namespace="usenix_organizers")
         return None
 
     result = {"chairs": chairs, "members": members}
-    logger.info(f"  Found {len(chairs)} chairs and {len(members)} committee members", file=sys.stderr)
+    logger.info(f"  Found {len(chairs)} chairs and {len(members)} committee members")
     _write_cache(CACHE_DIR, cache_key, result, namespace="usenix_organizers")
     return result
 
@@ -431,9 +431,9 @@ def main():
     for conf in conferences:
         for year in years:
             key = f"{conf}{year}"
-            logger.info(f"\n{'=' * 60}", file=sys.stderr)
-            logger.info(f"Scraping {conf.upper()} {year}", file=sys.stderr)
-            logger.info(f"{'=' * 60}", file=sys.stderr)
+            logger.info(f"\n{'=' * 60}")
+            logger.info(f"Scraping {conf.upper()} {year}")
+            logger.info(f"{'=' * 60}")
 
             artifacts = scrape_conference_year(conf, year, session, max_workers=args.max_workers, delay=args.delay)
 
