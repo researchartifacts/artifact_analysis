@@ -9,3 +9,110 @@
   patterns:
     - '^Bogdan\s+"Bo"\s+Stoica$'
     - "^Bogdan.*Bo.*Stoica$"
+
+# Middle-initial and casing variants
+- canonical: "Alessandro N. Baccarini"
+  patterns:
+    - "^Alessandro Baccarini$"
+
+- canonical: "Alexander J. Gaidis"
+  patterns:
+    - "^Alexander Gaidis$"
+
+- canonical: "Andrew R. Reiter"
+  patterns:
+    - "^Andrew Reiter$"
+
+- canonical: "Andrew J. Younge"
+  patterns:
+    - "^Andrew Younge$"
+
+- canonical: "Antonio M. Espinoza"
+  patterns:
+    - "^Antonio Espinoza$"
+
+- canonical: "Cesar A. Stuardo"
+  patterns:
+    - "^Cesar Stuardo$"
+
+- canonical: "Dan R. K. Ports"
+  patterns:
+    - "^Dan Ports$"
+
+- canonical: "David G. Balash"
+  patterns:
+    - "^David Balash$"
+
+- canonical: "Haryadi S. Gunawi"
+  patterns:
+    - "^Haryadi Gunawi$"
+
+- canonical: "Joppe W. Bos"
+  patterns:
+    - "^Joppe Bos$"
+
+- canonical: "Joseph E. Gonzalez"
+  patterns:
+    - "^Joseph Gonzalez$"
+
+- canonical: "Kelechi G. Kalu"
+  patterns:
+    - "^Kelechi Kalu$"
+
+- canonical: "Lachlan J. Gunn"
+  patterns:
+    - "^Lachlan Gunn$"
+    - "^Lachlan J Gunn$"
+
+- canonical: "Luigi D. C. Soares"
+  patterns:
+    - "^Luigi Soares$"
+
+- canonical: "Md. Armanuzzaman"
+  patterns:
+    - "^MD Armanuzzaman$"
+
+- canonical: "Michael D. Brown"
+  patterns:
+    - "^Michael Brown$"
+
+- canonical: "Patrick P. C. Lee"
+  patterns:
+    - "^Patrick Lee$"
+
+- canonical: "Paul L. R. Olivier"
+  patterns:
+    - "^Paul OLIVIER$"
+    - "^Paul L\\. R\\. OLIVIER$"
+
+- canonical: "Rafael Lourenço de Lima Chehab"
+  patterns:
+    - "^Rafael Lourenco de Lima Chehab$"
+
+- canonical: "Ray A. O. Sinurat"
+  patterns:
+    - "^Ray Sinurat$"
+
+- canonical: "Sayanton V. Dibbo"
+  patterns:
+    - "^Sayanton Dibbo$"
+
+- canonical: "Seung-Seob Lee"
+  patterns:
+    - "^Seung-seob Lee$"
+
+- canonical: "Sreeja S. Nair"
+  patterns:
+    - "^Sreeja Nair$"
+
+- canonical: "Tushar M. Jois"
+  patterns:
+    - "^Tushar Jois$"
+
+- canonical: "Yongwei Wu"
+  patterns:
+    - "^YongWei Wu$"
+
+- canonical: "Zbigniew T. Kalbarczyk"
+  patterns:
+    - "^Zbigniew Kalbarczyk$"
