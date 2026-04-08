@@ -57,15 +57,111 @@ def _load_affiliation_rules(path: Path = _RULES_PATH) -> list[tuple[re.Pattern, 
 _AFFILIATION_RULES = _load_affiliation_rules()
 
 
+_COUNTRIES = re.compile(
+    r"^(?:USA|U\.S\.A\.?|United States(?: of America)?|UK|United Kingdom|China|"
+    r"People'?s Republic of China|PRC|Germany|France|Japan|Canada|Australia|"
+    r"Switzerland|India|South Korea|Republic of Korea|Israel|Netherlands|"
+    r"The Netherlands|Singapore|Italy|Spain|Brazil|Sweden|Norway|Finland|"
+    r"Denmark|Austria|Belgium|Taiwan|Hong Kong|SAR|New Zealand|Portugal|"
+    r"Ireland|Poland|Czech Republic|Hungary|Greece|Romania|Turkey|Russia|"
+    r"Mexico|Chile|Colombia|Argentina|Egypt|South Africa|Saudi Arabia|UAE|"
+    r"Qatar|Iran|Pakistan|Bangladesh|Thailand|Vietnam|Philippines|Indonesia|"
+    r"Malaysia|Luxembourg|Croatia|Serbia|Slovenia|Slovakia|Bulgaria|Estonia|"
+    r"Latvia|Lithuania|Iceland|Cyprus|Malta|Morocco|Tunisia|Kenya|Nigeria|"
+    r"Ghana|Ethiopia|Uganda|Tanzania|Malawi|Mozambique|Zambia|Zimbabwe|"
+    r"Botswana|Namibia|Rwanda|Senegal|Cameroon|Ivory Coast|Jordan|Lebanon|"
+    r"Kuwait|Bahrain|Oman|Iraq|Sri Lanka|Nepal|Myanmar|Cambodia|Laos|"
+    r"Mongolia|Kazakhstan|Uzbekistan|Peru|Ecuador|Venezuela|Bolivia|"
+    r"Paraguay|Uruguay|Costa Rica|Panama|Cuba|Dominican Republic|"
+    r"Puerto Rico|Trinidad and Tobago|Jamaica|Guatemala|Honduras|"
+    r"El Salvador|Nicaragua|Macau)$",
+    re.I,
+)
+
+_US_STATES = re.compile(
+    r"^(?:Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|"
+    r"Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|"
+    r"Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|"
+    r"Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|"
+    r"New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|"
+    r"Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|"
+    r"Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming|"
+    r"AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|"
+    r"MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|"
+    r"VT|VA|WA|WV|WI|WY|DC)$",
+    re.I,
+)
+
+# Tokens that look like department / school / lab qualifiers (not part of the
+# core institution identity).
+_DEPT_PREFIXES = re.compile(
+    r"^(?:Department|Dept\.?|School|Faculty|College|Division|Lab(?:oratory)?|"
+    r"Center|Centre|Group|Section|Program|Office|Key Laboratory|"
+    r"State Key Laboratory)\b",
+    re.I,
+)
+
+
+def _strip_trailing_location(aff: str) -> str:
+    """Strip trailing comma-separated location tokens (country, state, city).
+
+    Repeatedly removes the last comma-separated segment if it matches a known
+    country, US state abbreviation, or looks like a city/ZIP.  Also strips
+    department/school qualifiers that follow the core institution name.
+    """
+    parts = [p.strip() for p in aff.split(",")]
+    # Remove trailing empty parts
+    while parts and not parts[-1]:
+        parts.pop()
+    if len(parts) <= 1:
+        return aff
+
+    changed = True
+    while changed and len(parts) > 1:
+        changed = False
+        last = parts[-1].strip()
+        # Remove trailing country
+        if _COUNTRIES.match(last):
+            parts.pop()
+            changed = True
+            continue
+        # Remove trailing US state (full name or abbreviation)
+        if _US_STATES.match(last):
+            parts.pop()
+            changed = True
+            continue
+        # Remove trailing "City, ..." patterns — short tokens that are
+        # likely city names (< 40 chars, no institutional keywords)
+        if (
+            len(last) < 40
+            and not re.search(
+                r"\b(?:University|Institute|Lab|Center|Centre|College|"
+                r"School|Research|Corporation|Inc|Ltd|LLC|GmbH|Corp|Cloud|"
+                r"Foundation|Association|Academy|Hospital|Library|Museum|"
+                r"Technologies|Technology|Systems|Software|Security|"
+                r"Data\d*|Group|Team|Division|Platform|Network|Service)\b",
+                last,
+                re.I,
+            )
+            and not _DEPT_PREFIXES.match(last)
+            # Looks like a place name: starts with uppercase, mostly alpha
+            and re.match(r"[A-Z\u00C0-\u024F]", last)
+            and sum(c.isalpha() or c.isspace() or c in "-'.–" for c in last) > len(last) * 0.7
+        ):
+            parts.pop()
+            changed = True
+            continue
+
+    return ", ".join(parts)
+
+
 def _normalize_affiliation(affiliation: str) -> str:
     """Normalize affiliation string to a canonical form.
 
     Strategy:
     1. Try each regex rule; if one matches, return its canonical name.
-    2. Otherwise, strip department / school / lab details that come after a
-       comma following the core university name.  E.g.
-       "Tsinghua University, School of Software, Beijing, China"
-       → "Tsinghua University"
+    2. Strip sub-units after a university name core.
+    3. Strip trailing location tokens (city, state, country).
     """
     if not affiliation:
         return ""
@@ -106,7 +202,8 @@ def _normalize_affiliation(affiliation: str) -> str:
         if len(core) > 10:
             return core
 
-    return aff
+    # 3. Strip trailing location (city, state, country) from any affiliation
+    return _strip_trailing_location(aff)
 
 
 # ── Merge logic ───────────────────────────────────────────────────────────────

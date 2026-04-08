@@ -18,6 +18,7 @@ import json
 import logging
 import os
 
+from src.generators.generate_combined_rankings import _normalize_affiliation
 from src.utils.conference import normalize_name as _base_normalize_name
 
 logger = logging.getLogger(__name__)
@@ -71,10 +72,12 @@ def generate_profiles(data_dir: str) -> None:
 
         profile: dict = {
             "name": name,
-            "affiliation": clean(
-                (cr.get("affiliation", "") if cr else "")
-                or a.get("affiliation")
-                or (ae.get("affiliation", "") if ae else "")
+            "affiliation": _normalize_affiliation(
+                clean(
+                    (cr.get("affiliation", "") if cr else "")
+                    or a.get("affiliation")
+                    or (ae.get("affiliation", "") if ae else "")
+                )
             ),
             "papers": a.get("papers", []),
             "papers_without_artifacts": a.get("papers_without_artifacts", []),
@@ -143,7 +146,9 @@ def generate_profiles(data_dir: str) -> None:
         cr = cr_by_name.get(cname)
         profile = {
             "name": cname,
-            "affiliation": clean((cr.get("affiliation", "") if cr else "") or m.get("affiliation", "")),
+            "affiliation": _normalize_affiliation(
+                clean((cr.get("affiliation", "") if cr else "") or m.get("affiliation", ""))
+            ),
             "papers": [],
             "conferences": m.get("conferences", []),
             "years": sorted(int(y) for y in m.get("years", {})),
