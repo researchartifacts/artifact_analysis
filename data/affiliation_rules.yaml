@@ -234,9 +234,9 @@
     - 'Carnegie\s+Mellon\s+University'
     - '\bCMU\b'
 
-- canonical: Microsoft Research
+- canonical: Microsoft
   patterns:
-    - 'Microsoft\s+Research(\s+Asia|\s+Cambridge|\s+Redmond|\s+India)?'
+    - '^Microsoft\b'
     - '\bMSR\b'
 
 - canonical: University of Science and Technology of China
@@ -282,6 +282,104 @@
     - '\bHuawei\s+Dresden\b'
     - '\bHuawei\s+Hong\s+Kong\b'
     - '\bHuawei\s+Munich\b'
+
+- canonical: ByteDance
+  patterns:
+    - '^ByteDance\b'
+    - '^Bytedance\b'
+
+- canonical: Uber
+  patterns:
+    - '^Uber\b'
+
+- canonical: LinkedIn
+  patterns:
+    - '^Linkedin\b'
+    - '^LinkedIn\b'
+
+- canonical: Siemens
+  patterns:
+    - '^Siemens\b'
+
+- canonical: Cloudflare
+  patterns:
+    - '^Cloudflare\b'
+
+- canonical: IBM
+  patterns:
+    - '^IBM\b'
+
+- canonical: Amazon
+  patterns:
+    - '^Amazon\b(?!.*[/])'  # skip dual affiliations like 'Amazon / Univ'
+    - '^AWS\b'
+
+- canonical: Alibaba
+  patterns:
+    - '^Alibaba\b'
+
+- canonical: Samsung
+  patterns:
+    - '^Samsung\b'
+
+- canonical: Oracle
+  patterns:
+    - '^Oracle\b'
+
+- canonical: Baidu
+  patterns:
+    - '^Baidu\b'
+
+- canonical: Thales
+  patterns:
+    - '^Thales\b'
+
+- canonical: Bosch
+  patterns:
+    - '^Robert\s+Bosch\b'
+
+- canonical: VMware
+  patterns:
+    - '^VMware\b'
+
+- canonical: PQShield
+  patterns:
+    - '^PQShield\b'
+
+- canonical: Independent Researcher
+  patterns:
+    - '^[Ii]ndependent\s+[Rr]esearcher'
+
+- canonical: Columbia University
+  patterns:
+    - '^Columbia\s+[Uu]niversity\b'
+
+- canonical: The University of Hong Kong
+  patterns:
+    - '[Tt]he\s+University\s+of\s+Hong\s+Kong\b'
+
+- canonical: Inria
+  patterns:
+    - '^INRIA\b'
+    - '^Inria\b'
+
+- canonical: EURECOM
+  patterns:
+    - '^[Ee]urecom\b'
+
+- canonical: IMDEA Networks Institute
+  patterns:
+    - '^[Ii]mdea\s+Networks\b'
+
+- canonical: Indian Institute of Technology Kharagpur
+  patterns:
+    - '[Ii]ndian\s+[Ii]nstitute\s+of\s+[Tt]echnology\s+Kharagpur'
+
+- canonical: TU Darmstadt
+  patterns:
+    - '^TU\s+Darmstadt\b'
+    - '^Technical\s+University\s+of\s+Darmstadt\b'
+    - '^Technische\s+Universit'
 
 - canonical: University of Pennsylvania
   patterns:
