@@ -54,6 +54,15 @@
     - '\bIntel\s+Corporation\b'
     - '\bIntel\s+Research\b'
 
+- canonical: Google
+  patterns:
+    - '^Google\b'
+    - '\bGoogle\s+Inc\.?\b'
+    - '\bGoogle\s+LLC\b'
+    - '\bGoogle\s+Research\b'
+    - '\bGoogle\s+DeepMind\b'
+    - '\bGoogle\s+Brain\b'
+
 - canonical: University of California, Berkeley
   patterns:
     - 'UC\s+Berkeley'
