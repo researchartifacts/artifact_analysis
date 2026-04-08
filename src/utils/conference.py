@@ -60,11 +60,14 @@ def discover_conferences(website_root: str | None = None) -> tuple[frozenset[str
 
     Falls back to auto-detection of the website root, then to built-in
     defaults if the directory is not found (e.g. in tests).
+    Discovered conferences are merged with the built-in fallbacks so that
+    known conferences are always classified even before the pipeline
+    auto-generates their pages.
     """
     root = website_root or _find_website_root()
     if root and os.path.isdir(root):
-        sys_confs = _scan_area_confs(root, "systems")
-        sec_confs = _scan_area_confs(root, "security")
+        sys_confs = _scan_area_confs(root, "systems") | _FALLBACK_SYSTEMS
+        sec_confs = _scan_area_confs(root, "security") | _FALLBACK_SECURITY
         if sys_confs or sec_confs:
             logger.debug(
                 "Discovered conferences from %s: systems=%s, security=%s",
@@ -87,6 +90,20 @@ _FALLBACK_SECURITY = frozenset(
 # Module-level sets, populated on first import.
 SYSTEMS_CONFS, SECURITY_CONFS = discover_conferences()
 ALL_CONFS = SYSTEMS_CONFS | SECURITY_CONFS
+
+
+# ── Conference display-name mapping ─────────────────────────────────────────
+# Used by auto-generated conference pages.  Conferences not listed here
+# default to the uppercase abbreviation.
+CONF_DISPLAY_NAMES: dict[str, str] = {
+    "ATC": "USENIX ATC",
+    "CAIS": "ACM CAIS",
+    "EUROSYS": "EuroSys",
+    "FAST": "USENIX FAST",
+    "NDSS": "NDSS",
+    "SYSTEX": "SysTEX",
+    "USENIXSEC": "USENIX Security",
+}
 
 
 # ── Name alias canonicalisation ─────────────────────────────────────────────

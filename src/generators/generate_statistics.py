@@ -27,9 +27,60 @@ from ..scrapers.acm_scrape import (
 from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
 from ..scrapers.sys_sec_scrape import get_conferences_from_prefix
 from ..scrapers.usenix_scrape import scrape_conference_year, to_pipeline_format
+from ..utils.conference import CONF_DISPLAY_NAMES
 from ..utils.conference import parse_conf_year as extract_conference_name
 
 logger = logging.getLogger(__name__)
+
+
+# ── Auto-generated conference pages ─────────────────────────────────────────
+
+_CONFERENCE_PAGE_TEMPLATE = """\
+---
+title: "{display_name}"
+permalink: /{area}/{slug}.html
+conf_name: "{conf_upper}"
+conf_display_name: "{display_name}"
+conf_category: "{area}"
+---
+
+{{%- include conference_page.html -%}}
+"""
+
+
+def _generate_conference_pages(
+    output_dir: str,
+    systems_confs: list[str],
+    security_confs: list[str],
+) -> None:
+    """Create conference ``.md`` pages for every known conference.
+
+    Pages are written to ``{output_dir}/systems/`` and
+    ``{output_dir}/security/``.  Existing pages are only overwritten when
+    their content differs so that manual edits *not* covered by the
+    template are preserved for non-auto-generated pages.
+    """
+    for area, confs in [("systems", systems_confs), ("security", security_confs)]:
+        area_dir = os.path.join(output_dir, area)
+        os.makedirs(area_dir, exist_ok=True)
+        for conf_upper in confs:
+            slug = conf_upper.lower()
+            display = CONF_DISPLAY_NAMES.get(conf_upper, conf_upper)
+            content = _CONFERENCE_PAGE_TEMPLATE.format(
+                display_name=display,
+                area=area,
+                slug=slug,
+                conf_upper=conf_upper,
+            )
+            path = os.path.join(area_dir, f"{slug}.md")
+            # Only write when the file is absent or differs.
+            if os.path.exists(path):
+                with open(path) as fh:
+                    if fh.read() == content:
+                        continue
+            with open(path, "w") as fh:
+                fh.write(content)
+            logger.info("Auto-generated conference page %s/%s.md", area, slug)
 
 # Workshops (as opposed to conferences) — used for visual distinction
 WORKSHOPS = {"woot", "systex"}
@@ -469,6 +520,9 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
 
         with open(os.path.join(output_dir, "assets/data/summary.json"), "w") as f:
             json.dump(summary, f, indent=2)
+
+        # Auto-generate per-conference .md pages for Jekyll
+        _generate_conference_pages(output_dir, systems_confs, security_confs)
 
         logger.info(f"Data files written to {output_dir}")
 
