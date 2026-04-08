@@ -32,10 +32,36 @@ from src.utils.conference import normalize_name as _base_normalize_name
 
 logger = logging.getLogger(__name__)
 
+_NAME_ALIASES_PATH = Path(__file__).resolve().parents[2] / "data" / "name_aliases.yaml"
+
+
+def _load_name_aliases(path: Path = _NAME_ALIASES_PATH) -> list[tuple[re.Pattern, str]]:
+    """Load name alias rules from a YAML data file."""
+    if not path.exists():
+        return []
+    with open(path) as fh:
+        entries = yaml.safe_load(fh) or []
+    rules: list[tuple[re.Pattern, str]] = []
+    for entry in entries:
+        combined = "|".join(entry["patterns"])
+        rules.append((re.compile(combined, re.I), entry["canonical"]))
+    return rules
+
+
+_NAME_ALIASES = _load_name_aliases()
+
+
+def canonicalize_name(name: str) -> str:
+    """Map known name aliases to their canonical form."""
+    for pat, canonical in _NAME_ALIASES:
+        if pat.search(name):
+            return canonical
+    return name
+
 
 def _normalize_name(name: str) -> str:
     """Normalise a name for cross-dataset matching (strips initials)."""
-    return _base_normalize_name(name, strip_initials=True)
+    return _base_normalize_name(canonicalize_name(name), strip_initials=True)
 
 
 # ── Affiliation normalization rules (loaded from YAML) ────────────────────────
@@ -57,102 +83,20 @@ def _load_affiliation_rules(path: Path = _RULES_PATH) -> list[tuple[re.Pattern, 
 _AFFILIATION_RULES = _load_affiliation_rules()
 
 
-_COUNTRIES = re.compile(
-    r"^(?:USA|U\.S\.A\.?|United States(?: of America)?|UK|United Kingdom|China|"
-    r"People'?s Republic of China|PRC|Germany|France|Japan|Canada|Australia|"
-    r"Switzerland|India|South Korea|Republic of Korea|Israel|Netherlands|"
-    r"The Netherlands|Singapore|Italy|Spain|Brazil|Sweden|Norway|Finland|"
-    r"Denmark|Austria|Belgium|Taiwan|Hong Kong|SAR|New Zealand|Portugal|"
-    r"Ireland|Poland|Czech Republic|Hungary|Greece|Romania|Turkey|Russia|"
-    r"Mexico|Chile|Colombia|Argentina|Egypt|South Africa|Saudi Arabia|UAE|"
-    r"Qatar|Iran|Pakistan|Bangladesh|Thailand|Vietnam|Philippines|Indonesia|"
-    r"Malaysia|Luxembourg|Croatia|Serbia|Slovenia|Slovakia|Bulgaria|Estonia|"
-    r"Latvia|Lithuania|Iceland|Cyprus|Malta|Morocco|Tunisia|Kenya|Nigeria|"
-    r"Ghana|Ethiopia|Uganda|Tanzania|Malawi|Mozambique|Zambia|Zimbabwe|"
-    r"Botswana|Namibia|Rwanda|Senegal|Cameroon|Ivory Coast|Jordan|Lebanon|"
-    r"Kuwait|Bahrain|Oman|Iraq|Sri Lanka|Nepal|Myanmar|Cambodia|Laos|"
-    r"Mongolia|Kazakhstan|Uzbekistan|Peru|Ecuador|Venezuela|Bolivia|"
-    r"Paraguay|Uruguay|Costa Rica|Panama|Cuba|Dominican Republic|"
-    r"Puerto Rico|Trinidad and Tobago|Jamaica|Guatemala|Honduras|"
-    r"El Salvador|Nicaragua|Macau)$",
-    re.I,
-)
-
-_US_STATES = re.compile(
-    r"^(?:Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|"
-    r"Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|"
-    r"Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|"
-    r"Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|"
-    r"New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|"
-    r"Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|"
-    r"Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming|"
-    r"AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|"
-    r"MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|"
-    r"VT|VA|WA|WV|WI|WY|DC)$",
-    re.I,
-)
-
-# Tokens that look like department / school / lab qualifiers (not part of the
-# core institution identity).
-_DEPT_PREFIXES = re.compile(
-    r"^(?:Department|Dept\.?|School|Faculty|College|Division|Lab(?:oratory)?|"
-    r"Center|Centre|Group|Section|Program|Office|Key Laboratory|"
-    r"State Key Laboratory)\b",
-    re.I,
-)
-
-
 def _strip_trailing_location(aff: str) -> str:
-    """Strip trailing comma-separated location tokens (country, state, city).
+    """Strip everything after the first comma.
 
-    Repeatedly removes the last comma-separated segment if it matches a known
-    country, US state abbreviation, or looks like a city/ZIP.  Also strips
-    department/school qualifiers that follow the core institution name.
+    The explicit YAML rules and the university-regex steps above handle all
+    cases where a comma is semantically meaningful (e.g. "University of
+    California, Berkeley").  For everything else the first comma-separated
+    segment is the core institution name; the rest is location, department,
+    or sub-unit detail that should be dropped.
     """
-    parts = [p.strip() for p in aff.split(",")]
-    # Remove trailing empty parts
-    while parts and not parts[-1]:
-        parts.pop()
-    if len(parts) <= 1:
+    idx = aff.find(",")
+    if idx <= 0:
         return aff
-
-    changed = True
-    while changed and len(parts) > 1:
-        changed = False
-        last = parts[-1].strip()
-        # Remove trailing country
-        if _COUNTRIES.match(last):
-            parts.pop()
-            changed = True
-            continue
-        # Remove trailing US state (full name or abbreviation)
-        if _US_STATES.match(last):
-            parts.pop()
-            changed = True
-            continue
-        # Remove trailing "City, ..." patterns — short tokens that are
-        # likely city names (< 40 chars, no institutional keywords)
-        if (
-            len(last) < 40
-            and not re.search(
-                r"\b(?:University|Institute|Lab|Center|Centre|College|"
-                r"School|Research|Corporation|Inc|Ltd|LLC|GmbH|Corp|Cloud|"
-                r"Foundation|Association|Academy|Hospital|Library|Museum|"
-                r"Technologies|Technology|Systems|Software|Security|"
-                r"Data\d*|Group|Team|Division|Platform|Network|Service)\b",
-                last,
-                re.I,
-            )
-            and not _DEPT_PREFIXES.match(last)
-            # Looks like a place name: starts with uppercase, mostly alpha
-            and re.match(r"[A-Z\u00C0-\u024F]", last)
-            and sum(c.isalpha() or c.isspace() or c in "-'.–" for c in last) > len(last) * 0.7
-        ):
-            parts.pop()
-            changed = True
-            continue
-
-    return ", ".join(parts)
+    core = aff[:idx].strip()
+    return core if core else aff
 
 
 def _normalize_affiliation(affiliation: str) -> str:
@@ -235,13 +179,30 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
     member_by_norm: dict[str, dict] = {}
     for m in ae_members:
         norm = _normalize_name(m["name"])
-        # If multiple AE entries map to the same norm (unlikely but possible),
-        # keep the one with higher memberships.
+        # If multiple AE entries map to the same norm (e.g. name aliases),
+        # merge their memberships, chairs, conferences, and years.
         if norm in member_by_norm:
-            if m.get("total_memberships", 0) > member_by_norm[norm].get("total_memberships", 0):
-                member_by_norm[norm] = m
+            existing = member_by_norm[norm]
+            existing["total_memberships"] = existing.get("total_memberships", 0) + m.get("total_memberships", 0)
+            existing["chair_count"] = existing.get("chair_count", 0) + m.get("chair_count", 0)
+            # Merge conferences (union)
+            seen = {tuple(c) if isinstance(c, list) else c for c in existing.get("conferences", [])}
+            for c in m.get("conferences", []):
+                key = tuple(c) if isinstance(c, list) else c
+                if key not in seen:
+                    existing.setdefault("conferences", []).append(c)
+                    seen.add(key)
+            # Merge years (sum counts)
+            for yr, cnt in m.get("years", {}).items():
+                yr_key = int(yr) if not isinstance(yr, int) else yr
+                existing.setdefault("years", {})[yr_key] = existing.get("years", {}).get(yr_key, 0) + cnt
+            # Use canonical name as display name
+            existing["name"] = canonicalize_name(existing["name"])
+            logger.info(f"  Merged AE entry '{m['name']}' into '{existing['name']}' (norm: {norm})")
         else:
-            member_by_norm[norm] = m
+            merged = dict(m)
+            merged["name"] = canonicalize_name(m["name"])
+            member_by_norm[norm] = merged
 
     # ── Disambiguation: when several DBLP authors share the same normalised
     #    name as an AE member, pick the best match via conference overlap. ────
@@ -639,6 +600,84 @@ def generate_combined_rankings(data_dir: str) -> None:
         else:
             # Person only in security - add them
             combined_all_dict[norm_name] = person.copy()
+
+    # ── Merge AE members from non-systems/non-security areas (e.g. CAIS) ───
+    # The combined_all_dict so far only has systems + security.  Build a
+    # complete merged view of all AE members and add any extra memberships
+    # that weren't captured by either area.
+    _all_ae_merged: dict[str, dict] = {}
+    for m in all_ae_members:
+        norm = _normalize_name(m["name"])
+        if norm in _all_ae_merged:
+            ex = _all_ae_merged[norm]
+            ex["total_memberships"] = ex.get("total_memberships", 0) + m.get("total_memberships", 0)
+            ex["chair_count"] = ex.get("chair_count", 0) + m.get("chair_count", 0)
+            seen = {tuple(c) if isinstance(c, list) else c for c in ex.get("conferences", [])}
+            for c in m.get("conferences", []):
+                key = tuple(c) if isinstance(c, list) else c
+                if key not in seen:
+                    ex.setdefault("conferences", []).append(c)
+                    seen.add(key)
+            for yr, cnt in m.get("years", {}).items():
+                yr_key = int(yr) if not isinstance(yr, int) else yr
+                ex.setdefault("years", {})[yr_key] = ex.get("years", {}).get(yr_key, 0) + cnt
+        else:
+            _all_ae_merged[norm] = {
+                "name": canonicalize_name(m["name"]),
+                "affiliation": m.get("affiliation", ""),
+                "total_memberships": m.get("total_memberships", 0),
+                "chair_count": m.get("chair_count", 0),
+                "conferences": list(m.get("conferences", [])),
+                "years": dict(m.get("years", {})),
+            }
+
+    for norm, ae_full in _all_ae_merged.items():
+        if norm in combined_all_dict:
+            existing = combined_all_dict[norm]
+            extra_mem = ae_full["total_memberships"] - existing.get("ae_memberships", 0)
+            extra_chair = ae_full["chair_count"] - existing.get("chair_count", 0)
+            if extra_mem > 0 or extra_chair > 0:
+                existing["ae_memberships"] += max(extra_mem, 0)
+                existing["chair_count"] += max(extra_chair, 0)
+                existing["ae_score"] += max(extra_mem, 0) * W_AE_MEMBERSHIP + max(extra_chair, 0) * W_AE_CHAIR
+                existing["combined_score"] += max(extra_mem, 0) * W_AE_MEMBERSHIP + max(extra_chair, 0) * W_AE_CHAIR
+                # Merge conferences
+                ae_confs = set(c[0] if isinstance(c, list) else c for c in ae_full.get("conferences", []))
+                existing["conferences"] = sorted(set(existing.get("conferences", [])) | ae_confs)
+                # Merge years
+                for yr, cnt in ae_full.get("years", {}).items():
+                    yr_key = int(yr) if not isinstance(yr, int) else yr
+                    existing.setdefault("years", {})[yr_key] = max(
+                        existing.get("years", {}).get(yr_key, 0), cnt
+                    )
+                all_yrs = list(existing.get("years", {}).keys())
+                if all_yrs:
+                    existing["first_year"] = min(all_yrs)
+                    existing["last_year"] = max(all_yrs)
+                logger.info(
+                    f"  Added {max(extra_mem, 0)} extra membership(s) and "
+                    f"{max(extra_chair, 0)} extra chair(s) for '{ae_full['name']}' "
+                    f"from non-area conferences"
+                )
+        else:
+            # Completely new person (AE-only from non-standard area)
+            years = {int(yr): cnt for yr, cnt in ae_full.get("years", {}).items()}
+            entry = _build_entry(
+                name=ae_full["name"],
+                affiliation=_normalize_affiliation(ae_full.get("affiliation", "")),
+                artifacts=0,
+                total_papers=0,
+                artifact_rate=0,
+                ae_memberships=ae_full["total_memberships"],
+                chair_count=ae_full["chair_count"],
+                conferences=sorted(set(c[0] if isinstance(c, list) else c for c in ae_full.get("conferences", []))),
+                years=years,
+                artifact_citations=0,
+                badges_available=0,
+                badges_functional=0,
+                badges_reproducible=0,
+            )
+            combined_all_dict[norm] = entry
 
     # Convert back to list and sort by combined_score descending
     combined_all = sorted(combined_all_dict.values(), key=lambda x: x["combined_score"], reverse=True)

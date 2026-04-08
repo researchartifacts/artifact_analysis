@@ -1,0 +1,11 @@
+# Name aliases for deduplication.
+#
+# Each entry maps one or more alternative spellings / nicknames to the
+# canonical name used throughout the dataset.  The "patterns" are
+# case-insensitive Python regexes matched with re.search against the
+# raw name string.  The first matching rule wins.
+
+- canonical: "Bogdan Alexandru Stoica"
+  patterns:
+    - '^Bogdan\s+"Bo"\s+Stoica$'
+    - "^Bogdan.*Bo.*Stoica$"

@@ -18,7 +18,7 @@ import json
 import logging
 import os
 
-from src.generators.generate_combined_rankings import _normalize_affiliation
+from src.generators.generate_combined_rankings import _normalize_affiliation, canonicalize_name
 from src.utils.conference import normalize_name as _base_normalize_name
 
 logger = logging.getLogger(__name__)
@@ -51,9 +51,9 @@ def generate_profiles(data_dir: str) -> None:
         return " ".join(s.split())
 
     def _normalize_name(name: str) -> str:
-        return _base_normalize_name(name, strip_initials=True)
+        return _base_normalize_name(canonicalize_name(name), strip_initials=True)
 
-    ae_by_name = {clean(m["name"]): m for m in ae_members}
+    ae_by_name = {clean(canonicalize_name(m["name"])): m for m in ae_members}
     # Also index AE members by normalised name for DBLP-suffix matching
     ae_by_norm: dict[str, dict] = {}
     for m in ae_members:
@@ -140,7 +140,7 @@ def generate_profiles(data_dir: str) -> None:
 
     # Add AE-only members not in authors
     for m in ae_members:
-        cname = clean(m["name"])
+        cname = clean(canonicalize_name(m["name"]))
         if cname in profiles:
             continue
         cr = cr_by_name.get(cname)
@@ -172,6 +172,11 @@ def generate_profiles(data_dir: str) -> None:
             profile["ae_score"] = cr.get("ae_score", 0)
             profile["rank"] = cr.get("rank", 0)
             profile["artifact_citations"] = cr.get("artifact_citations", 0)
+            # Use combined_rankings totals (they include cross-area merges)
+            if cr.get("ae_memberships", 0) > profile["ae_memberships"]:
+                profile["ae_memberships"] = cr["ae_memberships"]
+            if cr.get("chair_count", 0) > profile["chair_count"]:
+                profile["chair_count"] = cr["chair_count"]
         else:
             ae_mem = m.get("total_memberships", 0)
             chairs = m.get("chair_count", 0)
@@ -179,7 +184,7 @@ def generate_profiles(data_dir: str) -> None:
             profile["ae_score"] = ae_mem * W_AE_MEMBERSHIP + chairs * W_AE_CHAIR
             profile["citation_score"] = 0
             profile["combined_score"] = profile["ae_score"]
-        profiles[m["name"]] = profile
+        profiles[cname] = profile
 
     # Sort by combined_score desc, then artifact_count desc, then name asc
     profile_list = sorted(

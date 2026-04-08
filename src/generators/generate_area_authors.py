@@ -18,7 +18,7 @@ from collections import defaultdict
 import yaml
 
 from ..utils.conference import clean_name
-from .generate_combined_rankings import _normalize_affiliation
+from .generate_combined_rankings import _normalize_affiliation, canonicalize_name
 
 logger = logging.getLogger(__name__)
 DATA_DIR = None  # Set via CLI
@@ -35,7 +35,7 @@ def save_yaml(filename, data):
 
 
 def _normalize_name_key(name):
-    return clean_name(name).lower()
+    return clean_name(canonicalize_name(name)).lower()
 
 
 def _load_ae_affiliation_fallback():
