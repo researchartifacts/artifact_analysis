@@ -67,9 +67,23 @@ def _load_author_index_affiliations():
         return {}
 
 
+def _load_authors():
+    """Load authors from authors.json (has inline papers) with YAML fallback."""
+    json_path = os.path.join(DATA_DIR, "..", "assets", "data", "authors.json")
+    if os.path.exists(json_path):
+        with open(json_path) as f:
+            data = json.load(f)
+        # Verify the JSON actually has papers embedded
+        if data and data[0].get("papers"):
+            logger.info(f"Loaded {len(data)} authors from authors.json (with inline papers)")
+            return data
+        logger.warning("authors.json exists but has no inline papers, falling back to authors.yml")
+    return load_yaml("authors.yml")
+
+
 def generate_area_authors():
     summary = load_yaml("summary.yml")
-    authors = load_yaml("authors.yml")
+    authors = _load_authors()
     ae_aff_fallback = _load_ae_affiliation_fallback()
     index_affiliations = _load_author_index_affiliations()
 
