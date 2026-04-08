@@ -35,6 +35,13 @@ def generate_profiles(data_dir: str) -> None:
     with open(cr_path) as f:
         combined = json.load(f)
 
+    # Scoring weights — must match generate_combined_rankings.py
+    W_AVAILABLE = 1
+    W_FUNCTIONAL = 1
+    W_REPRODUCIBLE = 1
+    W_AE_MEMBERSHIP = 3
+    W_AE_CHAIR = 2
+
     # Index by cleaned name for lookups
     def clean(s: str) -> str:
         """Normalize whitespace (tabs, double spaces, etc.) to single space."""
@@ -73,13 +80,12 @@ def generate_profiles(data_dir: str) -> None:
         }
 
         if cr:
+            # Use combined_rankings data for consistency with ranking tables
             profile["combined_score"] = cr.get("combined_score", 0)
             profile["artifact_score"] = cr.get("artifact_score", 0)
             profile["citation_score"] = cr.get("citation_score", 0)
             profile["ae_score"] = cr.get("ae_score", 0)
             profile["rank"] = cr.get("rank", 0)
-            # Keep artifact metrics consistent with combined ranking views.
-            # This avoids stale/legacy denominator differences in AR%.
             profile["artifact_count"] = cr.get("artifacts", profile["artifact_count"])
             profile["total_papers"] = cr.get("total_papers", profile["total_papers"])
             profile["artifact_rate"] = cr.get("artifact_rate", profile["artifact_rate"])
@@ -87,6 +93,21 @@ def generate_profiles(data_dir: str) -> None:
             profile["badges_available"] = cr.get("badges_available", profile["badges_available"])
             profile["badges_functional"] = cr.get("badges_functional", profile["badges_functional"])
             profile["badges_reproducible"] = cr.get("badges_reproducible", profile["badges_reproducible"])
+        else:
+            # Not in combined_rankings (score < threshold) — compute directly
+            artifacts = profile["artifact_count"]
+            ba = profile["badges_available"]
+            bf = profile["badges_functional"]
+            br = profile["badges_reproducible"]
+            ae_mem = 0
+            chairs = 0
+            if ae:
+                ae_mem = ae.get("total_memberships", 0)
+                chairs = ae.get("chair_count", 0)
+            profile["artifact_score"] = artifacts * W_AVAILABLE + bf * W_FUNCTIONAL + br * W_REPRODUCIBLE
+            profile["ae_score"] = ae_mem * W_AE_MEMBERSHIP + chairs * W_AE_CHAIR
+            profile["citation_score"] = 0
+            profile["combined_score"] = profile["artifact_score"] + profile["ae_score"]
 
         if ae:
             profile["ae_memberships"] = ae.get("total_memberships", 0)
@@ -128,6 +149,13 @@ def generate_profiles(data_dir: str) -> None:
             profile["ae_score"] = cr.get("ae_score", 0)
             profile["rank"] = cr.get("rank", 0)
             profile["artifact_citations"] = cr.get("artifact_citations", 0)
+        else:
+            ae_mem = m.get("total_memberships", 0)
+            chairs = m.get("chair_count", 0)
+            profile["artifact_score"] = 0
+            profile["ae_score"] = ae_mem * W_AE_MEMBERSHIP + chairs * W_AE_CHAIR
+            profile["citation_score"] = 0
+            profile["combined_score"] = profile["ae_score"]
         profiles[m["name"]] = profile
 
     # Sort by combined_score desc, then artifact_count desc, then name asc
