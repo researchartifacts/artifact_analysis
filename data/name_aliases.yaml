@@ -116,3 +116,36 @@
 - canonical: "Zbigniew T. Kalbarczyk"
   patterns:
     - "^Zbigniew Kalbarczyk$"
+
+# Additional middle-initial and casing variants (batch 2)
+- canonical: "Benjamin M. Case"
+  patterns:
+    - "^Benjamin Case$"
+
+- canonical: "G. Edward Suh"
+  patterns:
+    - "^Edward Suh$"
+
+- canonical: "Jonathan R. Mayer"
+  patterns:
+    - "^Jonathan Mayer$"
+
+- canonical: "Ka-Ho Chow"
+  patterns:
+    - "^Ka Ho Chow$"
+
+- canonical: "Matthew D. Green"
+  patterns:
+    - "^Matthew Green$"
+
+- canonical: "Norman M. Sadeh"
+  patterns:
+    - "^Norman Sadeh$"
+
+- canonical: "Sanjay K. Jha"
+  patterns:
+    - "^Sanjay Jha$"
+
+- canonical: "Xiaofeng Wang"
+  patterns:
+    - "^XiaoFeng Wang$"

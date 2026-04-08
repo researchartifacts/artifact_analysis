@@ -384,3 +384,125 @@
 - canonical: University of Pennsylvania
   patterns:
     - 'Pennsylvani'
+
+# ── "The" prefix normalization ──
+- canonical: University of Chicago
+  patterns:
+    - '^The\s+University\s+of\s+Chicago\b'
+    - '^University\s+of\s+Chicago\b'
+
+- canonical: George Washington University
+  patterns:
+    - '^The\s+George\s+Washington\s+University\b'
+    - '^George\s+Washington\s+University\b'
+
+- canonical: The Ohio State University
+  patterns:
+    - '^Ohio\s+State\s+University\b'
+    - '^The\s+Ohio\s+State\s+University\b'
+
+- canonical: University of Manchester
+  patterns:
+    - '^The\s+University\s+of\s+Manchester\b'
+    - '^University\s+of\s+Manchester\b'
+
+- canonical: University of Melbourne
+  patterns:
+    - '^The\s+University\s+of\s+Melbourne\b'
+    - '^University\s+of\s+Melbourne\b'
+
+- canonical: University of Queensland
+  patterns:
+    - '^The\s+University\s+of\s+Queensland\b'
+    - '^University\s+of\s+Queensland\b'
+
+- canonical: University of Texas at Arlington
+  patterns:
+    - '^The\s+University\s+of\s+Texas\s+at\s+Arlington\b'
+    - '^University\s+of\s+Texas\s+at\s+Arlington\b'
+
+- canonical: University of Texas at Dallas
+  patterns:
+    - '^The\s+University\s+of\s+Texas\s+at\s+Dallas\b'
+    - '^University\s+of\s+Texas\s+at\s+Dallas\b'
+
+- canonical: University of Tokyo
+  patterns:
+    - '^The\s+University\s+of\s+Tokyo\b'
+    - '^University\s+of\s+Tokyo\b'
+
+# ── Location suffix normalization ──
+- canonical: Academia Sinica
+  patterns:
+    - '^Academia\s+Sinica\b'
+
+- canonical: Data61, CSIRO
+  patterns:
+    - '^Data61[\s,]+CSIRO\b'
+
+- canonical: Eindhoven University of Technology
+  patterns:
+    - '^Eindhoven\s+University\s+of\s+Technology\b'
+
+- canonical: Imperial College London
+  patterns:
+    - '^Imperial\s+College\s+London\b'
+
+- canonical: LMU Munich
+  patterns:
+    - '^LMU\s+Munich\b'
+
+- canonical: POSTECH
+  patterns:
+    - '^POSTECH\b'
+
+- canonical: TU Braunschweig
+  patterns:
+    - '^TU\s+Braunschweig\b'
+
+- canonical: TU Wien
+  patterns:
+    - '^TU\s+Wien\b'
+
+- canonical: Technology Innovation Institute
+  patterns:
+    - '^Technology\s+Innovation\s+Institute\b'
+
+- canonical: Tsinghua University
+  patterns:
+    - '^Tsinghua\s+University\b'
+
+- canonical: University of Rochester
+  patterns:
+    - '^University\s+of\s+Rochester\b'
+
+- canonical: Zhejiang University
+  patterns:
+    - '^Zhejiang\s+University\b'
+
+- canonical: City University of Hong Kong
+  patterns:
+    - '^City\s+University\s+of\s+Hong\s+Kong\b'
+
+# ── Accent / dash / formatting normalization ──
+- canonical: "École Normale Supérieure"
+  patterns:
+    - '^[EÉ]cole\s+Normale\s+Sup[eé]rieure\b'
+
+- canonical: University of Erlangen-Nuremberg
+  patterns:
+    - '^University\s+of\s+Erlangen'
+
+- canonical: University of Massachusetts Amherst
+  patterns:
+    - '^University\s+of\s+Massachusetts[\s-]+Amherst\b'
+    - '^University\s+of\s+Massachusetts\s+Amherst\b'
+
+# ── Typo fixes ──
+- canonical: "New York University Abu Dhabi"
+  patterns:
+    - '^New\s+York\s+University\s+Abu\s+Dhabi\b'
+
+- canonical: "Politecnico di Torino"
+  patterns:
+    - '^Politecnico\s+di\s+Torino\b'
