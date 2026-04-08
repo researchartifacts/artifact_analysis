@@ -269,6 +269,15 @@
     - 'Jiaotong'
     - '\bSJTU\b'
 
+- canonical: Huawei
+  patterns:
+    - '^Huawei\b'
+    - '\bHuawei\s+Technolog'
+    - '\bHuawei\s+Cloud\b'
+    - '\bHuawei\s+Dresden\b'
+    - '\bHuawei\s+Hong\s+Kong\b'
+    - '\bHuawei\s+Munich\b'
+
 - canonical: University of Pennsylvania
   patterns:
     - 'Pennsylvani'
