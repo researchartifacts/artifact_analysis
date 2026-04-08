@@ -47,6 +47,13 @@
     - '^CISPA\b'
     - '\bCISPA\s+Helmholtz\b'
 
+- canonical: Intel
+  patterns:
+    - '^Intel\b'
+    - '\bIntel\s+Labs\b'
+    - '\bIntel\s+Corporation\b'
+    - '\bIntel\s+Research\b'
+
 - canonical: University of California, Berkeley
   patterns:
     - 'UC\s+Berkeley'
