@@ -269,6 +269,11 @@
     - 'Jiaotong'
     - '\bSJTU\b'
 
+- canonical: Meta
+  patterns:
+    - '^Meta\b'
+    - '^Facebook\b'
+
 - canonical: Huawei
   patterns:
     - '^Huawei\b'
