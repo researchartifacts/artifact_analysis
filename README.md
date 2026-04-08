@@ -153,3 +153,7 @@ USENIX conferences are configured in `generate_statistics.py` via the `USENIX_CO
 ## Automation
 
 A GitHub Actions workflow (`.github/workflows/update-stats.yml`) runs monthly. Requires a `WEBSITE_UPDATE_TOKEN` secret with `repo` scope. Can also be triggered manually from the Actions tab.
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE) for details. manually from the Actions tab.
