@@ -18,6 +18,8 @@ import json
 import logging
 import os
 
+from src.utils.conference import normalize_name as _base_normalize_name
+
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +49,16 @@ def generate_profiles(data_dir: str) -> None:
         """Normalize whitespace (tabs, double spaces, etc.) to single space."""
         return " ".join(s.split())
 
+    def _normalize_name(name: str) -> str:
+        return _base_normalize_name(name, strip_initials=True)
+
     ae_by_name = {clean(m["name"]): m for m in ae_members}
+    # Also index AE members by normalised name for DBLP-suffix matching
+    ae_by_norm: dict[str, dict] = {}
+    for m in ae_members:
+        norm = _normalize_name(m["name"])
+        if norm not in ae_by_norm or m.get("total_memberships", 0) > ae_by_norm[norm].get("total_memberships", 0):
+            ae_by_norm[norm] = m
     cr_by_name = {clean(c["name"]): c for c in combined}
 
     profiles: dict[str, dict] = {}
@@ -56,7 +67,7 @@ def generate_profiles(data_dir: str) -> None:
     for a in authors:
         name = clean(a["name"])
         cr = cr_by_name.get(name)
-        ae = ae_by_name.get(name)
+        ae = ae_by_name.get(name) or ae_by_norm.get(_normalize_name(name))
 
         profile: dict = {
             "name": name,
@@ -114,6 +125,13 @@ def generate_profiles(data_dir: str) -> None:
             profile["chair_count"] = ae.get("chair_count", 0)
             profile["ae_conferences"] = ae.get("conferences", [])
             profile["ae_years"] = ae.get("years", {})
+        elif cr:
+            # AE data merged into combined_rankings via normalised name but
+            # ae_members lookup missed (e.g. DBLP suffix mismatch) — pull
+            # membership/chair counts from the combined ranking entry.
+            if cr.get("ae_memberships"):
+                profile["ae_memberships"] = cr["ae_memberships"]
+                profile["chair_count"] = cr.get("chair_count", 0)
 
         profiles[name] = profile
 
