@@ -25,43 +25,17 @@ from pathlib import Path
 
 import yaml
 
-from src.utils.conference import normalize_name as _base_normalize_name
+from src.utils.conference import canonicalize_name, normalize_name as _base_normalize_name
 
 # ── Name normalisation ────────────────────────────────────────────────────────
 
 
 logger = logging.getLogger(__name__)
 
-_NAME_ALIASES_PATH = Path(__file__).resolve().parents[2] / "data" / "name_aliases.yaml"
-
-
-def _load_name_aliases(path: Path = _NAME_ALIASES_PATH) -> list[tuple[re.Pattern, str]]:
-    """Load name alias rules from a YAML data file."""
-    if not path.exists():
-        return []
-    with open(path) as fh:
-        entries = yaml.safe_load(fh) or []
-    rules: list[tuple[re.Pattern, str]] = []
-    for entry in entries:
-        combined = "|".join(entry["patterns"])
-        rules.append((re.compile(combined, re.I), entry["canonical"]))
-    return rules
-
-
-_NAME_ALIASES = _load_name_aliases()
-
-
-def canonicalize_name(name: str) -> str:
-    """Map known name aliases to their canonical form."""
-    for pat, canonical in _NAME_ALIASES:
-        if pat.search(name):
-            return canonical
-    return name
-
 
 def _normalize_name(name: str) -> str:
     """Normalise a name for cross-dataset matching (strips initials)."""
-    return _base_normalize_name(canonicalize_name(name), strip_initials=True)
+    return _base_normalize_name(name, strip_initials=True)
 
 
 # ── Affiliation normalization rules (loaded from YAML) ────────────────────────
@@ -600,84 +574,6 @@ def generate_combined_rankings(data_dir: str) -> None:
         else:
             # Person only in security - add them
             combined_all_dict[norm_name] = person.copy()
-
-    # ── Merge AE members from non-systems/non-security areas (e.g. CAIS) ───
-    # The combined_all_dict so far only has systems + security.  Build a
-    # complete merged view of all AE members and add any extra memberships
-    # that weren't captured by either area.
-    _all_ae_merged: dict[str, dict] = {}
-    for m in all_ae_members:
-        norm = _normalize_name(m["name"])
-        if norm in _all_ae_merged:
-            ex = _all_ae_merged[norm]
-            ex["total_memberships"] = ex.get("total_memberships", 0) + m.get("total_memberships", 0)
-            ex["chair_count"] = ex.get("chair_count", 0) + m.get("chair_count", 0)
-            seen = {tuple(c) if isinstance(c, list) else c for c in ex.get("conferences", [])}
-            for c in m.get("conferences", []):
-                key = tuple(c) if isinstance(c, list) else c
-                if key not in seen:
-                    ex.setdefault("conferences", []).append(c)
-                    seen.add(key)
-            for yr, cnt in m.get("years", {}).items():
-                yr_key = int(yr) if not isinstance(yr, int) else yr
-                ex.setdefault("years", {})[yr_key] = ex.get("years", {}).get(yr_key, 0) + cnt
-        else:
-            _all_ae_merged[norm] = {
-                "name": canonicalize_name(m["name"]),
-                "affiliation": m.get("affiliation", ""),
-                "total_memberships": m.get("total_memberships", 0),
-                "chair_count": m.get("chair_count", 0),
-                "conferences": list(m.get("conferences", [])),
-                "years": dict(m.get("years", {})),
-            }
-
-    for norm, ae_full in _all_ae_merged.items():
-        if norm in combined_all_dict:
-            existing = combined_all_dict[norm]
-            extra_mem = ae_full["total_memberships"] - existing.get("ae_memberships", 0)
-            extra_chair = ae_full["chair_count"] - existing.get("chair_count", 0)
-            if extra_mem > 0 or extra_chair > 0:
-                existing["ae_memberships"] += max(extra_mem, 0)
-                existing["chair_count"] += max(extra_chair, 0)
-                existing["ae_score"] += max(extra_mem, 0) * W_AE_MEMBERSHIP + max(extra_chair, 0) * W_AE_CHAIR
-                existing["combined_score"] += max(extra_mem, 0) * W_AE_MEMBERSHIP + max(extra_chair, 0) * W_AE_CHAIR
-                # Merge conferences
-                ae_confs = set(c[0] if isinstance(c, list) else c for c in ae_full.get("conferences", []))
-                existing["conferences"] = sorted(set(existing.get("conferences", [])) | ae_confs)
-                # Merge years
-                for yr, cnt in ae_full.get("years", {}).items():
-                    yr_key = int(yr) if not isinstance(yr, int) else yr
-                    existing.setdefault("years", {})[yr_key] = max(
-                        existing.get("years", {}).get(yr_key, 0), cnt
-                    )
-                all_yrs = list(existing.get("years", {}).keys())
-                if all_yrs:
-                    existing["first_year"] = min(all_yrs)
-                    existing["last_year"] = max(all_yrs)
-                logger.info(
-                    f"  Added {max(extra_mem, 0)} extra membership(s) and "
-                    f"{max(extra_chair, 0)} extra chair(s) for '{ae_full['name']}' "
-                    f"from non-area conferences"
-                )
-        else:
-            # Completely new person (AE-only from non-standard area)
-            years = {int(yr): cnt for yr, cnt in ae_full.get("years", {}).items()}
-            entry = _build_entry(
-                name=ae_full["name"],
-                affiliation=_normalize_affiliation(ae_full.get("affiliation", "")),
-                artifacts=0,
-                total_papers=0,
-                artifact_rate=0,
-                ae_memberships=ae_full["total_memberships"],
-                chair_count=ae_full["chair_count"],
-                conferences=sorted(set(c[0] if isinstance(c, list) else c for c in ae_full.get("conferences", []))),
-                years=years,
-                artifact_citations=0,
-                badges_available=0,
-                badges_functional=0,
-                badges_reproducible=0,
-            )
-            combined_all_dict[norm] = entry
 
     # Convert back to list and sort by combined_score descending
     combined_all = sorted(combined_all_dict.values(), key=lambda x: x["combined_score"], reverse=True)

@@ -8,37 +8,115 @@ its own ``SYSTEMS_CONFS``, ``SECURITY_CONFS``, ``_conf_area()``,
 
 from __future__ import annotations
 
+import logging
+import os
 import re
 import unicodedata
+from pathlib import Path
+
+import yaml
+
+logger = logging.getLogger(__name__)
 
 # ── Conference → area classification ────────────────────────────────────────
-# Canonical source: reprodb.github.io/_data/summary.yml
-# SysTEX is a security workshop co-located with systems venues.
+# Conferences are discovered from the website directory structure:
+#   {website_root}/systems/*.md  → systems conferences
+#   {website_root}/security/*.md → security conferences
+# Pages like index.md, ae_members.md, etc. are excluded.
 
-SYSTEMS_CONFS = frozenset(
-    {
-        "ATC",
-        "EUROSYS",
-        "FAST",
-        "OSDI",
-        "SC",
-        "SOSP",
-    }
+# Non-conference pages present in each area directory.
+_AREA_NON_CONF_PAGES = frozenset(
+    {"ae_members", "authors", "combined_rankings", "committee", "index", "repo_stats"}
 )
 
-SECURITY_CONFS = frozenset(
-    {
-        "ACSAC",
-        "CHES",
-        "NDSS",
-        "PETS",
-        "SYSTEX",
-        "USENIXSEC",
-        "WOOT",
-    }
+
+def _scan_area_confs(website_root: str, area: str) -> frozenset[str]:
+    """Scan ``{website_root}/{area}/`` for conference ``.md`` files."""
+    area_dir = os.path.join(website_root, area)
+    if not os.path.isdir(area_dir):
+        return frozenset()
+    confs: set[str] = set()
+    for fname in os.listdir(area_dir):
+        if not fname.endswith(".md"):
+            continue
+        stem = fname[:-3]
+        if stem in _AREA_NON_CONF_PAGES:
+            continue
+        confs.add(stem.upper())
+    return frozenset(confs)
+
+
+def _find_website_root() -> str | None:
+    """Try to locate the website repo relative to the pipeline."""
+    # Common locations when running from reprodb-pipeline/
+    for candidate in ("../reprodb.github.io", "reprodb.github.io"):
+        if os.path.isdir(os.path.join(candidate, "systems")):
+            return candidate
+    return None
+
+
+def discover_conferences(website_root: str | None = None) -> tuple[frozenset[str], frozenset[str]]:
+    """Return ``(systems, security)`` conference sets from the website.
+
+    Falls back to auto-detection of the website root, then to built-in
+    defaults if the directory is not found (e.g. in tests).
+    """
+    root = website_root or _find_website_root()
+    if root and os.path.isdir(root):
+        sys_confs = _scan_area_confs(root, "systems")
+        sec_confs = _scan_area_confs(root, "security")
+        if sys_confs or sec_confs:
+            logger.debug(
+                "Discovered conferences from %s: systems=%s, security=%s",
+                root,
+                sorted(sys_confs),
+                sorted(sec_confs),
+            )
+            return sys_confs, sec_confs
+    # Fallback for tests / CI where the website repo isn't available
+    logger.debug("Website directory not found; using built-in conference defaults")
+    return _FALLBACK_SYSTEMS, _FALLBACK_SECURITY
+
+
+# Built-in fallbacks (kept in sync by CI; only used when website is absent).
+_FALLBACK_SYSTEMS = frozenset({"ATC", "CAIS", "EUROSYS", "FAST", "OSDI", "SC", "SOSP"})
+_FALLBACK_SECURITY = frozenset(
+    {"ACSAC", "CHES", "NDSS", "PETS", "SYSTEX", "USENIXSEC", "WOOT"}
 )
 
+# Module-level sets, populated on first import.
+SYSTEMS_CONFS, SECURITY_CONFS = discover_conferences()
 ALL_CONFS = SYSTEMS_CONFS | SECURITY_CONFS
+
+
+# ── Name alias canonicalisation ─────────────────────────────────────────────
+# Rules live in data/name_aliases.yaml — regex patterns → canonical name.
+
+_NAME_ALIASES_PATH = Path(__file__).resolve().parents[2] / "data" / "name_aliases.yaml"
+
+
+def _load_name_aliases(path: Path = _NAME_ALIASES_PATH) -> list[tuple[re.Pattern, str]]:
+    """Load name alias rules from a YAML data file."""
+    if not path.exists():
+        return []
+    with open(path) as fh:
+        entries = yaml.safe_load(fh) or []
+    rules: list[tuple[re.Pattern, str]] = []
+    for entry in entries:
+        combined = "|".join(entry["patterns"])
+        rules.append((re.compile(combined, re.I), entry["canonical"]))
+    return rules
+
+
+_NAME_ALIASES = _load_name_aliases()
+
+
+def canonicalize_name(name: str) -> str:
+    """Map known name aliases to their canonical form."""
+    for pat, canonical in _NAME_ALIASES:
+        if pat.search(name):
+            return canonical
+    return name
 
 
 def conf_area(conf_name: str) -> str:
@@ -92,11 +170,15 @@ def normalize_name(name: str, *, strip_initials: bool = False) -> str:
     """Aggressive normalisation for cross-source matching.
 
     Lower-cases, strips accents, removes dots, collapses whitespace.
+    Applies name alias canonicalisation first so that known aliases
+    (e.g. ``'Bogdan "Bo" Stoica'`` → ``'Bogdan Alexandru Stoica'``)
+    collapse to the same normalised key.
     Optionally strips single-letter initials (e.g. "J. Doe" → "Doe")
     and leading underscores for ranking deduplication.
     """
     if not name:
         return ""
+    name = canonicalize_name(name)
     name = name.strip().lower()
     name = unicodedata.normalize("NFKD", name)
     name = "".join(c for c in name if not unicodedata.combining(c))

@@ -18,7 +18,8 @@ import json
 import logging
 import os
 
-from src.generators.generate_combined_rankings import _normalize_affiliation, canonicalize_name
+from src.generators.generate_combined_rankings import _normalize_affiliation
+from src.utils.conference import canonicalize_name
 from src.utils.conference import normalize_name as _base_normalize_name
 
 logger = logging.getLogger(__name__)
@@ -51,7 +52,7 @@ def generate_profiles(data_dir: str) -> None:
         return " ".join(s.split())
 
     def _normalize_name(name: str) -> str:
-        return _base_normalize_name(canonicalize_name(name), strip_initials=True)
+        return _base_normalize_name(name, strip_initials=True)
 
     ae_by_name = {clean(canonicalize_name(m["name"])): m for m in ae_members}
     # Also index AE members by normalised name for DBLP-suffix matching

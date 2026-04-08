@@ -13,7 +13,7 @@ from src.utils.conference import (
 
 class TestConfArea:
     def test_systems_conferences(self):
-        for c in ("ATC", "EUROSYS", "FAST", "OSDI", "SC", "SOSP"):
+        for c in ("ATC", "CAIS", "EUROSYS", "FAST", "OSDI", "SC", "SOSP"):
             assert conf_area(c) == "systems"
 
     def test_security_conferences(self):
