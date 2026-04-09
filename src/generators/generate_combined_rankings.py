@@ -503,17 +503,19 @@ def generate_combined_rankings(data_dir: str) -> None:
 
     # Add all people from systems
     for person in combined_sys:
-        norm_name = _normalize_name(person["name"])
-        combined_all_dict[norm_name] = person.copy()
+        # Use raw name (preserves DBLP suffix like '0017') so that
+        # distinct people who share the same base name are not merged.
+        key = person["name"]
+        combined_all_dict[key] = person.copy()
 
     # Merge in people from security
     for person in combined_sec:
-        norm_name = _normalize_name(person["name"])
-        if norm_name in combined_all_dict:
+        key = person["name"]
+        if key in combined_all_dict:
             # Person is in both - merge their data by SUMMING contributions
             # Systems and security track different conferences, so artifacts,
             # papers, and AE memberships should be additive
-            existing = combined_all_dict[norm_name]
+            existing = combined_all_dict[key]
 
             # Sum all contribution metrics
             existing["artifacts"] += person["artifacts"]
@@ -575,7 +577,7 @@ def generate_combined_rankings(data_dir: str) -> None:
                 existing["ae_ratio"] = None
         else:
             # Person only in security - add them
-            combined_all_dict[norm_name] = person.copy()
+            combined_all_dict[key] = person.copy()
 
     # Convert back to list and sort by combined_score descending
     combined_all = sorted(combined_all_dict.values(), key=lambda x: x["combined_score"], reverse=True)
