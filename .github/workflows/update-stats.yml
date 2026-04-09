@@ -210,10 +210,13 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           
-          # Copy generated data to archive
+          # Copy all website data (generated outputs) to archive
           mkdir -p output/website_data
           cp -r ../website/_data output/website_data/ 2>/dev/null || true
           cp -r ../website/assets output/website_data/ 2>/dev/null || true
+          
+          # Copy the scraped artifacts.json (pipeline input) to output root
+          cp ../website/assets/data/artifacts.json output/artifacts.json 2>/dev/null || true
           
           # Create run summary
           cat > output/RUN_SUMMARY.txt <<EOF
@@ -223,12 +226,18 @@ jobs:
           Status: SUCCESS
           
           Generated Outputs:
-          - Statistics data
-          - Repository statistics
-          - Visualizations
-          - Per-area author data
-          - Combined rankings
-          - Institution rankings
+          - Statistics data (artifacts.json, summary.json)
+          - Repository statistics (repo_stats.yml, repo_stats_detail.json)
+          - Per-area author data (*_authors.json, *_conf_authors.json)
+          - Combined rankings (*_combined_rankings.json)
+          - Institution rankings (*_institution_rankings.json)
+          - Author profiles (author_profiles.json)
+          - Search data (search_data.json)
+          - Ranking history (ranking_history.json)
+          
+          Consumed Inputs (from DBLP workflow artifact):
+          - authors.json, author_index.json, paper_authors_map.json
+          - authors.yml, author_summary.yml, papers.json
           EOF
           
           git add output/

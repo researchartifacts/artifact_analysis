@@ -138,9 +138,11 @@ jobs:
           path: |
             website/_data/authors.yml
             website/_data/author_summary.yml
+            website/_data/papers.json
             website/assets/data/authors.json
             website/assets/data/author_index.json
             website/assets/data/paper_authors_map.json
+            website/assets/data/papers.json
           retention-days: 7
       
       - name: Summary
