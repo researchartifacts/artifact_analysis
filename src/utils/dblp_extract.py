@@ -284,6 +284,7 @@ def find_affiliation(name, repo_root=None):
     if name in _affiliations_cache:
         return _affiliations_cache[name]
     # Case-insensitive fallback
+    assert _affiliations_lower_cache is not None
     return _affiliations_lower_cache.get(name.lower())
 
 
