@@ -30,6 +30,8 @@ new DBLP API calls.
 from __future__ import annotations
 
 import argparse
+import html.entities
+import io
 import json
 import logging
 import os
@@ -72,6 +74,64 @@ def _is_fresh(dblp_file, extract_dir):
         return False
 
 
+# ---------------------------------------------------------------------------
+# HTML entity definitions for DBLP XML
+# ---------------------------------------------------------------------------
+# DBLP XML references an external DTD (dblp.dtd) that defines HTML entities
+# like &ouml; &eacute; etc.  When the DTD file is absent, lxml with
+# recover=True silently drops unresolved entities, corrupting names such as
+# "Jörg" → "Jrg".  We inject an internal-DTD subset with all required
+# entity definitions so the parser resolves them correctly.
+#
+# We use Python's standard html.entities.name2codepoint which already maps
+# every HTML entity name to its Unicode codepoint — no need to maintain a
+# manual map.
+_HTML_ENTITY_MAP: dict[str, int] = html.entities.name2codepoint
+
+_INTERNAL_DTD_ENTITIES = "\n".join(
+    f'  <!ENTITY {name} "&#x{cp:04X};">'
+    for name, cp in _HTML_ENTITY_MAP.items()
+)
+_INTERNAL_DOCTYPE = (
+    b'<!DOCTYPE dblp [\n'
+    + _INTERNAL_DTD_ENTITIES.encode("ascii")
+    + b'\n]>'
+)
+
+
+class _PatchedDTDStream:
+    """Wraps a GzipFile stream to replace the external DTD reference with inline entity definitions.
+
+    DBLP XML starts with ``<!DOCTYPE dblp SYSTEM "dblp.dtd">``.
+    This wrapper substitutes it with an internal DTD subset so that
+    lxml can resolve HTML entities without an external DTD file.
+    """
+
+    def __init__(self, raw_stream: GzipFile):
+        self._raw = raw_stream
+        # Read enough to capture the DOCTYPE (it's in the first ~100 bytes)
+        header = self._raw.read(4096)
+        header = header.replace(
+            b'<!DOCTYPE dblp SYSTEM "dblp.dtd">',
+            _INTERNAL_DOCTYPE,
+        )
+        self._prefix = io.BytesIO(header)
+        self._prefix_done = False
+
+    def read(self, size: int = -1) -> bytes:
+        if self._prefix_done:
+            return self._raw.read(size)
+        chunk = self._prefix.read(size)
+        if size < 0:
+            # Read everything
+            self._prefix_done = True
+            return chunk + self._raw.read()
+        if len(chunk) < size:
+            self._prefix_done = True
+            return chunk + self._raw.read(size - len(chunk))
+        return chunk
+
+
 def extract_dblp(dblp_file: str) -> tuple[str, str]:
     """Parse dblp.xml.gz and write JSON lookup files.
 
@@ -95,7 +155,7 @@ def extract_dblp(dblp_file: str) -> tuple[str, str]:
     # {author_name -> affiliation}
     affiliations = {}
 
-    dblp_stream = GzipFile(filename=dblp_file)
+    dblp_stream = _PatchedDTDStream(GzipFile(filename=dblp_file))
     iteration = 0
 
     for _, elem in ET.iterparse(
@@ -155,18 +215,18 @@ def extract_dblp(dblp_file: str) -> tuple[str, str]:
             logger.info(f"  … {iteration // 1_000_000}M elements")
         elem.clear()
 
-    dblp_stream.close()
+    dblp_stream._raw.close()
 
     total_papers = sum(len(plist) for conf_years in papers.values() for plist in conf_years.values())
     logger.info(
         f"  Done — {iteration} elements, {total_papers} conference papers, {len(affiliations)} author affiliations"
     )
 
-    # Write JSON files
-    with open(papers_path, "w") as f:
-        json.dump(papers, f, separators=(",", ":"))
-    with open(affiliations_path, "w") as f:
-        json.dump(affiliations, f, separators=(",", ":"))
+    # Write JSON files (ensure_ascii=False preserves Unicode characters)
+    with open(papers_path, "w", encoding="utf-8") as f:
+        json.dump(papers, f, separators=(",", ":"), ensure_ascii=False)
+    with open(affiliations_path, "w", encoding="utf-8") as f:
+        json.dump(affiliations, f, separators=(",", ":"), ensure_ascii=False)
 
     # Record the DBLP file mtime for freshness checks
     with open(_mtime_file(extract_dir), "w") as f:
