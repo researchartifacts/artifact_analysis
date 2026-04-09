@@ -140,6 +140,7 @@ jobs:
             website/_data/author_summary.yml
             website/assets/data/authors.json
             website/assets/data/author_index.json
+            website/assets/data/paper_authors_map.json
           retention-days: 7
       
       - name: Summary
