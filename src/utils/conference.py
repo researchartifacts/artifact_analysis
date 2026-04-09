@@ -25,9 +25,7 @@ logger = logging.getLogger(__name__)
 # Pages like index.md, ae_members.md, etc. are excluded.
 
 # Non-conference pages present in each area directory.
-_AREA_NON_CONF_PAGES = frozenset(
-    {"ae_members", "authors", "combined_rankings", "committee", "index", "repo_stats"}
-)
+_AREA_NON_CONF_PAGES = frozenset({"ae_members", "authors", "combined_rankings", "committee", "index", "repo_stats"})
 
 
 def _scan_area_confs(website_root: str, area: str) -> frozenset[str]:
@@ -83,9 +81,7 @@ def discover_conferences(website_root: str | None = None) -> tuple[frozenset[str
 
 # Built-in fallbacks (kept in sync by CI; only used when website is absent).
 _FALLBACK_SYSTEMS = frozenset({"ATC", "CAIS", "EUROSYS", "FAST", "OSDI", "SC", "SOSP"})
-_FALLBACK_SECURITY = frozenset(
-    {"ACSAC", "CHES", "NDSS", "PETS", "SYSTEX", "USENIXSEC", "WOOT"}
-)
+_FALLBACK_SECURITY = frozenset({"ACSAC", "CHES", "NDSS", "PETS", "SYSTEX", "USENIXSEC", "WOOT"})
 
 # Module-level sets, populated on first import.
 SYSTEMS_CONFS, SECURITY_CONFS = discover_conferences()

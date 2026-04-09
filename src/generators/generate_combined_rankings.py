@@ -359,7 +359,9 @@ def _build_entry(
             combined_score = artifact_score + citation_score + ae_score
     """
     # Compute weighted artifact score (additive: each badge level adds 1 pt)
-    artifact_score = badges_available * W_AVAILABLE + badges_functional * W_FUNCTIONAL + badges_reproducible * W_REPRODUCIBLE
+    artifact_score = (
+        badges_available * W_AVAILABLE + badges_functional * W_FUNCTIONAL + badges_reproducible * W_REPRODUCIBLE
+    )
 
     # Citation score (per-citation)
     citation_score = (artifact_citations or 0) * W_CITATION

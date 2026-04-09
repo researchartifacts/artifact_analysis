@@ -88,15 +88,8 @@ def _is_fresh(dblp_file, extract_dir):
 # manual map.
 _HTML_ENTITY_MAP: dict[str, int] = html.entities.name2codepoint
 
-_INTERNAL_DTD_ENTITIES = "\n".join(
-    f'  <!ENTITY {name} "&#x{cp:04X};">'
-    for name, cp in _HTML_ENTITY_MAP.items()
-)
-_INTERNAL_DOCTYPE = (
-    b'<!DOCTYPE dblp [\n'
-    + _INTERNAL_DTD_ENTITIES.encode("ascii")
-    + b'\n]>'
-)
+_INTERNAL_DTD_ENTITIES = "\n".join(f'  <!ENTITY {name} "&#x{cp:04X};">' for name, cp in _HTML_ENTITY_MAP.items())
+_INTERNAL_DOCTYPE = b"<!DOCTYPE dblp [\n" + _INTERNAL_DTD_ENTITIES.encode("ascii") + b"\n]>"
 
 
 class _PatchedDTDStream:

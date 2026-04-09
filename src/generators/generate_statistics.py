@@ -82,6 +82,7 @@ def _generate_conference_pages(
                 fh.write(content)
             logger.info("Auto-generated conference page %s/%s.md", area, slug)
 
+
 # Workshops (as opposed to conferences) — used for visual distinction
 WORKSHOPS = {"woot", "systex"}
 

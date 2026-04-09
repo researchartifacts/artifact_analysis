@@ -25,13 +25,10 @@ from src.utils.dblp_extract import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_dblp_gz(xml_body: str, tmp_path: Path) -> str:
     """Create a gzipped DBLP XML file with the external DTD reference."""
-    xml = (
-        '<?xml version="1.0" encoding="ISO-8859-1"?>\n'
-        '<!DOCTYPE dblp SYSTEM "dblp.dtd">\n'
-        f"<dblp>\n{xml_body}\n</dblp>"
-    )
+    xml = f'<?xml version="1.0" encoding="ISO-8859-1"?>\n<!DOCTYPE dblp SYSTEM "dblp.dtd">\n<dblp>\n{xml_body}\n</dblp>'
     gz_path = tmp_path / "dblp.xml.gz"
     with gzip.open(gz_path, "wb") as f:
         f.write(xml.encode("iso-8859-1"))
@@ -62,6 +59,7 @@ def _parse_authors_from_gz(gz_path: str) -> list[str]:
 # Entity map completeness
 # ---------------------------------------------------------------------------
 
+
 class TestEntityMapCompleteness:
     """Ensure _HTML_ENTITY_MAP covers all required entities."""
 
@@ -70,17 +68,71 @@ class TestEntityMapCompleteness:
 
     # All entities found in the DBLP XML dump (scraped with grep -oP '&[a-zA-Z]+;')
     DBLP_ENTITIES = {
-        "AElig", "Aacute", "Acirc", "Agrave", "Aring", "Atilde", "Auml",
-        "Ccedil", "ETH", "Eacute", "Ecirc", "Egrave", "Euml",
-        "Iacute", "Icirc", "Igrave", "Iuml", "Ntilde",
-        "Oacute", "Ocirc", "Ograve", "Oslash", "Otilde", "Ouml",
-        "THORN", "Uacute", "Ucirc", "Ugrave", "Uuml", "Yacute",
-        "aacute", "acirc", "aelig", "agrave", "aring", "atilde", "auml",
-        "ccedil", "eacute", "ecirc", "egrave", "eth", "euml",
-        "iacute", "icirc", "igrave", "iuml",
-        "micro", "ntilde", "oacute", "ocirc", "ograve", "oslash", "otilde", "ouml",
-        "reg", "szlig", "thorn", "times",
-        "uacute", "ucirc", "ugrave", "uuml", "yacute", "yuml",
+        "AElig",
+        "Aacute",
+        "Acirc",
+        "Agrave",
+        "Aring",
+        "Atilde",
+        "Auml",
+        "Ccedil",
+        "ETH",
+        "Eacute",
+        "Ecirc",
+        "Egrave",
+        "Euml",
+        "Iacute",
+        "Icirc",
+        "Igrave",
+        "Iuml",
+        "Ntilde",
+        "Oacute",
+        "Ocirc",
+        "Ograve",
+        "Oslash",
+        "Otilde",
+        "Ouml",
+        "THORN",
+        "Uacute",
+        "Ucirc",
+        "Ugrave",
+        "Uuml",
+        "Yacute",
+        "aacute",
+        "acirc",
+        "aelig",
+        "agrave",
+        "aring",
+        "atilde",
+        "auml",
+        "ccedil",
+        "eacute",
+        "ecirc",
+        "egrave",
+        "eth",
+        "euml",
+        "iacute",
+        "icirc",
+        "igrave",
+        "iuml",
+        "micro",
+        "ntilde",
+        "oacute",
+        "ocirc",
+        "ograve",
+        "oslash",
+        "otilde",
+        "ouml",
+        "reg",
+        "szlig",
+        "thorn",
+        "times",
+        "uacute",
+        "ucirc",
+        "ugrave",
+        "uuml",
+        "yacute",
+        "yuml",
     }
 
     def test_all_dblp_entities_mapped(self):
@@ -92,6 +144,7 @@ class TestEntityMapCompleteness:
     def test_uses_stdlib_html_entities(self):
         """Verify we delegate to html.entities.name2codepoint (no manual map)."""
         import html.entities
+
         assert _HTML_ENTITY_MAP is html.entities.name2codepoint
 
     def test_entity_values_are_valid_unicode(self):
@@ -110,6 +163,7 @@ class TestEntityMapCompleteness:
 # ---------------------------------------------------------------------------
 # PatchedDTDStream
 # ---------------------------------------------------------------------------
+
 
 class TestPatchedDTDStream:
     """Verify that _PatchedDTDStream correctly replaces the external DTD."""
@@ -141,6 +195,7 @@ class TestPatchedDTDStream:
 # ---------------------------------------------------------------------------
 # End-to-end entity resolution
 # ---------------------------------------------------------------------------
+
 
 class TestEntityResolution:
     """Test that HTML entities in author names are resolved to correct Unicode."""
@@ -279,6 +334,7 @@ class TestEntityResolution:
 # ---------------------------------------------------------------------------
 # Full extract_dblp integration
 # ---------------------------------------------------------------------------
+
 
 class TestExtractDblpIntegration:
     """Integration test: extract_dblp writes correct JSON with resolved entities."""
