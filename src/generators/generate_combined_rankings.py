@@ -19,13 +19,13 @@ import json
 import logging
 import os
 import re
-import unicodedata
 from collections import defaultdict
 from pathlib import Path
 
 import yaml
 
-from src.utils.conference import canonicalize_name, normalize_name as _base_normalize_name
+from src.utils.conference import canonicalize_name
+from src.utils.conference import normalize_name as _base_normalize_name
 
 # ── Name normalisation ────────────────────────────────────────────────────────
 
@@ -359,7 +359,7 @@ def _build_entry(
             combined_score = artifact_score + citation_score + ae_score
     """
     # Compute weighted artifact score (additive: each badge level adds 1 pt)
-    artifact_score = artifacts * W_AVAILABLE + badges_functional * W_FUNCTIONAL + badges_reproducible * W_REPRODUCIBLE
+    artifact_score = badges_available * W_AVAILABLE + badges_functional * W_FUNCTIONAL + badges_reproducible * W_REPRODUCIBLE
 
     # Citation score (per-citation)
     citation_score = (artifact_citations or 0) * W_CITATION

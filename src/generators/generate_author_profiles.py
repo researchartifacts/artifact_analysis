@@ -110,7 +110,6 @@ def generate_profiles(data_dir: str) -> None:
             profile["badges_reproducible"] = cr.get("badges_reproducible", profile["badges_reproducible"])
         else:
             # Not in combined_rankings (score < threshold) — compute directly
-            artifacts = profile["artifact_count"]
             ba = profile["badges_available"]
             bf = profile["badges_functional"]
             br = profile["badges_reproducible"]
@@ -119,7 +118,7 @@ def generate_profiles(data_dir: str) -> None:
             if ae:
                 ae_mem = ae.get("total_memberships", 0)
                 chairs = ae.get("chair_count", 0)
-            profile["artifact_score"] = artifacts * W_AVAILABLE + bf * W_FUNCTIONAL + br * W_REPRODUCIBLE
+            profile["artifact_score"] = ba * W_AVAILABLE + bf * W_FUNCTIONAL + br * W_REPRODUCIBLE
             profile["ae_score"] = ae_mem * W_AE_MEMBERSHIP + chairs * W_AE_CHAIR
             profile["citation_score"] = 0
             profile["combined_score"] = profile["artifact_score"] + profile["ae_score"]

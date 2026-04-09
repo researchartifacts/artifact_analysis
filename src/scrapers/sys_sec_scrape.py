@@ -194,7 +194,7 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
                     "created_at": record.get("created", ""),
                 }
                 break
-            elif resp.status_code == 429:
+            if resp.status_code == 429:
                 retry_after = int(resp.headers.get("Retry-After", 0))
                 wait = max(retry_after, 2 ** (attempt + 1))  # exponential backoff: 2, 4, 8s
                 logger.info(f"  Zenodo 429 for {url}, waiting {wait}s (attempt {attempt + 1}/4)")

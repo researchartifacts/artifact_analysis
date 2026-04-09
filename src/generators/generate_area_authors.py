@@ -17,9 +17,10 @@ from collections import defaultdict
 
 import yaml
 
+from src.utils.conference import canonicalize_name
+
 from ..utils.conference import clean_name
 from .generate_combined_rankings import _normalize_affiliation
-from src.utils.conference import canonicalize_name
 
 logger = logging.getLogger(__name__)
 DATA_DIR = None  # Set via CLI
