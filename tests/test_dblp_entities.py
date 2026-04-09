@@ -8,9 +8,7 @@ like "Jörg" → "Jrg".
 from __future__ import annotations
 
 import gzip
-import io
 import json
-import tempfile
 from pathlib import Path
 
 import lxml.etree as ET
@@ -22,7 +20,6 @@ from src.utils.dblp_extract import (
     _PatchedDTDStream,
     extract_dblp,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -43,21 +40,21 @@ def _make_dblp_gz(xml_body: str, tmp_path: Path) -> str:
 
 def _parse_authors_from_gz(gz_path: str) -> list[str]:
     """Parse a gzipped DBLP XML using our PatchedDTDStream and return author names."""
-    stream = _PatchedDTDStream(gzip.open(gz_path, "rb"))
-    authors = []
-    for _, elem in ET.iterparse(
-        stream,
-        events=("end",),
-        tag="www",
-        load_dtd=True,
-        recover=True,
-        huge_tree=True,
-    ):
-        for a in elem.findall("author"):
-            if a.text:
-                authors.append(a.text)
-        elem.clear()
-    stream._raw.close()
+    with gzip.open(gz_path, "rb") as raw:
+        stream = _PatchedDTDStream(raw)
+        authors = []
+        for _, elem in ET.iterparse(
+            stream,
+            events=("end",),
+            tag="www",
+            load_dtd=True,
+            recover=True,
+            huge_tree=True,
+        ):
+            for a in elem.findall("author"):
+                if a.text:
+                    authors.append(a.text)
+            elem.clear()
     return authors
 
 
@@ -119,23 +116,23 @@ class TestPatchedDTDStream:
 
     def test_replaces_external_dtd(self, tmp_path):
         gz_path = _make_dblp_gz("<www/>", tmp_path)
-        stream = _PatchedDTDStream(gzip.open(gz_path, "rb"))
-        content = stream.read()
-        stream._raw.close()
+        with gzip.open(gz_path, "rb") as raw:
+            stream = _PatchedDTDStream(raw)
+            content = stream.read()
         assert b'SYSTEM "dblp.dtd"' not in content
         assert b"<!DOCTYPE dblp [" in content
 
     def test_read_in_chunks(self, tmp_path):
         """Verify chunked reading reassembles correctly."""
         gz_path = _make_dblp_gz("<www/>", tmp_path)
-        stream = _PatchedDTDStream(gzip.open(gz_path, "rb"))
-        chunks = []
-        while True:
-            chunk = stream.read(64)
-            if not chunk:
-                break
-            chunks.append(chunk)
-        stream._raw.close()
+        with gzip.open(gz_path, "rb") as raw:
+            stream = _PatchedDTDStream(raw)
+            chunks = []
+            while True:
+                chunk = stream.read(64)
+                if not chunk:
+                    break
+                chunks.append(chunk)
         full = b"".join(chunks)
         assert b"<!DOCTYPE dblp [" in full
         assert b"</dblp>" in full
@@ -257,24 +254,24 @@ class TestEntityResolution:
             "</inproceedings>"
         )
         gz_path = _make_dblp_gz(xml_body, tmp_path)
-        stream = _PatchedDTDStream(gzip.open(gz_path, "rb"))
-        titles = []
-        authors = []
-        for _, elem in ET.iterparse(
-            stream,
-            events=("end",),
-            tag="inproceedings",
-            load_dtd=True,
-            recover=True,
-            huge_tree=True,
-        ):
-            t = elem.findtext("title") or ""
-            titles.append(t)
-            for a in elem.findall("author"):
-                if a.text:
-                    authors.append(a.text)
-            elem.clear()
-        stream._raw.close()
+        with gzip.open(gz_path, "rb") as raw:
+            stream = _PatchedDTDStream(raw)
+            titles = []
+            authors = []
+            for _, elem in ET.iterparse(
+                stream,
+                events=("end",),
+                tag="inproceedings",
+                load_dtd=True,
+                recover=True,
+                huge_tree=True,
+            ):
+                t = elem.findtext("title") or ""
+                titles.append(t)
+                for a in elem.findall("author"):
+                    if a.text:
+                        authors.append(a.text)
+                elem.clear()
         assert authors == ["Jörg Schwenk"]
         assert titles == ["Café Verification: A Schön Approach."]
 
