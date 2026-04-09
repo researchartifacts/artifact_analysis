@@ -174,11 +174,16 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
 
     if "/records/" in url:
         rec = url.split("/records/")[-1]
+    elif "/record/" in url:
+        rec = url.split("/record/")[-1]
     elif "zenodo." in url:
         rec = url.split("zenodo.")[-1]
     else:
         logger.info(f"  Could not parse Zenodo URL {url}")
         return None
+
+    # Strip fragments (#...) and query strings (?...)
+    rec = rec.split("#")[0].split("?")[0].strip("/")
 
     result = None
     try:
