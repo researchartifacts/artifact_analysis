@@ -28,19 +28,11 @@
     - '\bETHZ\b'
     - '^Department\s+of\s+Computer\s+Science,\s+ETH'
 
-- canonical: Max Planck Institute for Software Systems
+- canonical: Max Planck Society
   patterns:
-    - 'Max\s+Planck.*Software\s+Systems'
+    - 'Max\s+Planck'
     - '\bMPI[- ]?SWS\b'
-
-- canonical: Max Planck Institute for Security and Privacy
-  patterns:
-    - 'Max\s+Planck.*Security\s+and\s+Privacy'
     - '\bMPI[- ]?SP\b'
-
-- canonical: Max Planck Institute for Informatics
-  patterns:
-    - 'Max\s+Planck.*Informatics\b'
 
 - canonical: CISPA Helmholtz Center for Information Security
   patterns:
