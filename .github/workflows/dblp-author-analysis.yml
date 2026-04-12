@@ -131,7 +131,21 @@ jobs:
           python -m src.generators.generate_author_index \
             --data_dir website
 
+      - name: Check for enrichment changes
+        id: check_changes
+        run: |
+          cd website
+          if git diff --quiet; then
+            echo "No data changes detected"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Data enrichment detected:"
+            git diff --stat
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upload DBLP analysis results
+        if: steps.check_changes.outputs.changed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: dblp-analysis-results
@@ -144,6 +158,12 @@ jobs:
             website/assets/data/paper_authors_map.json
             website/assets/data/papers.json
           retention-days: 7
+
+      - name: Trigger statistics update
+        if: steps.check_changes.outputs.changed == 'true'
+        run: gh workflow run update-stats.yml
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
       
       - name: Summary
         run: |
@@ -164,4 +184,8 @@ jobs:
             echo "📝 Incremental mode — only enriched missing affiliations" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Results uploaded as artifact and will be merged by statistics update" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check_changes.outputs.changed }}" = "true" ]; then
+            echo "📊 Data changed — results uploaded and statistics update triggered" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "📊 No data changes — statistics update skipped" >> $GITHUB_STEP_SUMMARY
+          fi
