@@ -16,7 +16,7 @@ import os
 import re
 from collections import defaultdict
 
-from sys_sec_artifacts_results_scrape import get_ae_results
+from parse_results_md import get_ae_results
 from test_artifact_repositories import _normalise_url
 
 logger = logging.getLogger(__name__)

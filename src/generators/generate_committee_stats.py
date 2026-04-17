@@ -26,15 +26,15 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 from src.generators.generate_combined_rankings import _normalize_affiliation
-from src.scrapers.alternative_committee_scrape import (
+from src.scrapers.scrape_committee_web import (
     CHES_KNOWN_YEARS,
     PETS_KNOWN_YEARS,
     USENIX_CONF_SLUGS,
     USENIX_KNOWN_YEARS,
     get_alternative_committees,
 )
-from src.scrapers.sys_sec_committee_scrape import get_committees
-from src.scrapers.sys_sec_scrape import download_file
+from src.scrapers.parse_committee_md import get_committees
+from src.scrapers.repo_utils import download_file
 from src.utils.conference import (
     PLACEHOLDER_NAMES,
     SYSTEMS_CONFS,

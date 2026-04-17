@@ -2,7 +2,7 @@ import argparse
 import logging
 import re
 
-from .sys_sec_scrape import download_file, get_conferences_from_prefix, github_urls
+from .repo_utils import download_file, get_conferences_from_prefix, github_urls
 
 logger = logging.getLogger(__name__)
 

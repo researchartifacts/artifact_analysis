@@ -21,7 +21,7 @@ from pathlib import Path
 
 import yaml
 
-from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
+from ..scrapers.parse_results_md import get_ae_results
 from ..utils.collect_artifact_stats import figshare_stats, github_stats, zenodo_stats
 from ..utils.conference import conf_area as _conf_area
 from ..utils.conference import parse_conf_year as extract_conference_name

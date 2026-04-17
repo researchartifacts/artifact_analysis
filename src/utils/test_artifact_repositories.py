@@ -2,8 +2,8 @@ import argparse
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
-from ..scrapers.sys_sec_scrape import check_url_cached
+from ..scrapers.parse_results_md import get_ae_results
+from ..scrapers.repo_utils import check_url_cached
 
 logger = logging.getLogger(__name__)
 MAX_URL_WORKERS = 16  # parallel URL checks

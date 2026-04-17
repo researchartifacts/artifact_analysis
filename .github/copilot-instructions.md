@@ -86,7 +86,7 @@ per workflow. Workflows that use it:
 
 ## Caching Conventions
 
-- All HTTP calls must use `_session_with_retries()` from `src/scrapers/sys_sec_scrape.py`.
+- All HTTP calls must use `_session_with_retries()` from `src/scrapers/repo_utils.py`.
 - Cache responses in `.cache/` with appropriate TTL: 30 days for stable data, 7 days for URL liveness (negative), 90 days for URL existence (positive).
 - Use `_read_cache()` / `_write_cache()` helpers for consistency.
 - DBLP extracted data lives in `.cache/dblp_extracted/` and is invalidated by mtime of the XML file.

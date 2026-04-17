@@ -19,7 +19,7 @@ import time
 import requests
 import yaml
 
-from ..scrapers.sys_sec_scrape import _github_headers
+from ..scrapers.repo_utils import _github_headers
 from ..utils.conference import conf_area
 from ..utils.conference import parse_conf_year as _parse_conf_year
 from ..utils.http import create_session

@@ -7,8 +7,8 @@ from pathlib import Path
 
 import yaml
 from pytrie import Trie
-from sys_sec_committee_scrape import get_committees
-from sys_sec_scrape import download_file
+from parse_committee_md import get_committees
+from repo_utils import download_file
 from thefuzz import fuzz
 
 logger = logging.getLogger(__name__)

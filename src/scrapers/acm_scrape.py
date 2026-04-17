@@ -35,7 +35,7 @@ from bs4 import BeautifulSoup
 
 from src.utils.cache import _MISSING
 
-from .sys_sec_scrape import (
+from .repo_utils import (
     CACHE_DIR,
     CACHE_TTL,
     _read_cache,

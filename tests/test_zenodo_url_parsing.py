@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.scrapers.sys_sec_scrape import cached_zenodo_stats
+from src.scrapers.repo_utils import cached_zenodo_stats
 
 _FAKE_RECORD = {
     "stats": {"unique_views": 42, "unique_downloads": 7},
@@ -42,17 +42,17 @@ def _mock_get(expected_api_url):
         ("https://zenodo.org/record/1234567/", "1234567"),
     ],
 )
-@patch("src.scrapers.sys_sec_scrape._read_cache", return_value=type("", (), {})())
-@patch("src.scrapers.sys_sec_scrape._write_cache")
+@patch("src.scrapers.repo_utils._read_cache", return_value=type("", (), {})())
+@patch("src.scrapers.repo_utils._write_cache")
 def test_zenodo_url_parsing(mock_write, mock_read, input_url, expected_rec):
     """Verify both /record/ and /records/ URLs are parsed to the correct record ID."""
     # Make _read_cache return _MISSING so we go through the HTTP path
-    from src.scrapers.sys_sec_scrape import _MISSING
+    from src.scrapers.repo_utils import _MISSING
 
     mock_read.return_value = _MISSING
 
     expected_api = f"https://zenodo.org/api/records/{expected_rec}"
-    with patch("src.scrapers.sys_sec_scrape._session") as mock_session:
+    with patch("src.scrapers.repo_utils._session") as mock_session:
         mock_session.get.side_effect = _mock_get(expected_api)
         mock_session.default_timeout = 30
         result = cached_zenodo_stats(input_url)

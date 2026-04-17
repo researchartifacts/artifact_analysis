@@ -6,7 +6,7 @@ import requests
 import yaml
 from bs4 import BeautifulSoup
 
-from .sys_sec_scrape import download_file, get_conferences_from_prefix, github_urls
+from .repo_utils import download_file, get_conferences_from_prefix, github_urls
 
 logger = logging.getLogger(__name__)
 # Alternative results file names used by different conferences

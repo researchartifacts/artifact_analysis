@@ -24,7 +24,7 @@ from typing import Any
 
 import yaml
 
-from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
+from ..scrapers.parse_results_md import get_ae_results
 from ..utils.conference import conf_area as _conf_area
 from ..utils.conference import parse_conf_year as _extract_conference_year
 from ..utils.test_artifact_repositories import check_artifact_exists

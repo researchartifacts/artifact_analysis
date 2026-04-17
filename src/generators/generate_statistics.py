@@ -24,8 +24,8 @@ from ..scrapers.acm_scrape import (
 from ..scrapers.acm_scrape import (
     to_pipeline_format as acm_to_pipeline_format,
 )
-from ..scrapers.sys_sec_artifacts_results_scrape import get_ae_results
-from ..scrapers.sys_sec_scrape import get_conferences_from_prefix
+from ..scrapers.parse_results_md import get_ae_results
+from ..scrapers.repo_utils import get_conferences_from_prefix
 from ..scrapers.usenix_scrape import scrape_conference_year, to_pipeline_format
 from ..utils.conference import CONF_DISPLAY_NAMES
 from ..utils.conference import parse_conf_year as extract_conference_name

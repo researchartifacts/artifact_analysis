@@ -37,7 +37,7 @@ from bs4 import BeautifulSoup
 
 from src.utils.cache import _MISSING
 
-from .sys_sec_scrape import CACHE_DIR, CACHE_TTL, _read_cache, _write_cache
+from .repo_utils import CACHE_DIR, CACHE_TTL, _read_cache, _write_cache
 
 logger = logging.getLogger(__name__)
 BASE_URL = "https://www.usenix.org"
@@ -374,7 +374,7 @@ def scrape_organizers(conference: str, year: int, session: requests.Session | No
 def to_pipeline_format(artifacts):
     """
     Convert scraped artifacts to the format used by the existing pipeline
-    (matching sys_sec_artifacts_results_scrape.py output format).
+    (matching parse_results_md.py output format).
     """
     pipeline_artifacts = []
     for a in artifacts:

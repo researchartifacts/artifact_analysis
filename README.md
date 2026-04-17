@@ -62,10 +62,10 @@ Scripts are organized into functional categories:
 | `src/scrapers/usenix_scrape.py` | Scrapes USENIX conference pages for badges |
 | `src/scrapers/acsac_scrape.py` | Scrapes ACSAC artifact evaluation pages |
 | `src/scrapers/generate_results.py` | Generates results.md for sysartifacts and secartifacts sites |
-| `src/scrapers/sys_sec_scrape.py` | GitHub API fetching with caching |
-| `src/scrapers/sys_sec_artifacts_results_scrape.py` | Parses artifact YAML front-matter |
-| `src/scrapers/sys_sec_committee_scrape.py` | Committee member scraping |
-| `src/scrapers/alternative_committee_scrape.py` | Alternative committee scraping |
+| `src/scrapers/repo_utils.py` | GitHub API fetching with caching |
+| `src/scrapers/parse_results_md.py` | Parses artifact YAML front-matter from repos |
+| `src/scrapers/parse_committee_md.py` | Committee member scraping from repos |
+| `src/scrapers/scrape_committee_web.py` | Committee scraping from conference websites |
 
 ### Enrichers (data enhancement)
 
