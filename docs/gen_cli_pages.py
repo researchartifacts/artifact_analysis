@@ -47,7 +47,8 @@ MODULES = [
     ("src.scrapers.acm_scrape", "acm_scrape", "Scrapers", None),
     ("src.scrapers.sys_sec_committee_scrape", "sys_sec_committee_scrape", "Scrapers", None),
     ("src.scrapers.sys_sec_artifacts_results_scrape", "sys_sec_artifacts_results_scrape", "Scrapers", None),
-    ("src.scrapers.generate_sysartifacts_results", "generate_sysartifacts_results", "Scrapers", None),
+    ("src.scrapers.generate_results", "generate_results", "Scrapers", None),
+    ("src.scrapers.acsac_scrape", "acsac_scrape", "Scrapers", None),
     ("src.scrapers.alternative_committee_scrape", "alternative_committee_scrape", "Scrapers", None),
     # Utils
     ("src.utils.dblp_extract", "dblp_extract", "Utilities", "1b"),

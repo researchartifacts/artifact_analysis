@@ -60,7 +60,8 @@ Scripts are organized into functional categories:
 |--------|---------|
 | `src/scrapers/acm_scrape.py` | Scrapes ACM Digital Library |
 | `src/scrapers/usenix_scrape.py` | Scrapes USENIX conference pages for badges |
-| `src/scrapers/generate_sysartifacts_results.py` | Generates sysartifacts-compatible results.md |
+| `src/scrapers/acsac_scrape.py` | Scrapes ACSAC artifact evaluation pages |
+| `src/scrapers/generate_results.py` | Generates results.md for sysartifacts and secartifacts sites |
 | `src/scrapers/sys_sec_scrape.py` | GitHub API fetching with caching |
 | `src/scrapers/sys_sec_artifacts_results_scrape.py` | Parses artifact YAML front-matter |
 | `src/scrapers/sys_sec_committee_scrape.py` | Committee member scraping |
