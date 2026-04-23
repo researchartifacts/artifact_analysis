@@ -668,11 +668,21 @@ def _parse_acsac_section_members(soup, section_keywords):
                 if not entry or len(entry) < 3:
                     continue
                 # Skip footer/boilerplate text
-                if any(skip in entry.lower() for skip in [
-                    "return to top", "event by", "sponsor", "additional link",
-                    "code of conduct", "privacy policy", "contact us",
-                    "mailing list", "artifact committee", "applied computer",
-                ]):
+                if any(
+                    skip in entry.lower()
+                    for skip in [
+                        "return to top",
+                        "event by",
+                        "sponsor",
+                        "additional link",
+                        "code of conduct",
+                        "privacy policy",
+                        "contact us",
+                        "mailing list",
+                        "artifact committee",
+                        "applied computer",
+                    ]
+                ):
                     continue
                 if "," in entry:
                     parts = entry.split(",", 1)
@@ -732,11 +742,21 @@ def _parse_acsac_flat_members(soup, chairs):
             # Skip chair lines and boilerplate
             if re.match(r"(?:Artifact|The ACSAC)", entry, re.IGNORECASE):
                 continue
-            if any(skip in entry.lower() for skip in [
-                "return to top", "event by", "sponsor", "additional link",
-                "code of conduct", "privacy policy", "contact us",
-                "mailing list", "applied computer", "committee was divided",
-            ]):
+            if any(
+                skip in entry.lower()
+                for skip in [
+                    "return to top",
+                    "event by",
+                    "sponsor",
+                    "additional link",
+                    "code of conduct",
+                    "privacy policy",
+                    "contact us",
+                    "mailing list",
+                    "applied computer",
+                    "committee was divided",
+                ]
+            ):
                 continue
             if "," in entry:
                 parts = entry.split(",", 1)

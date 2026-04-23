@@ -158,11 +158,7 @@ def ensure_conference_pages(
         area_dir = os.path.join(root, area)
         if not os.path.isdir(area_dir):
             continue
-        existing = {
-            fname[:-3].upper()
-            for fname in os.listdir(area_dir)
-            if fname.endswith(".md")
-        }
+        existing = {fname[:-3].upper() for fname in os.listdir(area_dir) if fname.endswith(".md")}
         seen_prefixes: set[str] = set()
         for dir_name in sorted(dirs):
             conf_upper, year = parse_conf_year(dir_name)
