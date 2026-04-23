@@ -29,6 +29,7 @@ from src.generators.generate_combined_rankings import _normalize_affiliation
 from src.scrapers.parse_committee_md import get_committees
 from src.scrapers.repo_utils import download_file
 from src.scrapers.scrape_committee_web import (
+    ACSAC_KNOWN_YEARS,
     CHES_KNOWN_YEARS,
     PETS_KNOWN_YEARS,
     USENIX_CONF_SLUGS,
@@ -698,6 +699,11 @@ def generate_committee_data(conf_regex, output_dir):
 
     for year in PETS_KNOWN_YEARS:
         cy = f"pets{year}"
+        if re.search(conf_regex, cy) and (cy not in all_results or not _is_valid_committee(all_results.get(cy))):
+            conferences_needed[cy] = "security"
+
+    for year in ACSAC_KNOWN_YEARS:
+        cy = f"acsac{year}"
         if re.search(conf_regex, cy) and (cy not in all_results or not _is_valid_committee(all_results.get(cy))):
             conferences_needed[cy] = "security"
 
