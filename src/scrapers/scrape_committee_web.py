@@ -7,13 +7,16 @@ Supported sources:
 - USENIX website (FAST, OSDI, ATC, USENIX Security, WOOT)
 - CHES website (ches.iacr.org)
 - PETS website (petsymposium.org)
+- ACSAC website (acsac.org)
 """
 
 import logging
 import re
 import sys
+from pathlib import Path
 
 import requests
+import yaml
 from bs4 import BeautifulSoup
 
 # ── USENIX conference URL patterns ──────────────────────────────────────────
@@ -396,16 +399,17 @@ def scrape_ches_committee(year, session=None):
     Members are fetched from the JSON API
     (``ches.iacr.org/{year}/json/artifact.json``).  If the JSON endpoint is
     unavailable (e.g. CHES 2022), members are parsed from the static HTML.
-    Chairs are always scraped from the HTML page
-    (``ches.iacr.org/{year}/artifacts.php``) because the JSON data does not
-    include chair information.
+    Chairs are parsed from the JSON ``artifact_chairs`` field when available
+    (2025+), or from ``(Chair)`` annotations in JSON member names (2024), or
+    from the HTML page (``ches.iacr.org/{year}/artifacts.php``).
 
     Returns list of {name, affiliation, role} dicts, or None if not found.
     """
     sess = session or _get_session()
     members = []
+    json_chairs = []
 
-    # 1. Try JSON API for members
+    # 1. Try JSON API for members (and chairs when available)
     json_url = f"https://ches.iacr.org/{year}/json/artifact.json"
     try:
         resp = sess.get(json_url, timeout=30)
@@ -414,8 +418,21 @@ def scrape_ches_committee(year, session=None):
             for entry in data.get("committee", []):
                 name = re.sub(r"\s+", " ", entry.get("name", "")).strip()
                 affiliation = re.sub(r"\s+", " ", entry.get("affiliation", "")).strip()
+                # Detect "(Chair)" / "(Co-Chair)" embedded in the name (e.g. CHES 2024)
+                chair_match = re.search(r"\s*\((?:Co-)?Chair\)\s*$", name, re.IGNORECASE)
+                if chair_match:
+                    name = name[: chair_match.start()].strip()
+                    role = "chair"
+                else:
+                    role = "member"
                 if name and len(name) > 1:
-                    members.append({"name": name, "affiliation": affiliation, "role": "member"})
+                    members.append({"name": name, "affiliation": affiliation, "role": role})
+            # Parse artifact_chairs field (2025+)
+            for entry in data.get("artifact_chairs", []):
+                name = re.sub(r"\s+", " ", entry.get("name", "")).strip()
+                affiliation = re.sub(r"\s+", " ", entry.get("affiliation", "")).strip()
+                if name and len(name) > 1:
+                    json_chairs.append({"name": name, "affiliation": affiliation, "role": "chair"})
     except (requests.RequestException, ValueError, KeyError):
         logger.warning("Failed to fetch/parse CHES committee JSON, skipping JSON source")
 
@@ -426,15 +443,15 @@ def scrape_ches_committee(year, session=None):
         if resp.status_code == 200:
             soup = BeautifulSoup(resp.text, "html.parser")
 
-            # Parse chairs from HTML
-            chairs = _scrape_ches_chairs_html(soup)
+            # Parse chairs from HTML (fallback when JSON has no chair info)
+            html_chairs = _scrape_ches_chairs_html(soup)
 
             # If JSON didn't return members, try HTML fallback (CHES 2022)
             if not members:
                 members = _scrape_ches_members_html(soup)
 
-            # Combine: chairs first, then members (dedup by name)
-            all_members = chairs + members
+            # Combine: JSON chairs > HTML chairs > members (dedup by name)
+            all_members = json_chairs + html_chairs + members
             seen = set()
             deduped = []
             for m in all_members:
@@ -451,10 +468,11 @@ def scrape_ches_committee(year, session=None):
     except requests.RequestException as e:
         logger.warning(f"  Failed to fetch {html_url}: {e}")
 
-    # If only JSON members were found (HTML failed), return those
-    if members:
-        logger.info(f"  CHES: Found {len(members)} members for ches{year} (JSON only)")
-        return members
+    # If only JSON data was found (HTML failed), return those
+    combined = json_chairs + members
+    if combined:
+        logger.info(f"  CHES: Found {len(combined)} entries for ches{year} (JSON only)")
+        return combined
 
     return None
 
@@ -532,6 +550,291 @@ def scrape_pets_committee(year, session=None):
     return members if members else None
 
 
+# ── ACSAC scraper ────────────────────────────────────────────────────────────
+
+# ACSAC publishes artifact committee data at:
+#   https://www.acsac.org/<YYYY>/committees/artifact/   (2019-2022)
+#   https://www.acsac.org/<YYYY>/committees/artifacts/   (2023+)
+# The URL slug changed from singular to plural in 2023.
+# Page structure: <h1>Artifact(s) (Evaluation) Committee</h1>
+#   followed by chair text, then <h3>Students|Reviewers</h3> and <h3>Mentors</h3>
+#   with members as plain text lines "Name, Affiliation" separated by newlines.
+# 2019 uses a flat list (no section headings) after the chair line.
+ACSAC_KNOWN_YEARS = range(2019, 2026)
+
+
+def _find_acsac_heading(soup):
+    """Find the <h1> heading for the ACSAC artifact committee page."""
+    for h in soup.find_all("h1"):
+        txt = h.get_text().strip().lower()
+        if "artifact" in txt and "committee" in txt:
+            return h
+    return None
+
+
+def _parse_acsac_chairs(soup):
+    """Parse co-chairs from the ACSAC artifact committee page.
+
+    Chairs appear as plain text right after the <h1> heading, in the format:
+        "Artifact Evaluation Co-Chair: Name, Affiliation"
+    or  "Artifact Evaluation Chair: Name, Affiliation"
+
+    Returns list of {name, affiliation, role:'chair'} dicts.
+    """
+    chairs = []
+    h1 = _find_acsac_heading(soup)
+    if h1 is None:
+        return chairs
+
+    # The chair info is typically in the text between <h1> and the first <h3>.
+    # It may be in the parent container as NavigableStrings or in <p> tags.
+    # Collect all text until we hit the first <h3>.
+    text_parts = []
+    for sib in h1.next_siblings:
+        if hasattr(sib, "name") and sib.name in ("h2", "h3", "h4"):
+            break
+        if hasattr(sib, "name") and sib.name == "p":
+            text_parts.append(sib.get_text())
+        elif isinstance(sib, str):
+            text_parts.append(sib)
+
+    raw_text = "\n".join(text_parts)
+
+    # Extract chair lines: "Artifact Evaluation (Co-)Chair: Name, Affiliation"
+    for match in re.finditer(
+        r"(?:Artifact[s]? Evaluation )?(?:Co-)?Chair:\s*(.+?)(?:\n|$)",
+        raw_text,
+        re.IGNORECASE,
+    ):
+        entry = match.group(1).strip()
+        if "," in entry:
+            parts = entry.split(",", 1)
+            name = parts[0].strip()
+            affiliation = parts[1].strip()
+        else:
+            name = entry
+            affiliation = ""
+        name = re.sub(r"\s+", " ", name).strip()
+        affiliation = re.sub(r"\s+", " ", affiliation).strip()
+        if name and len(name) > 1:
+            chairs.append({"name": name, "affiliation": affiliation, "role": "chair"})
+
+    return chairs
+
+
+def _parse_acsac_section_members(soup, section_keywords):
+    """Parse members from an ACSAC committee section (Students, Mentors, Reviewers).
+
+    Finds <h3> headings matching *section_keywords*, then collects the text
+    between that heading and the next heading.  Members are listed as plain text
+    lines "Name, Affiliation" separated by whitespace/newlines.
+
+    Returns list of {name, affiliation, role:'member'} dicts.
+    """
+    members = []
+    for h3 in soup.find_all("h3"):
+        txt = h3.get_text().strip().lower()
+        if not any(kw in txt for kw in section_keywords):
+            continue
+
+        # Collect all text until next heading
+        text_parts = []
+        for sib in h3.next_siblings:
+            if hasattr(sib, "name") and sib.name in ("h1", "h2", "h3", "h4"):
+                break
+            if hasattr(sib, "name"):
+                text_parts.append(sib.get_text())
+            elif isinstance(sib, str):
+                text_parts.append(sib)
+
+        raw_text = "\n".join(text_parts)
+
+        # Split into individual entries.  The ACSAC pages concatenate names
+        # without clear delimiters; they appear as "Name, AffiliationName, Affiliation...".
+        # We split on patterns where an affiliation is followed by a name (uppercase letter
+        # after a lowercase/space sequence), or on explicit newlines.
+        # First, try splitting by newlines.
+        lines = [ln.strip() for ln in raw_text.split("\n") if ln.strip()]
+
+        for line in lines:
+            # Each line may still have multiple "Name, Affiliation" entries
+            # concatenated without a separator.  The ACSAC HTML renders them
+            # with <br/> or spacing, but get_text() may merge them.
+            # Use a heuristic: split where we see AffiliationName pattern
+            # i.e. a lowercase/closing-paren followed by an uppercase letter.
+            entries = re.split(r"(?<=[a-z)\]])(?=[A-Z])", line)
+            for entry in entries:
+                entry = entry.strip()
+                if not entry or len(entry) < 3:
+                    continue
+                # Skip footer/boilerplate text
+                if any(skip in entry.lower() for skip in [
+                    "return to top", "event by", "sponsor", "additional link",
+                    "code of conduct", "privacy policy", "contact us",
+                    "mailing list", "artifact committee", "applied computer",
+                ]):
+                    continue
+                if "," in entry:
+                    parts = entry.split(",", 1)
+                    name = parts[0].strip()
+                    affiliation = parts[1].strip()
+                else:
+                    name = entry
+                    affiliation = ""
+                name = re.sub(r"\s+", " ", name).strip()
+                affiliation = re.sub(r"\s+", " ", affiliation).strip()
+                if name and len(name) > 1 and not name.startswith("http"):
+                    members.append({"name": name, "affiliation": affiliation, "role": "member"})
+
+    return members
+
+
+def _parse_acsac_flat_members(soup, chairs):
+    """Parse members from a flat ACSAC committee page (no section headings).
+
+    Used for pages like 2019 where all members are listed directly after the
+    chair line with no ``<h3>`` section headings.  Collects text between the
+    ``<h1>`` heading and the footer, excluding the already-parsed chair names.
+
+    Returns list of {name, affiliation, role:'member'} dicts.
+    """
+    h1 = _find_acsac_heading(soup)
+    if h1 is None:
+        return []
+
+    chair_names = {c["name"].lower() for c in chairs}
+
+    # Collect all text between <h1> and footer-like headings
+    text_parts = []
+    for sib in h1.next_siblings:
+        if hasattr(sib, "name") and sib.name in ("h2", "h3", "h4"):
+            # Stop at footer headings (sponsors, etc.)
+            heading_text = sib.get_text().strip().lower()
+            if any(kw in heading_text for kw in ["event by", "sponsor", "additional"]):
+                break
+            # Also stop at unknown headings
+            break
+        if hasattr(sib, "name") and sib.name == "p":
+            text_parts.append(sib.get_text())
+        elif isinstance(sib, str):
+            text_parts.append(sib)
+
+    raw_text = "\n".join(text_parts)
+
+    members = []
+    lines = [ln.strip() for ln in raw_text.split("\n") if ln.strip()]
+    for line in lines:
+        entries = re.split(r"(?<=[a-z)\]])(?=[A-Z])", line)
+        for entry in entries:
+            entry = entry.strip()
+            if not entry or len(entry) < 3:
+                continue
+            # Skip chair lines and boilerplate
+            if re.match(r"(?:Artifact|The ACSAC)", entry, re.IGNORECASE):
+                continue
+            if any(skip in entry.lower() for skip in [
+                "return to top", "event by", "sponsor", "additional link",
+                "code of conduct", "privacy policy", "contact us",
+                "mailing list", "applied computer", "committee was divided",
+            ]):
+                continue
+            if "," in entry:
+                parts = entry.split(",", 1)
+                name = parts[0].strip()
+                affiliation = parts[1].strip()
+            else:
+                name = entry
+                affiliation = ""
+            name = re.sub(r"\s+", " ", name).strip()
+            affiliation = re.sub(r"\s+", " ", affiliation).strip()
+            if name and len(name) > 1 and not name.startswith("http") and name.lower() not in chair_names:
+                members.append({"name": name, "affiliation": affiliation, "role": "member"})
+
+    return members
+
+
+def scrape_acsac_committee(year, session=None):
+    """Scrape AE committee from the ACSAC website.
+
+    ACSAC publishes artifact committee data at two URL patterns:
+    - ``https://www.acsac.org/{year}/committees/artifact/``  (2020-2022)
+    - ``https://www.acsac.org/{year}/committees/artifacts/`` (2023+)
+
+    Returns list of {name, affiliation, role} dicts, or None if not found.
+    """
+    sess = session or _get_session()
+
+    # Try both URL patterns (slug changed from singular to plural in 2023)
+    urls = [
+        f"https://www.acsac.org/{year}/committees/artifacts/",
+        f"https://www.acsac.org/{year}/committees/artifact/",
+    ]
+
+    soup = None
+    for url in urls:
+        try:
+            resp = sess.get(url, timeout=30)
+            if resp.status_code == 404:
+                continue
+            resp.raise_for_status()
+            soup = BeautifulSoup(resp.text, "html.parser")
+            break
+        except requests.RequestException:
+            continue
+
+    if soup is None:
+        logger.info("  ACSAC: No committee page found for acsac%d", year)
+        return None
+
+    # Parse chairs
+    chairs = _parse_acsac_chairs(soup)
+
+    # Parse members from all relevant sections
+    # 2020-2022: "Students" and "Mentors"
+    # 2023+: "Reviewers" and "Mentors"
+    members = _parse_acsac_section_members(soup, ["student", "reviewer"])
+    mentors = _parse_acsac_section_members(soup, ["mentor"])
+
+    # Fallback for flat-list pages (e.g. 2019) that have no section headings:
+    # collect members from the text between <h1> and the footer.
+    if not members and not mentors:
+        members = _parse_acsac_flat_members(soup, chairs)
+
+    all_members = chairs + mentors + members
+
+    # Deduplicate by name (case-insensitive)
+    seen = set()
+    deduped = []
+    for m in all_members:
+        key = m["name"].lower()
+        if key not in seen:
+            seen.add(key)
+            deduped.append(m)
+
+    if deduped:
+        chair_count = sum(1 for m in deduped if m["role"] == "chair")
+        member_count = len(deduped) - chair_count
+        logger.info("  ACSAC: Found %d members + %d chair(s) for acsac%d", member_count, chair_count, year)
+    return deduped if deduped else None
+
+
+# ── Manual / static committees ───────────────────────────────────────────────
+
+_MANUAL_COMMITTEES_PATH = Path(__file__).resolve().parents[2] / "data" / "manual_committees.yaml"
+
+
+def _load_manual_committees():
+    """Load manual committee data from data/manual_committees.yaml.
+
+    Returns dict of {conf_year_str: [{name, affiliation, role}, ...]}.
+    """
+    if not _MANUAL_COMMITTEES_PATH.exists():
+        return {}
+    with _MANUAL_COMMITTEES_PATH.open() as f:
+        data = yaml.safe_load(f) or {}
+    return data
+
+
 # ── Public API ───────────────────────────────────────────────────────────────
 
 
@@ -571,6 +874,15 @@ def get_alternative_committees(conferences_needed):
         # Try PETS website
         elif conf == "pets":
             committee = scrape_pets_committee(year, session=sess)
+
+        # Try ACSAC website
+        elif conf == "acsac":
+            committee = scrape_acsac_committee(year, session=sess)
+
+        # Fallback: manual/static data (e.g. from proceedings front matter)
+        if not committee:
+            manual = _load_manual_committees()
+            committee = manual.get(conf_year_str)
 
         if committee and len(committee) > 0:
             results[conf_year_str] = committee
@@ -620,6 +932,7 @@ if __name__ == "__main__":
     parser.add_argument("--all-usenix", action="store_true", help="Scrape all known USENIX committees")
     parser.add_argument("--all-ches", action="store_true", help="Scrape all CHES years 2021-2025")
     parser.add_argument("--all-pets", action="store_true", help="Scrape all PETS years 2020-2025")
+    parser.add_argument("--all-acsac", action="store_true", help="Scrape all ACSAC years 2020-2025")
     args = parser.parse_args()
 
     if args.all_usenix:
@@ -642,6 +955,14 @@ if __name__ == "__main__":
                 logger.info(f"pets{y}: {len(committee)} members")
             else:
                 logger.info(f"pets{y}: not found")
+    elif args.all_acsac:
+        sess = _get_session()
+        for y in ACSAC_KNOWN_YEARS:
+            committee = scrape_acsac_committee(y, session=sess)
+            if committee:
+                logger.info(f"acsac{y}: {len(committee)} members")
+            else:
+                logger.info(f"acsac{y}: not found")
     elif args.conference and args.year:
         conf = args.conference.lower()
         if conf in USENIX_CONF_SLUGS:
@@ -650,6 +971,8 @@ if __name__ == "__main__":
             result = scrape_ches_committee(args.year)
         elif conf == "pets":
             result = scrape_pets_committee(args.year)
+        elif conf == "acsac":
+            result = scrape_acsac_committee(args.year)
         else:
             logger.info(f"Unknown conference: {conf}")
             sys.exit(1)

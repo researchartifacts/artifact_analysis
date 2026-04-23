@@ -27,7 +27,7 @@ from ..scrapers.acm_scrape import (
 from ..scrapers.parse_results_md import get_ae_results
 from ..scrapers.repo_utils import get_conferences_from_prefix
 from ..scrapers.usenix_scrape import scrape_conference_year, to_pipeline_format
-from ..utils.conference import CONF_DISPLAY_NAMES
+from ..utils.conference import CONF_DISPLAY_NAMES, ensure_conference_pages
 from ..utils.conference import parse_conf_year as extract_conference_name
 
 logger = logging.getLogger(__name__)
@@ -242,6 +242,9 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
     # Track all discovered conference dirs (for coverage table)
     sys_all_dirs = {item["name"] for item in get_conferences_from_prefix("sys") if re.search(conf_regex, item["name"])}
     sec_all_dirs = {item["name"] for item in get_conferences_from_prefix("sec") if re.search(conf_regex, item["name"])}
+
+    # Auto-create website pages for newly discovered conferences
+    ensure_conference_pages(sys_dirs=sys_all_dirs, sec_dirs=sec_all_dirs)
 
     # --- Automatic USENIX fallback ---
     # For every sysartifacts / secartifacts directory that has NO results,

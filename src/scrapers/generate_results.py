@@ -34,7 +34,6 @@ Output: <output_dir>/<dir_prefix><YYYY>/results.md (and organizers.md when avail
 import argparse
 import logging
 import os
-import sys
 
 import yaml
 
@@ -47,6 +46,7 @@ logger = logging.getLogger(__name__)
 
 # Each target+conference pair defines badge images, names, column order,
 # YAML front-matter order, and the Liquid template.
+
 
 def _sysartifacts_usenix_config(conference):
     """Build a sysartifacts config for a USENIX systems conference.
@@ -72,9 +72,9 @@ def _sysartifacts_usenix_config(conference):
             "reproduced_img": "usenix_reproduced.svg",
             "reproduced_name": "Results Reproduced",
         },
-        "badges_format": "csv_lower",       # "available,functional"
+        "badges_format": "csv_lower",  # "available,functional"
         "template": "sysartifacts_usenix",
-        "scraper": conference,              # passed to usenix_scrape → URL suffix
+        "scraper": conference,  # passed to usenix_scrape → URL suffix
         "scrape_organizers": True,
     }
 
@@ -83,7 +83,7 @@ TARGET_CONFERENCE_CONFIG = {
     # ── sysartifacts (all USENIX systems conferences share the same format) ──
     ("sysartifacts", "fast"): _sysartifacts_usenix_config("fast"),
     ("sysartifacts", "osdi"): _sysartifacts_usenix_config("osdi"),
-    ("sysartifacts", "atc"):  _sysartifacts_usenix_config("atc"),
+    ("sysartifacts", "atc"): _sysartifacts_usenix_config("atc"),
     ("sysartifacts", "nsdi"): _sysartifacts_usenix_config("nsdi"),
     # ── secartifacts ──────────────────────────────────────────────────────
     ("secartifacts", "usenixsec"): {
@@ -103,7 +103,7 @@ TARGET_CONFERENCE_CONFIG = {
             "reproduced_img": "usenixbadges-reproduced.svg",
             "reproduced_name": "Results Reproduced (v1.1)",
         },
-        "badges_format": "secartifacts_usenix",   # "Badges: Available, Functional"
+        "badges_format": "secartifacts_usenix",  # "Badges: Available, Functional"
         "template": "secartifacts_usenix",
         "scraper": "usenixsecurity",
         "scrape_organizers": False,
@@ -126,7 +126,7 @@ TARGET_CONFERENCE_CONFIG = {
             "reproducible_img": "ieeexplore_code_reproducible.png",
             "reproducible_name": "Code Reproducible",
         },
-        "badges_format": "single_lower",   # "available"
+        "badges_format": "single_lower",  # "available"
         "template": "secartifacts_acsac",
         "scraper": "acsac",
         "scrape_organizers": False,
@@ -137,7 +137,7 @@ TARGET_CONFERENCE_CONFIG = {
 def _available_conferences(target=None):
     """Return sorted list of conference names, optionally filtered by target."""
     confs = set()
-    for (t, c) in TARGET_CONFERENCE_CONFIG:
+    for t, c in TARGET_CONFERENCE_CONFIG:
         if target is None or t == target:
             confs.add(c)
     return sorted(confs)
@@ -158,6 +158,7 @@ def scrape_artifacts(config, year, **kwargs):
 
     if scraper == "acsac":
         from .acsac_scrape import scrape_acsac_artifacts
+
         return scrape_acsac_artifacts(year)
 
     # All USENIX conferences (fast, osdi, atc, nsdi, usenixsecurity)
@@ -172,12 +173,14 @@ def scrape_artifacts(config, year, **kwargs):
     for p in all_papers:
         if not p.get("badges"):
             continue
-        artifacts.append({
-            "title": p["title"],
-            "badges": p["badges"],
-            "artifact_urls": [],
-            "paper_url": p.get("paper_url", ""),
-        })
+        artifacts.append(
+            {
+                "title": p["title"],
+                "badges": p["badges"],
+                "artifact_urls": [],
+                "paper_url": p.get("paper_url", ""),
+            }
+        )
     return artifacts
 
 
@@ -186,6 +189,7 @@ def scrape_organizers_for(config, year):
     if not config.get("scrape_organizers"):
         return None
     from .usenix_scrape import scrape_organizers
+
     return scrape_organizers(config["scraper"], year)
 
 
@@ -199,10 +203,10 @@ def _format_badges(badges, fmt):
     if fmt == "csv_lower":
         # sysartifacts: "available,functional,reproduced"
         return ",".join(badges)
-    elif fmt == "secartifacts_usenix":
+    if fmt == "secartifacts_usenix":
         # secartifacts USENIX: "Badges: Available, Functional, Reproduced"
         return "Badges: " + ", ".join(b.capitalize() for b in badges)
-    elif fmt == "single_lower":
+    if fmt == "single_lower":
         # ACSAC: just the single badge name
         return badges[0] if badges else ""
     return ",".join(badges)
@@ -246,9 +250,7 @@ def generate_results_md(config, year, artifacts):
     front.update(config["front_matter"])
     front["artifacts"] = yaml_artifacts
 
-    front_yaml = yaml.dump(
-        front, default_flow_style=False, allow_unicode=True, sort_keys=False, width=120
-    )
+    front_yaml = yaml.dump(front, default_flow_style=False, allow_unicode=True, sort_keys=False, width=120)
 
     # Summary
     summary = "\n".join(f"* {counts[b]} {badge_labels[b]}" for b in badge_cols)
@@ -265,8 +267,7 @@ def generate_organizers_md(organizers):
     if not organizers or (not organizers.get("chairs") and not organizers.get("members")):
         return None
 
-    lines = ["---", "title: Organizers", "order: 20", "---", "",
-             "## Artifact Evaluation Committee Co-Chairs", ""]
+    lines = ["---", "title: Organizers", "order: 20", "---", "", "## Artifact Evaluation Committee Co-Chairs", ""]
 
     for chair in organizers.get("chairs", []):
         aff = f", {chair['affiliation']}" if chair["affiliation"] else ""
@@ -490,27 +491,43 @@ def main():
         description="Generate artifact-evaluation results.md for sysartifacts / secartifacts sites"
     )
     parser.add_argument(
-        "--target", "-t", type=str, required=True, choices=all_targets,
+        "--target",
+        "-t",
+        type=str,
+        required=True,
+        choices=all_targets,
         help="Target site: sysartifacts or secartifacts",
     )
     parser.add_argument(
-        "--conference", "-c", type=str, required=True,
+        "--conference",
+        "-c",
+        type=str,
+        required=True,
         help=f"Conference ({', '.join(all_confs)})",
     )
     parser.add_argument(
-        "--years", "-y", type=str, required=True,
+        "--years",
+        "-y",
+        type=str,
+        required=True,
         help="Comma-separated conference years (e.g. 2024,2025)",
     )
     parser.add_argument(
-        "--output_dir", "-o", type=str, default=None,
+        "--output_dir",
+        "-o",
+        type=str,
+        default=None,
         help="Output directory (results written to <output_dir>/<prefix><YYYY>/results.md)",
     )
     parser.add_argument(
-        "--dir-prefix", type=str, default=None,
+        "--dir-prefix",
+        type=str,
+        default=None,
         help="Override directory prefix (default: from config)",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Print generated results to stdout instead of writing files",
     )
     parser.add_argument("--max-workers", type=int, default=4, help="Max parallel HTTP requests (default: 4)")
@@ -524,8 +541,7 @@ def main():
     if key not in TARGET_CONFERENCE_CONFIG:
         valid = _available_conferences(target)
         parser.error(
-            f"Conference '{conference}' is not supported for target '{target}'. "
-            f"Valid conferences: {', '.join(valid)}"
+            f"Conference '{conference}' is not supported for target '{target}'. Valid conferences: {', '.join(valid)}"
         )
 
     config = TARGET_CONFERENCE_CONFIG[key]
@@ -558,11 +574,11 @@ def main():
         organizers_content = generate_organizers_md(organizers)
 
         if args.dry_run:
-            print(f"\n--- {dir_prefix}{year}/results.md ---")
-            print(content)
+            logger.info("\n--- %s%s/results.md ---", dir_prefix, year)
+            logger.info("%s", content)
             if organizers_content:
-                print(f"\n--- {dir_prefix}{year}/organizers.md ---")
-                print(organizers_content)
+                logger.info("\n--- %s%s/organizers.md ---", dir_prefix, year)
+                logger.info("%s", organizers_content)
         else:
             out_dir = args.output_dir or "."
             conf_dir = os.path.join(out_dir, f"{dir_prefix}{year}")
@@ -584,5 +600,6 @@ def main():
 
 if __name__ == "__main__":
     from src.utils.logging_config import setup_logging
+
     setup_logging()
     main()

@@ -1,0 +1,138 @@
+# Manual committee data for conferences where the information cannot be
+# scraped from a website (e.g. only published in proceedings front matter).
+#
+# Format:
+#   <conf><year>:
+#     - name: "Full Name"
+#       affiliation: "Institution"
+#       role: chair | member
+#
+# Sources should be documented in comments for provenance.
+
+# ACSAC 2017 — from website (combined committees page):
+# https://www.acsac.org/2017/committees/#artifact
+acsac2017:
+  - name: "Manuel Egele"
+    affiliation: "Boston University"
+    role: chair
+  - name: "Assel Aliyeva"
+    affiliation: "Boston University"
+    role: member
+  - name: "Priyam Biswas"
+    affiliation: "Purdue"
+    role: member
+  - name: "William Blair"
+    affiliation: "Boston University"
+    role: member
+  - name: "Matthew R Cole"
+    affiliation: "Binghamton"
+    role: member
+  - name: "Hugo Gascon"
+    affiliation: "TU Braunschweig"
+    role: member
+  - name: "Rasoul Jahanshahi"
+    affiliation: "Boston University"
+    role: member
+  - name: "Moritz Lipp"
+    affiliation: "TU Graz"
+    role: member
+  - name: "Derrick McKee"
+    affiliation: "Purdue"
+    role: member
+  - name: "Zhenyu Ning"
+    affiliation: "Wayne State"
+    role: member
+  - name: "Nguyen Phong Hoang"
+    affiliation: "Stony Brook"
+    role: member
+  - name: "David Pouliot"
+    affiliation: "Portland State University"
+    role: member
+  - name: "Thomas Rosenstatter"
+    affiliation: "Chalmers University"
+    role: member
+  - name: "Michael Schwarz"
+    affiliation: "TU Graz"
+    role: member
+  - name: "Prashast Srivastava"
+    affiliation: "Purdue"
+    role: member
+  - name: "Christian Wressnegger"
+    affiliation: "TU Braunschweig"
+    role: member
+
+# ACSAC 2018 — from ACM proceedings front matter:
+# https://dl.acm.org/action/showFmPdf?doi=10.1145/3274694
+acsac2018:
+  - name: "Manuel Egele"
+    affiliation: "Boston University"
+    role: chair
+  - name: "Aselya Aliyeva"
+    affiliation: "Boston University"
+    role: member
+  - name: "William Blair"
+    affiliation: "Boston University"
+    role: member
+  - name: "Quan Chen"
+    affiliation: "NC State University"
+    role: member
+  - name: "James Conners"
+    affiliation: "Brigham Young University"
+    role: member
+  - name: "Ali Davanian"
+    affiliation: "UC, Riverside"
+    role: member
+  - name: "Aurore Fass"
+    affiliation: "CISPA Helmholtz Center i.G."
+    role: member
+  - name: "Rasoul Jahanshahi"
+    affiliation: "Boston University"
+    role: member
+  - name: "Gordon Meiser"
+    affiliation: "CISPA Helmholtz Center i.G."
+    role: member
+  - name: "Dario Nisi"
+    affiliation: "Eurecom"
+    role: member
+  - name: "Alexanders Oleinik"
+    affiliation: "Boston University"
+    role: member
+  - name: "Feargus Pendlebury"
+    affiliation: "RHUL"
+    role: member
+  - name: "Fabio Pierazzi"
+    affiliation: "RHUL"
+    role: member
+  - name: "Marcello Pogliani"
+    affiliation: "Politecnico di Milano"
+    role: member
+  - name: "Andrea Possemato"
+    affiliation: "Eurecom"
+    role: member
+  - name: "Zhenxiao Qi"
+    affiliation: "UC Riverside"
+    role: member
+  - name: "Mohammed Rashed"
+    affiliation: "Universidad Carlos III de Madrid"
+    role: member
+  - name: "Shaown Sarker"
+    affiliation: "NC State University"
+    role: member
+  - name: "Mishra Shachee"
+    affiliation: "Stony Brook University"
+    role: member
+  - name: "Irfan Ul Haq"
+    affiliation: "IMDEA Software Institute"
+    role: member
+  - name: "Marius Steffens"
+    affiliation: "CISPA Helmholtz Center i.G."
+    role: member
+  - name: "Binghui Wang"
+    affiliation: "Iowa State University"
+    role: member
+  - name: "Christian Wressnegger"
+    affiliation: "Technische Universität Braunschweig"
+    role: member
+  - name: "Onur Zungur"
+    affiliation: "Boston University"
+    role: member

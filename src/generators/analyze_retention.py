@@ -15,13 +15,13 @@ import logging
 import re
 from collections import defaultdict
 
+from src.scrapers.parse_committee_md import get_committees
 from src.scrapers.scrape_committee_web import (
     CHES_KNOWN_YEARS,
     USENIX_CONF_SLUGS,
     USENIX_KNOWN_YEARS,
     get_alternative_committees,
 )
-from src.scrapers.parse_committee_md import get_committees
 from src.utils.conference import SECURITY_CONFS, SYSTEMS_CONFS, clean_member_name
 from src.utils.conference import (
     conf_area as _conf_area,

@@ -24,7 +24,7 @@ import logging
 import re
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
-from bs4 import BeautifulSoup, NavigableString
+from bs4 import BeautifulSoup
 
 from src.utils.http import create_session
 
@@ -131,22 +131,26 @@ def scrape_acsac_artifacts(year, session=None):
             title = re.sub(r"^Title:\s*", "", title)
 
             if title:
-                raw_entries.append({
-                    "title": title,
-                    "badge": current_badge,
-                    "artifact_urls": artifact_urls,
-                })
+                raw_entries.append(
+                    {
+                        "title": title,
+                        "badge": current_badge,
+                        "artifact_urls": artifact_urls,
+                    }
+                )
 
     # Convert to the common artifact format (list of badges per paper)
     # ACSAC gives each paper its highest badge, so badges is a single-element list
     artifacts = []
     for entry in raw_entries:
-        artifacts.append({
-            "title": entry["title"],
-            "badges": [entry["badge"]],
-            "artifact_urls": entry["artifact_urls"],
-            "paper_url": "",
-        })
+        artifacts.append(
+            {
+                "title": entry["title"],
+                "badges": [entry["badge"]],
+                "artifact_urls": entry["artifact_urls"],
+                "paper_url": "",
+            }
+        )
 
     return artifacts
 
@@ -164,13 +168,15 @@ def main():
         artifacts = scrape_acsac_artifacts(year, session=session)
         logger.info("ACSAC %d: %d artifacts", year, len(artifacts))
         if args.format == "json":
-            print(json.dumps(artifacts, indent=2))
+            logger.info("%s", json.dumps(artifacts, indent=2))
         else:
             import yaml
-            print(yaml.dump(artifacts, default_flow_style=False))
+
+            logger.info("%s", yaml.dump(artifacts, default_flow_style=False))
 
 
 if __name__ == "__main__":
     from src.utils.logging_config import setup_logging
+
     setup_logging()
     main()

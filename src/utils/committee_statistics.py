@@ -6,8 +6,8 @@ import logging
 from pathlib import Path
 
 import yaml
-from pytrie import Trie
 from parse_committee_md import get_committees
+from pytrie import Trie
 from repo_utils import download_file
 from thefuzz import fuzz
 

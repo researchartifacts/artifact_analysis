@@ -88,6 +88,108 @@ SYSTEMS_CONFS, SECURITY_CONFS = discover_conferences()
 ALL_CONFS = SYSTEMS_CONFS | SECURITY_CONFS
 
 
+def refresh_conference_sets(website_root: str | None = None) -> None:
+    """Re-scan the website directory and update the module-level conference sets.
+
+    Call this after :func:`ensure_conference_pages` has created new files.
+    """
+    global SYSTEMS_CONFS, SECURITY_CONFS, ALL_CONFS  # noqa: PLW0603
+    SYSTEMS_CONFS, SECURITY_CONFS = discover_conferences(website_root)
+    ALL_CONFS = SYSTEMS_CONFS | SECURITY_CONFS
+
+
+# ── Auto-create missing conference pages ────────────────────────────────────
+
+_CONF_PAGE_TEMPLATE = """\
+---
+title: "{display_name}"
+permalink: /{area}/{slug}.html
+conf_name: "{conf_upper}"
+conf_display_name: "{display_name}"
+conf_category: "{area}"
+---
+
+{{%- include conference_page.html -%}}
+"""
+
+
+def ensure_conference_pages(
+    sys_dirs: set[str] | None = None,
+    sec_dirs: set[str] | None = None,
+    website_root: str | None = None,
+) -> list[str]:
+    """Create ``<conf>.md`` pages for conferences discovered in artifact sites.
+
+    For each conference-year directory (e.g. ``vehiclesec2026``) found in the
+    sysartifacts / secartifacts repos, extract the conference name prefix and
+    ensure a corresponding ``{website_root}/{area}/{conf}.md`` page exists.
+    Missing pages are created from a standard template.
+
+    Parameters
+    ----------
+    sys_dirs, sec_dirs:
+        Sets of directory names (e.g. ``{"osdi2024", "sosp2023"}``).
+        If *None*, they are fetched from the GitHub API via
+        :func:`~src.scrapers.repo_utils.get_conferences_from_prefix`.
+    website_root:
+        Path to the ``reprodb.github.io`` checkout.  Auto-detected if *None*.
+
+    Returns
+    -------
+    list[str]
+        Paths of newly created ``.md`` files.
+    """
+    root = website_root or _find_website_root()
+    if not root or not os.path.isdir(root):
+        logger.debug("Website root not found; skipping conference page creation")
+        return []
+
+    # Lazy-import to avoid pulling network dependencies at module load time.
+    if sys_dirs is None or sec_dirs is None:
+        from ..scrapers.repo_utils import get_conferences_from_prefix
+
+        if sys_dirs is None:
+            sys_dirs = {item["name"] for item in get_conferences_from_prefix("sys")}
+        if sec_dirs is None:
+            sec_dirs = {item["name"] for item in get_conferences_from_prefix("sec")}
+
+    created: list[str] = []
+    for area, dirs in [("systems", sys_dirs), ("security", sec_dirs)]:
+        area_dir = os.path.join(root, area)
+        if not os.path.isdir(area_dir):
+            continue
+        existing = {
+            fname[:-3].upper()
+            for fname in os.listdir(area_dir)
+            if fname.endswith(".md")
+        }
+        seen_prefixes: set[str] = set()
+        for dir_name in sorted(dirs):
+            conf_upper, year = parse_conf_year(dir_name)
+            if year is None or conf_upper in seen_prefixes:
+                continue
+            seen_prefixes.add(conf_upper)
+            if conf_upper in existing:
+                continue
+            slug = conf_upper.lower()
+            display_name = CONF_DISPLAY_NAMES.get(conf_upper, conf_upper)
+            page_path = os.path.join(area_dir, f"{slug}.md")
+            content = _CONF_PAGE_TEMPLATE.format(
+                display_name=display_name,
+                area=area,
+                slug=slug,
+                conf_upper=conf_upper,
+            )
+            with open(page_path, "w") as fh:
+                fh.write(content)
+            logger.info("Created conference page: %s", page_path)
+            created.append(page_path)
+
+    if created:
+        refresh_conference_sets(root)
+    return created
+
+
 # ── Conference display-name mapping ─────────────────────────────────────────
 # Used by auto-generated conference pages.  Conferences not listed here
 # default to the uppercase abbreviation.
@@ -99,6 +201,7 @@ CONF_DISPLAY_NAMES: dict[str, str] = {
     "NDSS": "NDSS",
     "SYSTEX": "SysTEX",
     "USENIXSEC": "USENIX Security",
+    "VEHICLESEC": "USENIX VehicleSec",
 }
 
 
