@@ -79,13 +79,13 @@ pipeline_modules = [(m, n, c, s) for m, n, c, s in MODULES if s]
 pipeline_modules.sort(key=lambda x: (x[3].replace("b", ".1").replace("c", ".2")))
 index_lines.append("## Pipeline Order\n\n")
 index_lines.append("| Step | Script | Category |\n|------|--------|----------|\n")
-for mod, name, cat, step in pipeline_modules:
+for _mod, name, cat, step in pipeline_modules:
     index_lines.append(f"| {step} | [{name}]({name}.md) | {cat} |\n")
 index_lines.append("\n")
 
 # Group by category
 current_cat = None
-for mod, name, cat, step in MODULES:
+for _mod, name, cat, step in MODULES:
     if cat != current_cat:
         current_cat = cat
         index_lines.append(f"## {cat}\n\n")
