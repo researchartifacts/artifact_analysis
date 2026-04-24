@@ -119,7 +119,7 @@ fi
     echo "  commit: $(cd "$OUTPUT_DIR" && git rev-parse HEAD 2>/dev/null || echo 'unknown')"
     echo "  branch: $(cd "$OUTPUT_DIR" && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')"
     echo ""
-    echo "cache_version: $(cat "$CACHE_VERSION_FILE" 2>/dev/null || echo 'unknown')"
+    echo "cache_version: $(cat "$CACHE_VERSION_FILE" 2>/dev/null || echo 'none (cache was empty or no cache-version.txt)')"
 } > "$RESULTS_DIR/input/run_metadata.txt"
 
 # ── 4. Commit ─────────────────────────────────────────────────────────────────
