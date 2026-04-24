@@ -21,6 +21,12 @@ def _parse_member_line(line):
     # Skip contact / email lines that are not actual names
     if "reach the" in line.lower() or "contact" in line.lower() and "@" in line:
         return None, None
+    # Skip descriptive/footnote lines that are not member names
+    if line.lstrip("*- ").startswith(("¹", "²", "³", "⁴", "⁵")):
+        return None, None
+    lower = line.lower()
+    if "award" in lower or "distinguished" in lower or "participated in" in lower:
+        return None, None
     # Strip list markers
     start = 0
     if line.startswith(("-", "*")):
@@ -40,6 +46,8 @@ def _parse_member_line(line):
         return None, None
     # Strip bold/italic markers
     line = line.strip("*_").strip()
+    # Strip trailing footnote markers (e.g., "Cen Zhang (Georgia Tech)¹")
+    line = re.sub(r"[¹²³⁴⁵⁶⁷⁸⁹⁰]+$", "", line).strip()
 
     # Handle "Name, Details (Affiliation)" pattern first
     # Example: "Salvatore Signorello, INESC-ID/IST (University of Lisbon)"

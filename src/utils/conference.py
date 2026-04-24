@@ -377,8 +377,16 @@ def clean_member_name(raw_name: str) -> str | None:
     if link_match:
         name = link_match.group(1)
     name = _BR_TAG.sub("", name).strip()
+    # Strip trailing footnote markers (e.g., "Cen Zhang¹" → "Cen Zhang")
+    name = name.rstrip("¹²³⁴⁵⁶⁷⁸⁹⁰").strip()
     if name.lower() in PLACEHOLDER_NAMES or len(name) <= 1:
         return None
     if "contact" in name.lower() or "reach" in name.lower() or "mailto:" in name.lower():
+        return None
+    lower = name.lower()
+    if "award" in lower or "distinguished" in lower or "participated in" in lower:
+        return None
+    # Skip footnote markers (superscript digits at start of line)
+    if name.lstrip().startswith(("¹", "²", "³", "⁴", "⁵")):
         return None
     return clean_name(name)
