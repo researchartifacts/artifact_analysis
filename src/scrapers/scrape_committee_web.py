@@ -149,43 +149,43 @@ def _parse_usenix_committee_html(soup):
     if p_tag is None:
         return members
 
-    # Parse the <p> content: split by <br> tags
-    lines = []
-    current_parts = []
+    # Split the <p> inner HTML on <br> tags using string splitting.
+    # We avoid DOM-based iteration because html.parser sometimes nests
+    # content inside non-self-closing <br> tags (e.g. OSDI/ATC 2023).
+    inner_html = p_tag.decode_contents()
+    raw_segments = re.split(r"<br\s*/?>", inner_html)
 
-    for child in p_tag.children:
-        if hasattr(child, "name") and child.name == "br":
-            if current_parts:
-                lines.append("".join(current_parts).strip())
-                current_parts = []
-        elif hasattr(child, "name") and child.name in ("em", "a"):
-            current_parts.append(child.get_text())
-        else:
-            text = str(child) if not hasattr(child, "name") else child.get_text()
-            current_parts.append(text)
-
-    if current_parts:
-        last = "".join(current_parts).strip()
-        if last:
-            lines.append(last)
-
-    for line in lines:
-        line = line.strip()
-        if not line:
+    for segment in raw_segments:
+        segment = segment.strip()
+        if not segment:
             continue
         # Skip non-member lines
-        if line.startswith(("http", "[")) or "@" in line:
+        if segment.startswith(("http", "[", "<a")) or "@" in segment:
             continue
 
-        # Parse "Name, Affiliation"
-        # The affiliation was in <em> tags, so it's already extracted as plain text
-        if "," in line:
-            parts = line.split(",", 1)
-            name = parts[0].strip()
-            affiliation = parts[1].strip()
+        # Parse name and affiliation from "Name, <em>Affiliation</em>"
+        seg_soup = BeautifulSoup(segment, "html.parser")
+        em = seg_soup.find("em")
+        if em:
+            affiliation = em.get_text().strip()
+            # Name is the text before the <em> tag
+            name_parts = []
+            for child in seg_soup.children:
+                if hasattr(child, "name") and child.name == "em":
+                    break
+                text = str(child) if not hasattr(child, "name") else child.get_text()
+                name_parts.append(text)
+            name = "".join(name_parts).strip().rstrip(",").strip()
         else:
-            name = line
-            affiliation = ""
+            # Plain text: "Name, Affiliation"
+            text = seg_soup.get_text().strip()
+            if "," in text:
+                parts = text.split(",", 1)
+                name = parts[0].strip()
+                affiliation = parts[1].strip()
+            else:
+                name = text
+                affiliation = ""
 
         # Clean up
         name = re.sub(r"\s+", " ", name).strip().strip("*_").strip()
