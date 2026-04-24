@@ -22,6 +22,12 @@ def _normalise_url(val):
         return None
     if val.startswith("10."):
         val = "https://doi.org/" + val
+    # Convert git@github.com:user/repo.git to HTTPS
+    if val.startswith("git@github.com:"):
+        path = val[len("git@github.com:") :]
+        if path.endswith(".git"):
+            path = path[:-4]
+        val = "https://github.com/" + path
     return val
 
 

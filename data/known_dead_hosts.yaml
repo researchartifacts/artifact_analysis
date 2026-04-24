@@ -1,0 +1,17 @@
+# Known dead hosts — URL existence checks are skipped for these domains.
+#
+# These domains consistently fail with DNS resolution errors, connection
+# timeouts, or permanent HTTP errors. Each retry wastes ~30 seconds
+# (3 retries × 10s timeout), making the pipeline unnecessarily slow.
+#
+# To add a host: append the domain (no protocol, no path).
+# To re-enable checking: remove the host and clear the cache entry.
+#
+# Last audited: 2026-04-24
+
+# DNS resolution failures (domain expired or taken down)
+- resin.azurehdinsight.net
+- seclab.tuwien.ac.at
+- greubelhome.ddns.net
+- sso-privacy-leak.info
+- www.illinois.adsc.com.sg

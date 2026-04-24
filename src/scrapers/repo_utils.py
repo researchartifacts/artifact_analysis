@@ -4,8 +4,10 @@ import os
 import time
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
+import yaml
 
 from src.utils.cache import (
     _MISSING,
@@ -26,6 +28,24 @@ from src.utils.cache import (
 logger = logging.getLogger(__name__)
 _SCRIPT_DIR = Path(__file__).resolve().parent
 CACHE_DIR = str(_SCRIPT_DIR.parent / ".cache")
+
+_KNOWN_DEAD_HOSTS_PATH = _SCRIPT_DIR.parent.parent / "data" / "known_dead_hosts.yaml"
+_known_dead_hosts: set[str] | None = None
+
+
+def _load_known_dead_hosts() -> set[str]:
+    """Load the set of hostnames to skip during URL checking."""
+    global _known_dead_hosts
+    if _known_dead_hosts is None:
+        if _KNOWN_DEAD_HOSTS_PATH.exists():
+            with _KNOWN_DEAD_HOSTS_PATH.open() as f:
+                hosts = yaml.safe_load(f) or []
+            _known_dead_hosts = {h.lower() for h in hosts}
+        else:
+            _known_dead_hosts = set()
+    return _known_dead_hosts
+
+
 _SECONDS_PER_DAY = 86400
 CACHE_TTL = _SECONDS_PER_DAY * 30  # 30 days – conference listings & raw file downloads
 CACHE_TTL_URL = _SECONDS_PER_DAY * 90  # 90 days – URL existence checks (positive)
@@ -76,6 +96,18 @@ def check_url_cached(url: str, ttl: int = CACHE_TTL_URL) -> bool:
     negative results are cached for CACHE_TTL_URL_NEG (shorter) so they
     are re-checked periodically without hammering every run.
     """
+    # Skip non-HTTP URLs entirely
+    if not url.startswith(("http://", "https://")):
+        return False
+
+    # Skip known-dead hosts to avoid expensive DNS/timeout retries
+    try:
+        host = urlparse(url).hostname
+        if host and host.lower() in _load_known_dead_hosts():
+            return False
+    except Exception:
+        pass
+
     cached = _read_cache(CACHE_DIR, url, ttl=ttl, namespace="url_exists")
     if cached is True:
         return True  # positive hit – trust it
@@ -90,10 +122,14 @@ def check_url_cached(url: str, ttl: int = CACHE_TTL_URL) -> bool:
             time.sleep(10)
             resp = _session.head(url, allow_redirects=True, timeout=10)
         exists = 200 <= resp.status_code < 300
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"  Request error for {url}: {e}")
+        # DNS failures and connection refused are effectively permanent
+        # for old artifact URLs — cache as negative to avoid retrying.
+        _write_cache(CACHE_DIR, url, False, namespace="url_exists")
+        return False
     except requests.RequestException as e:
         logger.error(f"  Request error for {url}: {e}")
-        # Network errors (timeouts, DNS failures, connection refused) are
-        # transient — do NOT cache them as negative results.
         return False
 
     _write_cache(CACHE_DIR, url, exists, namespace="url_exists")
