@@ -34,13 +34,15 @@ USENIX_CONF_SLUGS = {
     "woot": "woot",
 }
 
-# Known years where USENIX call-for-artifacts pages exist
+# Known years where call-for-artifacts pages exist
 USENIX_KNOWN_YEARS = {
     "fast": range(2024, 2027),  # 2024-2026
     "osdi": range(2020, 2027),  # 2020-2026  (some may 404)
     "atc": range(2020, 2027),  # 2020-2026  (some may 404)
     "usenixsec": range(2020, 2027),  # 2020-2026
-    "woot": range(2019, 2027),  # 2019, 2024-2026 (2020-2023 have no AE data)
+    # WOOT: 2019 USENIX, 2020 no AE, 2021-2023 IEEE (manual_committees.yaml),
+    # 2024-2026 back to USENIX
+    "woot": [2019, 2021, 2022, 2023, 2024, 2025, 2026],
 }
 
 BASE_USENIX = "https://www.usenix.org"
