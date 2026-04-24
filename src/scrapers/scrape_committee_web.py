@@ -11,6 +11,7 @@ Supported sources:
 """
 
 import logging
+import os
 import re
 import sys
 from pathlib import Path
@@ -873,8 +874,14 @@ def get_alternative_committees(conferences_needed):
     -------
     dict of {conf_year_str: [{name, affiliation}, ...]}
     """
+    skip_scrape = os.getenv("SKIP_USENIX_SCRAPE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
     results = {}
-    sess = _get_session()
+    manual = _load_manual_committees()
+    sess = None if skip_scrape else _get_session()
 
     for conf_year_str, _area in conferences_needed.items():
         m = re.match(r"^([a-zA-Z]+)(\d{4})$", conf_year_str)
@@ -885,25 +892,27 @@ def get_alternative_committees(conferences_needed):
 
         committee = None
 
-        # Try USENIX website
-        if conf in USENIX_CONF_SLUGS:
-            committee = scrape_usenix_committee(conf, year, session=sess)
+        if not skip_scrape:
+            # Try USENIX website
+            if conf in USENIX_CONF_SLUGS:
+                committee = scrape_usenix_committee(conf, year, session=sess)
 
-        # Try CHES website
-        elif conf == "ches":
-            committee = scrape_ches_committee(year, session=sess)
+            # Try CHES website
+            elif conf == "ches":
+                committee = scrape_ches_committee(year, session=sess)
 
-        # Try PETS website
-        elif conf == "pets":
-            committee = scrape_pets_committee(year, session=sess)
+            # Try PETS website
+            elif conf == "pets":
+                committee = scrape_pets_committee(year, session=sess)
 
-        # Try ACSAC website
-        elif conf == "acsac":
-            committee = scrape_acsac_committee(year, session=sess)
+            # Try ACSAC website
+            elif conf == "acsac":
+                committee = scrape_acsac_committee(year, session=sess)
+        else:
+            logger.info(f"  Skipping live scrape for {conf_year_str} (SKIP_USENIX_SCRAPE set)")
 
         # Fallback: manual/static data (e.g. from proceedings front matter)
         if not committee:
-            manual = _load_manual_committees()
             committee = manual.get(conf_year_str)
 
         if committee and len(committee) > 0:
