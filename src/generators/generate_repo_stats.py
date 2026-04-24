@@ -483,7 +483,9 @@ def main():
                 abc = yaml.safe_load(f) or []
             for c in abc:
                 area_lookup[c.get("name", "")] = c.get("category", "")
-        yearly_by_year = defaultdict(lambda: {"all": defaultdict(list), "systems": defaultdict(list), "security": defaultdict(list)})
+        yearly_by_year = defaultdict(
+            lambda: {"all": defaultdict(list), "systems": defaultdict(list), "security": defaultdict(list)}
+        )
         for cs in conf_stats:
             area = area_lookup.get(cs["name"], _conf_area(cs["name"]))
             for yr_data in cs.get("years", []):
@@ -491,7 +493,7 @@ def main():
                 repos = yr_data.get("github_repos", 0)
                 avg_s = yr_data.get("avg_stars", 0)
                 avg_f = yr_data.get("avg_forks", 0)
-                for bucket in (["all", area] if area in ("systems", "security") else ["all"]):
+                for bucket in ["all", area] if area in ("systems", "security") else ["all"]:
                     yearly_by_year[yr][bucket]["repos_list"].append(repos)
                     yearly_by_year[yr][bucket]["stars_list"].append(avg_s)
                     yearly_by_year[yr][bucket]["forks_list"].append(avg_f)

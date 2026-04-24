@@ -202,24 +202,72 @@ def cached_github_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
     return result
 
 
+def _resolve_zenodo_record_id(url: str) -> str | None:
+    """Extract a numeric Zenodo record ID from various URL formats.
+
+    Handles: /records/ID, /record/ID, /uploads/ID, /doi/10.5281/zenodo.ID,
+    doi.org/10.5281/zenodo.ID, and bare zenodo.ID fallback.
+    Returns None for unparseable URLs (e.g. /badge/ links).
+    """
+    import re
+
+    if "/records/" in url:
+        rec = url.split("/records/")[-1]
+    elif "/record/" in url:
+        rec = url.split("/record/")[-1]
+    elif "/uploads/" in url:
+        rec = url.split("/uploads/")[-1]
+    elif "/doi/10.5281/zenodo." in url:
+        rec = url.split("/doi/10.5281/zenodo.")[-1]
+    elif "doi.org/10.5281/zenodo." in url:
+        rec = url.split("zenodo.")[-1]
+    elif "/badge/" in url:
+        return None
+    elif "zenodo." in url:
+        rec = url.split("zenodo.")[-1]
+    else:
+        return None
+
+    # Strip fragments, query strings, trailing slashes, path suffixes
+    rec = rec.split("#")[0].split("?")[0].strip("/")
+    # Take only the leading numeric part (e.g. "1234567/files/..." → "1234567")
+    m = re.match(r"(\d+)", rec)
+    return m.group(1) if m else None
+
+
+def _resolve_zenodo_doi(url: str) -> str | None:
+    """Follow a DOI redirect to find the canonical Zenodo record ID.
+
+    Concept DOIs (e.g. zenodo.15530592) redirect to the latest version
+    (e.g. zenodo.org/records/15530593). The API returns 410 for the
+    concept ID, so we need the resolved one.
+    """
+    try:
+        resp = _session.head(url, allow_redirects=True, timeout=10)
+        final = resp.url
+        if "/records/" in final:
+            rec = final.split("/records/")[-1].split("?")[0].split("#")[0].strip("/")
+            if rec.isdigit():
+                return rec
+        if "/record/" in final:
+            rec = final.split("/record/")[-1].split("?")[0].split("#")[0].strip("/")
+            if rec.isdigit():
+                return rec
+    except requests.RequestException:
+        pass
+    return None
+
+
 def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
     """Fetch Zenodo record stats with caching and 429 retry."""
     cached = _read_cache(CACHE_DIR, url, ttl=ttl, namespace="zenodo_stats")
     if cached is not _MISSING:
         return cached
 
-    if "/records/" in url:
-        rec = url.split("/records/")[-1]
-    elif "/record/" in url:
-        rec = url.split("/record/")[-1]
-    elif "zenodo." in url:
-        rec = url.split("zenodo.")[-1]
-    else:
+    rec = _resolve_zenodo_record_id(url)
+    if rec is None:
         logger.info(f"  Could not parse Zenodo URL {url}")
         return None
-
-    # Strip fragments (#...) and query strings (?...)
-    rec = rec.split("#")[0].split("?")[0].strip("/")
 
     result = None
     try:
@@ -240,6 +288,15 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
                 wait = max(retry_after, 2 ** (attempt + 1))  # exponential backoff: 2, 4, 8s
                 logger.info(f"  Zenodo 429 for {url}, waiting {wait}s (attempt {attempt + 1}/4)")
                 time.sleep(wait)
+            elif resp.status_code in (404, 410):
+                # Concept DOI or superseded version — resolve via redirect
+                resolved = _resolve_zenodo_doi(url)
+                if resolved and resolved != rec:
+                    logger.info(f"  Zenodo {resp.status_code} for record {rec}, resolved DOI to {resolved}")
+                    rec = resolved
+                    continue  # retry with the resolved ID
+                logger.info(f"  Could not collect Zenodo stats for {url} (HTTP {resp.status_code})")
+                break
             else:
                 logger.info(f"  Could not collect Zenodo stats for {url} (HTTP {resp.status_code})")
                 break
