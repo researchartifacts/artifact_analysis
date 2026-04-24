@@ -471,6 +471,55 @@ def main():
             json.dump(aggregated.get("all_github_repos", []), f, indent=2)
         logger.info(f"Written per-repo detail ({len(aggregated.get('all_github_repos', []))} repos) to {detail_path}")
 
+        # Write repo_stats_yearly.json — per-year stats split by area (all/systems/security)
+        # Used by website repo_stats pages as a downloadable data file
+        yearly_path = os.path.join(assets_dir, "repo_stats_yearly.json")
+        conf_stats = aggregated.get("by_conference", [])
+        # Build area lookup from artifacts_by_conference if available
+        abc_path = os.path.join(data_dir, "artifacts_by_conference.yml")
+        area_lookup = {}
+        if os.path.exists(abc_path):
+            with open(abc_path, "r") as f:
+                abc = yaml.safe_load(f) or []
+            for c in abc:
+                area_lookup[c.get("name", "")] = c.get("category", "")
+        yearly_by_year = defaultdict(lambda: {"all": defaultdict(list), "systems": defaultdict(list), "security": defaultdict(list)})
+        for cs in conf_stats:
+            area = area_lookup.get(cs["name"], _conf_area(cs["name"]))
+            for yr_data in cs.get("years", []):
+                yr = yr_data["year"]
+                repos = yr_data.get("github_repos", 0)
+                avg_s = yr_data.get("avg_stars", 0)
+                avg_f = yr_data.get("avg_forks", 0)
+                for bucket in (["all", area] if area in ("systems", "security") else ["all"]):
+                    yearly_by_year[yr][bucket]["repos_list"].append(repos)
+                    yearly_by_year[yr][bucket]["stars_list"].append(avg_s)
+                    yearly_by_year[yr][bucket]["forks_list"].append(avg_f)
+        yearly_json = []
+        for yr in sorted(yearly_by_year.keys()):
+            entry = {"year": yr}
+            for bucket in ("all", "systems", "security"):
+                rl = yearly_by_year[yr][bucket]["repos_list"]
+                sl = yearly_by_year[yr][bucket]["stars_list"]
+                fl = yearly_by_year[yr][bucket]["forks_list"]
+                if rl:
+                    total_repos = sum(rl)
+                    total_stars = sum(r * s for r, s in zip(rl, sl))
+                    total_forks = sum(r * f for r, f in zip(rl, fl))
+                    entry[bucket] = {
+                        "repos": total_repos,
+                        "avg_stars": round(total_stars / total_repos, 1) if total_repos else 0,
+                        "avg_forks": round(total_forks / total_repos, 1) if total_repos else 0,
+                        "min_stars": round(min(sl), 1),
+                        "max_stars": round(max(sl), 1),
+                        "min_forks": round(min(fl), 1),
+                        "max_forks": round(max(fl), 1),
+                    }
+            yearly_json.append(entry)
+        with open(yearly_path, "w") as f:
+            json.dump(yearly_json, f, indent=2)
+        logger.info(f"Written yearly stats ({len(yearly_json)} years) to {yearly_path}")
+
         # ---- Historical time-series tracking ----
         # Append a dated snapshot for each fetched artifact so we can track
         # stars/forks/views/downloads over time across monthly runs.

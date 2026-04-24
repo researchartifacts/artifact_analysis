@@ -117,10 +117,10 @@ export PYTHONUNBUFFERED=1
 LOGFILE="$LOG_DIR/last_pipeline.log"
 exec > >(tee "$LOGFILE") 2>&1
 
-echo "[1/13] Checking DBLP freshness..."
+echo "[1/14] Checking DBLP freshness..."
 "$SCRIPTS_DIR/download_dblp.sh" --auto
 
-echo "[1b/13] Extracting DBLP lookup data..."
+echo "[1b/14] Extracting DBLP lookup data..."
 if [ -f "$DBLP_FILE" ]; then
     $PYTHON -m src.utils.dblp_extract --dblp_file "$DBLP_FILE" \
         || { echo "⚠️  DBLP extraction failed"; }
@@ -128,19 +128,19 @@ else
     echo "⚠️  Skipped ($DBLP_FILE not found)"
 fi
 
-echo "[2/13] Generating statistics (sysartifacts + secartifacts + USENIX)..."
+echo "[2/14] Generating statistics (sysartifacts + secartifacts + USENIX)..."
 $PYTHON -m src.generators.generate_statistics --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "❌ Statistics failed"; exit 1; }
 
-echo "[3/13] Generating repository statistics (stars, forks, etc.)..."
+echo "[3/14] Generating repository statistics (stars, forks, etc.)..."
 $PYTHON -m src.generators.generate_repo_stats --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Repository stats failed (may need API access)"; }
 
-echo "[3b/13] Generating artifact availability (URL liveness)..."
+echo "[3b/14] Generating artifact availability (URL liveness)..."
 $PYTHON -m src.generators.generate_artifact_availability --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Artifact availability check failed (may need network access)"; }
 
-echo "[3c/13] Generating AE participation statistics (DBLP paper counts)..."
+echo "[3c/14] Generating AE participation statistics (DBLP paper counts)..."
 if [ -f "$DBLP_FILE" ]; then
     $PYTHON -m src.generators.generate_participation_stats \
         --dblp_file "$DBLP_FILE" --output_dir "$OUTPUT_DIR" \
@@ -149,18 +149,18 @@ else
     echo "⚠️  Skipped ($DBLP_FILE not found)"
 fi
 
-echo "[4/13] Artifact citation stats — SKIPPED (disabled by default)."
+echo "[4/14] Artifact citation stats — SKIPPED (disabled by default)."
 echo "       OpenAlex citation counts for artifact DOIs are unreliable."
 echo "       All reported citations were false positives or self-citations."
 echo "       To re-enable: pass --enable-citations to generate_artifact_citations."
 # $PYTHON -m src.generators.generate_artifact_citations --data_dir "$OUTPUT_DIR" --enable-citations \
 #     || { echo "⚠️  Artifact citations failed (may need network access)"; }
 
-echo "[5/13] Cited artifacts lists — SKIPPED (no citation data)."
+echo "[5/14] Cited artifacts lists — SKIPPED (no citation data)."
 # $PYTHON -m src.generators.generate_cited_artifacts_list --data_dir "$OUTPUT_DIR" \
 #     || { echo "⚠️  Cited artifacts list generation failed"; }
 
-echo "[6/13] Generating author statistics..."
+echo "[6/14] Generating author statistics..."
 if [ -f "$DBLP_FILE" ]; then
     $PYTHON -m src.generators.generate_author_stats \
         --dblp_file "$DBLP_FILE" --data_dir "$OUTPUT_DIR" --output_dir "$OUTPUT_DIR" \
@@ -169,33 +169,37 @@ else
     echo "⚠️  Skipped ($DBLP_FILE not found)"
 fi
 
-echo "[7/13] Generating per-area author data..."
+echo "[7/14] Generating per-area author data..."
 $PYTHON -m src.generators.generate_area_authors --data_dir "$OUTPUT_DIR" \
     || { echo "❌ Area author generation failed"; exit 1; }
 
-echo "[8/13] Generating committee statistics..."
+echo "[8/14] Generating committee statistics..."
 $PYTHON -m src.generators.generate_committee_stats --conf_regex "$CONF_REGEX" --output_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Committee statistics failed (may need network access)"; }
 
-echo "[9/13] Generating combined rankings..."
+echo "[9/14] Generating combined rankings..."
 $PYTHON -m src.generators.generate_combined_rankings --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Combined rankings failed"; }
 
-echo "[10/13] Generating institution rankings..."
+echo "[10/14] Generating institution rankings..."
 $PYTHON -m src.generators.generate_institution_rankings --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Institution rankings failed"; }
 
-echo "[11/13] Generating author profiles..."
+echo "[11/14] Generating author profiles..."
 $PYTHON -m src.generators.generate_author_profiles --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Author profiles failed"; }
 
-echo "[12/13] Generating search data..."
+echo "[12/14] Generating search data..."
 $PYTHON -m src.generators.generate_search_data --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Search data generation failed"; }
 
-echo "[13/13] Updating ranking history snapshots..."
+echo "[13/14] Updating ranking history snapshots..."
 $PYTHON -m src.generators.generate_ranking_history --data_dir "$OUTPUT_DIR" \
     || { echo "⚠️  Ranking history update failed"; }
+
+echo "[14/14] Generating visualizations (SVG charts)..."
+$PYTHON -m src.generators.generate_visualizations --data_dir "$OUTPUT_DIR" \
+    || { echo "⚠️  Visualization generation failed"; }
 
 echo "✅ Pipeline complete! Output in $OUTPUT_DIR"
 

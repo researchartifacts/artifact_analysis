@@ -125,6 +125,13 @@ jobs:
           cd reprodb-pipeline
           python -m src.generators.generate_area_authors --data_dir ../website
       
+      - name: Generate committee statistics
+        run: |
+          cd reprodb-pipeline
+          python -m src.generators.generate_committee_stats \
+            --conf_regex '.*20[12][0-9]' \
+            --output_dir ../website || echo "⚠️ Committee statistics failed"
+
       - name: Generate combined rankings
         run: |
           cd reprodb-pipeline
@@ -149,7 +156,19 @@ jobs:
         run: |
           cd reprodb-pipeline
           python -m src.generators.generate_ranking_history --data_dir ../website
-      
+
+      - name: Generate artifact availability
+        run: |
+          cd reprodb-pipeline
+          python -m src.generators.generate_artifact_availability \
+            --conf_regex '.*20[12][0-9]' \
+            --output_dir ../website || echo "⚠️ Artifact availability check failed"
+
+      - name: Generate visualizations
+        run: |
+          cd reprodb-pipeline
+          python -m src.generators.generate_visualizations --data_dir ../website || echo "⚠️ Visualization generation failed"
+
       - name: Verify generated files
         run: |
           echo "Checking generated files..."
