@@ -16,7 +16,7 @@ import os
 import re
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -313,7 +313,7 @@ def aggregate_stats(all_stats):
             }
         )
 
-    overall["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
+    overall["last_updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     # Per-repo detail: all GitHub entries with individual star/fork counts
     all_github_detail = []
@@ -532,7 +532,7 @@ def main():
         # ---- Historical time-series tracking ----
         # Append a dated snapshot for each fetched artifact so we can track
         # stars/forks/views/downloads over time across monthly runs.
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         history_path = os.path.join(assets_dir, "repo_stats_history.json")
 
         # Load existing history
