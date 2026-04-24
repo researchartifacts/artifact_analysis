@@ -56,6 +56,60 @@ def _get_session():
     return create_session()
 
 
+# ── Cached HTTP fetch for committee scraping ────────────────────────────────
+# Uses the shared disk cache (src/.cache/) so that scraped HTML persists
+# across CI runs.  When *cache_only* is True (SKIP_USENIX_SCRAPE mode),
+# no live HTTP requests are made — only cached responses are returned.
+# This means the first full run populates the cache and all subsequent
+# CI runs re-use it, eliminating the need for live scraping entirely.
+
+_SCRAPE_CACHE_DIR = str(Path(__file__).resolve().parent.parent / ".cache")
+# Committee pages rarely change — 90-day TTL.
+_SCRAPE_CACHE_TTL = 90 * 24 * 3600
+
+
+def _cached_fetch(url, session=None, cache_only=False, timeout=30):
+    """Fetch *url* with disk-cache backing.
+
+    Returns the response text (str) on success, or ``None`` on failure / 404.
+
+    Parameters
+    ----------
+    url : str
+        URL to fetch.
+    session : requests.Session, optional
+        Reusable session.  Created on demand if not provided.
+    cache_only : bool
+        If True, only return data already in the cache — never make a live
+        HTTP request.  Used when ``SKIP_USENIX_SCRAPE`` is set.
+    timeout : int
+        HTTP timeout in seconds.
+    """
+    from src.utils.cache import _MISSING, read_cache, write_cache
+
+    cached = read_cache(_SCRAPE_CACHE_DIR, url, ttl=_SCRAPE_CACHE_TTL, namespace="committee_scrape")
+    if cached is not _MISSING:
+        return cached  # may be str (success) or None (cached 404)
+
+    if cache_only:
+        return None  # not in cache and live fetch disabled
+
+    sess = session or _get_session()
+    try:
+        resp = sess.get(url, timeout=timeout)
+        if resp.status_code == 404:
+            # Cache the 404 so we don't retry every run (short TTL: 7 days)
+            write_cache(_SCRAPE_CACHE_DIR, url, None, namespace="committee_scrape")
+            return None
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        logger.warning(f"  Failed to fetch {url}: {e}")
+        return None
+
+    write_cache(_SCRAPE_CACHE_DIR, url, resp.text, namespace="committee_scrape")
+    return resp.text
+
+
 def _parse_usenix_views_rows(heading):
     """Parse committee from newer USENIX format using views-row divs.
 
@@ -256,7 +310,7 @@ def _parse_usenix_cochairs_html(soup):
     return members
 
 
-def scrape_usenix_committee(conference, year, session=None):
+def scrape_usenix_committee(conference, year, session=None, cache_only=False):
     """Scrape AE committee from a USENIX conference call-for-artifacts page.
 
     Parameters
@@ -266,6 +320,8 @@ def scrape_usenix_committee(conference, year, session=None):
     year : int
         4-digit year
     session : requests.Session, optional
+    cache_only : bool
+        If True, only return data from the disk cache.
 
     Returns
     -------
@@ -278,17 +334,11 @@ def scrape_usenix_committee(conference, year, session=None):
     yy = str(year)[2:]  # e.g. 2024 -> "24"
     url = f"{BASE_USENIX}/conference/{slug}{yy}/call-for-artifacts"
 
-    sess = session or _get_session()
-    try:
-        resp = sess.get(url, timeout=30)
-        if resp.status_code == 404:
-            return None
-        resp.raise_for_status()
-    except requests.RequestException as e:
-        logger.warning(f"  Failed to fetch {url}: {e}")
+    html = _cached_fetch(url, session=session, cache_only=cache_only)
+    if html is None:
         return None
 
-    soup = BeautifulSoup(resp.text, "html.parser")
+    soup = BeautifulSoup(html, "html.parser")
 
     # Parse co-chairs and regular committee members
     chairs = _parse_usenix_cochairs_html(soup)
@@ -396,7 +446,7 @@ def _scrape_ches_members_html(soup):
     return members
 
 
-def scrape_ches_committee(year, session=None):
+def scrape_ches_committee(year, session=None, cache_only=False):
     """Scrape AE committee from the CHES website.
 
     Members are fetched from the JSON API
@@ -408,16 +458,17 @@ def scrape_ches_committee(year, session=None):
 
     Returns list of {name, affiliation, role} dicts, or None if not found.
     """
-    sess = session or _get_session()
     members = []
     json_chairs = []
 
     # 1. Try JSON API for members (and chairs when available)
     json_url = f"https://ches.iacr.org/{year}/json/artifact.json"
-    try:
-        resp = sess.get(json_url, timeout=30)
-        if resp.status_code == 200:
-            data = resp.json()
+    json_text = _cached_fetch(json_url, session=session, cache_only=cache_only)
+    if json_text is not None:
+        try:
+            import json as _json
+
+            data = _json.loads(json_text)
             for entry in data.get("committee", []):
                 name = re.sub(r"\s+", " ", entry.get("name", "")).strip()
                 affiliation = re.sub(r"\s+", " ", entry.get("affiliation", "")).strip()
@@ -436,40 +487,37 @@ def scrape_ches_committee(year, session=None):
                 affiliation = re.sub(r"\s+", " ", entry.get("affiliation", "")).strip()
                 if name and len(name) > 1:
                     json_chairs.append({"name": name, "affiliation": affiliation, "role": "chair"})
-    except (requests.RequestException, ValueError, KeyError):
-        logger.warning("Failed to fetch/parse CHES committee JSON, skipping JSON source")
+        except (ValueError, KeyError):
+            logger.warning("Failed to parse CHES committee JSON, skipping JSON source")
 
     # 2. Fetch HTML page for chairs (and fallback members if JSON failed)
     html_url = f"https://ches.iacr.org/{year}/artifacts.php"
-    try:
-        resp = sess.get(html_url, timeout=30)
-        if resp.status_code == 200:
-            soup = BeautifulSoup(resp.text, "html.parser")
+    html_text = _cached_fetch(html_url, session=session, cache_only=cache_only)
+    if html_text is not None:
+        soup = BeautifulSoup(html_text, "html.parser")
 
-            # Parse chairs from HTML (fallback when JSON has no chair info)
-            html_chairs = _scrape_ches_chairs_html(soup)
+        # Parse chairs from HTML (fallback when JSON has no chair info)
+        html_chairs = _scrape_ches_chairs_html(soup)
 
-            # If JSON didn't return members, try HTML fallback (CHES 2022)
-            if not members:
-                members = _scrape_ches_members_html(soup)
+        # If JSON didn't return members, try HTML fallback (CHES 2022)
+        if not members:
+            members = _scrape_ches_members_html(soup)
 
-            # Combine: JSON chairs > HTML chairs > members (dedup by name)
-            all_members = json_chairs + html_chairs + members
-            seen = set()
-            deduped = []
-            for m in all_members:
-                key = m["name"].lower()
-                if key not in seen:
-                    seen.add(key)
-                    deduped.append(m)
+        # Combine: JSON chairs > HTML chairs > members (dedup by name)
+        all_members = json_chairs + html_chairs + members
+        seen = set()
+        deduped = []
+        for m in all_members:
+            key = m["name"].lower()
+            if key not in seen:
+                seen.add(key)
+                deduped.append(m)
 
-            if deduped:
-                chair_count = sum(1 for m in deduped if m["role"] == "chair")
-                member_count = len(deduped) - chair_count
-                logger.info(f"  CHES: Found {member_count} members + {chair_count} chair(s) for ches{year}")
-            return deduped if deduped else None
-    except requests.RequestException as e:
-        logger.warning(f"  Failed to fetch {html_url}: {e}")
+        if deduped:
+            chair_count = sum(1 for m in deduped if m["role"] == "chair")
+            member_count = len(deduped) - chair_count
+            logger.info(f"  CHES: Found {member_count} members + {chair_count} chair(s) for ches{year}")
+        return deduped if deduped else None
 
     # If only JSON data was found (HTML failed), return those
     combined = json_chairs + members
@@ -487,7 +535,7 @@ def scrape_ches_committee(year, session=None):
 PETS_KNOWN_YEARS = range(2020, 2027)
 
 
-def scrape_pets_committee(year, session=None):
+def scrape_pets_committee(year, session=None, cache_only=False):
     """Scrape artifact review committee from PETS/PoPETs website.
 
     PETS publishes ARC on: petsymposium.org/cfp{YY}.php
@@ -500,18 +548,12 @@ def scrape_pets_committee(year, session=None):
     """
     yy = str(year)[2:]
     url = f"https://petsymposium.org/cfp{yy}.php"
-    sess = session or _get_session()
 
-    try:
-        resp = sess.get(url, timeout=30)
-        if resp.status_code == 404:
-            return None
-        resp.raise_for_status()
-    except requests.RequestException as e:
-        logger.warning(f"  Failed to fetch {url}: {e}")
+    html = _cached_fetch(url, session=session, cache_only=cache_only)
+    if html is None:
         return None
 
-    soup = BeautifulSoup(resp.text, "html.parser")
+    soup = BeautifulSoup(html, "html.parser")
     members = []
 
     # Find the <dt> element containing "Artifact Review Committee"
@@ -776,7 +818,7 @@ def _parse_acsac_flat_members(soup, chairs):
     return members
 
 
-def scrape_acsac_committee(year, session=None):
+def scrape_acsac_committee(year, session=None, cache_only=False):
     """Scrape AE committee from the ACSAC website.
 
     ACSAC publishes artifact committee data at two URL patterns:
@@ -785,8 +827,6 @@ def scrape_acsac_committee(year, session=None):
 
     Returns list of {name, affiliation, role} dicts, or None if not found.
     """
-    sess = session or _get_session()
-
     # Try both URL patterns (slug changed from singular to plural in 2023)
     urls = [
         f"https://www.acsac.org/{year}/committees/artifacts/",
@@ -795,15 +835,10 @@ def scrape_acsac_committee(year, session=None):
 
     soup = None
     for url in urls:
-        try:
-            resp = sess.get(url, timeout=30)
-            if resp.status_code == 404:
-                continue
-            resp.raise_for_status()
-            soup = BeautifulSoup(resp.text, "html.parser")
+        html = _cached_fetch(url, session=session, cache_only=cache_only)
+        if html is not None:
+            soup = BeautifulSoup(html, "html.parser")
             break
-        except requests.RequestException:
-            continue
 
     if soup is None:
         logger.info("  ACSAC: No committee page found for acsac%d", year)
@@ -874,14 +909,17 @@ def get_alternative_committees(conferences_needed):
     -------
     dict of {conf_year_str: [{name, affiliation}, ...]}
     """
-    skip_scrape = os.getenv("SKIP_USENIX_SCRAPE", "").strip().lower() in {
+    cache_only = os.getenv("SKIP_USENIX_SCRAPE", "").strip().lower() in {
         "1",
         "true",
         "yes",
     }
     results = {}
     manual = _load_manual_committees()
-    sess = None if skip_scrape else _get_session()
+    sess = None if cache_only else _get_session()
+
+    if cache_only:
+        logger.info("  SKIP_USENIX_SCRAPE set — using cached scraping results only (no live HTTP)")
 
     for conf_year_str, _area in conferences_needed.items():
         m = re.match(r"^([a-zA-Z]+)(\d{4})$", conf_year_str)
@@ -892,24 +930,15 @@ def get_alternative_committees(conferences_needed):
 
         committee = None
 
-        if not skip_scrape:
-            # Try USENIX website
-            if conf in USENIX_CONF_SLUGS:
-                committee = scrape_usenix_committee(conf, year, session=sess)
-
-            # Try CHES website
-            elif conf == "ches":
-                committee = scrape_ches_committee(year, session=sess)
-
-            # Try PETS website
-            elif conf == "pets":
-                committee = scrape_pets_committee(year, session=sess)
-
-            # Try ACSAC website
-            elif conf == "acsac":
-                committee = scrape_acsac_committee(year, session=sess)
-        else:
-            logger.info(f"  Skipping live scrape for {conf_year_str} (SKIP_USENIX_SCRAPE set)")
+        # Try web scraper (uses disk cache; cache_only=True means no live HTTP)
+        if conf in USENIX_CONF_SLUGS:
+            committee = scrape_usenix_committee(conf, year, session=sess, cache_only=cache_only)
+        elif conf == "ches":
+            committee = scrape_ches_committee(year, session=sess, cache_only=cache_only)
+        elif conf == "pets":
+            committee = scrape_pets_committee(year, session=sess, cache_only=cache_only)
+        elif conf == "acsac":
+            committee = scrape_acsac_committee(year, session=sess, cache_only=cache_only)
 
         # Fallback: manual/static data (e.g. from proceedings front matter)
         if not committee:

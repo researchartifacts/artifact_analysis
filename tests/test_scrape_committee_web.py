@@ -1,10 +1,25 @@
 """Tests for committee web scrapers (CHES, ACSAC, PETS)."""
 
-from unittest.mock import MagicMock
+import json
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from src.scrapers.scrape_committee_web import (
     scrape_ches_committee,
 )
+from src.utils.cache import _MISSING
+
+
+@pytest.fixture(autouse=True)
+def _no_disk_cache():
+    """Prevent disk cache from interfering between tests."""
+    with (
+        patch("src.utils.cache.read_cache", return_value=_MISSING),
+        patch("src.utils.cache.write_cache"),
+    ):
+        yield
+
 
 # ── CHES JSON: artifact_chairs field (2025 format) ──────────────────────────
 
@@ -18,6 +33,7 @@ def _mock_session(json_data=None, html_text="", json_status=200, html_status=200
         if url.endswith(".json"):
             resp.status_code = json_status
             resp.json.return_value = json_data or {}
+            resp.text = json.dumps(json_data or {})
             resp.raise_for_status = MagicMock()
         else:
             resp.status_code = html_status

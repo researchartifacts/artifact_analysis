@@ -29,16 +29,10 @@ from src.generators.generate_combined_rankings import _normalize_affiliation
 from src.scrapers.parse_committee_md import get_committees
 from src.scrapers.repo_utils import download_file
 from src.scrapers.scrape_committee_web import (
-    ACSAC_KNOWN_YEARS,
-    CHES_KNOWN_YEARS,
-    PETS_KNOWN_YEARS,
-    USENIX_CONF_SLUGS,
-    USENIX_KNOWN_YEARS,
     get_alternative_committees,
 )
 from src.utils.conference import (
     PLACEHOLDER_NAMES,
-    SYSTEMS_CONFS,
     clean_member_name,
 )
 from src.utils.conference import (
@@ -679,33 +673,31 @@ def generate_committee_data(conf_regex, output_dir):
         all_results[cy] = _clean_committee(all_results[cy])
 
     # ── 1b. Supplement with alternative sources ──────────────────────────────
-    #  Identify conferences that are missing or have low-quality data
+    #  Scan ALL conference-years from sysartifacts/secartifacts that are
+    #  missing or have too-few members (< MIN_COMMITTEE_SIZE), and try to
+    #  get their committee data from a web scraper or manual file.
+    #
+    #  This replaces hardcoded *_KNOWN_YEARS lists — any conference-year
+    #  directory in sys/secartifacts is automatically checked.
     logger.info("  Checking for conferences needing alternative sources...")
     conferences_needed = {}
 
-    # Determine which conference-years we expect based on USENIX/CHES/PETS
-    for conf, _slug in USENIX_CONF_SLUGS.items():
-        for year in USENIX_KNOWN_YEARS.get(conf, []):
-            cy = f"{conf}{year}"
-            if re.search(conf_regex, cy):
-                area = "systems" if conf in SYSTEMS_CONFS else "security"
-                if cy not in all_results or not _is_valid_committee(all_results.get(cy)):
-                    conferences_needed[cy] = area
+    # Collect all conference-year directories from both repos
+    from src.scrapers.repo_utils import get_conferences_from_prefix
 
-    for year in CHES_KNOWN_YEARS:
-        cy = f"ches{year}"
-        if re.search(conf_regex, cy) and (cy not in all_results or not _is_valid_committee(all_results.get(cy))):
-            conferences_needed[cy] = "security"
+    all_conf_dirs = set()
+    for prefix in ("sys", "sec"):
+        for entry in get_conferences_from_prefix(prefix) or []:
+            name = entry.get("name", "")
+            if re.search(conf_regex, name):
+                all_conf_dirs.add(name)
 
-    for year in PETS_KNOWN_YEARS:
-        cy = f"pets{year}"
-        if re.search(conf_regex, cy) and (cy not in all_results or not _is_valid_committee(all_results.get(cy))):
-            conferences_needed[cy] = "security"
-
-    for year in ACSAC_KNOWN_YEARS:
-        cy = f"acsac{year}"
-        if re.search(conf_regex, cy) and (cy not in all_results or not _is_valid_committee(all_results.get(cy))):
-            conferences_needed[cy] = "security"
+    # For every conference-year that's missing or invalid, mark as needed
+    for cy in sorted(all_conf_dirs):
+        if cy in all_results and _is_valid_committee(all_results[cy]):
+            continue  # already have good data
+        area = _conf_area(cy)
+        conferences_needed[cy] = area
 
     if conferences_needed:
         logger.info(f"    Need alternative sources for {len(conferences_needed)} conference-years:")
