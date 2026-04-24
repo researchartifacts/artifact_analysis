@@ -1,2416 +1,2698 @@
-# Manual committee data for conferences where the information cannot be
-# scraped from a website (e.g. only published in proceedings front matter).
-#
-# Format:
-#   <conf><year>:
-#     - name: "Full Name"
-#       affiliation: "Institution"
-#       role: chair | member
-#
-# Sources should be documented in comments for provenance.
-
-# ACSAC 2017 — from website (combined committees page):
-# https://www.acsac.org/2017/committees/#artifact
 acsac2017:
-  - name: "Manuel Egele"
-    affiliation: "Boston University"
-    role: chair
-  - name: "Assel Aliyeva"
-    affiliation: "Boston University"
-    role: member
-  - name: "Priyam Biswas"
-    affiliation: "Purdue"
-    role: member
-  - name: "William Blair"
-    affiliation: "Boston University"
-    role: member
-  - name: "Matthew R Cole"
-    affiliation: "Binghamton"
-    role: member
-  - name: "Hugo Gascon"
-    affiliation: "TU Braunschweig"
-    role: member
-  - name: "Rasoul Jahanshahi"
-    affiliation: "Boston University"
-    role: member
-  - name: "Moritz Lipp"
-    affiliation: "TU Graz"
-    role: member
-  - name: "Derrick McKee"
-    affiliation: "Purdue"
-    role: member
-  - name: "Zhenyu Ning"
-    affiliation: "Wayne State"
-    role: member
-  - name: "Nguyen Phong Hoang"
-    affiliation: "Stony Brook"
-    role: member
-  - name: "David Pouliot"
-    affiliation: "Portland State University"
-    role: member
-  - name: "Thomas Rosenstatter"
-    affiliation: "Chalmers University"
-    role: member
-  - name: "Michael Schwarz"
-    affiliation: "TU Graz"
-    role: member
-  - name: "Prashast Srivastava"
-    affiliation: "Purdue"
-    role: member
-  - name: "Christian Wressnegger"
-    affiliation: "TU Braunschweig"
-    role: member
-
-# ACSAC 2018 — from ACM proceedings front matter:
-# https://dl.acm.org/action/showFmPdf?doi=10.1145/3274694
+- affiliation: Boston University
+  name: Manuel Egele
+  role: chair
+- affiliation: Boston University
+  name: Assel Aliyeva
+  role: member
+- affiliation: Purdue
+  name: Priyam Biswas
+  role: member
+- affiliation: Boston University
+  name: William Blair
+  role: member
+- affiliation: Binghamton
+  name: Matthew R Cole
+  role: member
+- affiliation: TU Braunschweig
+  name: Hugo Gascon
+  role: member
+- affiliation: Boston University
+  name: Rasoul Jahanshahi
+  role: member
+- affiliation: TU Graz
+  name: Moritz Lipp
+  role: member
+- affiliation: Purdue
+  name: Derrick McKee
+  role: member
+- affiliation: Wayne State
+  name: Zhenyu Ning
+  role: member
+- affiliation: Stony Brook
+  name: Nguyen Phong Hoang
+  role: member
+- affiliation: Portland State University
+  name: David Pouliot
+  role: member
+- affiliation: Chalmers University
+  name: Thomas Rosenstatter
+  role: member
+- affiliation: TU Graz
+  name: Michael Schwarz
+  role: member
+- affiliation: Purdue
+  name: Prashast Srivastava
+  role: member
+- affiliation: TU Braunschweig
+  name: Christian Wressnegger
+  role: member
 acsac2018:
-  - name: "Manuel Egele"
-    affiliation: "Boston University"
-    role: chair
-  - name: "Aselya Aliyeva"
-    affiliation: "Boston University"
-    role: member
-  - name: "William Blair"
-    affiliation: "Boston University"
-    role: member
-  - name: "Quan Chen"
-    affiliation: "NC State University"
-    role: member
-  - name: "James Conners"
-    affiliation: "Brigham Young University"
-    role: member
-  - name: "Ali Davanian"
-    affiliation: "UC, Riverside"
-    role: member
-  - name: "Aurore Fass"
-    affiliation: "CISPA Helmholtz Center i.G."
-    role: member
-  - name: "Rasoul Jahanshahi"
-    affiliation: "Boston University"
-    role: member
-  - name: "Gordon Meiser"
-    affiliation: "CISPA Helmholtz Center i.G."
-    role: member
-  - name: "Dario Nisi"
-    affiliation: "Eurecom"
-    role: member
-  - name: "Alexanders Oleinik"
-    affiliation: "Boston University"
-    role: member
-  - name: "Feargus Pendlebury"
-    affiliation: "RHUL"
-    role: member
-  - name: "Fabio Pierazzi"
-    affiliation: "RHUL"
-    role: member
-  - name: "Marcello Pogliani"
-    affiliation: "Politecnico di Milano"
-    role: member
-  - name: "Andrea Possemato"
-    affiliation: "Eurecom"
-    role: member
-  - name: "Zhenxiao Qi"
-    affiliation: "UC Riverside"
-    role: member
-  - name: "Mohammed Rashed"
-    affiliation: "Universidad Carlos III de Madrid"
-    role: member
-  - name: "Shaown Sarker"
-    affiliation: "NC State University"
-    role: member
-  - name: "Mishra Shachee"
-    affiliation: "Stony Brook University"
-    role: member
-  - name: "Irfan Ul Haq"
-    affiliation: "IMDEA Software Institute"
-    role: member
-  - name: "Marius Steffens"
-    affiliation: "CISPA Helmholtz Center i.G."
-    role: member
-  - name: "Binghui Wang"
-    affiliation: "Iowa State University"
-    role: member
-  - name: "Christian Wressnegger"
-    affiliation: "Technische Universität Braunschweig"
-    role: member
-  - name: "Onur Zungur"
-    affiliation: "Boston University"
-    role: member
-
-# ── USENIX conferences (scraped from usenix.org call-for-artifacts pages) ──
-# Cached here because GitHub Actions runners cannot reliably reach usenix.org.
-# To refresh: run `python -m src.scrapers.scrape_committee_web --dump-cache`
-
-# ATC 2025 — https://www.usenix.org/conference/atc25/call-for-artifacts
+- affiliation: Boston University
+  name: Manuel Egele
+  role: chair
+- affiliation: Boston University
+  name: Aselya Aliyeva
+  role: member
+- affiliation: Boston University
+  name: William Blair
+  role: member
+- affiliation: NC State University
+  name: Quan Chen
+  role: member
+- affiliation: Brigham Young University
+  name: James Conners
+  role: member
+- affiliation: UC, Riverside
+  name: Ali Davanian
+  role: member
+- affiliation: CISPA Helmholtz Center i.G.
+  name: Aurore Fass
+  role: member
+- affiliation: Boston University
+  name: Rasoul Jahanshahi
+  role: member
+- affiliation: CISPA Helmholtz Center i.G.
+  name: Gordon Meiser
+  role: member
+- affiliation: Eurecom
+  name: Dario Nisi
+  role: member
+- affiliation: Boston University
+  name: Alexanders Oleinik
+  role: member
+- affiliation: RHUL
+  name: Feargus Pendlebury
+  role: member
+- affiliation: RHUL
+  name: Fabio Pierazzi
+  role: member
+- affiliation: Politecnico di Milano
+  name: Marcello Pogliani
+  role: member
+- affiliation: Eurecom
+  name: Andrea Possemato
+  role: member
+- affiliation: UC Riverside
+  name: Zhenxiao Qi
+  role: member
+- affiliation: Universidad Carlos III de Madrid
+  name: Mohammed Rashed
+  role: member
+- affiliation: NC State University
+  name: Shaown Sarker
+  role: member
+- affiliation: Stony Brook University
+  name: Mishra Shachee
+  role: member
+- affiliation: IMDEA Software Institute
+  name: Irfan Ul Haq
+  role: member
+- affiliation: CISPA Helmholtz Center i.G.
+  name: Marius Steffens
+  role: member
+- affiliation: Iowa State University
+  name: Binghui Wang
+  role: member
+- affiliation: Technische Universität Braunschweig
+  name: Christian Wressnegger
+  role: member
+- affiliation: Boston University
+  name: Onur Zungur
+  role: member
+atc2023: &id001
+- affiliation: The University of Chicago
+  name: Cesar A. Stuardo
+  role: chair
+- affiliation: Huawei Technologies Co.
+  name: Jianyu Jiang
+  role: chair
+- affiliation: Royal Holloway, University of London
+  name: Nathan Rutherford
+  role: chair
+- affiliation: University of North Carolina at Charlotte
+  name: Abdullah Al Raqibul Islam
+  role: member
+- affiliation: University of Utah
+  name: Amit Samanta
+  role: member
+- affiliation: University of Sydney
+  name: Andrei Lebedev
+  role: member
+- affiliation: University of Minnesota, Twin Cities
+  name: Anlan Zhang
+  role: member
+- affiliation: Washington University in St. Louis
+  name: Ao Li
+  role: member
+- affiliation: MIT
+  name: Ariel Szekely
+  role: member
+- affiliation: University of Michigan
+  name: Ayush Goel
+  role: member
+- affiliation: The University of Hong Kong
+  name: Baber Rehman
+  role: member
+- affiliation: UIUC
+  name: Benjamin Reidys
+  role: member
+- affiliation: The Hong Kong University of Science and Technology
+  name: Bowen Zhang
+  role: member
+- affiliation: The Chinese University of Hong Kong, Shenzhen
+  name: Boxi Yu
+  role: member
+- affiliation: The Chinese University of Hong Kong
+  name: Chaokun Chang
+  role: member
+- affiliation: King Abdullah University of Science and Technology
+  name: Chen-Yu Ho
+  role: member
+- affiliation: University of Wisconsin Madison
+  name: Chendong Wang
+  role: member
+- affiliation: The Chinese University of Hong Kong
+  name: Chenxia Han
+  role: member
+- affiliation: University of Cambridge
+  name: Chris Jensen
+  role: member
+- affiliation: UIUC
+  name: Daixuan Li
+  role: member
+- affiliation: INESC-ID
+  name: Daniel Porto
+  role: member
+- affiliation: Meta
+  name: David Ke Hong
+  role: member
+- affiliation: University of California, Irvine
+  name: Dongjoo Seo
+  role: member
+- affiliation: Federal University of Mato Grosso do Sul
+  name: Fabrício B. Carvalho
+  role: member
+- affiliation: University of Massachusetts Amherst
+  name: Fadhil I. Kurnia
+  role: member
+- affiliation: ShanghaiTech University
+  name: Feiran Qin
+  role: member
+- affiliation: Nanyang Technological University
+  name: Gao Wei
+  role: member
+- affiliation: University at Buffalo
+  name: Gaoxiang Liu
+  role: member
+- affiliation: The Institute of Computing Technology, Chinese Academy of Sciences
+  name: Haofeng Li
+  role: member
+- affiliation: University of California, Los Angeles
+  name: Haoran Ma
+  role: member
+- affiliation: ''
+  name: Haoyu Yang
+  role: member
+- affiliation: University of Massachusetts Amherst
+  name: Hongyu Cai
+  role: member
+- affiliation: Cornell University
+  name: Hongzheng Chen
+  role: member
+- affiliation: University of Toronto
+  name: Huangshi Tian
+  role: member
+- affiliation: Stony Brook University
+  name: Ibrahim Umit Akgun
+  role: member
+- affiliation: North Carolina State University
+  name: Imranur Rahman
+  role: member
+- affiliation: University of California, Irvine
+  name: Jessy Ayala
+  role: member
+- affiliation: City University of Hong Kong
+  name: Jiamin Li
+  role: member
+- affiliation: Columbia University
+  name: Jianan Yao
+  role: member
+- affiliation: The University of Hong Kong
+  name: Jiangtao Yu
+  role: member
+- affiliation: Zhengzhou University
+  name: Jiaqi Yao
+  role: member
+- affiliation: EPFL
+  name: Jin Zhang
+  role: member
+- affiliation: University of California, Irvine
+  name: Jing Liu
+  role: member
+- affiliation: UIUC
+  name: Jinghan Sun
+  role: member
+- affiliation: University of California, Riverside
+  name: Jingyao Zhang
+  role: member
+- affiliation: City University of Hong Kong
+  name: Jingzong Li
+  role: member
+- affiliation: Tsinghua University
+  name: Jinjun Peng
+  role: member
+- affiliation: MIT
+  name: Joshua Fried
+  role: member
+- affiliation: University of Pennsylvania
+  name: Karan Newatia
+  role: member
+- affiliation: City University of Hong Kong
+  name: Lei Li
+  role: member
+- affiliation: EPFL
+  name: Lei Yan
+  role: member
+- affiliation: Hong Kong University of Science and Technology
+  name: Lingyun Yang
+  role: member
+- affiliation: University of Chicago
+  name: Martin L. Putra
+  role: member
+- affiliation: Nanyang Technological University
+  name: Meng Zhang
+  role: member
+- affiliation: Huawei
+  name: Michael Giardino
+  role: member
+- affiliation: Shanghai Jiao Tong University
+  name: Mingyu Li
+  role: member
+- affiliation: Tsinghua University
+  name: Minhui Xie
+  role: member
+- affiliation: Huazhong University of Science and Technology
+  name: Qiangyu Pei
+  role: member
+- affiliation: National University of Singapore
+  name: QiaoLing Chen
+  role: member
+- affiliation: Stanford University
+  name: Qizheng Zhang
+  role: member
+- affiliation: Princeton University
+  name: Rui Pan
+  role: member
+- affiliation: ETH Zurich
+  name: Runbin Shi
+  role: member
+- affiliation: Apple
+  name: Satish Kumar
+  role: member
+- affiliation: Imperial College London
+  name: Scofield Zhengqing Liu
+  role: member
+- affiliation: The University of Hong Kong
+  name: Sheng Lyu
+  role: member
+- affiliation: University of California, Los Angeles
+  name: Shi Liu
+  role: member
+- affiliation: UIUC
+  name: Siyuan Chai
+  role: member
+- affiliation: Amazon
+  name: Soumya Smruti Mishra
+  role: member
+- affiliation: Cornell University
+  name: Sowmya Dharanipragada
+  role: member
+- affiliation: National Technical University of Athens
+  name: Stratos Psomadakis
+  role: member
+- affiliation: University of Washington
+  name: Sudheesh Singanamalla
+  role: member
+- affiliation: University of California, Berkeley
+  name: Suyash Gupta
+  role: member
+- affiliation: University of Melbourne
+  name: Tharindu B. Hewage
+  role: member
+- affiliation: University of Virginia
+  name: Tianle Zhong
+  role: member
+- affiliation: University of California, Berkeley
+  name: Tianrui Wei
+  role: member
+- affiliation: Georgia Institute of Technology
+  name: Vaibhav Bhosale
+  role: member
+- affiliation: EPFL
+  name: Vishal Gupta
+  role: member
+- affiliation: EPFL
+  name: Vojtech Aschenbrenner
+  role: member
+- affiliation: The Hong Kong University of Science and Technology
+  name: Wei Chen
+  role: member
+- affiliation: Shanghai Jiao Tong University
+  name: Weihao Cui
+  role: member
+- affiliation: Tsinghua University
+  name: Weilin Zhao
+  role: member
+- affiliation: The University of Hong Kong
+  name: Weiying Hou
+  role: member
+- affiliation: National University of Singapore
+  name: Wentao Huang
+  role: member
+- affiliation: The University of Hong Kong
+  name: Xian Wang
+  role: member
+- affiliation: University of California, Merced
+  name: Xianzhong Ding
+  role: member
+- affiliation: Shanghai Jiao Tong University
+  name: Xiaoxiang Shi
+  role: member
+- affiliation: Shanghai Jiao Tong University
+  name: Xinrui Li
+  role: member
+- affiliation: UIUC
+  name: Xuhao Luo
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Xupeng Miao
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Yi Zhou
+  role: member
+- affiliation: The University of Hong Kong
+  name: Yichao Fu
+  role: member
+- affiliation: University of California, Los Angeles
+  name: Yifan Qiao
+  role: member
+- affiliation: University of California, Santa Barbara
+  name: Yifan Yang
+  role: member
+- affiliation: Stony Brook University
+  name: Yifei Liu
+  role: member
+- affiliation: University of Michigan
+  name: Yile Gu
+  role: member
+- affiliation: University of Cambridge
+  name: Yilei Liang
+  role: member
+- affiliation: Peking University
+  name: Yinmin Zhong
+  role: member
+- affiliation: Shanghai Jiaotong University
+  name: Yixin Song
+  role: member
+- affiliation: University of California, Riverside
+  name: Yizhuo Zhai
+  role: member
+- affiliation: Sun Yat-sen University
+  name: Yongfeng Wang
+  role: member
+- affiliation: City University of Hong Kong
+  name: Yu Liang
+  role: member
+- affiliation: University of California, Santa Barbara
+  name: Yunfeng Li
+  role: member
+- affiliation: Renmin University of China
+  name: Yunhong Ji
+  role: member
+- affiliation: UIUC
+  name: Yuqi Xue
+  role: member
+- affiliation: University of Science and Technology of China
+  name: Zewen Jin
+  role: member
+- affiliation: Microsoft
+  name: Zhipeng Zhao
+  role: member
+- affiliation: Bytedance
+  name: Zhuo Jiang
+  role: member
+- affiliation: University of Washington
+  name: Zihao Ye
+  role: member
+- affiliation: ETH Zurich
+  name: Zu-Ming Jiang
+  role: member
 atc2025:
-  - name: "Vijay Chidambaram"
-    affiliation: "The University of Texas at Austin"
-    role: chair
-  - name: "Alain Tchana"
-    affiliation: "Grenoble INP"
-    role: chair
-  - name: "Ghazal Abdollahi"
-    affiliation: "University of Utah"
-    role: member
-  - name: "Ghadeer Almusaddar"
-    affiliation: "Binghamton University"
-    role: member
-  - name: "Ayush Bansal"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Binong Kiri Bey"
-    affiliation: "Indian Institute of Technology"
-    role: member
-  - name: "Archit Bhatnagar"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Rahul Bothra"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Cláudia Brito"
-    affiliation: "INESC TEC and University of Minho"
-    role: member
-  - name: "Quinn Burke"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Cathy Cai"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Tingjia Cao"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Sarthak Chakraborty"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Hongzheng Chen"
-    affiliation: "Cornell University"
-    role: member
-  - name: "Qixuan Chen"
-    affiliation: "Boston University"
-    role: member
-  - name: "Xiang Chen"
-    affiliation: "Hong Kong University of Science and Technology"
-    role: member
-  - name: "Yi Chen"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Feng Cheng"
-    affiliation: "Duke University"
-    role: member
-  - name: "Georgia Christofidi"
-    affiliation: "IMDEA Software Institute"
-    role: member
-  - name: "Jackson Clark"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Chuanqi Cong"
-    affiliation: "Beihang University"
-    role: member
-  - name: "Guangyang Deng"
-    affiliation: "Xiamen University"
-    role: member
-  - name: "Jiaqi Deng"
-    affiliation: "Georgia Institute of Technology"
-    role: member
-  - name: "Sriram Devata"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Huibing Dong"
-    affiliation: "University of Minnesota"
-    role: member
-  - name: "Juechu Dong"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Chunfeng Du"
-    affiliation: "Zhengzhou University"
-    role: member
-  - name: "Enguang Fan"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Yuan Feng"
-    affiliation: "University of California, Merced"
-    role: member
-  - name: "Shen Fu"
-    affiliation: "University of Science and Technology of China"
-    role: member
-  - name: "Kaihui Gao"
-    affiliation: "Zhongguancun Laboratory"
-    role: member
-  - name: "Xiangyu Gao"
-    affiliation: "University of Washington"
-    role: member
-  - name: "Raja Gond"
-    affiliation: "Microsoft Research"
-    role: member
-  - name: "Jinnan Guo"
-    affiliation: "Imperial College London"
-    role: member
-  - name: "Ke Han"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Wanning He"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Kiran Hombal"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Lana Honcharuk"
-    affiliation: "Crusoe Cloud"
-    role: member
-  - name: "Tony Hong"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Guanzhou Hu"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Hao Hu"
-    affiliation: "Harare Institute of Technology"
-    role: member
-  - name: "Tiancheng Hu"
-    affiliation: "Peking University"
-    role: member
-  - name: "Hao Huang"
-    affiliation: "Harbin Institute of Technology"
-    role: member
-  - name: "Lei Huang"
-    affiliation: "Boston University"
-    role: member
-  - name: "Ryan Huang"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Songlin Huang"
-    affiliation: "The University of Hong Kong"
-    role: member
-  - name: "Yibo Huang"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Malvika Jadhav"
-    affiliation: "University of Florida"
-    role: member
-  - name: "Shashwat Jaiswal"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Yuchen Ji"
-    affiliation: "ShanghaiTech University"
-    role: member
-  - name: "Haitian Jiang"
-    affiliation: "New York University"
-    role: member
-  - name: "Teng \"Sebastian\" Jiang"
-    affiliation: "Columbia University"
-    role: member
-  - name: "Zhihan Jiang"
-    affiliation: "Chinese University of Hong Kong"
-    role: member
-  - name: "Zewen Jin"
-    affiliation: "University of Science and Technology of China"
-    role: member
-  - name: "Sagar Bharadwaj Kalasibail Seetharam"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Rishika Varma Kalidindi"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Saisha Kamat"
-    affiliation: "University of North Carolina at Charlotte"
-    role: member
-  - name: "Ashish Kashinath"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Zhaokang Ke"
-    affiliation: "University of Minnesota"
-    role: member
-  - name: "Jungwoo Kim"
-    affiliation: "Stanford University"
-    role: member
-  - name: "Fadhil Kurnia"
-    affiliation: "University of Massachusetts Amherst"
-    role: member
-  - name: "Borui Li"
-    affiliation: "Southeast University"
-    role: member
-  - name: "Hanchen Li"
-    affiliation: "Stealth Startup and University of California, Berkeley"
-    role: member
-  - name: "Jiansong Li"
-    affiliation: "Li Auto Inc"
-    role: member
-  - name: "Junzhe Li"
-    affiliation: "The University of Hong Kong"
-    role: member
-  - name: "Shengkai Li"
-    affiliation: "University of Chinese Academy of Sciences"
-    role: member
-  - name: "Sijia Li"
-    affiliation: "Virginia Tech"
-    role: member
-  - name: "Tuo Li"
-    affiliation: "Tsinghua University"
-    role: member
-  - name: "Yueying Li"
-    affiliation: "Cornell University"
-    role: member
-  - name: "Yuke Li"
-    affiliation: "University of California, Merced"
-    role: member
-  - name: "Zeyu Li"
-    affiliation: "Hong Kong University of Science and Technology"
-    role: member
-  - name: "Zhifei Li"
-    affiliation: "University of California, Berkeley"
-    role: member
-  - name: "Junxuan Liao"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Georgios Liargkovas"
-    affiliation: "Columbia University"
-    role: member
-  - name: "Changyuan Lin"
-    affiliation: "University of British Columbia"
-    role: member
-  - name: "Jing Liu"
-    affiliation: "Max Planck Institute for Security and Privacy"
-    role: member
-  - name: "Peizhe Liu"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Yiqi Liu"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Jiaheng Lu"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Shouxi Luo"
-    affiliation: "Southwest Jiaotong University"
-    role: member
-  - name: "Yilong Luo"
-    affiliation: "Peking University"
-    role: member
-  - name: "Jeff J. Ma"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Shivani Mehendarge"
-    affiliation: "Amazon"
-    role: member
-  - name: "Deepanjali Mishra"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Farzad Mohammadi"
-    affiliation: "Imperial College London"
-    role: member
-  - name: "Grigoris Ntousakis"
-    affiliation: "Brown University"
-    role: member
-  - name: "João Oliveira"
-    affiliation: "INESC-ID and Instituto Superior Técnico, Universidade de Lisboa"
-    role: member
-  - name: "Nikolaos Pagonas"
-    affiliation: "Columbia University"
-    role: member
-  - name: "Jiaqi Pan"
-    affiliation: "University of Illinois Urbana–Champaign and Tsinghua University"
-    role: member
-  - name: "Lichen Pan"
-    affiliation: "Peking University"
-    role: member
-  - name: "Melissa Z. Pan"
-    affiliation: "University of California, Berkeley"
-    role: member
-  - name: "Yanqi Pan"
-    affiliation: "Harbin Institute of Technology"
-    role: member
-  - name: "Zaifeng Pan"
-    affiliation: "University of California, San Diego"
-    role: member
-  - name: "Santosh Pandey"
-    affiliation: "Rutgers University"
-    role: member
-  - name: "Konstantinos Papaioannou"
-    affiliation: "IMDEA Software Institute"
-    role: member
-  - name: "Michael Paper"
-    affiliation: "Stanford University"
-    role: member
-  - name: "Magdalena Pasternak"
-    affiliation: "University of Florida"
-    role: member
-  - name: "Sibendu Paul"
-    affiliation: "Amazon Prime Video"
-    role: member
-  - name: "Pedro Henrique Penna"
-    affiliation: "Microsoft Research"
-    role: member
-  - name: "Stratos Psomadakis"
-    affiliation: "National Technical University of Athens"
-    role: member
-  - name: "Rohan Puri"
-    affiliation: "Samsung Semiconductor"
-    role: member
-  - name: "Shangshu Qian"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Feiran (Alex) Qin"
-    affiliation: "North Carolina State University"
-    role: member
-  - name: "Suyan Qu"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Vishal Rao"
-    affiliation: "Georgia Institute of Technology"
-    role: member
-  - name: "Siddhant Ray"
-    affiliation: "University of Chicago"
-    role: member
-  - name: "Jonah Rosenblum"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Giannis Roumpos"
-    affiliation: "IMDEA Software Institute"
-    role: member
-  - name: "Amit Samanta"
-    affiliation: "University of Utah"
-    role: member
-  - name: "Srinjoy Sarkar"
-    affiliation: "Indian Institute of Technology"
-    role: member
-  - name: "Aditya Shah"
-    affiliation: "Google"
-    role: member
-  - name: "Shail Shah"
-    affiliation: "Microsoft"
-    role: member
-  - name: "Shazibul Islam Shamim"
-    affiliation: "Kennesaw State University"
-    role: member
-  - name: "Tanvi Sharma"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Xiaoxiang Shi"
-    affiliation: "Shanghai Jiao Tong University"
-    role: member
-  - name: "Sachin Kumar Singh"
-    affiliation: "University of Utah"
-    role: member
-  - name: "Jiansen Song"
-    affiliation: "Chinese Academy of Sciences"
-    role: member
-  - name: "Yuhang Song"
-    affiliation: "Boston University"
-    role: member
-  - name: "Zihe Song"
-    affiliation: "The University of Texas at Dallas"
-    role: member
-  - name: "Cesar A. Stuardo"
-    affiliation: "ByteDance"
-    role: member
-  - name: "Yiming Su"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Qingxiao Sun"
-    affiliation: "China University of Petroleum"
-    role: member
-  - name: "Tong Sun"
-    affiliation: "Zhejiang University"
-    role: member
-  - name: "Xin Tan"
-    affiliation: "Chinese University of Hong Kong"
-    role: member
-  - name: "Syed Salauddin Mohammad Tariq"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Sahil Tyagi"
-    affiliation: "Oak Ridge National Laboratory"
-    role: member
-  - name: "Diogo Vaz"
-    affiliation: "INESC-ID and Instituto Superior Técnico, Universidade de Lisboa"
-    role: member
-  - name: "Alan Wang"
-    affiliation: "Northeastern University"
-    role: member
-  - name: "Ruihong Wang"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Wenlong Wang"
-    affiliation: "University of Minnesota"
-    role: member
-  - name: "Xinkai Wang"
-    affiliation: "Shanghai Jiao Tong University"
-    role: member
-  - name: "Yun Wang"
-    affiliation: "Shanghai Jiao Tong University"
-    role: member
-  - name: "Chiyue Wei"
-    affiliation: "Duke University"
-    role: member
-  - name: "Hengfeng Wei"
-    affiliation: "Nanjing University"
-    role: member
-  - name: "Caeden Whitaker"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Chao Wu"
-    affiliation: "Nanjing University of Science and Technology"
-    role: member
-  - name: "Yanran Wu"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Zeqing Wu"
-    affiliation: "Zhengzhou University"
-    role: member
-  - name: "Ziqiang Wu"
-    affiliation: "Huazhong University of Science and Technology"
-    role: member
-  - name: "Xingyu Xiang"
-    affiliation: "Harvard University"
-    role: member
-  - name: "Shaokang Xie"
-    affiliation: "University of California, Davis"
-    role: member
-  - name: "Yifan Xie"
-    affiliation: "National University of Defense Technology"
-    role: member
-  - name: "Guanglei Xu"
-    affiliation: "Huazhong University of Science and Technology"
-    role: member
-  - name: "Hanchen Xu"
-    affiliation: "Virginia Tech"
-    role: member
-  - name: "Haocheng Xu"
-    affiliation: "University of California, Irvine"
-    role: member
-  - name: "Tianyin Xu"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Kaiwen Xue"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Mingxuan Yang"
-    affiliation: "Imperial College London"
-    role: member
-  - name: "Zhijun Yang"
-    affiliation: "Huazhong University of Science and Technology"
-    role: member
-  - name: "Sheng Yao"
-    affiliation: "Hong Kong University of Science and Technology"
-    role: member
-  - name: "Chenhao Ye"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Jia Yin"
-    affiliation: "Renmin University"
-    role: member
-  - name: "Jinsun Yoo"
-    affiliation: "Georgia Institute of Technology"
-    role: member
-  - name: "Boxi Yu"
-    affiliation: "Chinese University of Hong Kong"
-    role: member
-  - name: "Diman Zad Tootaghaj"
-    affiliation: "Hewlett Packard Labs"
-    role: member
-  - name: "Wahid Uz Zaman"
-    affiliation: "The Pennsylvania State University"
-    role: member
-  - name: "Ioannis Zarkadas"
-    affiliation: "Columbia University"
-    role: member
-  - name: "Junyao Zhang"
-    affiliation: "Duke University"
-    role: member
-  - name: "Siyuan Zhang"
-    affiliation: "Ohio State University"
-    role: member
-  - name: "Songhao Zhang"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Wenhui Zhang"
-    affiliation: "ByteDance"
-    role: member
-  - name: "Xiangqun Zhang"
-    affiliation: "Syracuse University"
-    role: member
-  - name: "Xiao Zhang"
-    affiliation: "The University of Texas at Austin"
-    role: member
-  - name: "Yuanliang Zhang"
-    affiliation: "National University of Defense Technology"
-    role: member
-  - name: "Naiqian Zheng"
-    affiliation: "Peking University"
-    role: member
-  - name: "Xinying Zheng"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Yusheng Zheng"
-    affiliation: "University of California, Santa Cruz"
-    role: member
-  - name: "Shawn Zhong"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Tianle Zhong"
-    affiliation: "University of Virginia"
-    role: member
-  - name: "Yangjie Zhou"
-    affiliation: "National University of Singapore"
-    role: member
-  - name: "Jianian Zhu"
-    affiliation: "Huazhong University of Science and Technology"
-    role: member
-  - name: "Siqi Zhu"
-    affiliation: "Tsinghua University"
-    role: member
-  - name: "Zeying Zhu"
-    affiliation: "University of Maryland"
-    role: member
-  - name: "Xiangyu Zou"
-    affiliation: "Harbin Institute of Technology"
-    role: member
-
-# FAST 2024 — https://www.usenix.org/conference/fast24/call-for-artifacts
+- affiliation: The University of Texas at Austin
+  name: Vijay Chidambaram
+  role: chair
+- affiliation: Grenoble INP
+  name: Alain Tchana
+  role: chair
+- affiliation: University of Utah
+  name: Ghazal Abdollahi
+  role: member
+- affiliation: Binghamton University
+  name: Ghadeer Almusaddar
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Ayush Bansal
+  role: member
+- affiliation: Indian Institute of Technology
+  name: Binong Kiri Bey
+  role: member
+- affiliation: University of Michigan
+  name: Archit Bhatnagar
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Rahul Bothra
+  role: member
+- affiliation: INESC TEC and University of Minho
+  name: Cláudia Brito
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Quinn Burke
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Cathy Cai
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Tingjia Cao
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Sarthak Chakraborty
+  role: member
+- affiliation: Cornell University
+  name: Hongzheng Chen
+  role: member
+- affiliation: Boston University
+  name: Qixuan Chen
+  role: member
+- affiliation: Hong Kong University of Science and Technology
+  name: Xiang Chen
+  role: member
+- affiliation: University of Michigan
+  name: Yi Chen
+  role: member
+- affiliation: Duke University
+  name: Feng Cheng
+  role: member
+- affiliation: IMDEA Software Institute
+  name: Georgia Christofidi
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Jackson Clark
+  role: member
+- affiliation: Beihang University
+  name: Chuanqi Cong
+  role: member
+- affiliation: Xiamen University
+  name: Guangyang Deng
+  role: member
+- affiliation: Georgia Institute of Technology
+  name: Jiaqi Deng
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Sriram Devata
+  role: member
+- affiliation: University of Minnesota
+  name: Huibing Dong
+  role: member
+- affiliation: University of Michigan
+  name: Juechu Dong
+  role: member
+- affiliation: Zhengzhou University
+  name: Chunfeng Du
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Enguang Fan
+  role: member
+- affiliation: University of California, Merced
+  name: Yuan Feng
+  role: member
+- affiliation: University of Science and Technology of China
+  name: Shen Fu
+  role: member
+- affiliation: Zhongguancun Laboratory
+  name: Kaihui Gao
+  role: member
+- affiliation: University of Washington
+  name: Xiangyu Gao
+  role: member
+- affiliation: Microsoft Research
+  name: Raja Gond
+  role: member
+- affiliation: Imperial College London
+  name: Jinnan Guo
+  role: member
+- affiliation: Purdue University
+  name: Ke Han
+  role: member
+- affiliation: University of Michigan
+  name: Wanning He
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Kiran Hombal
+  role: member
+- affiliation: Crusoe Cloud
+  name: Lana Honcharuk
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Tony Hong
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Guanzhou Hu
+  role: member
+- affiliation: Harare Institute of Technology
+  name: Hao Hu
+  role: member
+- affiliation: Peking University
+  name: Tiancheng Hu
+  role: member
+- affiliation: Harbin Institute of Technology
+  name: Hao Huang
+  role: member
+- affiliation: Boston University
+  name: Lei Huang
+  role: member
+- affiliation: University of Michigan
+  name: Ryan Huang
+  role: member
+- affiliation: The University of Hong Kong
+  name: Songlin Huang
+  role: member
+- affiliation: University of Michigan
+  name: Yibo Huang
+  role: member
+- affiliation: University of Florida
+  name: Malvika Jadhav
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Shashwat Jaiswal
+  role: member
+- affiliation: ShanghaiTech University
+  name: Yuchen Ji
+  role: member
+- affiliation: New York University
+  name: Haitian Jiang
+  role: member
+- affiliation: Columbia University
+  name: Teng "Sebastian" Jiang
+  role: member
+- affiliation: Chinese University of Hong Kong
+  name: Zhihan Jiang
+  role: member
+- affiliation: University of Science and Technology of China
+  name: Zewen Jin
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Sagar Bharadwaj Kalasibail Seetharam
+  role: member
+- affiliation: University of Michigan
+  name: Rishika Varma Kalidindi
+  role: member
+- affiliation: University of North Carolina at Charlotte
+  name: Saisha Kamat
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Ashish Kashinath
+  role: member
+- affiliation: University of Minnesota
+  name: Zhaokang Ke
+  role: member
+- affiliation: Stanford University
+  name: Jungwoo Kim
+  role: member
+- affiliation: University of Massachusetts Amherst
+  name: Fadhil Kurnia
+  role: member
+- affiliation: Southeast University
+  name: Borui Li
+  role: member
+- affiliation: Stealth Startup and University of California, Berkeley
+  name: Hanchen Li
+  role: member
+- affiliation: Li Auto Inc
+  name: Jiansong Li
+  role: member
+- affiliation: The University of Hong Kong
+  name: Junzhe Li
+  role: member
+- affiliation: University of Chinese Academy of Sciences
+  name: Shengkai Li
+  role: member
+- affiliation: Virginia Tech
+  name: Sijia Li
+  role: member
+- affiliation: Tsinghua University
+  name: Tuo Li
+  role: member
+- affiliation: Cornell University
+  name: Yueying Li
+  role: member
+- affiliation: University of California, Merced
+  name: Yuke Li
+  role: member
+- affiliation: Hong Kong University of Science and Technology
+  name: Zeyu Li
+  role: member
+- affiliation: University of California, Berkeley
+  name: Zhifei Li
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Junxuan Liao
+  role: member
+- affiliation: Columbia University
+  name: Georgios Liargkovas
+  role: member
+- affiliation: University of British Columbia
+  name: Changyuan Lin
+  role: member
+- affiliation: Max Planck Institute for Security and Privacy
+  name: Jing Liu
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Peizhe Liu
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Yiqi Liu
+  role: member
+- affiliation: University of Michigan
+  name: Jiaheng Lu
+  role: member
+- affiliation: Southwest Jiaotong University
+  name: Shouxi Luo
+  role: member
+- affiliation: Peking University
+  name: Yilong Luo
+  role: member
+- affiliation: University of Michigan
+  name: Jeff J. Ma
+  role: member
+- affiliation: Amazon
+  name: Shivani Mehendarge
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Deepanjali Mishra
+  role: member
+- affiliation: Imperial College London
+  name: Farzad Mohammadi
+  role: member
+- affiliation: Brown University
+  name: Grigoris Ntousakis
+  role: member
+- affiliation: INESC-ID and Instituto Superior Técnico, Universidade de Lisboa
+  name: João Oliveira
+  role: member
+- affiliation: Columbia University
+  name: Nikolaos Pagonas
+  role: member
+- affiliation: University of Illinois Urbana–Champaign and Tsinghua University
+  name: Jiaqi Pan
+  role: member
+- affiliation: Peking University
+  name: Lichen Pan
+  role: member
+- affiliation: University of California, Berkeley
+  name: Melissa Z. Pan
+  role: member
+- affiliation: Harbin Institute of Technology
+  name: Yanqi Pan
+  role: member
+- affiliation: University of California, San Diego
+  name: Zaifeng Pan
+  role: member
+- affiliation: Rutgers University
+  name: Santosh Pandey
+  role: member
+- affiliation: IMDEA Software Institute
+  name: Konstantinos Papaioannou
+  role: member
+- affiliation: Stanford University
+  name: Michael Paper
+  role: member
+- affiliation: University of Florida
+  name: Magdalena Pasternak
+  role: member
+- affiliation: Amazon Prime Video
+  name: Sibendu Paul
+  role: member
+- affiliation: Microsoft Research
+  name: Pedro Henrique Penna
+  role: member
+- affiliation: National Technical University of Athens
+  name: Stratos Psomadakis
+  role: member
+- affiliation: Samsung Semiconductor
+  name: Rohan Puri
+  role: member
+- affiliation: Purdue University
+  name: Shangshu Qian
+  role: member
+- affiliation: North Carolina State University
+  name: Feiran (Alex) Qin
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Suyan Qu
+  role: member
+- affiliation: Georgia Institute of Technology
+  name: Vishal Rao
+  role: member
+- affiliation: University of Chicago
+  name: Siddhant Ray
+  role: member
+- affiliation: University of Michigan
+  name: Jonah Rosenblum
+  role: member
+- affiliation: IMDEA Software Institute
+  name: Giannis Roumpos
+  role: member
+- affiliation: University of Utah
+  name: Amit Samanta
+  role: member
+- affiliation: Indian Institute of Technology
+  name: Srinjoy Sarkar
+  role: member
+- affiliation: Google
+  name: Aditya Shah
+  role: member
+- affiliation: Microsoft
+  name: Shail Shah
+  role: member
+- affiliation: Kennesaw State University
+  name: Shazibul Islam Shamim
+  role: member
+- affiliation: Purdue University
+  name: Tanvi Sharma
+  role: member
+- affiliation: Shanghai Jiao Tong University
+  name: Xiaoxiang Shi
+  role: member
+- affiliation: University of Utah
+  name: Sachin Kumar Singh
+  role: member
+- affiliation: Chinese Academy of Sciences
+  name: Jiansen Song
+  role: member
+- affiliation: Boston University
+  name: Yuhang Song
+  role: member
+- affiliation: The University of Texas at Dallas
+  name: Zihe Song
+  role: member
+- affiliation: ByteDance
+  name: Cesar A. Stuardo
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Yiming Su
+  role: member
+- affiliation: China University of Petroleum
+  name: Qingxiao Sun
+  role: member
+- affiliation: Zhejiang University
+  name: Tong Sun
+  role: member
+- affiliation: Chinese University of Hong Kong
+  name: Xin Tan
+  role: member
+- affiliation: University of Michigan
+  name: Syed Salauddin Mohammad Tariq
+  role: member
+- affiliation: Oak Ridge National Laboratory
+  name: Sahil Tyagi
+  role: member
+- affiliation: INESC-ID and Instituto Superior Técnico, Universidade de Lisboa
+  name: Diogo Vaz
+  role: member
+- affiliation: Northeastern University
+  name: Alan Wang
+  role: member
+- affiliation: Purdue University
+  name: Ruihong Wang
+  role: member
+- affiliation: University of Minnesota
+  name: Wenlong Wang
+  role: member
+- affiliation: Shanghai Jiao Tong University
+  name: Xinkai Wang
+  role: member
+- affiliation: Shanghai Jiao Tong University
+  name: Yun Wang
+  role: member
+- affiliation: Duke University
+  name: Chiyue Wei
+  role: member
+- affiliation: Nanjing University
+  name: Hengfeng Wei
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Caeden Whitaker
+  role: member
+- affiliation: Nanjing University of Science and Technology
+  name: Chao Wu
+  role: member
+- affiliation: Purdue University
+  name: Yanran Wu
+  role: member
+- affiliation: Zhengzhou University
+  name: Zeqing Wu
+  role: member
+- affiliation: Huazhong University of Science and Technology
+  name: Ziqiang Wu
+  role: member
+- affiliation: Harvard University
+  name: Xingyu Xiang
+  role: member
+- affiliation: University of California, Davis
+  name: Shaokang Xie
+  role: member
+- affiliation: National University of Defense Technology
+  name: Yifan Xie
+  role: member
+- affiliation: Huazhong University of Science and Technology
+  name: Guanglei Xu
+  role: member
+- affiliation: Virginia Tech
+  name: Hanchen Xu
+  role: member
+- affiliation: University of California, Irvine
+  name: Haocheng Xu
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Tianyin Xu
+  role: member
+- affiliation: University of Michigan
+  name: Kaiwen Xue
+  role: member
+- affiliation: Imperial College London
+  name: Mingxuan Yang
+  role: member
+- affiliation: Huazhong University of Science and Technology
+  name: Zhijun Yang
+  role: member
+- affiliation: Hong Kong University of Science and Technology
+  name: Sheng Yao
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Chenhao Ye
+  role: member
+- affiliation: Renmin University
+  name: Jia Yin
+  role: member
+- affiliation: Georgia Institute of Technology
+  name: Jinsun Yoo
+  role: member
+- affiliation: Chinese University of Hong Kong
+  name: Boxi Yu
+  role: member
+- affiliation: Hewlett Packard Labs
+  name: Diman Zad Tootaghaj
+  role: member
+- affiliation: The Pennsylvania State University
+  name: Wahid Uz Zaman
+  role: member
+- affiliation: Columbia University
+  name: Ioannis Zarkadas
+  role: member
+- affiliation: Duke University
+  name: Junyao Zhang
+  role: member
+- affiliation: Ohio State University
+  name: Siyuan Zhang
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Songhao Zhang
+  role: member
+- affiliation: ByteDance
+  name: Wenhui Zhang
+  role: member
+- affiliation: Syracuse University
+  name: Xiangqun Zhang
+  role: member
+- affiliation: The University of Texas at Austin
+  name: Xiao Zhang
+  role: member
+- affiliation: National University of Defense Technology
+  name: Yuanliang Zhang
+  role: member
+- affiliation: Peking University
+  name: Naiqian Zheng
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Xinying Zheng
+  role: member
+- affiliation: University of California, Santa Cruz
+  name: Yusheng Zheng
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Shawn Zhong
+  role: member
+- affiliation: University of Virginia
+  name: Tianle Zhong
+  role: member
+- affiliation: National University of Singapore
+  name: Yangjie Zhou
+  role: member
+- affiliation: Huazhong University of Science and Technology
+  name: Jianian Zhu
+  role: member
+- affiliation: Tsinghua University
+  name: Siqi Zhu
+  role: member
+- affiliation: University of Maryland
+  name: Zeying Zhu
+  role: member
+- affiliation: Harbin Institute of Technology
+  name: Xiangyu Zou
+  role: member
 fast2024:
-  - name: "Haryadi Gunawi"
-    affiliation: "The University of Chicago"
-    role: chair
-  - name: "Huaicheng Li"
-    affiliation: "Virginia Tech"
-    role: chair
-  - name: "Saheed Olayemi Bolarinwa"
-    affiliation: "The Leibniz Supercomputing Centre"
-    role: member
-  - name: "Chunfeng Du"
-    affiliation: "Xiamen University"
-    role: member
-  - name: "Jian Gao"
-    affiliation: "Tsinghua University"
-    role: member
-  - name: "Andrzej Jackowski"
-    affiliation: "University of Warsaw"
-    role: member
-  - name: "Chenhao Jiang"
-    affiliation: "University of Toronto"
-    role: member
-  - name: "Ziyang Jiao"
-    affiliation: "Syracuse University"
-    role: member
-  - name: "R. Madhava Krishnan"
-    affiliation: "Oracle"
-    role: member
-  - name: "Jiamin Li"
-    affiliation: "City University of Hong Kong"
-    role: member
-  - name: "Xiaolu Li"
-    affiliation: "Huazhong University of Science and Technology"
-    role: member
-  - name: "Congyu Liu"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Ruiming Lu"
-    affiliation: "Shanghai Jiao Tong University"
-    role: member
-  - name: "Teng Ma"
-    affiliation: "Alibaba Group"
-    role: member
-  - name: "Weiwu Pang"
-    affiliation: "University of Southern California"
-    role: member
-  - name: "Marcus Paradies"
-    affiliation: "Technische Universität Ilmenau"
-    role: member
-  - name: "Bo Peng"
-    affiliation: "Shanghai Jiao Tong University"
-    role: member
-  - name: "Benjamin Reidys"
-    affiliation: "University of Illinois at Urbana–Champaign"
-    role: member
-  - name: "Reza Salkhordeh"
-    affiliation: "Johannes Gutenberg University"
-    role: member
-  - name: "Tomoya Suzuki"
-    affiliation: "University of California, San Diego"
-    role: member
-  - name: "Dingwen Tao"
-    affiliation: "Indiana University"
-    role: member
-  - name: "Lingfeng Xiang"
-    affiliation: "The University of Texas at Arlington"
-    role: member
-  - name: "Danning Xie"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Minhui Xie"
-    affiliation: "Tsinghua University"
-    role: member
-  - name: "Chenhao Ye"
-    affiliation: "University of Wisconsin—Madison"
-    role: member
-  - name: "Liangcheng Yu"
-    affiliation: "University of Pennsylvania"
-    role: member
-  - name: "Anlan Zhang"
-    affiliation: "University of Southern California"
-    role: member
-  - name: "Jianshun Zhang"
-    affiliation: "Huazhong University of Science and Technology"
-    role: member
-  - name: "Xuechen Zhang"
-    affiliation: "Washington State University Vancouver"
-    role: member
-  - name: "Mai Zheng"
-    affiliation: "Iowa State University"
-    role: member
-  - name: "Shawn Zhong"
-    affiliation: "University of Wisconsin—Madison"
-    role: member
-  - name: "Yuqing Zhu"
-    affiliation: "Tsinghua University"
-    role: member
-  - name: "Xiangyu Zou"
-    affiliation: "Harbin Institute of Technology Shenzhen"
-    role: member
-
-# FAST 2025 — https://www.usenix.org/conference/fast25/call-for-artifacts
+- affiliation: The University of Chicago
+  name: Haryadi Gunawi
+  role: chair
+- affiliation: Virginia Tech
+  name: Huaicheng Li
+  role: chair
+- affiliation: The Leibniz Supercomputing Centre
+  name: Saheed Olayemi Bolarinwa
+  role: member
+- affiliation: Xiamen University
+  name: Chunfeng Du
+  role: member
+- affiliation: Tsinghua University
+  name: Jian Gao
+  role: member
+- affiliation: University of Warsaw
+  name: Andrzej Jackowski
+  role: member
+- affiliation: University of Toronto
+  name: Chenhao Jiang
+  role: member
+- affiliation: Syracuse University
+  name: Ziyang Jiao
+  role: member
+- affiliation: Oracle
+  name: R. Madhava Krishnan
+  role: member
+- affiliation: City University of Hong Kong
+  name: Jiamin Li
+  role: member
+- affiliation: Huazhong University of Science and Technology
+  name: Xiaolu Li
+  role: member
+- affiliation: Purdue University
+  name: Congyu Liu
+  role: member
+- affiliation: Shanghai Jiao Tong University
+  name: Ruiming Lu
+  role: member
+- affiliation: Alibaba Group
+  name: Teng Ma
+  role: member
+- affiliation: University of Southern California
+  name: Weiwu Pang
+  role: member
+- affiliation: Technische Universität Ilmenau
+  name: Marcus Paradies
+  role: member
+- affiliation: Shanghai Jiao Tong University
+  name: Bo Peng
+  role: member
+- affiliation: University of Illinois at Urbana–Champaign
+  name: Benjamin Reidys
+  role: member
+- affiliation: Johannes Gutenberg University
+  name: Reza Salkhordeh
+  role: member
+- affiliation: University of California, San Diego
+  name: Tomoya Suzuki
+  role: member
+- affiliation: Indiana University
+  name: Dingwen Tao
+  role: member
+- affiliation: The University of Texas at Arlington
+  name: Lingfeng Xiang
+  role: member
+- affiliation: Purdue University
+  name: Danning Xie
+  role: member
+- affiliation: Tsinghua University
+  name: Minhui Xie
+  role: member
+- affiliation: University of Wisconsin—Madison
+  name: Chenhao Ye
+  role: member
+- affiliation: University of Pennsylvania
+  name: Liangcheng Yu
+  role: member
+- affiliation: University of Southern California
+  name: Anlan Zhang
+  role: member
+- affiliation: Huazhong University of Science and Technology
+  name: Jianshun Zhang
+  role: member
+- affiliation: Washington State University Vancouver
+  name: Xuechen Zhang
+  role: member
+- affiliation: Iowa State University
+  name: Mai Zheng
+  role: member
+- affiliation: University of Wisconsin—Madison
+  name: Shawn Zhong
+  role: member
+- affiliation: Tsinghua University
+  name: Yuqing Zhu
+  role: member
+- affiliation: Harbin Institute of Technology Shenzhen
+  name: Xiangyu Zou
+  role: member
 fast2025:
-  - name: "Huaicheng Li"
-    affiliation: "Virginia Tech"
-    role: chair
-  - name: "Juncheng Yang"
-    affiliation: "Harvard University"
-    role: chair
-  - name: "Ghadeer Almusaddar"
-    affiliation: "Binghamton University"
-    role: member
-  - name: "Benixon Arul dhas"
-    affiliation: "Samsung"
-    role: member
-  - name: "Sanjith Athlur"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Rahul Bhadani"
-    affiliation: "The University of Alabama in Huntsville"
-    role: member
-  - name: "Zhang Cao"
-    affiliation: "Xidian University"
-    role: member
-  - name: "Yiwei Chen"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Tejas Chopra"
-    affiliation: "Netflix"
-    role: member
-  - name: "Ismet Dagli"
-    affiliation: "Colorado School of Mines"
-    role: member
-  - name: "Omkar Desai"
-    affiliation: "Syracuse University"
-    role: member
-  - name: "Ruwen Fan"
-    affiliation: "Tsinghua University"
-    role: member
-  - name: "Haoyu Gong"
-    affiliation: "University of Minnesota Twin Cities"
-    role: member
-  - name: "Pradeep Kumar Goudagunta"
-    affiliation: "Dropbox"
-    role: member
-  - name: "Kiran Shashi Hombal"
-    affiliation: "University of Illinois at Urbana–Champaign"
-    role: member
-  - name: "Guangyu Hu"
-    affiliation: "The Hong Kong University of Science and Technology"
-    role: member
-  - name: "Guanzhou Hu"
-    affiliation: "University of Wisconsin—Madison"
-    role: member
-  - name: "Lei Huang"
-    affiliation: "Boston University"
-    role: member
-  - name: "Lokesh Nagappa Jaliminche"
-    affiliation: "University of California, Santa Cruz"
-    role: member
-  - name: "Priyanka Jayaswal"
-    affiliation: "Microsoft"
-    role: member
-  - name: "Minhao Jin"
-    affiliation: "Princeton University"
-    role: member
-  - name: "Ying Jing"
-    affiliation: "University of Illinois at Urbana–Champaign"
-    role: member
-  - name: "Konstantinos Kanellis"
-    affiliation: "University of Wisconsin—Madison"
-    role: member
-  - name: "Zhaokang Ke"
-    affiliation: "University of Minnesota Twin Cities"
-    role: member
-  - name: "Jiajun Li"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Yi Liu"
-    affiliation: "University of California, Santa Cruz"
-    role: member
-  - name: "Ruiming Lu"
-    affiliation: "Shanghai Jiao Tong University"
-    role: member
-  - name: "Kabilan Mahathevan"
-    affiliation: "National University of Singapore"
-    role: member
-  - name: "Ziming Mao"
-    affiliation: "University of California, Berkeley"
-    role: member
-  - name: "Utkarsh Mittal"
-    affiliation: "BCS, IEEE, and Gap"
-    role: member
-  - name: "Hojin Park"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Rohan Puri"
-    affiliation: "Samsung"
-    role: member
-  - name: "Hariharan Ragothaman"
-    affiliation: "Athenahealth and Northeastern University"
-    role: member
-  - name: "Sriram Rangarajan"
-    affiliation: "Netflix"
-    role: member
-  - name: "Alok Ranjan"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Harisankar Sadasivan"
-    affiliation: "AMD"
-    role: member
-  - name: "Kartik Sathyanarayanan"
-    affiliation: "Netflix"
-    role: member
-  - name: "Souptik Sen"
-    affiliation: "Snowflake"
-    role: member
-  - name: "Dongjoo Seo"
-    affiliation: "University of California, Irvine"
-    role: member
-  - name: "Aakash Sharma"
-    affiliation: "UiT The Arctic University of Norway"
-    role: member
-  - name: "Shubhendra Pal Singhal"
-    affiliation: "Georgia Institute of Technology"
-    role: member
-  - name: "Vikranth Srivatsa"
-    affiliation: "University of California, San Diego"
-    role: member
-  - name: "Gongjin Sun"
-    affiliation: "Samsung"
-    role: member
-  - name: "Yifei Sun"
-    affiliation: "Northeastern University"
-    role: member
-  - name: "Sarvesh Tandon"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Divyaank Tiwari"
-    affiliation: "Stony Brook University"
-    role: member
-  - name: "Qing Wang"
-    affiliation: "Tsinghua University"
-    role: member
-  - name: "Ron Yifeng Wang"
-    affiliation: "Stanford University"
-    role: member
-  - name: "Wenlong Wang"
-    affiliation: "University of Minnesota Twin Cities"
-    role: member
-  - name: "Amit Warke"
-    affiliation: "Hitachi"
-    role: member
-  - name: "Hanfei Yu"
-    affiliation: "Stevens Institute of Technology"
-    role: member
-  - name: "Da Zhang"
-    affiliation: "Samsung"
-    role: member
-  - name: "Jianshun Zhang"
-    affiliation: "Huazhong University of Science and Technology"
-    role: member
-  - name: "Tianru Zhang"
-    affiliation: "Uppsala University"
-    role: member
-  - name: "Chen Zhong"
-    affiliation: "The University of Texas at Arlington"
-    role: member
-  - name: "Zeying Zhu"
-    affiliation: "University of Maryland, College Park"
-    role: member
-
-# FAST 2026 — https://www.usenix.org/conference/fast26/call-for-artifacts
+- affiliation: Virginia Tech
+  name: Huaicheng Li
+  role: chair
+- affiliation: Harvard University
+  name: Juncheng Yang
+  role: chair
+- affiliation: Binghamton University
+  name: Ghadeer Almusaddar
+  role: member
+- affiliation: Samsung
+  name: Benixon Arul dhas
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Sanjith Athlur
+  role: member
+- affiliation: The University of Alabama in Huntsville
+  name: Rahul Bhadani
+  role: member
+- affiliation: Xidian University
+  name: Zhang Cao
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Yiwei Chen
+  role: member
+- affiliation: Netflix
+  name: Tejas Chopra
+  role: member
+- affiliation: Colorado School of Mines
+  name: Ismet Dagli
+  role: member
+- affiliation: Syracuse University
+  name: Omkar Desai
+  role: member
+- affiliation: Tsinghua University
+  name: Ruwen Fan
+  role: member
+- affiliation: University of Minnesota Twin Cities
+  name: Haoyu Gong
+  role: member
+- affiliation: Dropbox
+  name: Pradeep Kumar Goudagunta
+  role: member
+- affiliation: University of Illinois at Urbana–Champaign
+  name: Kiran Shashi Hombal
+  role: member
+- affiliation: The Hong Kong University of Science and Technology
+  name: Guangyu Hu
+  role: member
+- affiliation: University of Wisconsin—Madison
+  name: Guanzhou Hu
+  role: member
+- affiliation: Boston University
+  name: Lei Huang
+  role: member
+- affiliation: University of California, Santa Cruz
+  name: Lokesh Nagappa Jaliminche
+  role: member
+- affiliation: Microsoft
+  name: Priyanka Jayaswal
+  role: member
+- affiliation: Princeton University
+  name: Minhao Jin
+  role: member
+- affiliation: University of Illinois at Urbana–Champaign
+  name: Ying Jing
+  role: member
+- affiliation: University of Wisconsin—Madison
+  name: Konstantinos Kanellis
+  role: member
+- affiliation: University of Minnesota Twin Cities
+  name: Zhaokang Ke
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Jiajun Li
+  role: member
+- affiliation: University of California, Santa Cruz
+  name: Yi Liu
+  role: member
+- affiliation: Shanghai Jiao Tong University
+  name: Ruiming Lu
+  role: member
+- affiliation: National University of Singapore
+  name: Kabilan Mahathevan
+  role: member
+- affiliation: University of California, Berkeley
+  name: Ziming Mao
+  role: member
+- affiliation: BCS, IEEE, and Gap
+  name: Utkarsh Mittal
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Hojin Park
+  role: member
+- affiliation: Samsung
+  name: Rohan Puri
+  role: member
+- affiliation: Athenahealth and Northeastern University
+  name: Hariharan Ragothaman
+  role: member
+- affiliation: Netflix
+  name: Sriram Rangarajan
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Alok Ranjan
+  role: member
+- affiliation: AMD
+  name: Harisankar Sadasivan
+  role: member
+- affiliation: Netflix
+  name: Kartik Sathyanarayanan
+  role: member
+- affiliation: Snowflake
+  name: Souptik Sen
+  role: member
+- affiliation: University of California, Irvine
+  name: Dongjoo Seo
+  role: member
+- affiliation: UiT The Arctic University of Norway
+  name: Aakash Sharma
+  role: member
+- affiliation: Georgia Institute of Technology
+  name: Shubhendra Pal Singhal
+  role: member
+- affiliation: University of California, San Diego
+  name: Vikranth Srivatsa
+  role: member
+- affiliation: Samsung
+  name: Gongjin Sun
+  role: member
+- affiliation: Northeastern University
+  name: Yifei Sun
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Sarvesh Tandon
+  role: member
+- affiliation: Stony Brook University
+  name: Divyaank Tiwari
+  role: member
+- affiliation: Tsinghua University
+  name: Qing Wang
+  role: member
+- affiliation: Stanford University
+  name: Ron Yifeng Wang
+  role: member
+- affiliation: University of Minnesota Twin Cities
+  name: Wenlong Wang
+  role: member
+- affiliation: Hitachi
+  name: Amit Warke
+  role: member
+- affiliation: Stevens Institute of Technology
+  name: Hanfei Yu
+  role: member
+- affiliation: Samsung
+  name: Da Zhang
+  role: member
+- affiliation: Huazhong University of Science and Technology
+  name: Jianshun Zhang
+  role: member
+- affiliation: Uppsala University
+  name: Tianru Zhang
+  role: member
+- affiliation: The University of Texas at Arlington
+  name: Chen Zhong
+  role: member
+- affiliation: University of Maryland, College Park
+  name: Zeying Zhu
+  role: member
 fast2026:
-  - name: "Erci Xu"
-    affiliation: "Alibaba and Shanghai Jiao Tong University"
-    role: chair
-  - name: "Juncheng Yang"
-    affiliation: "Harvard University"
-    role: chair
-  - name: "Minwoo Ahn"
-    affiliation: "Sungkyunkwan University"
-    role: member
-  - name: "Ghadeer Almusaddar"
-    affiliation: "Binghamton University"
-    role: member
-  - name: "Pushpa Kumar Balan"
-    affiliation: "University of Central Missouri"
-    role: member
-  - name: "Shreesha Gopalakrishna Bhat"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Tingjia Cao"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Prajwal Challa"
-    affiliation: "The University of Texas at Arlington"
-    role: member
-  - name: "Shawn Chen"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Wendi Cheng"
-    affiliation: "Northwestern Polytechnical University"
-    role: member
-  - name: "Seokjoo Cho"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Jiaqi Deng"
-    affiliation: "Georgia Institute of Technology"
-    role: member
-  - name: "Saarth Deshpande"
-    affiliation: "The University of Texas at Austin"
-    role: member
-  - name: "Zheyun Feng"
-    affiliation: "University of New Hampshire"
-    role: member
-  - name: "Bin Gao"
-    affiliation: "National University of Singapore"
-    role: member
-  - name: "Pradeep Kumar Goudagunta"
-    affiliation: "Dropbox"
-    role: member
-  - name: "Fei Gui"
-    affiliation: "Tsinghua University"
-    role: member
-  - name: "Hao Guo"
-    affiliation: "Tsinghua University"
-    role: member
-  - name: "Jinnan Guo"
-    affiliation: "Imperial College London"
-    role: member
-  - name: "Abhishek Gupta"
-    affiliation: "Huawei and NetApp"
-    role: member
-  - name: "Ojas Gupta"
-    affiliation: "Juniper Networks"
-    role: member
-  - name: "Surabhi Gupta"
-    affiliation: "Google"
-    role: member
-  - name: "Ashwin Das Gururaja"
-    affiliation: "Adobe"
-    role: member
-  - name: "Runzhou Han"
-    affiliation: "Microsoft"
-    role: member
-  - name: "Shujie Han"
-    affiliation: "Northwestern Polytechnical University"
-    role: member
-  - name: "Shiyue Hou"
-    affiliation: "Northeastern University"
-    role: member
-  - name: "Jiyu Hu"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Yibo Huang"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Zhengjie Ji"
-    affiliation: "Virginia Tech"
-    role: member
-  - name: "Yin Jia"
-    affiliation: "Renmin University of China"
-    role: member
-  - name: "Sheng Jiang"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Yankai Jiang"
-    affiliation: "Northeastern University"
-    role: member
-  - name: "Ajay Joshi"
-    affiliation: "Snowflake"
-    role: member
-  - name: "Prudhviraj Karumanchi"
-    affiliation: "Netflix"
-    role: member
-  - name: "Zhaokang Ke"
-    affiliation: "University of Minnesota Twin Cities"
-    role: member
-  - name: "Redwan Ibne Seraj Khan"
-    affiliation: "Virginia Tech"
-    role: member
-  - name: "Isaac Khor"
-    affiliation: "Northeastern University"
-    role: member
-  - name: "Timothy Kim"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Hanchen Li"
-    affiliation: "The University of Chicago"
-    role: member
-  - name: "Haoyu Li"
-    affiliation: "Columbia University"
-    role: member
-  - name: "Jun Li"
-    affiliation: "Nanjing University of Posts and Telecommunications"
-    role: member
-  - name: "Yuze Li"
-    affiliation: "Virginia Tech"
-    role: member
-  - name: "Qi Lin"
-    affiliation: "Arizona State University"
-    role: member
-  - name: "Tejas Lodaya"
-    affiliation: "DoorDash"
-    role: member
-  - name: "Hitesh Saai Mananchery Panneerselvam"
-    affiliation: "Expedia Group"
-    role: member
-  - name: "Alagappan Maruthappan"
-    affiliation: "Netflix"
-    role: member
-  - name: "Qiutong Men"
-    affiliation: "New York University"
-    role: member
-  - name: "Deepanjali Mishra"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Niraj Pal"
-    affiliation: "Twitch and The University of Texas at Dallas"
-    role: member
-  - name: "Yanqi Pan"
-    affiliation: "Harbin Institute of Technology"
-    role: member
-  - name: "Santosh Pandey"
-    affiliation: "Rutgers University"
-    role: member
-  - name: "Xi Pang"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Tharindu Patabandi"
-    affiliation: "Samsung Semiconductor, Inc."
-    role: member
-  - name: "Shishir Patil"
-    affiliation: "University of California, Berkeley"
-    role: member
-  - name: "Rohan Puri"
-    affiliation: "Samsung Semiconductor, Inc."
-    role: member
-  - name: "Ziyue Qiu"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Yanjing Ren"
-    affiliation: "The Chinese University of Hong Kong"
-    role: member
-  - name: "Amit Samanta"
-    affiliation: "The University of Utah"
-    role: member
-  - name: "Alok Shankar"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Shubhendra Pal Singhal"
-    affiliation: "Georgia Institute of Technology"
-    role: member
-  - name: "Tong Sun"
-    affiliation: "Zhejiang University"
-    role: member
-  - name: "Xin Tan"
-    affiliation: "The Chinese University of Hong Kong"
-    role: member
-  - name: "Viraj Thakkar"
-    affiliation: "Arizona State University"
-    role: member
-  - name: "Divyaank Tiwari"
-    affiliation: "Stony Brook University"
-    role: member
-  - name: "Joel Tony"
-    affiliation: "Microsoft Research"
-    role: member
-  - name: "Vaibhav Upadhyay"
-    affiliation: "PhonePe"
-    role: member
-  - name: "Jing Wang"
-    affiliation: "Shanghai Jiao Tong University"
-    role: member
-  - name: "Yirong Wang"
-    affiliation: "Northeastern University"
-    role: member
-  - name: "Chenhao Ye"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Feng Yicheng"
-    affiliation: "The Chinese University of Hong Kong"
-    role: member
-  - name: "Yucheng Yin"
-    affiliation: "Conviva"
-    role: member
-  - name: "Hanfei Yu"
-    affiliation: "Stevens Institute of Technology"
-    role: member
-  - name: "Wahid Uz Zaman"
-    affiliation: "The Pennsylvania State University"
-    role: member
-  - name: "Yannis Zarkadas"
-    affiliation: "Columbia University"
-    role: member
-  - name: "Gen Zhang"
-    affiliation: "National University of Defense Technology"
-    role: member
-  - name: "Jianshun Zhang"
-    affiliation: "Huazhong University of Science and Technology"
-    role: member
-  - name: "Xiangqun Zhang"
-    affiliation: "Syracuse University"
-    role: member
-  - name: "Yongkang Zhang"
-    affiliation: "The Hong Kong University of Science and Technology"
-    role: member
-  - name: "Shawn (Wanxiang) Zhong"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Yanbo Zhou"
-    affiliation: "University of California, San Diego"
-    role: member
-
-# OSDI 2026 — https://www.usenix.org/conference/osdi26/call-for-artifacts
+- affiliation: Alibaba and Shanghai Jiao Tong University
+  name: Erci Xu
+  role: chair
+- affiliation: Harvard University
+  name: Juncheng Yang
+  role: chair
+- affiliation: Sungkyunkwan University
+  name: Minwoo Ahn
+  role: member
+- affiliation: Binghamton University
+  name: Ghadeer Almusaddar
+  role: member
+- affiliation: University of Central Missouri
+  name: Pushpa Kumar Balan
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Shreesha Gopalakrishna Bhat
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Tingjia Cao
+  role: member
+- affiliation: The University of Texas at Arlington
+  name: Prajwal Challa
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Shawn Chen
+  role: member
+- affiliation: Northwestern Polytechnical University
+  name: Wendi Cheng
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Seokjoo Cho
+  role: member
+- affiliation: Georgia Institute of Technology
+  name: Jiaqi Deng
+  role: member
+- affiliation: The University of Texas at Austin
+  name: Saarth Deshpande
+  role: member
+- affiliation: University of New Hampshire
+  name: Zheyun Feng
+  role: member
+- affiliation: National University of Singapore
+  name: Bin Gao
+  role: member
+- affiliation: Dropbox
+  name: Pradeep Kumar Goudagunta
+  role: member
+- affiliation: Tsinghua University
+  name: Fei Gui
+  role: member
+- affiliation: Tsinghua University
+  name: Hao Guo
+  role: member
+- affiliation: Imperial College London
+  name: Jinnan Guo
+  role: member
+- affiliation: Huawei and NetApp
+  name: Abhishek Gupta
+  role: member
+- affiliation: Juniper Networks
+  name: Ojas Gupta
+  role: member
+- affiliation: Google
+  name: Surabhi Gupta
+  role: member
+- affiliation: Adobe
+  name: Ashwin Das Gururaja
+  role: member
+- affiliation: Microsoft
+  name: Runzhou Han
+  role: member
+- affiliation: Northwestern Polytechnical University
+  name: Shujie Han
+  role: member
+- affiliation: Northeastern University
+  name: Shiyue Hou
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Jiyu Hu
+  role: member
+- affiliation: University of Michigan
+  name: Yibo Huang
+  role: member
+- affiliation: Virginia Tech
+  name: Zhengjie Ji
+  role: member
+- affiliation: Renmin University of China
+  name: Yin Jia
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Sheng Jiang
+  role: member
+- affiliation: Northeastern University
+  name: Yankai Jiang
+  role: member
+- affiliation: Snowflake
+  name: Ajay Joshi
+  role: member
+- affiliation: Netflix
+  name: Prudhviraj Karumanchi
+  role: member
+- affiliation: University of Minnesota Twin Cities
+  name: Zhaokang Ke
+  role: member
+- affiliation: Virginia Tech
+  name: Redwan Ibne Seraj Khan
+  role: member
+- affiliation: Northeastern University
+  name: Isaac Khor
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Timothy Kim
+  role: member
+- affiliation: The University of Chicago
+  name: Hanchen Li
+  role: member
+- affiliation: Columbia University
+  name: Haoyu Li
+  role: member
+- affiliation: Nanjing University of Posts and Telecommunications
+  name: Jun Li
+  role: member
+- affiliation: Virginia Tech
+  name: Yuze Li
+  role: member
+- affiliation: Arizona State University
+  name: Qi Lin
+  role: member
+- affiliation: DoorDash
+  name: Tejas Lodaya
+  role: member
+- affiliation: Expedia Group
+  name: Hitesh Saai Mananchery Panneerselvam
+  role: member
+- affiliation: Netflix
+  name: Alagappan Maruthappan
+  role: member
+- affiliation: New York University
+  name: Qiutong Men
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Deepanjali Mishra
+  role: member
+- affiliation: Twitch and The University of Texas at Dallas
+  name: Niraj Pal
+  role: member
+- affiliation: Harbin Institute of Technology
+  name: Yanqi Pan
+  role: member
+- affiliation: Rutgers University
+  name: Santosh Pandey
+  role: member
+- affiliation: Purdue University
+  name: Xi Pang
+  role: member
+- affiliation: Samsung Semiconductor, Inc.
+  name: Tharindu Patabandi
+  role: member
+- affiliation: University of California, Berkeley
+  name: Shishir Patil
+  role: member
+- affiliation: Samsung Semiconductor, Inc.
+  name: Rohan Puri
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Ziyue Qiu
+  role: member
+- affiliation: The Chinese University of Hong Kong
+  name: Yanjing Ren
+  role: member
+- affiliation: The University of Utah
+  name: Amit Samanta
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Alok Shankar
+  role: member
+- affiliation: Georgia Institute of Technology
+  name: Shubhendra Pal Singhal
+  role: member
+- affiliation: Zhejiang University
+  name: Tong Sun
+  role: member
+- affiliation: The Chinese University of Hong Kong
+  name: Xin Tan
+  role: member
+- affiliation: Arizona State University
+  name: Viraj Thakkar
+  role: member
+- affiliation: Stony Brook University
+  name: Divyaank Tiwari
+  role: member
+- affiliation: Microsoft Research
+  name: Joel Tony
+  role: member
+- affiliation: PhonePe
+  name: Vaibhav Upadhyay
+  role: member
+- affiliation: Shanghai Jiao Tong University
+  name: Jing Wang
+  role: member
+- affiliation: Northeastern University
+  name: Yirong Wang
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Chenhao Ye
+  role: member
+- affiliation: The Chinese University of Hong Kong
+  name: Feng Yicheng
+  role: member
+- affiliation: Conviva
+  name: Yucheng Yin
+  role: member
+- affiliation: Stevens Institute of Technology
+  name: Hanfei Yu
+  role: member
+- affiliation: The Pennsylvania State University
+  name: Wahid Uz Zaman
+  role: member
+- affiliation: Columbia University
+  name: Yannis Zarkadas
+  role: member
+- affiliation: National University of Defense Technology
+  name: Gen Zhang
+  role: member
+- affiliation: Huazhong University of Science and Technology
+  name: Jianshun Zhang
+  role: member
+- affiliation: Syracuse University
+  name: Xiangqun Zhang
+  role: member
+- affiliation: The Hong Kong University of Science and Technology
+  name: Yongkang Zhang
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Shawn (Wanxiang) Zhong
+  role: member
+- affiliation: University of California, San Diego
+  name: Yanbo Zhou
+  role: member
+osdi2023: *id001
 osdi2026:
-  - name: "Anand Iyer"
-    affiliation: "Georgia Institute of Technology"
-    role: chair
-  - name: "Sara McAllister"
-    affiliation: "Google and University of Wisconsin–Madison"
-    role: chair
-  - name: "Abhinav Agarwal"
-    affiliation: "Rubrik"
-    role: member
-  - name: "Vishal Agarwal"
-    affiliation: "NVIDIA"
-    role: member
-  - name: "Anirudha Agrawal"
-    affiliation: "Georgia Tech"
-    role: member
-  - name: "Kenan Alghythee"
-    affiliation: "University of Illinois Chicago"
-    role: member
-  - name: "Abhijeet Apsunde"
-    affiliation: "eBay Inc"
-    role: member
-  - name: "Sanjith Athlur"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Abdelrahman Baba"
-    affiliation: "University of Waterloo"
-    role: member
-  - name: "Seungsu Baek"
-    affiliation: "Korea University"
-    role: member
-  - name: "Luyao Bai"
-    affiliation: "University of Illinois Chicago"
-    role: member
-  - name: "Jongho Baik"
-    affiliation: "Korea University"
-    role: member
-  - name: "Afsara Benazir"
-    affiliation: "University of Virginia"
-    role: member
-  - name: "Ayush Bhardwaj"
-    affiliation: "Akamai Technologies"
-    role: member
-  - name: "Romil Bhardwaj"
-    affiliation: "SkyPilot"
-    role: member
-  - name: "Cláudia Brito"
-    affiliation: "INESC TEC and University of Minho"
-    role: member
-  - name: "Zechao Cai"
-    affiliation: "ETH Zurich"
-    role: member
-  - name: "Noppapon Chalermchockcharoenkit"
-    affiliation: "University of California, Berkeley Sky Lab and Crusoe AI"
-    role: member
-  - name: "Manas Chaudhari"
-    affiliation: "Meta"
-    role: member
-  - name: "Jiahao Chen"
-    affiliation: "Georgia Tech"
-    role: member
-  - name: "Deebakkarthi Chinnasame Rani"
-    affiliation: "University of Virginia"
-    role: member
-  - name: "Hayden Coffey"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Chihan Cui"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Ahmed Dajani"
-    affiliation: "Iowa State University"
-    role: member
-  - name: "Yi Deng"
-    affiliation: "University of Virginia"
-    role: member
-  - name: "Richi Dubey"
-    affiliation: "Georgia Institute of Technology"
-    role: member
-  - name: "Oytun Kuday Duran"
-    affiliation: "Georgia Tech"
-    role: member
-  - name: "Rohit Dwivedula"
-    affiliation: "University of Texas at Austin"
-    role: member
-  - name: "Tânia Esteves"
-    affiliation: "INESC TEC and University of Minho"
-    role: member
-  - name: "Swapnil Gandhi"
-    affiliation: "Stanford"
-    role: member
-  - name: "Pratishtha Gaur"
-    affiliation: "University of California, San Diego"
-    role: member
-  - name: "Maryam Ghorbanvirdi"
-    affiliation: "George Washington University"
-    role: member
-  - name: "Sarmistha Sarna Gomasta"
-    affiliation: "Umass Amherst"
-    role: member
-  - name: "Raja Gond"
-    affiliation: "Microsoft Research India"
-    role: member
-  - name: "Krishna Praneet Gudipaty"
-    affiliation: "University of Massachusetts Amherst"
-    role: member
-  - name: "Ishita Gupta"
-    affiliation: "Alai Studios"
-    role: member
-  - name: "Kiran Hombal"
-    affiliation: "University of Illinois Urbana–Champaign"
-    role: member
-  - name: "Lana Honcharuk"
-    affiliation: "Crusoe"
-    role: member
-  - name: "Fariha Tabassum Islam"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Priyanka Jayaswal"
-    affiliation: "Microsoft"
-    role: member
-  - name: "Dongming Jiang"
-    affiliation: "The University of Texas at dallas"
-    role: member
-  - name: "Yiwei Jiang"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Yuxuan Jiang"
-    affiliation: "SambaNova Systems"
-    role: member
-  - name: "Nitin Kedia"
-    affiliation: "University of Texas at Austin"
-    role: member
-  - name: "Tuhin Khare"
-    affiliation: "Georgia Institute of Technology"
-    role: member
-  - name: "Donghyun Kim"
-    affiliation: "The University of Texas at Dallas"
-    role: member
-  - name: "Geonwoo Kim"
-    affiliation: "The University of Texas at Austin"
-    role: member
-  - name: "Pavani Kuppili"
-    affiliation: "University of Utah"
-    role: member
-  - name: "Mahesh Lakshminarasimhan"
-    affiliation: "AMD USA"
-    role: member
-  - name: "Tingfeng Lan"
-    affiliation: "University of Virginia"
-    role: member
-  - name: "Tyler Landle"
-    affiliation: "Georgia Institute of Technology"
-    role: member
-  - name: "Kinman Lei"
-    affiliation: "Tsinghua University"
-    role: member
-  - name: "Jingzong Li"
-    affiliation: "The Hang Seng University of Hong Kong"
-    role: member
-  - name: "Lanzhe Li"
-    affiliation: "Nanjing University"
-    role: member
-  - name: "Nanqinqin Li"
-    affiliation: "Princeton University"
-    role: member
-  - name: "Zhiyue Li"
-    affiliation: "Tsinghua University"
-    role: member
-  - name: "Wei Siew Liew"
-    affiliation: "University of Utah"
-    role: member
-  - name: "Darren Lim"
-    affiliation: "Crusoe"
-    role: member
-  - name: "Chungang Lin"
-    affiliation: "Institute of Computing Technology, Chinese Academy of Sciences"
-    role: member
-  - name: "Xiaoyuan Liu"
-    affiliation: "University of California, Berkeley"
-    role: member
-  - name: "Yuxuan Liu"
-    affiliation: "University of Virginia"
-    role: member
-  - name: "Qingjie Lu"
-    affiliation: "University of Pennsylvania"
-    role: member
-  - name: "Muxi Lyu"
-    affiliation: "University of California, Berkeley"
-    role: member
-  - name: "Manvik Nanda"
-    affiliation: "University of Utah"
-    role: member
-  - name: "Harald Ng"
-    affiliation: "KTH Royal Institute of Technology"
-    role: member
-  - name: "Mary Ogunmola"
-    affiliation: "University of Utah"
-    role: member
-  - name: "Zhiyang Pan"
-    affiliation: "University of California, Berkeley"
-    role: member
-  - name: "Dimas Parikesit"
-    affiliation: "University of Virginia"
-    role: member
-  - name: "Shishir Patil"
-    affiliation: "University of California, Berkeley"
-    role: member
-  - name: "Stratos Psomadakis"
-    affiliation: "National Technical University of Athens"
-    role: member
-  - name: "Liang Qiao"
-    affiliation: "University of Science and Technology of China"
-    role: member
-  - name: "Ruoyu Qin"
-    affiliation: "Tsinghua University"
-    role: member
-  - name: "Shriram Raja"
-    affiliation: "Boston University"
-    role: member
-  - name: "Vishnu Ramadas"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Yeonju Ro"
-    affiliation: "University of Texas at Austin"
-    role: member
-  - name: "Giannis Roumpos"
-    affiliation: "IMDEA Software Institute"
-    role: member
-  - name: "Amit Samanta"
-    affiliation: "University of Utah"
-    role: member
-  - name: "Hetvi Shastri"
-    affiliation: "University of Massachusetts Amherst"
-    role: member
-  - name: "Hang Shen"
-    affiliation: "Northeastern University (China)"
-    role: member
-  - name: "Muhammad Shoaib"
-    affiliation: "University of Virginia"
-    role: member
-  - name: "Akshat Sinha"
-    affiliation: "Rubrik, Inc"
-    role: member
-  - name: "Eunseok Song"
-    affiliation: "Korea University"
-    role: member
-  - name: "Sheetal Sriram"
-    affiliation: "Georgia Institute of Technology"
-    role: member
-  - name: "Thanathorn Sukprasert"
-    affiliation: "University of Massachusetts Amherst"
-    role: member
-  - name: "Tong Sun"
-    affiliation: "Zhejiang University"
-    role: member
-  - name: "Mengze Tang"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Zirui Wang"
-    affiliation: "University of Virginia"
-    role: member
-  - name: "Li Wu"
-    affiliation: "UMass Amherst"
-    role: member
-  - name: "Yibo Wu"
-    affiliation: "University of Washington"
-    role: member
-  - name: "Tian Xia"
-    affiliation: "University of California, Berkeley"
-    role: member
-  - name: "Zeyu Xia"
-    affiliation: "University of Virginia"
-    role: member
-  - name: "Chengpo Yan"
-    affiliation: "University of Wisconsin–Madison"
-    role: member
-  - name: "Xufeng Yang"
-    affiliation: "Xiamen University, China"
-    role: member
-  - name: "Yuanyuan Yang"
-    affiliation: "University of Washington"
-    role: member
-  - name: "Zeren Yang"
-    affiliation: "Microsoft"
-    role: member
-  - name: "Haoran Zhang"
-    affiliation: "University of Virginia"
-    role: member
-  - name: "Sen Zhang"
-    affiliation: "University of Science and Technology of China"
-    role: member
-  - name: "Zhiwei Zheng"
-    affiliation: "University of Pennsylvania"
-    role: member
-  - name: "Yanbo Zhou"
-    affiliation: "University of California, San Diego"
-    role: member
-  - name: "Tianyu Zuo"
-    affiliation: "University of Virginia"
-    role: member
-
-# USENIXSEC 2020 — https://www.usenix.org/conference/usenixsecurity20/call-for-artifacts
+- affiliation: Georgia Institute of Technology
+  name: Anand Iyer
+  role: chair
+- affiliation: Google and University of Wisconsin–Madison
+  name: Sara McAllister
+  role: chair
+- affiliation: Rubrik
+  name: Abhinav Agarwal
+  role: member
+- affiliation: NVIDIA
+  name: Vishal Agarwal
+  role: member
+- affiliation: Georgia Tech
+  name: Anirudha Agrawal
+  role: member
+- affiliation: University of Illinois Chicago
+  name: Kenan Alghythee
+  role: member
+- affiliation: eBay Inc
+  name: Abhijeet Apsunde
+  role: member
+- affiliation: Carnegie Mellon University
+  name: Sanjith Athlur
+  role: member
+- affiliation: University of Waterloo
+  name: Abdelrahman Baba
+  role: member
+- affiliation: Korea University
+  name: Seungsu Baek
+  role: member
+- affiliation: University of Illinois Chicago
+  name: Luyao Bai
+  role: member
+- affiliation: Korea University
+  name: Jongho Baik
+  role: member
+- affiliation: University of Virginia
+  name: Afsara Benazir
+  role: member
+- affiliation: Akamai Technologies
+  name: Ayush Bhardwaj
+  role: member
+- affiliation: SkyPilot
+  name: Romil Bhardwaj
+  role: member
+- affiliation: INESC TEC and University of Minho
+  name: Cláudia Brito
+  role: member
+- affiliation: ETH Zurich
+  name: Zechao Cai
+  role: member
+- affiliation: University of California, Berkeley Sky Lab and Crusoe AI
+  name: Noppapon Chalermchockcharoenkit
+  role: member
+- affiliation: Meta
+  name: Manas Chaudhari
+  role: member
+- affiliation: Georgia Tech
+  name: Jiahao Chen
+  role: member
+- affiliation: University of Virginia
+  name: Deebakkarthi Chinnasame Rani
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Hayden Coffey
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Chihan Cui
+  role: member
+- affiliation: Iowa State University
+  name: Ahmed Dajani
+  role: member
+- affiliation: University of Virginia
+  name: Yi Deng
+  role: member
+- affiliation: Georgia Institute of Technology
+  name: Richi Dubey
+  role: member
+- affiliation: Georgia Tech
+  name: Oytun Kuday Duran
+  role: member
+- affiliation: University of Texas at Austin
+  name: Rohit Dwivedula
+  role: member
+- affiliation: INESC TEC and University of Minho
+  name: Tânia Esteves
+  role: member
+- affiliation: Stanford
+  name: Swapnil Gandhi
+  role: member
+- affiliation: University of California, San Diego
+  name: Pratishtha Gaur
+  role: member
+- affiliation: George Washington University
+  name: Maryam Ghorbanvirdi
+  role: member
+- affiliation: Umass Amherst
+  name: Sarmistha Sarna Gomasta
+  role: member
+- affiliation: Microsoft Research India
+  name: Raja Gond
+  role: member
+- affiliation: University of Massachusetts Amherst
+  name: Krishna Praneet Gudipaty
+  role: member
+- affiliation: Alai Studios
+  name: Ishita Gupta
+  role: member
+- affiliation: University of Illinois Urbana–Champaign
+  name: Kiran Hombal
+  role: member
+- affiliation: Crusoe
+  name: Lana Honcharuk
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Fariha Tabassum Islam
+  role: member
+- affiliation: Microsoft
+  name: Priyanka Jayaswal
+  role: member
+- affiliation: The University of Texas at dallas
+  name: Dongming Jiang
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Yiwei Jiang
+  role: member
+- affiliation: SambaNova Systems
+  name: Yuxuan Jiang
+  role: member
+- affiliation: University of Texas at Austin
+  name: Nitin Kedia
+  role: member
+- affiliation: Georgia Institute of Technology
+  name: Tuhin Khare
+  role: member
+- affiliation: The University of Texas at Dallas
+  name: Donghyun Kim
+  role: member
+- affiliation: The University of Texas at Austin
+  name: Geonwoo Kim
+  role: member
+- affiliation: University of Utah
+  name: Pavani Kuppili
+  role: member
+- affiliation: AMD USA
+  name: Mahesh Lakshminarasimhan
+  role: member
+- affiliation: University of Virginia
+  name: Tingfeng Lan
+  role: member
+- affiliation: Georgia Institute of Technology
+  name: Tyler Landle
+  role: member
+- affiliation: Tsinghua University
+  name: Kinman Lei
+  role: member
+- affiliation: The Hang Seng University of Hong Kong
+  name: Jingzong Li
+  role: member
+- affiliation: Nanjing University
+  name: Lanzhe Li
+  role: member
+- affiliation: Princeton University
+  name: Nanqinqin Li
+  role: member
+- affiliation: Tsinghua University
+  name: Zhiyue Li
+  role: member
+- affiliation: University of Utah
+  name: Wei Siew Liew
+  role: member
+- affiliation: Crusoe
+  name: Darren Lim
+  role: member
+- affiliation: Institute of Computing Technology, Chinese Academy of Sciences
+  name: Chungang Lin
+  role: member
+- affiliation: University of California, Berkeley
+  name: Xiaoyuan Liu
+  role: member
+- affiliation: University of Virginia
+  name: Yuxuan Liu
+  role: member
+- affiliation: University of Pennsylvania
+  name: Qingjie Lu
+  role: member
+- affiliation: University of California, Berkeley
+  name: Muxi Lyu
+  role: member
+- affiliation: University of Utah
+  name: Manvik Nanda
+  role: member
+- affiliation: KTH Royal Institute of Technology
+  name: Harald Ng
+  role: member
+- affiliation: University of Utah
+  name: Mary Ogunmola
+  role: member
+- affiliation: University of California, Berkeley
+  name: Zhiyang Pan
+  role: member
+- affiliation: University of Virginia
+  name: Dimas Parikesit
+  role: member
+- affiliation: University of California, Berkeley
+  name: Shishir Patil
+  role: member
+- affiliation: National Technical University of Athens
+  name: Stratos Psomadakis
+  role: member
+- affiliation: University of Science and Technology of China
+  name: Liang Qiao
+  role: member
+- affiliation: Tsinghua University
+  name: Ruoyu Qin
+  role: member
+- affiliation: Boston University
+  name: Shriram Raja
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Vishnu Ramadas
+  role: member
+- affiliation: University of Texas at Austin
+  name: Yeonju Ro
+  role: member
+- affiliation: IMDEA Software Institute
+  name: Giannis Roumpos
+  role: member
+- affiliation: University of Utah
+  name: Amit Samanta
+  role: member
+- affiliation: University of Massachusetts Amherst
+  name: Hetvi Shastri
+  role: member
+- affiliation: Northeastern University (China)
+  name: Hang Shen
+  role: member
+- affiliation: University of Virginia
+  name: Muhammad Shoaib
+  role: member
+- affiliation: Rubrik, Inc
+  name: Akshat Sinha
+  role: member
+- affiliation: Korea University
+  name: Eunseok Song
+  role: member
+- affiliation: Georgia Institute of Technology
+  name: Sheetal Sriram
+  role: member
+- affiliation: University of Massachusetts Amherst
+  name: Thanathorn Sukprasert
+  role: member
+- affiliation: Zhejiang University
+  name: Tong Sun
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Mengze Tang
+  role: member
+- affiliation: University of Virginia
+  name: Zirui Wang
+  role: member
+- affiliation: UMass Amherst
+  name: Li Wu
+  role: member
+- affiliation: University of Washington
+  name: Yibo Wu
+  role: member
+- affiliation: University of California, Berkeley
+  name: Tian Xia
+  role: member
+- affiliation: University of Virginia
+  name: Zeyu Xia
+  role: member
+- affiliation: University of Wisconsin–Madison
+  name: Chengpo Yan
+  role: member
+- affiliation: Xiamen University, China
+  name: Xufeng Yang
+  role: member
+- affiliation: University of Washington
+  name: Yuanyuan Yang
+  role: member
+- affiliation: Microsoft
+  name: Zeren Yang
+  role: member
+- affiliation: University of Virginia
+  name: Haoran Zhang
+  role: member
+- affiliation: University of Science and Technology of China
+  name: Sen Zhang
+  role: member
+- affiliation: University of Pennsylvania
+  name: Zhiwei Zheng
+  role: member
+- affiliation: University of California, San Diego
+  name: Yanbo Zhou
+  role: member
+- affiliation: University of Virginia
+  name: Tianyu Zuo
+  role: member
 usenixsec2020:
-  - name: "Thorsten Holz"
-    affiliation: "Ruhr-Universität Bochum"
-    role: chair
-  - name: "Brendan Dolan-Gavitt"
-    affiliation: "New York University"
-    role: chair
-  - name: "Babak Amin Azad"
-    affiliation: "Stony Brook University"
-    role: member
-  - name: "Elias Athanasopoulos"
-    affiliation: "University of Cyprus"
-    role: member
-  - name: "Kevin Borgolte"
-    affiliation: "Princeton University"
-    role: member
-  - name: "Marcus Botacin"
-    affiliation: "Federal University of Paraná Marcus Brinkmann, Ruhr-Universität Bochum"
-    role: member
-  - name: "Jason Carter"
-    affiliation: "Oak Ridge National Laboratory"
-    role: member
-  - name: "Sofía Celi"
-    affiliation: "Dyne"
-    role: member
-  - name: "Andrea Continella"
-    affiliation: "University of California, Santa Barbara"
-    role: member
-  - name: "Moritz Eckert"
-    affiliation: "EURECOM"
-    role: member
-  - name: "Rob Gillen"
-    affiliation: "Oak Ridge National Laboratory"
-    role: member
-  - name: "Carson Harmon"
-    affiliation: "Trail of Bits"
-    role: member
-  - name: "Zhenghao Hu"
-    affiliation: "New York University"
-    role: member
-  - name: "Georges-Axel Jaloyan"
-    affiliation: "École Normale Supérieure"
-    role: member
-  - name: "Sebastiano Mariani"
-    affiliation: "University of California, Santa Barbara"
-    role: member
-  - name: "Maryam Masoudian"
-    affiliation: "Sharif University of Technology/The Hong Kong University of Science and Technology"
-    role: member
-  - name: "Luca Massarelli"
-    affiliation: "Sapienza University of Rome"
-    role: member
-  - name: "Robert Merget"
-    affiliation: "Ruhr-Universität Bochum"
-    role: member
-  - name: "Feargus Pendlebury"
-    affiliation: "King's College London"
-    role: member
-  - name: "Fabio Pierazzi"
-    affiliation: "King's College London"
-    role: member
-  - name: "Blagovesta Pirelli"
-    affiliation: "École Polytechnique Fédérale de Lausanne (EPFL)"
-    role: member
-  - name: "Goran Piskachev"
-    affiliation: "Fraunhofer IEM"
-    role: member
-  - name: "Andrew R. Reiter"
-    affiliation: "Veracode Applied Research Group"
-    role: member
-  - name: "Eyal Ronen"
-    affiliation: "Tel Aviv University/Katholieke Universiteit Leuven"
-    role: member
-  - name: "Gururaj Saileshwar"
-    affiliation: "Georgia Institute of Technology"
-    role: member
-  - name: "Solmaz Salimi"
-    affiliation: "Sharif University of Technology"
-    role: member
-  - name: "Mark Santolucito"
-    affiliation: "Yale University"
-    role: member
-  - name: "Juraj Somorovsky"
-    affiliation: "Ruhr-Universität Bochum"
-    role: member
-  - name: "Sooel Son"
-    affiliation: "Korea Advanced Institute of Science and Technology (KAIST)"
-    role: member
-  - name: "Santiago Torres-Arias New York University"
-    affiliation: ""
-    role: member
-  - name: "Anjo Vahldiek-Oberwagner"
-    affiliation: "Intel Labs"
-    role: member
-  - name: "Ryan Vrecenar"
-    affiliation: "Sandia National Laboratories"
-    role: member
-  - name: "Ding Wang"
-    affiliation: "Nankai University"
-    role: member
-  - name: "Shuai Wang"
-    affiliation: "The Hong Kong University of Science and Technology"
-    role: member
-  - name: "Tianhao Wang"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Christian Wressnegger"
-    affiliation: "Karlsruhe Institute of Technology"
-    role: member
-  - name: "Fengwei Zhang"
-    affiliation: "Southern University of Science and Technology"
-    role: member
-
-# USENIXSEC 2021 — https://www.usenix.org/conference/usenixsecurity21/call-for-artifacts
+- affiliation: Ruhr-Universität Bochum
+  name: Thorsten Holz
+  role: chair
+- affiliation: New York University
+  name: Brendan Dolan-Gavitt
+  role: chair
+- affiliation: Stony Brook University
+  name: Babak Amin Azad
+  role: member
+- affiliation: University of Cyprus
+  name: Elias Athanasopoulos
+  role: member
+- affiliation: Princeton University
+  name: Kevin Borgolte
+  role: member
+- affiliation: Federal University of Paraná Marcus Brinkmann, Ruhr-Universität Bochum
+  name: Marcus Botacin
+  role: member
+- affiliation: Oak Ridge National Laboratory
+  name: Jason Carter
+  role: member
+- affiliation: Dyne
+  name: Sofía Celi
+  role: member
+- affiliation: University of California, Santa Barbara
+  name: Andrea Continella
+  role: member
+- affiliation: EURECOM
+  name: Moritz Eckert
+  role: member
+- affiliation: Oak Ridge National Laboratory
+  name: Rob Gillen
+  role: member
+- affiliation: Trail of Bits
+  name: Carson Harmon
+  role: member
+- affiliation: New York University
+  name: Zhenghao Hu
+  role: member
+- affiliation: École Normale Supérieure
+  name: Georges-Axel Jaloyan
+  role: member
+- affiliation: University of California, Santa Barbara
+  name: Sebastiano Mariani
+  role: member
+- affiliation: Sharif University of Technology/The Hong Kong University of Science
+    and Technology
+  name: Maryam Masoudian
+  role: member
+- affiliation: Sapienza University of Rome
+  name: Luca Massarelli
+  role: member
+- affiliation: Ruhr-Universität Bochum
+  name: Robert Merget
+  role: member
+- affiliation: King's College London
+  name: Feargus Pendlebury
+  role: member
+- affiliation: King's College London
+  name: Fabio Pierazzi
+  role: member
+- affiliation: École Polytechnique Fédérale de Lausanne (EPFL)
+  name: Blagovesta Pirelli
+  role: member
+- affiliation: Fraunhofer IEM
+  name: Goran Piskachev
+  role: member
+- affiliation: Veracode Applied Research Group
+  name: Andrew R. Reiter
+  role: member
+- affiliation: Tel Aviv University/Katholieke Universiteit Leuven
+  name: Eyal Ronen
+  role: member
+- affiliation: Georgia Institute of Technology
+  name: Gururaj Saileshwar
+  role: member
+- affiliation: Sharif University of Technology
+  name: Solmaz Salimi
+  role: member
+- affiliation: Yale University
+  name: Mark Santolucito
+  role: member
+- affiliation: Ruhr-Universität Bochum
+  name: Juraj Somorovsky
+  role: member
+- affiliation: Korea Advanced Institute of Science and Technology (KAIST)
+  name: Sooel Son
+  role: member
+- affiliation: ''
+  name: Santiago Torres-Arias New York University
+  role: member
+- affiliation: Intel Labs
+  name: Anjo Vahldiek-Oberwagner
+  role: member
+- affiliation: Sandia National Laboratories
+  name: Ryan Vrecenar
+  role: member
+- affiliation: Nankai University
+  name: Ding Wang
+  role: member
+- affiliation: The Hong Kong University of Science and Technology
+  name: Shuai Wang
+  role: member
+- affiliation: Purdue University
+  name: Tianhao Wang
+  role: member
+- affiliation: Karlsruhe Institute of Technology
+  name: Christian Wressnegger
+  role: member
+- affiliation: Southern University of Science and Technology
+  name: Fengwei Zhang
+  role: member
 usenixsec2021:
-  - name: "Thorsten Holz"
-    affiliation: "Ruhr-Universität Bochum"
-    role: chair
-  - name: "Clémentine Maurice"
-    affiliation: "IRISA"
-    role: chair
-  - name: "Abhishek Bichhawat"
-    affiliation: "Carnegie Mellon University"
-    role: member
-  - name: "Alex Ozdemir"
-    affiliation: "Stanford University"
-    role: member
-  - name: "Alyssa Milburn"
-    affiliation: "Vrije Universiteit Amsterdam"
-    role: member
-  - name: "Amirreza Niakanlahiji"
-    affiliation: "University of Illinois Springfield"
-    role: member
-  - name: "Amit Seal Ami"
-    affiliation: "College of William & Mary"
-    role: member
-  - name: "Andrew Reiter"
-    affiliation: "Redacted"
-    role: member
-  - name: "Anitha Gollamudi"
-    affiliation: "Harvard University"
-    role: member
-  - name: "Anna Lorimer"
-    affiliation: "University of Chicago"
-    role: member
-  - name: "Armin Sarabi"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Asem Ghaleb"
-    affiliation: "University of British Columbia"
-    role: member
-  - name: "Aurore Fass"
-    affiliation: "CISPA Helmholtz Center for Information Security"
-    role: member
-  - name: "Basavesh Ammanaghatta Shivakumar"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Christian Wressnegger"
-    affiliation: "Karlsruhe Institute of Technology (KIT)"
-    role: member
-  - name: "Dan Shumow"
-    affiliation: "Microsoft Research"
-    role: member
-  - name: "Enrico Mariconti"
-    affiliation: "University College London"
-    role: member
-  - name: "Erik Tews"
-    affiliation: "University of Twente"
-    role: member
-  - name: "Erin Avllazagaj"
-    affiliation: "University of Maryland"
-    role: member
-  - name: "Fatemeh Mireshghallah"
-    affiliation: "University of California, San Diego"
-    role: member
-  - name: "Georges-Axel Jaloyan"
-    affiliation: "École Normale Supérieure"
-    role: member
-  - name: "Henry Birge-Lee"
-    affiliation: "Princeton University"
-    role: member
-  - name: "Jared Carlson"
-    affiliation: "Veracode Applied Research Group"
-    role: member
-  - name: "Jim Lawson"
-    affiliation: "University of California, Berkeley"
-    role: member
-  - name: "Jun Xu"
-    affiliation: "Stevens Institute of Technology"
-    role: member
-  - name: "Kaushal Kafle"
-    affiliation: "College of William & Mary"
-    role: member
-  - name: "Kevin Liao"
-    affiliation: "Massachusetts Institute of Technology"
-    role: member
-  - name: "Kyungtae Kim"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Lior Shafir"
-    affiliation: "Tel Aviv University"
-    role: member
-  - name: "Luis Garcia"
-    affiliation: "USC Information Sciences Institute (ISI)"
-    role: member
-  - name: "Lukas Giner"
-    affiliation: "Graz University of Technology"
-    role: member
-  - name: "M. Hammad Mazhar"
-    affiliation: "The University of Iowa"
-    role: member
-  - name: "Madura Shelton"
-    affiliation: "University of Adelaide"
-    role: member
-  - name: "Michael Rodler"
-    affiliation: "University of Duisburg-Essen"
-    role: member
-  - name: "Michael Specter"
-    affiliation: "Massachusetts Institute of Technology"
-    role: member
-  - name: "Mohammad Saidur Rahman"
-    affiliation: "Rochester Institute of Technology"
-    role: member
-  - name: "Omer Akgul"
-    affiliation: "University of Maryland"
-    role: member
-  - name: "Sarah Zennou"
-    affiliation: "Airbus"
-    role: member
-  - name: "Shay Berkovich"
-    affiliation: "BlackBerry"
-    role: member
-  - name: "Solmaz Salimi"
-    affiliation: "Sharif University of Technology"
-    role: member
-  - name: "Taegyu Kim"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Weijia He"
-    affiliation: "University of Chicago"
-    role: member
-  - name: "Xiaohan Fu"
-    affiliation: "University of California, San Diego"
-    role: member
-  - name: "Yongjun Zhao"
-    affiliation: "Nanyang Technological University"
-    role: member
-  - name: "Zhenyu Ning"
-    affiliation: "Southern University of Science and Technology"
-    role: member
-
-# USENIXSEC 2022 — https://www.usenix.org/conference/usenixsecurity22/call-for-artifacts
+- affiliation: Ruhr-Universität Bochum
+  name: Thorsten Holz
+  role: chair
+- affiliation: IRISA
+  name: Clémentine Maurice
+  role: chair
+- affiliation: Carnegie Mellon University
+  name: Abhishek Bichhawat
+  role: member
+- affiliation: Stanford University
+  name: Alex Ozdemir
+  role: member
+- affiliation: Vrije Universiteit Amsterdam
+  name: Alyssa Milburn
+  role: member
+- affiliation: University of Illinois Springfield
+  name: Amirreza Niakanlahiji
+  role: member
+- affiliation: College of William & Mary
+  name: Amit Seal Ami
+  role: member
+- affiliation: Redacted
+  name: Andrew Reiter
+  role: member
+- affiliation: Harvard University
+  name: Anitha Gollamudi
+  role: member
+- affiliation: University of Chicago
+  name: Anna Lorimer
+  role: member
+- affiliation: University of Michigan
+  name: Armin Sarabi
+  role: member
+- affiliation: University of British Columbia
+  name: Asem Ghaleb
+  role: member
+- affiliation: CISPA Helmholtz Center for Information Security
+  name: Aurore Fass
+  role: member
+- affiliation: Purdue University
+  name: Basavesh Ammanaghatta Shivakumar
+  role: member
+- affiliation: Karlsruhe Institute of Technology (KIT)
+  name: Christian Wressnegger
+  role: member
+- affiliation: Microsoft Research
+  name: Dan Shumow
+  role: member
+- affiliation: University College London
+  name: Enrico Mariconti
+  role: member
+- affiliation: University of Twente
+  name: Erik Tews
+  role: member
+- affiliation: University of Maryland
+  name: Erin Avllazagaj
+  role: member
+- affiliation: University of California, San Diego
+  name: Fatemeh Mireshghallah
+  role: member
+- affiliation: École Normale Supérieure
+  name: Georges-Axel Jaloyan
+  role: member
+- affiliation: Princeton University
+  name: Henry Birge-Lee
+  role: member
+- affiliation: Veracode Applied Research Group
+  name: Jared Carlson
+  role: member
+- affiliation: University of California, Berkeley
+  name: Jim Lawson
+  role: member
+- affiliation: Stevens Institute of Technology
+  name: Jun Xu
+  role: member
+- affiliation: College of William & Mary
+  name: Kaushal Kafle
+  role: member
+- affiliation: Massachusetts Institute of Technology
+  name: Kevin Liao
+  role: member
+- affiliation: Purdue University
+  name: Kyungtae Kim
+  role: member
+- affiliation: Tel Aviv University
+  name: Lior Shafir
+  role: member
+- affiliation: USC Information Sciences Institute (ISI)
+  name: Luis Garcia
+  role: member
+- affiliation: Graz University of Technology
+  name: Lukas Giner
+  role: member
+- affiliation: The University of Iowa
+  name: M. Hammad Mazhar
+  role: member
+- affiliation: University of Adelaide
+  name: Madura Shelton
+  role: member
+- affiliation: University of Duisburg-Essen
+  name: Michael Rodler
+  role: member
+- affiliation: Massachusetts Institute of Technology
+  name: Michael Specter
+  role: member
+- affiliation: Rochester Institute of Technology
+  name: Mohammad Saidur Rahman
+  role: member
+- affiliation: University of Maryland
+  name: Omer Akgul
+  role: member
+- affiliation: Airbus
+  name: Sarah Zennou
+  role: member
+- affiliation: BlackBerry
+  name: Shay Berkovich
+  role: member
+- affiliation: Sharif University of Technology
+  name: Solmaz Salimi
+  role: member
+- affiliation: Purdue University
+  name: Taegyu Kim
+  role: member
+- affiliation: University of Chicago
+  name: Weijia He
+  role: member
+- affiliation: University of California, San Diego
+  name: Xiaohan Fu
+  role: member
+- affiliation: Nanyang Technological University
+  name: Yongjun Zhao
+  role: member
+- affiliation: Southern University of Science and Technology
+  name: Zhenyu Ning
+  role: member
 usenixsec2022:
-  - name: "Clémentine Maurice"
-    affiliation: "CNRS"
-    role: chair
-  - name: "Cristiano Giuffrida"
-    affiliation: "VU Amsterdam"
-    role: chair
-  - name: "Shubham Agarwal"
-    affiliation: "CISPA Helmholtz Center for Information Security"
-    role: member
-  - name: "Mohsen Ahmadi"
-    affiliation: "University of California, Los Angeles"
-    role: member
-  - name: "Nikolaos Alexopoulos"
-    affiliation: "Technische Universität Darmstadt"
-    role: member
-  - name: "Ranya Aloufi"
-    affiliation: "Imperial College London"
-    role: member
-  - name: "Amit Seal Ami"
-    affiliation: "College of William & Mary"
-    role: member
-  - name: "Simone Aonzo"
-    affiliation: "EURECOM"
-    role: member
-  - name: "Daniel Arp"
-    affiliation: "Technische Universität Braunschweig"
-    role: member
-  - name: "Erin Avllazagaj"
-    affiliation: "University of Maryland, College Park"
-    role: member
-  - name: "Pierre Ayoub"
-    affiliation: "EURECOM"
-    role: member
-  - name: "David G. Balash"
-    affiliation: "The George Washington University"
-    role: member
-  - name: "Shay Berkovich"
-    affiliation: "BlackBerry"
-    role: member
-  - name: "Jakob Bleier"
-    affiliation: "TU Wien"
-    role: member
-  - name: "Alejandro Cabrera Aldaya"
-    affiliation: "Tampere University"
-    role: member
-  - name: "Fabricio Ceschin"
-    affiliation: "Federal University of Parana"
-    role: member
-  - name: "Weikeng Chen"
-    affiliation: "University of California, Berkeley"
-    role: member
-  - name: "Hongjun Choi"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Emilio Coppa"
-    affiliation: "Sapienza University of Rome"
-    role: member
-  - name: "Pascal Cotret"
-    affiliation: "ENSTA Bretagne"
-    role: member
-  - name: "Dipanjan Das"
-    affiliation: "University of California, Santa Barbara"
-    role: member
-  - name: "Giulio De Pasquale"
-    affiliation: "King's College London"
-    role: member
-  - name: "Luca Degani"
-    affiliation: "University of Trento and Istituto di Informatica e Telematica, Consiglio Nazionale delle Ricerche"
-    role: member
-  - name: "Matteo Dell'Amico"
-    affiliation: "University of Genoa"
-    role: member
-  - name: "Hailun Ding"
-    affiliation: "Rutgers University"
-    role: member
-  - name: "Dong Du"
-    affiliation: "Shanghai Jiao Tong University"
-    role: member
-  - name: "Thorsten Eisenhofer"
-    affiliation: "Ruhr-Universität Bochum"
-    role: member
-  - name: "Alessandro Erba"
-    affiliation: "CISPA Helmholtz Center for Information Security"
-    role: member
-  - name: "Christof Ferreira Torres"
-    affiliation: "University of Luxembourg"
-    role: member
-  - name: "Romain Fouquet"
-    affiliation: "Université de Lille, Inria, CNRS"
-    role: member
-  - name: "Walid Ghandour"
-    affiliation: "Lebanese University"
-    role: member
-  - name: "Samuel Grayson"
-    affiliation: "University of Illinois at Urbana–Champaign"
-    role: member
-  - name: "Michele Grisafi"
-    affiliation: "University of Trento"
-    role: member
-  - name: "Ashish Hooda"
-    affiliation: "University of Wisconsin—Madison"
-    role: member
-  - name: "Shengtuo Hu"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Shan Huang"
-    affiliation: "Stevens Institute of Technology"
-    role: member
-  - name: "Mazharul Islam"
-    affiliation: "University of Wisconsin—Madison"
-    role: member
-  - name: "Adriaan Jacobs"
-    affiliation: "imec-DistriNet, Katholieke Universiteit Leuven"
-    role: member
-  - name: "Jafar Haadi Jafarian"
-    affiliation: "University of Colorado Denver"
-    role: member
-  - name: "Yilin Ji"
-    affiliation: "Karlsruhe Institute of Technology"
-    role: member
-  - name: "Kaushal Kafle"
-    affiliation: "College of William & Mary"
-    role: member
-  - name: "Imtiaz Karim"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Arslan Khan"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Hyungsub Kim"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Soomin Kim"
-    affiliation: "Korea Advanced Institute of Science and Technology (KAIST)"
-    role: member
-  - name: "Daniel Klischies"
-    affiliation: "Ruhr-Universität Bochum"
-    role: member
-  - name: "Anne Josiane Kouam"
-    affiliation: "Inria"
-    role: member
-  - name: "Johannes Krupp"
-    affiliation: "CISPA Helmholtz Center for Information Security"
-    role: member
-  - name: "Joel Kuepper"
-    affiliation: "The University of Adelaide"
-    role: member
-  - name: "Georg Land"
-    affiliation: "Ruhr-Universität Bochum and Deutsches Forschungszentrum für Künstliche Intelligenz"
-    role: member
-  - name: "Ang Li"
-    affiliation: "Arizona State University"
-    role: member
-  - name: "Song Li"
-    affiliation: "Johns Hopkins University"
-    role: member
-  - name: "Eleonora Losiouk"
-    affiliation: "University of Padua"
-    role: member
-  - name: "Keyu Man"
-    affiliation: "University of California, Riverside"
-    role: member
-  - name: "Damien Marion"
-    affiliation: "IRISA"
-    role: member
-  - name: "Maryam Masoudian"
-    affiliation: "Sharif University of Technology, Hong Kong University of Science and Technology (HKUST)"
-    role: member
-  - name: "Guozhu Meng"
-    affiliation: "SKLOIS, Institute of Information Engineering, Chinese Academy of Sciences"
-    role: member
-  - name: "Grégoire Menguy"
-    affiliation: "Université Paris-Saclay, CEA"
-    role: member
-  - name: "Brad Miller"
-    affiliation: "Google"
-    role: member
-  - name: "Vladislav Mladenov"
-    affiliation: "Horst Görtz Institute for IT Security"
-    role: member
-  - name: "Eric Mugnier"
-    affiliation: "University of California, San Diego"
-    role: member
-  - name: "Paul Olivier"
-    affiliation: "EURECOM"
-    role: member
-  - name: "Kexin Pei"
-    affiliation: "Columbia University"
-    role: member
-  - name: "Cesar Pereida Garcia"
-    affiliation: "Tampere University"
-    role: member
-  - name: "Duy-Phuc Pham"
-    affiliation: "INRIA, IRISA, France"
-    role: member
-  - name: "Goran Piskachev"
-    affiliation: "Fraunhofer IEM"
-    role: member
-  - name: "Hernan Ponce de Leon"
-    affiliation: "Bundeswehr University Munich"
-    role: member
-  - name: "Erwin Quiring"
-    affiliation: "Technische Universität Braunschweig"
-    role: member
-  - name: "Imranur Rahman"
-    affiliation: "North Carolina State University"
-    role: member
-  - name: "Vidya Lakshmi Rajagopalan"
-    affiliation: "Stevens Institute of Technology"
-    role: member
-  - name: "Andrew R. Reiter"
-    affiliation: "Redacted"
-    role: member
-  - name: "Jenni Reuben"
-    affiliation: "Totalförsvarets forskningsinstitut (FOI)"
-    role: member
-  - name: "Irwin Reyes"
-    affiliation: "Two Six Technologies"
-    role: member
-  - name: "Michael Rodler"
-    affiliation: "University of Duisburg-Essen"
-    role: member
-  - name: "Kuheli Sai"
-    affiliation: "University of Pittsburgh"
-    role: member
-  - name: "Saiful Islam Salim"
-    affiliation: "University of Arizona"
-    role: member
-  - name: "Solmaz Salimi"
-    affiliation: "Sharif University of Technology"
-    role: member
-  - name: "Moritz Schloegel"
-    affiliation: "Ruhr-Universität Bochum"
-    role: member
-  - name: "Vikash Sehwag"
-    affiliation: "Princeton University"
-    role: member
-  - name: "Omid Setayeshfar"
-    affiliation: "University of Georgia"
-    role: member
-  - name: "Alex Seto"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Johnny So"
-    affiliation: "Stony Brook University"
-    role: member
-  - name: "Marco Squarcina"
-    affiliation: "TU Wien"
-    role: member
-  - name: "Avinash Sudhodanan"
-    affiliation: "HUMAN"
-    role: member
-  - name: "Mauro Tempesta"
-    affiliation: "TU Wien"
-    role: member
-  - name: "Erik Tews"
-    affiliation: "University of Twente"
-    role: member
-  - name: "Flavio Toffalini"
-    affiliation: "EPFL"
-    role: member
-  - name: "Guillaume Valadon"
-    affiliation: "Quarkslab"
-    role: member
-  - name: "Thijs van Ede"
-    affiliation: "University of Twente"
-    role: member
-  - name: "Alexios Voulimeneas"
-    affiliation: "imec-DistriNet, Katholieke Universiteit Leuven"
-    role: member
-  - name: "Dawei Wang"
-    affiliation: "SKLOIS, Institute of Information Engineering, Chinese Academy of Sciences"
-    role: member
-  - name: "Ding Wang"
-    affiliation: "Nankai University"
-    role: member
-  - name: "Xiaoguang Wang"
-    affiliation: "Virginia Tech"
-    role: member
-  - name: "Zhenting Wang"
-    affiliation: "Rutgers University"
-    role: member
-  - name: "Zhongjie Wang"
-    affiliation: "Baidu Security"
-    role: member
-  - name: "Noel Warford"
-    affiliation: "University of Maryland, College Park"
-    role: member
-  - name: "Feng Wei"
-    affiliation: "University at Buffalo"
-    role: member
-  - name: "Shijia Wei"
-    affiliation: "The University of Texas at Austin"
-    role: member
-  - name: "Ruoyu Wu"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Jeffrey Alan Young"
-    affiliation: "Clemson Univeristy"
-    role: member
-  - name: "Chengyu Zhang"
-    affiliation: "East China Normal University"
-    role: member
-  - name: "Qingzhao Zhang"
-    affiliation: "University of Michigan"
-    role: member
-  - name: "Yuchen Zhang"
-    affiliation: "Stevens Institute of Technology"
-    role: member
-  - name: "Zhiyuan Zhang"
-    affiliation: "The University of Adelaide"
-    role: member
-  - name: "Yongjun Zhao"
-    affiliation: "Nanyang Technological University"
-    role: member
-  - name: "Shitong Zhu"
-    affiliation: "University of California, Riverside"
-    role: member
-
-# WOOT 2019 — https://www.usenix.org/conference/woot19/call-for-artifacts
+- affiliation: CNRS
+  name: Clémentine Maurice
+  role: chair
+- affiliation: VU Amsterdam
+  name: Cristiano Giuffrida
+  role: chair
+- affiliation: CISPA Helmholtz Center for Information Security
+  name: Shubham Agarwal
+  role: member
+- affiliation: University of California, Los Angeles
+  name: Mohsen Ahmadi
+  role: member
+- affiliation: Technische Universität Darmstadt
+  name: Nikolaos Alexopoulos
+  role: member
+- affiliation: Imperial College London
+  name: Ranya Aloufi
+  role: member
+- affiliation: College of William & Mary
+  name: Amit Seal Ami
+  role: member
+- affiliation: EURECOM
+  name: Simone Aonzo
+  role: member
+- affiliation: Technische Universität Braunschweig
+  name: Daniel Arp
+  role: member
+- affiliation: University of Maryland, College Park
+  name: Erin Avllazagaj
+  role: member
+- affiliation: EURECOM
+  name: Pierre Ayoub
+  role: member
+- affiliation: The George Washington University
+  name: David G. Balash
+  role: member
+- affiliation: BlackBerry
+  name: Shay Berkovich
+  role: member
+- affiliation: TU Wien
+  name: Jakob Bleier
+  role: member
+- affiliation: Tampere University
+  name: Alejandro Cabrera Aldaya
+  role: member
+- affiliation: Federal University of Parana
+  name: Fabricio Ceschin
+  role: member
+- affiliation: University of California, Berkeley
+  name: Weikeng Chen
+  role: member
+- affiliation: Purdue University
+  name: Hongjun Choi
+  role: member
+- affiliation: Sapienza University of Rome
+  name: Emilio Coppa
+  role: member
+- affiliation: ENSTA Bretagne
+  name: Pascal Cotret
+  role: member
+- affiliation: University of California, Santa Barbara
+  name: Dipanjan Das
+  role: member
+- affiliation: King's College London
+  name: Giulio De Pasquale
+  role: member
+- affiliation: University of Trento and Istituto di Informatica e Telematica, Consiglio
+    Nazionale delle Ricerche
+  name: Luca Degani
+  role: member
+- affiliation: University of Genoa
+  name: Matteo Dell'Amico
+  role: member
+- affiliation: Rutgers University
+  name: Hailun Ding
+  role: member
+- affiliation: Shanghai Jiao Tong University
+  name: Dong Du
+  role: member
+- affiliation: Ruhr-Universität Bochum
+  name: Thorsten Eisenhofer
+  role: member
+- affiliation: CISPA Helmholtz Center for Information Security
+  name: Alessandro Erba
+  role: member
+- affiliation: University of Luxembourg
+  name: Christof Ferreira Torres
+  role: member
+- affiliation: Université de Lille, Inria, CNRS
+  name: Romain Fouquet
+  role: member
+- affiliation: Lebanese University
+  name: Walid Ghandour
+  role: member
+- affiliation: University of Illinois at Urbana–Champaign
+  name: Samuel Grayson
+  role: member
+- affiliation: University of Trento
+  name: Michele Grisafi
+  role: member
+- affiliation: University of Wisconsin—Madison
+  name: Ashish Hooda
+  role: member
+- affiliation: University of Michigan
+  name: Shengtuo Hu
+  role: member
+- affiliation: Stevens Institute of Technology
+  name: Shan Huang
+  role: member
+- affiliation: University of Wisconsin—Madison
+  name: Mazharul Islam
+  role: member
+- affiliation: imec-DistriNet, Katholieke Universiteit Leuven
+  name: Adriaan Jacobs
+  role: member
+- affiliation: University of Colorado Denver
+  name: Jafar Haadi Jafarian
+  role: member
+- affiliation: Karlsruhe Institute of Technology
+  name: Yilin Ji
+  role: member
+- affiliation: College of William & Mary
+  name: Kaushal Kafle
+  role: member
+- affiliation: Purdue University
+  name: Imtiaz Karim
+  role: member
+- affiliation: Purdue University
+  name: Arslan Khan
+  role: member
+- affiliation: Purdue University
+  name: Hyungsub Kim
+  role: member
+- affiliation: Korea Advanced Institute of Science and Technology (KAIST)
+  name: Soomin Kim
+  role: member
+- affiliation: Ruhr-Universität Bochum
+  name: Daniel Klischies
+  role: member
+- affiliation: Inria
+  name: Anne Josiane Kouam
+  role: member
+- affiliation: CISPA Helmholtz Center for Information Security
+  name: Johannes Krupp
+  role: member
+- affiliation: The University of Adelaide
+  name: Joel Kuepper
+  role: member
+- affiliation: Ruhr-Universität Bochum and Deutsches Forschungszentrum für Künstliche
+    Intelligenz
+  name: Georg Land
+  role: member
+- affiliation: Arizona State University
+  name: Ang Li
+  role: member
+- affiliation: Johns Hopkins University
+  name: Song Li
+  role: member
+- affiliation: University of Padua
+  name: Eleonora Losiouk
+  role: member
+- affiliation: University of California, Riverside
+  name: Keyu Man
+  role: member
+- affiliation: IRISA
+  name: Damien Marion
+  role: member
+- affiliation: Sharif University of Technology, Hong Kong University of Science and
+    Technology (HKUST)
+  name: Maryam Masoudian
+  role: member
+- affiliation: SKLOIS, Institute of Information Engineering, Chinese Academy of Sciences
+  name: Guozhu Meng
+  role: member
+- affiliation: Université Paris-Saclay, CEA
+  name: Grégoire Menguy
+  role: member
+- affiliation: Google
+  name: Brad Miller
+  role: member
+- affiliation: Horst Görtz Institute for IT Security
+  name: Vladislav Mladenov
+  role: member
+- affiliation: University of California, San Diego
+  name: Eric Mugnier
+  role: member
+- affiliation: EURECOM
+  name: Paul Olivier
+  role: member
+- affiliation: Columbia University
+  name: Kexin Pei
+  role: member
+- affiliation: Tampere University
+  name: Cesar Pereida Garcia
+  role: member
+- affiliation: INRIA, IRISA, France
+  name: Duy-Phuc Pham
+  role: member
+- affiliation: Fraunhofer IEM
+  name: Goran Piskachev
+  role: member
+- affiliation: Bundeswehr University Munich
+  name: Hernan Ponce de Leon
+  role: member
+- affiliation: Technische Universität Braunschweig
+  name: Erwin Quiring
+  role: member
+- affiliation: North Carolina State University
+  name: Imranur Rahman
+  role: member
+- affiliation: Stevens Institute of Technology
+  name: Vidya Lakshmi Rajagopalan
+  role: member
+- affiliation: Redacted
+  name: Andrew R. Reiter
+  role: member
+- affiliation: Totalförsvarets forskningsinstitut (FOI)
+  name: Jenni Reuben
+  role: member
+- affiliation: Two Six Technologies
+  name: Irwin Reyes
+  role: member
+- affiliation: University of Duisburg-Essen
+  name: Michael Rodler
+  role: member
+- affiliation: University of Pittsburgh
+  name: Kuheli Sai
+  role: member
+- affiliation: University of Arizona
+  name: Saiful Islam Salim
+  role: member
+- affiliation: Sharif University of Technology
+  name: Solmaz Salimi
+  role: member
+- affiliation: Ruhr-Universität Bochum
+  name: Moritz Schloegel
+  role: member
+- affiliation: Princeton University
+  name: Vikash Sehwag
+  role: member
+- affiliation: University of Georgia
+  name: Omid Setayeshfar
+  role: member
+- affiliation: Purdue University
+  name: Alex Seto
+  role: member
+- affiliation: Stony Brook University
+  name: Johnny So
+  role: member
+- affiliation: TU Wien
+  name: Marco Squarcina
+  role: member
+- affiliation: HUMAN
+  name: Avinash Sudhodanan
+  role: member
+- affiliation: TU Wien
+  name: Mauro Tempesta
+  role: member
+- affiliation: University of Twente
+  name: Erik Tews
+  role: member
+- affiliation: EPFL
+  name: Flavio Toffalini
+  role: member
+- affiliation: Quarkslab
+  name: Guillaume Valadon
+  role: member
+- affiliation: University of Twente
+  name: Thijs van Ede
+  role: member
+- affiliation: imec-DistriNet, Katholieke Universiteit Leuven
+  name: Alexios Voulimeneas
+  role: member
+- affiliation: SKLOIS, Institute of Information Engineering, Chinese Academy of Sciences
+  name: Dawei Wang
+  role: member
+- affiliation: Nankai University
+  name: Ding Wang
+  role: member
+- affiliation: Virginia Tech
+  name: Xiaoguang Wang
+  role: member
+- affiliation: Rutgers University
+  name: Zhenting Wang
+  role: member
+- affiliation: Baidu Security
+  name: Zhongjie Wang
+  role: member
+- affiliation: University of Maryland, College Park
+  name: Noel Warford
+  role: member
+- affiliation: University at Buffalo
+  name: Feng Wei
+  role: member
+- affiliation: The University of Texas at Austin
+  name: Shijia Wei
+  role: member
+- affiliation: Purdue University
+  name: Ruoyu Wu
+  role: member
+- affiliation: Clemson Univeristy
+  name: Jeffrey Alan Young
+  role: member
+- affiliation: East China Normal University
+  name: Chengyu Zhang
+  role: member
+- affiliation: University of Michigan
+  name: Qingzhao Zhang
+  role: member
+- affiliation: Stevens Institute of Technology
+  name: Yuchen Zhang
+  role: member
+- affiliation: The University of Adelaide
+  name: Zhiyuan Zhang
+  role: member
+- affiliation: Nanyang Technological University
+  name: Yongjun Zhao
+  role: member
+- affiliation: University of California, Riverside
+  name: Shitong Zhu
+  role: member
 woot2019:
-  - name: "Alex Gantman"
-    affiliation: "Qualcomm"
-    role: chair
-  - name: "Clémentine Maurice"
-    affiliation: "CNRS, IRISA"
-    role: chair
-  - name: "Alexandre Gazet"
-    affiliation: "Airbus"
-    role: member
-  - name: "Andrew Ruef"
-    affiliation: "Self"
-    role: member
-  - name: "Antonio Nappa"
-    affiliation: "Brave Software Inc. - Universidad Carlos III Madrid"
-    role: member
-  - name: "Christian Wressnegger"
-    affiliation: "TU Braunschhweig"
-    role: member
-  - name: "Daniele Cono D'Elia"
-    affiliation: "Sapienza University of Rome"
-    role: member
-  - name: "Davide Quarta"
-    affiliation: "Eurecom"
-    role: member
-  - name: "Fabio Pierazzi"
-    affiliation: "King's College London"
-    role: member
-  - name: "Fengwei Zhang"
-    affiliation: "SUSTech and Wayne State University"
-    role: member
-  - name: "Marcus Botacin"
-    affiliation: "Federal University of Paraná"
-    role: member
-  - name: "Marcus Brinkmann"
-    affiliation: "Ruhr University Bochum"
-    role: member
-  - name: "Patrick Jauernig"
-    affiliation: "Technische Universität Darmstadt"
-    role: member
-  - name: "Santiago Torres-Arias"
-    affiliation: "New York University"
-    role: member
-  - name: "Vladislav Mladenov"
-    affiliation: "Ruhr University Bochum"
-    role: member
-
-# WOOT 2024 — https://www.usenix.org/conference/woot24/call-for-artifacts
-woot2024:
-  - name: "Asmita"
-    affiliation: "University of California, Davis"
-    role: member
-  - name: "Tolga Atalay"
-    affiliation: "Virginia Tech"
-    role: member
-  - name: "Aurélien Hernandez"
-    affiliation: "EURECOM"
-    role: member
-  - name: "Adrian Herrera"
-    affiliation: "Interrupt Labs"
-    role: member
-  - name: "Jingmei Hu"
-    affiliation: "Amazon"
-    role: member
-  - name: "Doreen Joseph"
-    affiliation: "University of California, Davis"
-    role: member
-  - name: "Endong Liu"
-    affiliation: "University of Birmingham"
-    role: member
-  - name: "Jing Liu"
-    affiliation: "University of California, Irvine"
-    role: member
-  - name: "Zeyan Liu"
-    affiliation: "University of Kansas"
-    role: member
-  - name: "Sabrina Manickam"
-    affiliation: "Vellore Institute of Technology and Max Planck Institute for Security and Privacy"
-    role: member
-  - name: "Andrea Monzani"
-    affiliation: "University of Milan"
-    role: member
-  - name: "Paul Olivier"
-    affiliation: "LAAS-CNRS"
-    role: member
-  - name: "Samuel Pélissier"
-    affiliation: "INSA Lyon, Inria"
-    role: member
-  - name: "Davide Rusconi"
-    affiliation: "University of Milan"
-    role: member
-  - name: "Nathan Rutherford"
-    affiliation: "Royal Holloway, University of London"
-    role: member
-  - name: "Mahsa Saeidi"
-    affiliation: "Oregon State university"
-    role: member
-  - name: "Amit Samanta"
-    affiliation: "University of Utah"
-    role: member
-  - name: "Ryan Tsang"
-    affiliation: "University of California, Davis"
-    role: member
-  - name: "Billy Tsouvalas"
-    affiliation: "Stony Brook University"
-    role: member
-  - name: "Jayakrishna Menon Vadayath"
-    affiliation: "Arizona State University"
-    role: member
-  - name: "Nils Wiersma"
-    affiliation: "Netherlands Forensic Institute"
-    role: member
-  - name: "Lennert Wouters"
-    affiliation: "KU Leuven"
-    role: member
-  - name: "Yingao (Elaine) Yao"
-    affiliation: "University of British Columbia"
-    role: member
-  - name: "Matteo Zoia"
-    affiliation: "University of Milan"
-    role: member
-
-# WOOT 2025 — https://www.usenix.org/conference/woot25/call-for-artifacts
-woot2025:
-  - name: "Asmita Asmita"
-    affiliation: "University of California, Davis"
-    role: member
-  - name: "Jiska Classen"
-    affiliation: "Hasso Plattner Institute, University of Potsdam"
-    role: member
-  - name: "Julian Funk"
-    affiliation: "Friedrich-Alexander-Universität Erlangen-Nürnberg"
-    role: member
-  - name: "Koen Koning"
-    affiliation: "Intel"
-    role: member
-  - name: "Jing Liu"
-    affiliation: "Max Planck Institute for Security and Privacy"
-    role: member
-  - name: "Sabrina Manickam"
-    affiliation: "Ruhr University Bochum and Max Planck Institute for Security and Privacy"
-    role: member
-  - name: "Philipp Mao"
-    affiliation: "EPFL"
-    role: member
-  - name: "Alyssa Milburn"
-    affiliation: "Intel"
-    role: member
-  - name: "Khosro Moeini"
-    affiliation: "Boston University"
-    role: member
-  - name: "Paul L. R. Olivier"
-    affiliation: ""
-    role: member
-  - name: "Pujan Paudel"
-    affiliation: "Boston University"
-    role: member
-  - name: "Nathan Rutherford"
-    affiliation: "Royal Holloway, University of London"
-    role: member
-  - name: "Amit Samanta"
-    affiliation: "The University of Utah"
-    role: member
-  - name: "Jayakrishna Menon Vadayath"
-    affiliation: "Arizona State University"
-    role: member
-  - name: "Eduard Vlad"
-    affiliation: "RWTH Aachen University"
-    role: member
-  - name: "Nils Wiersma"
-    affiliation: "Netherlands Forensic Institute"
-    role: member
-
-# WOOT 2026 — https://www.usenix.org/conference/woot26/call-for-artifacts
-woot2026:
-  - name: "Shevek"
-    affiliation: ""
-    role: member
-  - name: "Muhammad Hammad Bashir"
-    affiliation: "The Pennsylvania State University"
-    role: member
-  - name: "Priyanka Bose"
-    affiliation: "Palo Alto Networks"
-    role: member
-  - name: "Jared Chandler"
-    affiliation: "Dartmouth College"
-    role: member
-  - name: "Gabriele Digregorio"
-    affiliation: "Politecnico di Milano"
-    role: member
-  - name: "Matthias Frielingsdorf"
-    affiliation: "iVerify"
-    role: member
-  - name: "Muhammad Ibrahim"
-    affiliation: "Georgia Institute of Technology"
-    role: member
-  - name: "Seth Jenkins"
-    affiliation: "Google"
-    role: member
-  - name: "Xiang Li"
-    affiliation: "Nankai University"
-    role: member
-  - name: "Jennifer Miller"
-    affiliation: "Arizona State University"
-    role: member
-  - name: "Khosro Moeini"
-    affiliation: "Boston University"
-    role: member
-  - name: "Paul L. R. Olivier"
-    affiliation: "LAAS-CNRS"
-    role: member
-  - name: "Amit Samanta"
-    affiliation: "The University of Utah"
-    role: member
-  - name: "Md Hasan Shahriar"
-    affiliation: "Virginia Tech"
-    role: member
-  - name: "Sagor Sikdar"
-    affiliation: "The Pennsylvania State University"
-    role: member
-  - name: "Eduard Vlad"
-    affiliation: "EPFL"
-    role: member
-
-# ── IEEE WOOT conferences (scraped from ieee-security.org and wootconference.org) ──
-# WOOT 2021-2023 were IEEE workshops co-located with IEEE S&P.
-
-# WOOT 2021 — https://www.ieee-security.org/TC/SP2021/SPW2021/WOOT21/
+- affiliation: Qualcomm
+  name: Alex Gantman
+  role: chair
+- affiliation: CNRS, IRISA
+  name: Clémentine Maurice
+  role: chair
+- affiliation: Airbus
+  name: Alexandre Gazet
+  role: member
+- affiliation: Self
+  name: Andrew Ruef
+  role: member
+- affiliation: Brave Software Inc. - Universidad Carlos III Madrid
+  name: Antonio Nappa
+  role: member
+- affiliation: TU Braunschhweig
+  name: Christian Wressnegger
+  role: member
+- affiliation: Sapienza University of Rome
+  name: Daniele Cono D'Elia
+  role: member
+- affiliation: Eurecom
+  name: Davide Quarta
+  role: member
+- affiliation: King's College London
+  name: Fabio Pierazzi
+  role: member
+- affiliation: SUSTech and Wayne State University
+  name: Fengwei Zhang
+  role: member
+- affiliation: Federal University of Paraná
+  name: Marcus Botacin
+  role: member
+- affiliation: Ruhr University Bochum
+  name: Marcus Brinkmann
+  role: member
+- affiliation: Technische Universität Darmstadt
+  name: Patrick Jauernig
+  role: member
+- affiliation: New York University
+  name: Santiago Torres-Arias
+  role: member
+- affiliation: Ruhr University Bochum
+  name: Vladislav Mladenov
+  role: member
 woot2021:
-  - name: "Erik van der Kouwe"
-    affiliation: "Vrije Universiteit Amsterdam"
-    role: chair
-  - name: "Ateeq Sharfuddin"
-    affiliation: "SCYTHE"
-    role: member
-  - name: "Brian Chapman"
-    affiliation: "SCYTHE"
-    role: member
-  - name: "Daniel Uroz"
-    affiliation: "University of Zaragoza"
-    role: member
-  - name: "Mohsen Ahmadi"
-    affiliation: "Arizona State University"
-    role: member
-  - name: "Ricardo J. Rodríguez"
-    affiliation: "University of Zaragoza"
-    role: member
-  - name: "Victor Duta"
-    affiliation: "Vrije Universiteit Amsterdam"
-    role: member
-
-# WOOT 2022 — https://www.ieee-security.org/TC/SP2022/WOOT22/index.html
+- affiliation: Vrije Universiteit Amsterdam
+  name: Erik van der Kouwe
+  role: chair
+- affiliation: SCYTHE
+  name: Ateeq Sharfuddin
+  role: member
+- affiliation: SCYTHE
+  name: Brian Chapman
+  role: member
+- affiliation: University of Zaragoza
+  name: Daniel Uroz
+  role: member
+- affiliation: Arizona State University
+  name: Mohsen Ahmadi
+  role: member
+- affiliation: University of Zaragoza
+  name: Ricardo J. Rodríguez
+  role: member
+- affiliation: Vrije Universiteit Amsterdam
+  name: Victor Duta
+  role: member
 woot2022:
-  - name: "Eduardo Blázquez González"
-    affiliation: "UC3M Madrid"
-    role: member
-  - name: "Georg Merzdovnik"
-    affiliation: "SBA Research"
-    role: member
-  - name: "Hendrik Siewert"
-    affiliation: "Paderborn University"
-    role: member
-  - name: "Kevin Tavukciyan"
-    affiliation: "IBM Zürich"
-    role: member
-  - name: "Marco Casagrande"
-    affiliation: "EURECOM"
-    role: member
-  - name: "Michael Pucher"
-    affiliation: "University of Vienna"
-    role: member
-  - name: "Nathan Rutherford"
-    affiliation: "Royal Holloway, University of London"
-    role: member
-  - name: "Pedro Bernardo"
-    affiliation: "TU Wien"
-    role: member
-  - name: "Sebastian Schrittwieser"
-    affiliation: "University of Vienna"
-    role: member
-  - name: "Sven Hebrok"
-    affiliation: "Paderborn University"
-    role: member
-  - name: "Travis Goodspeed"
-    affiliation: "Radiant Machines"
-    role: member
-
-# WOOT 2023 — https://wootconference.org/#cfa
+- affiliation: UC3M Madrid
+  name: Eduardo Blázquez González
+  role: member
+- affiliation: SBA Research
+  name: Georg Merzdovnik
+  role: member
+- affiliation: Paderborn University
+  name: Hendrik Siewert
+  role: member
+- affiliation: IBM Zürich
+  name: Kevin Tavukciyan
+  role: member
+- affiliation: EURECOM
+  name: Marco Casagrande
+  role: member
+- affiliation: University of Vienna
+  name: Michael Pucher
+  role: member
+- affiliation: Royal Holloway, University of London
+  name: Nathan Rutherford
+  role: member
+- affiliation: TU Wien
+  name: Pedro Bernardo
+  role: member
+- affiliation: University of Vienna
+  name: Sebastian Schrittwieser
+  role: member
+- affiliation: Paderborn University
+  name: Sven Hebrok
+  role: member
+- affiliation: Radiant Machines
+  name: Travis Goodspeed
+  role: member
 woot2023:
-  - name: "Marco Squarcina"
-    affiliation: "TU Wien"
-    role: chair
-  - name: "Aakash Sharma"
-    affiliation: "UiT The Arctic University of Norway"
-    role: member
-  - name: "Adrian Herrera"
-    affiliation: "Defence Science and Technology Group (DSTG) and Australian National University (ANU)"
-    role: member
-  - name: "Amit Samanta"
-    affiliation: "University of Utah"
-    role: member
-  - name: "Anunay Kulshrestha"
-    affiliation: "Princeton University"
-    role: member
-  - name: "Giulio De Pasquale"
-    affiliation: "King's College London"
-    role: member
-  - name: "Hadrien Barral"
-    affiliation: "ENS"
-    role: member
-  - name: "Hyungsub Kim"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Jessy Ayala"
-    affiliation: "UC Irvine"
-    role: member
-  - name: "Kazi Samin Mubasshir"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Lorenzo Cazzaro"
-    affiliation: "Ca' Foscari University of Venice"
-    role: member
-  - name: "Marco Bonelli"
-    affiliation: "Independent"
-    role: member
-  - name: "Matthew Revelle"
-    affiliation: "Kudu Dynamics"
-    role: member
-  - name: "Michael Pucher"
-    affiliation: "University of Vienna"
-    role: member
-  - name: "Mirza Masfiqur Rahman"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Muhammad Ibrahim"
-    affiliation: "Purdue University"
-    role: member
-  - name: "Nathan Rutherford"
-    affiliation: "Royal Holloway, University of London"
-    role: member
-  - name: "Pedro Bernardo"
-    affiliation: "TU Wien"
-    role: member
-  - name: "Sachin Kumar Singh"
-    affiliation: "University of Utah"
-    role: member
-  - name: "Xin Jin"
-    affiliation: "The Ohio State University"
-    role: member
-  - name: "Yash Vekaria"
-    affiliation: "University of California - Davis"
-    role: member
-  - name: "Zhibo Li"
-    affiliation: "University of Edinburgh"
-    role: member
+- affiliation: TU Wien
+  name: Marco Squarcina
+  role: chair
+- affiliation: UiT The Arctic University of Norway
+  name: Aakash Sharma
+  role: member
+- affiliation: Defence Science and Technology Group (DSTG) and Australian National
+    University (ANU)
+  name: Adrian Herrera
+  role: member
+- affiliation: University of Utah
+  name: Amit Samanta
+  role: member
+- affiliation: Princeton University
+  name: Anunay Kulshrestha
+  role: member
+- affiliation: King's College London
+  name: Giulio De Pasquale
+  role: member
+- affiliation: ENS
+  name: Hadrien Barral
+  role: member
+- affiliation: Purdue University
+  name: Hyungsub Kim
+  role: member
+- affiliation: UC Irvine
+  name: Jessy Ayala
+  role: member
+- affiliation: Purdue University
+  name: Kazi Samin Mubasshir
+  role: member
+- affiliation: Ca' Foscari University of Venice
+  name: Lorenzo Cazzaro
+  role: member
+- affiliation: Independent
+  name: Marco Bonelli
+  role: member
+- affiliation: Kudu Dynamics
+  name: Matthew Revelle
+  role: member
+- affiliation: University of Vienna
+  name: Michael Pucher
+  role: member
+- affiliation: Purdue University
+  name: Mirza Masfiqur Rahman
+  role: member
+- affiliation: Purdue University
+  name: Muhammad Ibrahim
+  role: member
+- affiliation: Royal Holloway, University of London
+  name: Nathan Rutherford
+  role: member
+- affiliation: TU Wien
+  name: Pedro Bernardo
+  role: member
+- affiliation: University of Utah
+  name: Sachin Kumar Singh
+  role: member
+- affiliation: The Ohio State University
+  name: Xin Jin
+  role: member
+- affiliation: University of California - Davis
+  name: Yash Vekaria
+  role: member
+- affiliation: University of Edinburgh
+  name: Zhibo Li
+  role: member
+woot2024:
+- affiliation: University of California, Davis
+  name: Asmita
+  role: member
+- affiliation: Virginia Tech
+  name: Tolga Atalay
+  role: member
+- affiliation: EURECOM
+  name: Aurélien Hernandez
+  role: member
+- affiliation: Interrupt Labs
+  name: Adrian Herrera
+  role: member
+- affiliation: Amazon
+  name: Jingmei Hu
+  role: member
+- affiliation: University of California, Davis
+  name: Doreen Joseph
+  role: member
+- affiliation: University of Birmingham
+  name: Endong Liu
+  role: member
+- affiliation: University of California, Irvine
+  name: Jing Liu
+  role: member
+- affiliation: University of Kansas
+  name: Zeyan Liu
+  role: member
+- affiliation: Vellore Institute of Technology and Max Planck Institute for Security
+    and Privacy
+  name: Sabrina Manickam
+  role: member
+- affiliation: University of Milan
+  name: Andrea Monzani
+  role: member
+- affiliation: LAAS-CNRS
+  name: Paul Olivier
+  role: member
+- affiliation: INSA Lyon, Inria
+  name: Samuel Pélissier
+  role: member
+- affiliation: University of Milan
+  name: Davide Rusconi
+  role: member
+- affiliation: Royal Holloway, University of London
+  name: Nathan Rutherford
+  role: member
+- affiliation: Oregon State university
+  name: Mahsa Saeidi
+  role: member
+- affiliation: University of Utah
+  name: Amit Samanta
+  role: member
+- affiliation: University of California, Davis
+  name: Ryan Tsang
+  role: member
+- affiliation: Stony Brook University
+  name: Billy Tsouvalas
+  role: member
+- affiliation: Arizona State University
+  name: Jayakrishna Menon Vadayath
+  role: member
+- affiliation: Netherlands Forensic Institute
+  name: Nils Wiersma
+  role: member
+- affiliation: KU Leuven
+  name: Lennert Wouters
+  role: member
+- affiliation: University of British Columbia
+  name: Yingao (Elaine) Yao
+  role: member
+- affiliation: University of Milan
+  name: Matteo Zoia
+  role: member
+woot2025:
+- affiliation: University of California, Davis
+  name: Asmita Asmita
+  role: member
+- affiliation: Hasso Plattner Institute, University of Potsdam
+  name: Jiska Classen
+  role: member
+- affiliation: Friedrich-Alexander-Universität Erlangen-Nürnberg
+  name: Julian Funk
+  role: member
+- affiliation: Intel
+  name: Koen Koning
+  role: member
+- affiliation: Max Planck Institute for Security and Privacy
+  name: Jing Liu
+  role: member
+- affiliation: Ruhr University Bochum and Max Planck Institute for Security and Privacy
+  name: Sabrina Manickam
+  role: member
+- affiliation: EPFL
+  name: Philipp Mao
+  role: member
+- affiliation: Intel
+  name: Alyssa Milburn
+  role: member
+- affiliation: Boston University
+  name: Khosro Moeini
+  role: member
+- affiliation: ''
+  name: Paul L. R. Olivier
+  role: member
+- affiliation: Boston University
+  name: Pujan Paudel
+  role: member
+- affiliation: Royal Holloway, University of London
+  name: Nathan Rutherford
+  role: member
+- affiliation: The University of Utah
+  name: Amit Samanta
+  role: member
+- affiliation: Arizona State University
+  name: Jayakrishna Menon Vadayath
+  role: member
+- affiliation: RWTH Aachen University
+  name: Eduard Vlad
+  role: member
+- affiliation: Netherlands Forensic Institute
+  name: Nils Wiersma
+  role: member
+woot2026:
+- affiliation: ''
+  name: Shevek
+  role: member
+- affiliation: The Pennsylvania State University
+  name: Muhammad Hammad Bashir
+  role: member
+- affiliation: Palo Alto Networks
+  name: Priyanka Bose
+  role: member
+- affiliation: Dartmouth College
+  name: Jared Chandler
+  role: member
+- affiliation: Politecnico di Milano
+  name: Gabriele Digregorio
+  role: member
+- affiliation: iVerify
+  name: Matthias Frielingsdorf
+  role: member
+- affiliation: Georgia Institute of Technology
+  name: Muhammad Ibrahim
+  role: member
+- affiliation: Google
+  name: Seth Jenkins
+  role: member
+- affiliation: Nankai University
+  name: Xiang Li
+  role: member
+- affiliation: Arizona State University
+  name: Jennifer Miller
+  role: member
+- affiliation: Boston University
+  name: Khosro Moeini
+  role: member
+- affiliation: LAAS-CNRS
+  name: Paul L. R. Olivier
+  role: member
+- affiliation: The University of Utah
+  name: Amit Samanta
+  role: member
+- affiliation: Virginia Tech
+  name: Md Hasan Shahriar
+  role: member
+- affiliation: The Pennsylvania State University
+  name: Sagor Sikdar
+  role: member
+- affiliation: EPFL
+  name: Eduard Vlad
+  role: member
