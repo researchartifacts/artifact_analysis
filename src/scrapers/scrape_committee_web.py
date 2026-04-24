@@ -36,11 +36,11 @@ USENIX_CONF_SLUGS = {
 
 # Known years where USENIX call-for-artifacts pages exist
 USENIX_KNOWN_YEARS = {
-    "fast": range(2024, 2026),  # 2024, 2025
-    "osdi": range(2020, 2026),  # 2020-2025  (some may 404)
-    "atc": range(2020, 2026),  # 2020-2025  (some may 404)
-    "usenixsec": range(2020, 2026),  # 2020-2025
-    "woot": range(2024, 2026),  # 2024 (2025 may exist)
+    "fast": range(2024, 2027),  # 2024-2026
+    "osdi": range(2020, 2027),  # 2020-2026  (some may 404)
+    "atc": range(2020, 2027),  # 2020-2026  (some may 404)
+    "usenixsec": range(2020, 2027),  # 2020-2026
+    "woot": range(2019, 2027),  # 2019, 2024-2026 (2020-2023 have no AE data)
 }
 
 BASE_USENIX = "https://www.usenix.org"
