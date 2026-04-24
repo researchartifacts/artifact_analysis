@@ -81,7 +81,7 @@ def discover_conferences(website_root: str | None = None) -> tuple[frozenset[str
 
 # Built-in fallbacks (kept in sync by CI; only used when website is absent).
 _FALLBACK_SYSTEMS = frozenset({"ATC", "CAIS", "EUROSYS", "FAST", "OSDI", "SC", "SOSP"})
-_FALLBACK_SECURITY = frozenset({"ACSAC", "CHES", "NDSS", "PETS", "SYSTEX", "USENIXSEC", "WOOT"})
+_FALLBACK_SECURITY = frozenset({"ACSAC", "CHES", "NDSS", "PETS", "SYSTEX", "USENIXSEC", "VEHICLESEC", "WOOT"})
 
 # Module-level sets, populated on first import.
 SYSTEMS_CONFS, SECURITY_CONFS = discover_conferences()

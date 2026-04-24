@@ -734,8 +734,16 @@ def generate_committee_data(conf_regex, output_dir):
     if classified["failed"]:
         logger.error(f"  ⚠️  Could not classify {len(classified['failed'])} members")
 
-    # Build area map
-    conf_to_area = {cy: _conf_area(cy) for cy in all_results}
+    # Build area map – prefer the source prefix (sys→systems, sec→security)
+    # over the fallback list so that new conferences are classified correctly.
+    conf_to_area = {}
+    for cy in all_results:
+        if cy in sys_results:
+            conf_to_area[cy] = "systems"
+        elif cy in sec_results:
+            conf_to_area[cy] = "security"
+        else:
+            conf_to_area[cy] = _conf_area(cy)
 
     # ── 3. Aggregate statistics ──────────────────────────────────────────────
     country_all, country_sys, country_sec = _aggregate_across_conferences(classified["by_country"], conf_to_area)
