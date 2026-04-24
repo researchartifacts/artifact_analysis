@@ -80,11 +80,11 @@ The pipeline scrapes committee data from external websites (USENIX, CHES, PETS, 
 In CI, the env var `SKIP_USENIX_SCRAPE=1` is set because these sites block GitHub
 Actions IPs (Cloudflare). When set, both `generate_statistics.py` and
 `get_alternative_committees()` skip live scraping and fall back to cached data in
-`data/manual_committees.yaml`.
+`data/local_committees.yaml`.
 
 **When adding a new conference year:**
 1. Run the scraper locally to fetch committee data (USENIX scraping works from dev machines).
-2. Append the results to `data/manual_committees.yaml` so CI can use them offline.
+2. Append the results to `data/local_committees.yaml` so CI can use them offline.
 3. Update `USENIX_KNOWN_YEARS` in `src/scrapers/scrape_committee_web.py` if needed.
 
 ## CI Secrets

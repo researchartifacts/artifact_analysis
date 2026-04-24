@@ -26,7 +26,7 @@ When adding a new conference year that requires web scraping:
 
 1. Run the scraper locally — external sites (USENIX, CHES, PETS, ACSAC) block GitHub
    Actions IPs, so CI cannot fetch live data.
-2. Append the scraped committee data to `data/manual_committees.yaml`.
+2. Append the scraped committee data to `data/local_committees.yaml`.
 3. Update `USENIX_KNOWN_YEARS` in `src/scrapers/scrape_committee_web.py` if needed.
 4. CI uses `SKIP_USENIX_SCRAPE=1` to skip live scraping and read from the YAML fallback.
 

@@ -41,7 +41,7 @@ USENIX_KNOWN_YEARS = {
     "osdi": range(2020, 2027),  # 2020-2026  (some may 404)
     "atc": range(2020, 2027),  # 2020-2026  (some may 404)
     "usenixsec": range(2020, 2027),  # 2020-2026
-    # WOOT: 2019 USENIX, 2020 no AE, 2021-2023 IEEE (manual_committees.yaml),
+    # WOOT: 2019 USENIX, 2020 no AE, 2021-2023 IEEE (local_committees.yaml),
     # 2024-2026 back to USENIX
     "woot": [2019, 2021, 2022, 2023, 2024, 2025, 2026],
 }
@@ -876,19 +876,110 @@ def scrape_acsac_committee(year, session=None, cache_only=False):
     return deduped if deduped else None
 
 
-# ── Manual / static committees ───────────────────────────────────────────────
+# ── HotCRP scraper ───────────────────────────────────────────────────────────
 
-_MANUAL_COMMITTEES_PATH = Path(__file__).resolve().parents[2] / "data" / "manual_committees.yaml"
+# Maps (conference, year) to HotCRP PC-list URLs.
+# URL pattern: https://{conf}{yy}ae.hotcrp.com/u/0/users/pc
+# Only conferences with public HotCRP AE sites are listed here.
+HOTCRP_URLS = {
+    ("sosp", 2024): "https://sosp24ae.hotcrp.com/u/0/users/pc",
+    ("sosp", 2025): "https://sosp25ae.hotcrp.com/u/0/users/pc",
+}
 
 
-def _load_manual_committees():
-    """Load manual committee data from data/manual_committees.yaml.
+def scrape_hotcrp_committee(conference, year, session=None, cache_only=False):
+    """Scrape AE committee from a public HotCRP PC-list page.
+
+    Parameters
+    ----------
+    conference : str
+        Conference name (e.g. 'sosp')
+    year : int
+        4-digit year
+    session : requests.Session, optional
+    cache_only : bool
+        If True, only return data from the disk cache.
+
+    Returns
+    -------
+    list of {name, affiliation, role} dicts, or None if page not found
+    """
+    url = HOTCRP_URLS.get((conference.lower(), year))
+    if url is None:
+        return None
+
+    html = _cached_fetch(url, session=session, cache_only=cache_only)
+    if html is None:
+        return None
+
+    soup = BeautifulSoup(html, "html.parser")
+    table = soup.find("table")
+    if table is None:
+        return None
+
+    members = []
+    for row in table.find_all("tr")[1:]:  # skip header row
+        cells = row.find_all("td")
+        if len(cells) < 2:
+            continue
+
+        name_cell = cells[0]
+        affil_cell = cells[1]
+
+        # Detect chair role from <span class="pcrole">chair</span>
+        role_span = name_cell.find("span", class_="pcrole")
+        is_chair = role_span is not None and "chair" in role_span.get_text(strip=True).lower()
+
+        # Extract name: prefer <span class="taghl"> (highlighted name),
+        # otherwise fall back to full cell text minus the role span
+        name_span = name_cell.find("span", class_="taghl")
+        if name_span:
+            name = name_span.get_text(strip=True)
+        else:
+            # Remove the role span text from the cell text
+            name = name_cell.get_text(strip=True)
+            if role_span:
+                name = name.replace(role_span.get_text(strip=True), "").strip()
+
+        affiliation = affil_cell.get_text(strip=True)
+
+        # Clean up
+        name = re.sub(r"\s+", " ", name).strip()
+        affiliation = re.sub(r"\s+", " ", affiliation).strip()
+
+        # Skip placeholder entries ("[No name]", empty, "None")
+        if not name or name == "[No name]" or len(name) < 2:
+            continue
+
+        role = "chair" if is_chair else "member"
+        members.append({"name": name, "affiliation": affiliation, "role": role})
+
+    if members:
+        chair_count = sum(1 for m in members if m["role"] == "chair")
+        member_count = len(members) - chair_count
+        logger.info(
+            "  HotCRP: Found %d members + %d chair(s) for %s%d",
+            member_count,
+            chair_count,
+            conference,
+            year,
+        )
+    return members if members else None
+
+
+# ── Local / static committees ────────────────────────────────────────────────
+
+_LOCAL_COMMITTEES_PATH = Path(__file__).resolve().parents[2] / "data" / "local_committees.yaml"
+
+
+def _load_local_committees():
+    """Load local committee data from data/local_committees.yaml.
 
     Returns dict of {conf_year_str: [{name, affiliation, role}, ...]}.
     """
-    if not _MANUAL_COMMITTEES_PATH.exists():
+    if not _LOCAL_COMMITTEES_PATH.exists():
         return {}
-    with _MANUAL_COMMITTEES_PATH.open() as f:
+    with _LOCAL_COMMITTEES_PATH.open() as f:
         data = yaml.safe_load(f) or {}
     return data
 
@@ -915,7 +1006,7 @@ def get_alternative_committees(conferences_needed):
         "yes",
     }
     results = {}
-    manual = _load_manual_committees()
+    local = _load_local_committees()
     sess = None if cache_only else _get_session()
 
     if cache_only:
@@ -940,9 +1031,14 @@ def get_alternative_committees(conferences_needed):
         elif conf == "acsac":
             committee = scrape_acsac_committee(year, session=sess, cache_only=cache_only)
 
-        # Fallback: manual/static data (e.g. from proceedings front matter)
+        # Try HotCRP (public pages, not blocked by SKIP_USENIX_SCRAPE)
+        if not committee and (conf, year) in HOTCRP_URLS:
+            hotcrp_sess = sess if sess is not None else _get_session()
+            committee = scrape_hotcrp_committee(conf, year, session=hotcrp_sess, cache_only=False)
+
+        # Fallback: local/static data (e.g. from local pipeline run)
         if not committee:
-            committee = manual.get(conf_year_str)
+            committee = local.get(conf_year_str)
 
         if committee and len(committee) > 0:
             results[conf_year_str] = committee
