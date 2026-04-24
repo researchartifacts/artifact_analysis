@@ -63,7 +63,16 @@ jobs:
           cd reprodb-pipeline
           pip install -r requirements-ci.txt
           pip install jsonschema
-      
+
+      - name: Restore HTTP response cache
+        uses: actions/cache@v4
+        with:
+          path: reprodb-pipeline/src/.cache
+          key: scraper-cache-${{ hashFiles('reprodb-pipeline/requirements.txt') }}-week${{ github.run_number }}
+          restore-keys: |
+            scraper-cache-${{ hashFiles('reprodb-pipeline/requirements.txt') }}-
+            scraper-cache-
+
       - name: Create output directories
         run: |
           mkdir -p website/_data
@@ -84,7 +93,7 @@ jobs:
             --output_dir ../website
       
       - name: Generate repository statistics
-        timeout-minutes: 300
+        timeout-minutes: 120
         env:
           GITHUB_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
         run: |

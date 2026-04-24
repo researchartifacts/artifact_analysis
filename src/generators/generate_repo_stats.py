@@ -111,7 +111,8 @@ def collect_stats_for_results(results, url_keys=None):
                 seen_urls.add(url_normalized)
                 jobs.append((url, conf_name, year, artifact.get("title", "Unknown")))
 
-    logger.info(f"  Collecting stats for {len(jobs)} unique URLs (4 workers)")
+    max_workers = 8
+    logger.info(f"  Collecting stats for {len(jobs)} unique URLs ({max_workers} workers)")
 
     def _fetch_stats(url):
         """Fetch stats for a single URL (thread-safe via disk cache)."""
@@ -128,7 +129,7 @@ def collect_stats_for_results(results, url_keys=None):
 
     all_stats = []
     collected = 0
-    with ThreadPoolExecutor(max_workers=4) as pool:
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
         future_to_job = {pool.submit(_fetch_stats, url): (url, conf, yr, title) for url, conf, yr, title in jobs}
         for i, future in enumerate(as_completed(future_to_job), 1):
             url, conf_name, year, title = future_to_job[future]
@@ -466,9 +467,15 @@ def main():
         logger.info(f"Written to {out_path}")
 
         # Write per-repo detail JSON for CDF generation
+        # Sort by URL for stable ordering across runs (ThreadPoolExecutor
+        # returns results in non-deterministic completion order).
+        detail_repos = sorted(
+            aggregated.get("all_github_repos", []),
+            key=lambda e: (e.get("conference", ""), e.get("year", 0), e.get("url", "")),
+        )
         detail_path = os.path.join(assets_dir, "repo_stats_detail.json")
         with open(detail_path, "w") as f:
-            json.dump(aggregated.get("all_github_repos", []), f, indent=2)
+            json.dump(detail_repos, f, indent=2)
         logger.info(f"Written per-repo detail ({len(aggregated.get('all_github_repos', []))} repos) to {detail_path}")
 
         # Write repo_stats_yearly.json — per-year stats split by area (all/systems/security)
