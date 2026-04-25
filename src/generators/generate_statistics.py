@@ -12,8 +12,10 @@ import re
 from collections import defaultdict
 from datetime import datetime
 
-from src.utils.io import save_json, save_yaml
+from src.utils.io import save_validated_json, save_yaml
 
+from ..models.artifacts import Artifact
+from ..models.summary import Summary
 from ..scrapers.acm_scrape import (
     get_acm_conferences,
 )
@@ -518,9 +520,9 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
         save_yaml(os.path.join(output_dir, "_data/artifacts_by_year.yml"), artifacts_by_year)
 
         # Write JSON files for download
-        save_json(os.path.join(output_dir, "assets/data/artifacts.json"), all_artifacts)
+        save_validated_json(os.path.join(output_dir, "assets/data/artifacts.json"), all_artifacts, Artifact)
 
-        save_json(os.path.join(output_dir, "assets/data/summary.json"), summary)
+        save_validated_json(os.path.join(output_dir, "assets/data/summary.json"), summary, Summary)
 
         # Auto-generate per-conference .md pages for Jekyll
         _generate_conference_pages(output_dir, systems_confs, security_confs)

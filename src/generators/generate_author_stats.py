@@ -12,8 +12,9 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-from src.utils.io import load_json, load_yaml, save_json, save_yaml
+from src.utils.io import load_json, load_yaml, save_json, save_validated_json, save_yaml
 
+from ..models.author_stats import AuthorStats
 from ..utils.conference import clean_name as clean_display_name
 from ..utils.conference import normalize_title
 from .generate_combined_rankings import _normalize_affiliation
@@ -624,7 +625,7 @@ def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> Non
     save_yaml(os.path.join(output_dir, "_data/author_summary.yml"), author_summary)
 
     # JSON for download (full data including embedded papers for backward compat)
-    save_json(os.path.join(output_dir, "assets/data/authors.json"), authors_list)
+    save_validated_json(os.path.join(output_dir, "assets/data/authors.json"), authors_list, AuthorStats)
 
     # Paper -> authors mapping for citation attribution
     save_json(os.path.join(output_dir, "assets/data/paper_authors_map.json"), papers_with_authors)

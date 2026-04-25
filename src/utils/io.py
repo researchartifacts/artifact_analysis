@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from pydantic import BaseModel, TypeAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,30 @@ def save_json(
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(data, fh, **kwargs)
         fh.write("\n")
+
+
+def save_validated_json(
+    path: str | Path,
+    data: Any,
+    model: type[BaseModel],
+    *,
+    indent: int | None = 2,
+    compact: bool = False,
+) -> None:
+    """Validate *data* against a Pydantic *model* and write as JSON.
+
+    When *data* is a list, each item is validated individually.  A single
+    ``BaseModel`` instance or dict is validated as-is.
+
+    Validation errors are logged and re-raised so callers can decide how to
+    handle them.  The ``TypeAdapter`` approach supports both ``list[Model]``
+    and single-model payloads.
+    """
+    adapter = TypeAdapter(list[model] if isinstance(data, list) else model)
+    validated = adapter.validate_python(data)
+    # Serialize through Pydantic so aliases and custom encoders are honoured
+    serialized = adapter.dump_python(validated, mode="python")
+    save_json(path, serialized, indent=indent, compact=compact)
 
 
 def load_yaml(path: str | Path, *, default: Any = None) -> Any:

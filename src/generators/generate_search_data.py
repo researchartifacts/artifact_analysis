@@ -6,7 +6,9 @@ import logging
 import os
 import re
 
-from src.utils.io import load_json, save_json
+from src.utils.io import load_json, save_validated_json
+
+from ..models.search_data import SearchEntry
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +76,7 @@ def generate_search_data(data_dir: str) -> list:
     merged.sort(key=lambda x: (-x["year"], x["conference"], x["title"]))
 
     out_path = os.path.join(assets_data, "search_data.json")
-    save_json(out_path, merged, indent=None)
+    save_validated_json(out_path, merged, SearchEntry, indent=None)
 
     logger.info(
         f"search_data.json: {len(merged)} artifacts "

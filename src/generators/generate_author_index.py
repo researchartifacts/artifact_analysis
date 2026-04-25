@@ -21,7 +21,9 @@ import logging
 import os
 from datetime import datetime
 
-from src.utils.io import load_json, save_json
+from src.utils.io import load_json, save_validated_json
+
+from ..models.author_index import AuthorIndexEntry
 
 logger = logging.getLogger(__name__)
 
@@ -175,7 +177,7 @@ def main():
     )
 
     # Write
-    save_json(index_path, index)
+    save_validated_json(index_path, index, AuthorIndexEntry)
     logger.info(f"Written to {index_path}")
 
     return index

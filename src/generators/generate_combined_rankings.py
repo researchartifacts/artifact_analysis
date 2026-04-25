@@ -23,7 +23,9 @@ from pathlib import Path
 
 from src.utils.conference import canonicalize_name
 from src.utils.conference import normalize_name as _base_normalize_name
-from src.utils.io import load_json, load_yaml, save_json, save_yaml
+from src.utils.io import load_json, load_yaml, save_validated_json, save_yaml
+
+from ..models.combined_rankings import AuthorRanking
 
 # ── Name normalisation ────────────────────────────────────────────────────────
 
@@ -617,7 +619,7 @@ def generate_combined_rankings(data_dir: str) -> None:
         ("security_combined_rankings.json", combined_sec),
     ]:
         path = os.path.join(assets_data, fname)
-        save_json(path, data, indent=None)
+        save_validated_json(path, data, AuthorRanking, indent=None)
         logger.info(f"  Wrote {path} ({len(data)} entries)")
 
     # ── Per-conference combined rankings ──────────────────────────────────
@@ -678,7 +680,7 @@ def generate_combined_rankings(data_dir: str) -> None:
 
         fname = f"{conf_lower}_combined_rankings.json"
         path = os.path.join(assets_data, fname)
-        save_json(path, conf_combined, indent=None)
+        save_validated_json(path, conf_combined, AuthorRanking, indent=None)
         logger.info(f"  Wrote {path} ({len(conf_combined)} entries)")
 
     # Summary YAML

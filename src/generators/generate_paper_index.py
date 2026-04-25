@@ -14,7 +14,9 @@ import logging
 import os
 
 from src.utils.conference import normalize_title
-from src.utils.io import load_json, load_yaml, save_json
+from src.utils.io import load_json, load_yaml, save_json, save_validated_json
+
+from ..models.paper_index import Paper
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +125,7 @@ def main():
 
     # Write paper index
     os.makedirs(os.path.dirname(index_path), exist_ok=True)
-    save_json(index_path, papers)
+    save_validated_json(index_path, papers, Paper)
 
     # Also write to assets/data for client-side loading
     assets_path = os.path.join(data_dir, "assets", "data", "papers.json")

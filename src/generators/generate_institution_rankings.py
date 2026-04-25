@@ -10,7 +10,9 @@ from collections import defaultdict
 from pathlib import Path
 
 from src.generators.generate_combined_rankings import _normalize_affiliation
-from src.utils.io import load_json, save_json
+from src.utils.io import load_json, save_validated_json
+
+from ..models.institution_rankings import InstitutionRanking
 
 logger = logging.getLogger(__name__)
 
@@ -169,7 +171,7 @@ def main():
         institutions = aggregate_by_institution(combined_data)
 
         output_path = data_dir / "institution_rankings.json"
-        save_json(output_path, institutions)
+        save_validated_json(output_path, institutions, InstitutionRanking)
         logger.info(f"  ✓ Generated {output_path} ({len(institutions)} institutions)")
     else:
         logger.info(f"  ✗ {combined_path} not found")
@@ -182,7 +184,7 @@ def main():
         systems_institutions = aggregate_by_institution(systems_data)
 
         output_path = data_dir / "systems_institution_rankings.json"
-        save_json(output_path, systems_institutions)
+        save_validated_json(output_path, systems_institutions, InstitutionRanking)
         logger.info(f"  ✓ Generated {output_path} ({len(systems_institutions)} institutions)")
     else:
         logger.info(f"  ✗ {systems_path} not found")
@@ -195,7 +197,7 @@ def main():
         security_institutions = aggregate_by_institution(security_data)
 
         output_path = data_dir / "security_institution_rankings.json"
-        save_json(output_path, security_institutions)
+        save_validated_json(output_path, security_institutions, InstitutionRanking)
         logger.info(f"  ✓ Generated {output_path} ({len(security_institutions)} institutions)")
     else:
         logger.info(f"  ✗ {security_path} not found")
@@ -211,7 +213,7 @@ def main():
         conf_data = load_combined_ranking(conf_path)
         conf_institutions = aggregate_by_institution(conf_data)
         output_path = data_dir / f"{prefix}_institution_rankings.json"
-        save_json(output_path, conf_institutions)
+        save_validated_json(output_path, conf_institutions, InstitutionRanking)
         logger.info(f"  ✓ Generated {output_path} ({len(conf_institutions)} institutions)")
 
 
