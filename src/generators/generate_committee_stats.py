@@ -692,6 +692,15 @@ def generate_committee_data(conf_regex, output_dir):
             if re.search(conf_regex, name):
                 all_conf_dirs.add(name)
 
+    # Also include conferences from local_committees.yaml so that
+    # conferences not yet merged into sysartifacts/secartifacts are
+    # still discovered and can be fetched from alternative sources.
+    from src.scrapers.scrape_committee_web import _load_local_committees
+
+    for cy in _load_local_committees():
+        if re.search(conf_regex, cy):
+            all_conf_dirs.add(cy)
+
     # For every conference-year that's missing or invalid, mark as needed
     for cy in sorted(all_conf_dirs):
         if cy in all_results and _is_valid_committee(all_results[cy]):

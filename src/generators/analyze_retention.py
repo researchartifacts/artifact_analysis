@@ -86,6 +86,14 @@ def scrape_all_committees(conf_regex):
         if re.search(conf_regex, cy) and (cy not in all_results or not _is_valid_committee(all_results.get(cy))):
             conferences_needed[cy] = "security"
 
+    # Also include conferences from local_committees.yaml
+    from src.scrapers.scrape_committee_web import _load_local_committees
+
+    for cy in _load_local_committees():
+        if re.search(conf_regex, cy) and (cy not in all_results or not _is_valid_committee(all_results.get(cy))):
+            area = _conf_area(cy)
+            conferences_needed[cy] = area
+
     # Skip PETS — petsymposium.org is unreliable/timing out
     # The secartifacts YAML has PETs chairs but not full committees
 
