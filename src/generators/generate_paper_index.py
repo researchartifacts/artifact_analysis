@@ -10,11 +10,11 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
 
 from src.utils.conference import normalize_title
+from src.utils.io import load_json, load_yaml, save_json
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,7 @@ def load_existing_index(path):
     """Load existing paper index to preserve IDs across runs."""
     if not os.path.exists(path):
         return [], {}
-    with open(path) as f:
-        entries = json.load(f)
+    entries = load_json(path)
     by_norm_title = {}
     for entry in entries:
         key = entry.get("normalized_title", "")
@@ -113,13 +112,9 @@ def main():
     # Load authors (use JSON if available, else YAML)
     json_path = os.path.join(data_dir, "assets", "data", "authors.json")
     if os.path.exists(json_path):
-        with open(json_path) as f:
-            authors_data = json.load(f)
+        authors_data = load_json(json_path)
     else:
-        import yaml
-
-        with open(authors_path) as f:
-            authors_data = yaml.safe_load(f)
+        authors_data = load_yaml(authors_path)
 
     existing, existing_by_title = load_existing_index(index_path)
     max_id = max((e["id"] for e in existing), default=0)
@@ -128,14 +123,12 @@ def main():
 
     # Write paper index
     os.makedirs(os.path.dirname(index_path), exist_ok=True)
-    with open(index_path, "w") as f:
-        json.dump(papers, f, indent=2, ensure_ascii=False)
+    save_json(index_path, papers)
 
     # Also write to assets/data for client-side loading
     assets_path = os.path.join(data_dir, "assets", "data", "papers.json")
     os.makedirs(os.path.dirname(assets_path), exist_ok=True)
-    with open(assets_path, "w") as f:
-        json.dump(papers, f, ensure_ascii=False)
+    save_json(assets_path, papers, indent=None)
 
     logger.info(f"Paper index: {len(papers)} unique papers -> {index_path}")
     artifact_papers = sum(1 for p in papers if p.get("has_artifact", True))

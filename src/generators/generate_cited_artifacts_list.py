@@ -16,12 +16,12 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
 from collections import defaultdict
 
 from src.utils.conference import normalize_title
+from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +44,7 @@ def generate(data_dir: str) -> None:
         logger.error(f"Error: {citations_path} not found. Run generate_artifact_citations.py first")
         return
 
-    with open(citations_path, "r") as f:
-        citations = json.load(f)
+    citations = load_json(citations_path)
 
     # Build lookup: normalized title -> citation data
     cited_artifacts = {}
@@ -64,12 +63,11 @@ def generate(data_dir: str) -> None:
     # Load paper-to-authors mapping
     paper_author_map = {}
     if os.path.exists(paper_authors_map_path):
-        with open(paper_authors_map_path, "r") as f:
-            papers = json.load(f)
-            for paper in papers:
-                norm_title = normalize_title(paper.get("title", ""))
-                if norm_title:
-                    paper_author_map[norm_title] = paper
+        papers = load_json(paper_authors_map_path)
+        for paper in papers:
+            norm_title = normalize_title(paper.get("title", ""))
+            if norm_title:
+                paper_author_map[norm_title] = paper
     else:
         logger.warning(
             f"Warning: {paper_authors_map_path} not found. Run generate_author_stats.py first for full mapping."
@@ -80,24 +78,22 @@ def generate(data_dir: str) -> None:
     institution_info = {}
 
     if os.path.exists(combined_rankings_path):
-        with open(combined_rankings_path, "r") as f:
-            rankings = json.load(f)
-            for author in rankings:
-                author_name = author.get("name", "")
-                author_info[author_name] = {
-                    "display_name": author.get("display_name", ""),
-                    "affiliation": author.get("affiliation", ""),
-                    "display_affiliation": author.get("display_affiliation", ""),
-                }
+        rankings = load_json(combined_rankings_path)
+        for author in rankings:
+            author_name = author.get("name", "")
+            author_info[author_name] = {
+                "display_name": author.get("display_name", ""),
+                "affiliation": author.get("affiliation", ""),
+                "display_affiliation": author.get("display_affiliation", ""),
+            }
 
     if os.path.exists(institution_rankings_path):
-        with open(institution_rankings_path, "r") as f:
-            institutions = json.load(f)
-            for inst in institutions:
-                inst_name = inst.get("institution", "")
-                institution_info[inst_name] = {
-                    "display_name": inst.get("display_name", ""),
-                }
+        institutions = load_json(institution_rankings_path)
+        for inst in institutions:
+            inst_name = inst.get("institution", "")
+            institution_info[inst_name] = {
+                "display_name": inst.get("display_name", ""),
+            }
 
     # Build mapping: author -> cited artifacts
     cited_by_author = defaultdict(
@@ -190,26 +186,22 @@ def generate(data_dir: str) -> None:
     # Write output files
     os.makedirs(os.path.dirname(out_author_cited), exist_ok=True)
 
-    with open(out_author_cited, "w") as f:
-        # Convert defaultdict to regular dict for JSON serialization
-        out_dict = {k: v for k, v in cited_by_author.items()}
-        # Sort by total citations
-        sort_dict = {
-            k: out_dict[k] for k in sorted(out_dict.keys(), key=lambda x: out_dict[x]["total_citations"], reverse=True)
-        }
-        json.dump(sort_dict, f, indent=2, ensure_ascii=False)
+    # Convert defaultdict to regular dict and sort by total citations
+    author_dict = {k: v for k, v in cited_by_author.items()}
+    author_sorted = {
+        k: author_dict[k] for k in sorted(author_dict, key=lambda x: author_dict[x]["total_citations"], reverse=True)
+    }
+    save_json(out_author_cited, author_sorted)
 
-    with open(out_institution_cited, "w") as f:
-        out_dict = {k: v for k, v in cited_by_institution.items()}
-        sort_dict = {
-            k: out_dict[k] for k in sorted(out_dict.keys(), key=lambda x: out_dict[x]["total_citations"], reverse=True)
-        }
-        json.dump(sort_dict, f, indent=2, ensure_ascii=False)
+    inst_dict = {k: v for k, v in cited_by_institution.items()}
+    inst_sorted = {
+        k: inst_dict[k] for k in sorted(inst_dict, key=lambda x: inst_dict[x]["total_citations"], reverse=True)
+    }
+    save_json(out_institution_cited, inst_sorted)
 
-    with open(out_cited_list, "w") as f:
-        # Sort by citation count
-        sorted_list = sorted(cited_artifacts_list, key=lambda x: x["cited_by_count"], reverse=True)
-        json.dump(sorted_list, f, indent=2, ensure_ascii=False)
+    # Sort by citation count
+    sorted_list = sorted(cited_artifacts_list, key=lambda x: x["cited_by_count"], reverse=True)
+    save_json(out_cited_list, sorted_list)
 
     logger.info(f"Wrote {out_author_cited} ({len(cited_by_author)} authors with cited artifacts)")
     logger.info(f"Wrote {out_institution_cited} ({len(cited_by_institution)} institutions with cited artifacts)")

@@ -12,12 +12,12 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import time
 
 import requests
-import yaml
+
+from src.utils.io import load_yaml, save_json
 
 from ..scrapers.repo_utils import _github_headers
 from ..utils.conference import conf_area
@@ -44,8 +44,7 @@ def _normalize_repo(url):
 
 
 def collect(cache_path: str, output_path: str) -> None:
-    with open(cache_path) as f:
-        data = yaml.safe_load(f)
+    data = load_yaml(cache_path)
 
     headers = _github_headers()
     session = create_session(extra_headers=headers)
@@ -157,8 +156,7 @@ def collect(cache_path: str, output_path: str) -> None:
 
     logger.info(f"\nDone: {len(results)} repos collected, {errors} errors")
 
-    with open(output_path, "w") as f:
-        json.dump(results, f, indent=2)
+    save_json(output_path, results)
     logger.info(f"Wrote {output_path}")
 
 

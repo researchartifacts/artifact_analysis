@@ -9,7 +9,6 @@ csrankings.csv file and matches our authors to their faculty records.
 
 import argparse
 import csv
-import json
 import logging
 import os
 import re
@@ -19,6 +18,8 @@ from pathlib import Path
 from typing import Optional
 
 import requests
+
+from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
 CSRANKINGS_URL = "https://raw.githubusercontent.com/emeryberger/CSrankings/gh-pages/csrankings.csv"
@@ -202,8 +203,7 @@ def enrich_affiliations(
     Returns statistics about enrichment.
     """
     # Load authors
-    with open(authors_file, "r", encoding="utf-8") as f:
-        authors = json.load(f)
+    authors = load_json(authors_file)
 
     # Load author index if data_dir is provided
     index_by_name = {}
@@ -270,8 +270,7 @@ def enrich_affiliations(
 
     # Save results
     if not dry_run:
-        with open(output_file, "w", encoding="utf-8") as f:
-            json.dump(authors, f, indent=2, ensure_ascii=False)
+        save_json(output_file, authors)
         logger.info(f"\nEnriched authors saved to: {output_file}")
         # Save updated author index
         if data_dir and index_by_name:

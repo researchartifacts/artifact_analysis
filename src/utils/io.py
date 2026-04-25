@@ -35,12 +35,28 @@ def load_json(path: str | Path, *, default: Any = None) -> Any:
         return default
 
 
-def save_json(path: str | Path, data: Any, *, indent: int = 2) -> None:
-    """Write *data* as pretty-printed JSON, creating parent dirs as needed."""
+def save_json(
+    path: str | Path,
+    data: Any,
+    *,
+    indent: int | None = 2,
+    compact: bool = False,
+) -> None:
+    """Write *data* as JSON, creating parent dirs as needed.
+
+    *indent* controls pretty-printing (default ``2``).  Pass ``indent=None``
+    to omit indentation but keep standard separators.  Set ``compact=True``
+    for fully minified output (no whitespace).
+    """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    kwargs: dict[str, Any] = {"ensure_ascii": False}
+    if compact:
+        kwargs["separators"] = (",", ":")
+    else:
+        kwargs["indent"] = indent
     with open(path, "w", encoding="utf-8") as fh:
-        json.dump(data, fh, indent=indent, ensure_ascii=False)
+        json.dump(data, fh, **kwargs)
         fh.write("\n")
 
 

@@ -14,13 +14,13 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
 
 from src.generators.generate_combined_rankings import _normalize_affiliation
 from src.utils.conference import canonicalize_name
 from src.utils.conference import normalize_name as _base_normalize_name
+from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
 
@@ -32,12 +32,9 @@ def generate_profiles(data_dir: str) -> None:
     out_path = os.path.join(data_dir, "assets/data/author_profiles.json")
 
     # Load data sources
-    with open(authors_path) as f:
-        authors = json.load(f)
-    with open(ae_path) as f:
-        ae_members = json.load(f)
-    with open(cr_path) as f:
-        combined = json.load(f)
+    authors = load_json(authors_path)
+    ae_members = load_json(ae_path)
+    combined = load_json(cr_path)
 
     # Scoring weights — must match generate_combined_rankings.py
     W_AVAILABLE = 1
@@ -205,8 +202,7 @@ def generate_profiles(data_dir: str) -> None:
         logger.debug("Optional module not available, skipping enrichment")
 
     # Write compact JSON
-    with open(out_path, "w") as f:
-        json.dump(profile_list, f, ensure_ascii=False, separators=(",", ":"))
+    save_json(out_path, profile_list, compact=True)
 
     logger.info(f"Wrote {out_path} ({len(profile_list)} profiles, {os.path.getsize(out_path) / 1024:.0f}KB)")
     logger.info(f"  Authors with papers: {sum(1 for p in profile_list if p['papers'])}")

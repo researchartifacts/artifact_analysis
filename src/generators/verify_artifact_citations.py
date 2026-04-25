@@ -27,6 +27,8 @@ import time
 import urllib.parse
 import urllib.request
 
+from src.utils.io import load_json, save_json
+
 logger = logging.getLogger(__name__)
 # Artifact DOI prefixes we recognise
 ARTIFACT_DOI_PREFIXES = ("10.5281/zenodo.", "10.6084/m9.figshare.")
@@ -161,8 +163,7 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
         logger.info(f"Error: {citations_path} not found.")
         sys.exit(1)
 
-    with open(citations_path, "r") as f:
-        artifacts = json.load(f)
+    artifacts = load_json(citations_path)
 
     # Collect artifacts that have citing DOIs
     cited_artifacts = []
@@ -357,8 +358,7 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
 
     # Write results to file
     if output_file:
-        with open(output_file, "w") as f:
-            json.dump(results, f, indent=2)
+        save_json(output_file, results)
         logger.info(f"\nDetailed results written to: {output_file}")
 
     # Write verified citing dois file (genuine only)

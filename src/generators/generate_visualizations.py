@@ -5,29 +5,26 @@ Creates SVG charts that can be embedded in the Jekyll site.
 """
 
 import argparse
-import json
 import logging
 import os
 from collections import defaultdict
 
 import matplotlib
-import yaml
 
 logger = logging.getLogger(__name__)
 matplotlib.use("Agg")  # Use non-interactive backend
 import matplotlib.pyplot as plt
 
+from src.utils.io import load_json, load_yaml
+
 
 def load_data(data_dir):
     """Load YAML/JSON data files needed for chart generation."""
-    with open(os.path.join(data_dir, "_data/artifacts_by_year.yml"), "r") as f:
-        by_year = yaml.safe_load(f)
+    by_year = load_yaml(os.path.join(data_dir, "_data/artifacts_by_year.yml"))
 
-    with open(os.path.join(data_dir, "_data/artifacts_by_conference.yml"), "r") as f:
-        by_conference = yaml.safe_load(f)
+    by_conference = load_yaml(os.path.join(data_dir, "_data/artifacts_by_conference.yml"))
 
-    with open(os.path.join(data_dir, "assets/data/artifacts.json"), "r") as f:
-        all_artifacts = json.load(f)
+    all_artifacts = load_json(os.path.join(data_dir, "assets/data/artifacts.json"))
 
     return by_year, by_conference, all_artifacts
 

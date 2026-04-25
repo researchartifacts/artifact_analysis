@@ -22,7 +22,6 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
 import re
@@ -38,6 +37,7 @@ from src.utils.cache import _MISSING
 from src.utils.cache import read_cache as _read_cache
 from src.utils.cache import write_cache as _write_cache
 from src.utils.http import create_session
+from src.utils.io import load_json
 
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
@@ -377,8 +377,7 @@ def find_affiliation_for_author(
 # ---------------------------------------------------------------------------
 def _build_author_papers_index(papers_file: str) -> dict[str, list[dict]]:
     """Map each author name → list of paper dicts (with title, year, doi_url)."""
-    with open(papers_file, encoding="utf-8") as f:
-        papers = json.load(f)
+    papers = load_json(papers_file)
 
     index: dict[str, list[dict]] = {}
     for paper in papers:

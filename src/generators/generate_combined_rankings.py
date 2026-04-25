@@ -15,17 +15,15 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
 import re
 from collections import defaultdict
 from pathlib import Path
 
-import yaml
-
 from src.utils.conference import canonicalize_name
 from src.utils.conference import normalize_name as _base_normalize_name
+from src.utils.io import load_json, load_yaml, save_json, save_yaml
 
 # ── Name normalisation ────────────────────────────────────────────────────────
 
@@ -45,8 +43,7 @@ _RULES_PATH = Path(__file__).resolve().parents[2] / "data" / "affiliation_rules.
 
 def _load_affiliation_rules(path: Path = _RULES_PATH) -> list[tuple[re.Pattern, str]]:
     """Load affiliation regex rules from a YAML data file."""
-    with open(path) as fh:
-        entries = yaml.safe_load(fh)
+    entries = load_yaml(path)
     rules: list[tuple[re.Pattern, str]] = []
     for entry in entries:
         combined = "|".join(entry["patterns"])
@@ -447,8 +444,7 @@ def generate_combined_rankings(data_dir: str) -> None:
         if not os.path.exists(path):
             logger.warning(f"  Warning: {name} not found, skipping")
             return []
-        with open(path) as f:
-            return json.load(f)
+        return load_json(path)
 
     all_authors = _load_json("authors.json")
     sys_authors = _load_json("systems_authors.json")
@@ -621,8 +617,7 @@ def generate_combined_rankings(data_dir: str) -> None:
         ("security_combined_rankings.json", combined_sec),
     ]:
         path = os.path.join(assets_data, fname)
-        with open(path, "w") as f:
-            json.dump(data, f, ensure_ascii=False)
+        save_json(path, data, indent=None)
         logger.info(f"  Wrote {path} ({len(data)} entries)")
 
     # ── Per-conference combined rankings ──────────────────────────────────
@@ -635,8 +630,7 @@ def generate_combined_rankings(data_dir: str) -> None:
         conf_upper = conf_lower.upper()
 
         # Load per-conference authors (already filtered & scored for this conf)
-        with open(conf_author_path) as f:
-            conf_authors_data = json.load(f)
+        conf_authors_data = load_json(conf_author_path)
 
         # Add citation data
         _add_citations_to_authors(conf_authors_data)
@@ -684,8 +678,7 @@ def generate_combined_rankings(data_dir: str) -> None:
 
         fname = f"{conf_lower}_combined_rankings.json"
         path = os.path.join(assets_data, fname)
-        with open(path, "w") as f:
-            json.dump(conf_combined, f, ensure_ascii=False)
+        save_json(path, conf_combined, indent=None)
         logger.info(f"  Wrote {path} ({len(conf_combined)} entries)")
 
     # Summary YAML
@@ -704,8 +697,7 @@ def generate_combined_rankings(data_dir: str) -> None:
         "top_combined_score": combined_all[0]["combined_score"] if combined_all else 0,
     }
     yml_path = os.path.join(yaml_dir, "combined_summary.yml")
-    with open(yml_path, "w") as f:
-        yaml.dump(summary, f, default_flow_style=False, sort_keys=False)
+    save_yaml(yml_path, summary)
     logger.info(f"  Wrote {yml_path}")
 
     logger.info(

@@ -14,6 +14,8 @@ import logging
 import os
 import sys
 
+from src.utils.io import load_json
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,8 +29,7 @@ def export_citations(data_dir: str, output_file: str = None) -> None:
         logger.info("Run generate_artifact_citations.py first.")
         sys.exit(1)
 
-    with open(citations_path, "r") as f:
-        artifacts = json.load(f)
+    artifacts = load_json(citations_path)
 
     # Open output file or use stdout
     out_cm = open(output_file, "w") if output_file else contextlib.nullcontext(sys.stdout)  # noqa: SIM115

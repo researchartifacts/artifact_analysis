@@ -26,18 +26,18 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
 from datetime import datetime
+
+from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
 
 
 def _load_json(path: str) -> list | dict:
     if os.path.exists(path):
-        with open(path) as f:
-            return json.load(f)
+        return load_json(path)
     return []
 
 
@@ -95,8 +95,7 @@ def generate_ranking_history(data_dir: str, force: bool = False) -> None:
 
         author_history = _update_history(author_history, author_entries, date)
 
-        with open(author_hist_path, "w") as f:
-            json.dump(author_history, f, ensure_ascii=False, separators=(",", ":"))
+        save_json(author_hist_path, author_history, compact=True)
 
         logger.info(
             f"  Author ranking history: {len(author_history)} snapshots, {len(author_entries)} entries for {date}"
@@ -138,8 +137,7 @@ def generate_ranking_history(data_dir: str, force: bool = False) -> None:
 
         inst_history = _update_history(inst_history, inst_entries, date)
 
-        with open(inst_hist_path, "w") as f:
-            json.dump(inst_history, f, ensure_ascii=False, separators=(",", ":"))
+        save_json(inst_hist_path, inst_history, compact=True)
 
         logger.info(
             f"  Institution ranking history: {len(inst_history)} snapshots, {len(inst_entries)} entries for {date}"

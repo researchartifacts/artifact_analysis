@@ -6,14 +6,13 @@ Download from: https://dblp.org/xml/dblp.xml.gz
 """
 
 import argparse
-import json
 import logging
 import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-import yaml
+from src.utils.io import load_json, load_yaml, save_json, save_yaml
 
 from ..utils.conference import clean_name as clean_display_name
 from ..utils.conference import normalize_title
@@ -34,8 +33,7 @@ def load_artifacts(data_dir: str) -> list[dict] | None:
         logger.info("Please run generate_statistics.py first")
         return None
 
-    with open(artifacts_path, "r") as f:
-        artifacts = json.load(f)
+    artifacts = load_json(artifacts_path)
 
     return artifacts
 
@@ -50,8 +48,7 @@ def load_conference_active_years(data_dir):
         logger.warning(f"Warning: {conf_path} not found, will count all years")
         return {}
 
-    with open(conf_path, "r") as f:
-        conf_data = yaml.safe_load(f)
+    conf_data = load_yaml(conf_path)
 
     active_years = {}
     for conf in conf_data:
@@ -82,8 +79,7 @@ def load_artifact_citations(data_dir: str) -> dict[str, int]:
         logger.info("Artifact citation data not available (collection disabled — see generate_artifact_citations.py)")
         return {}
 
-    with open(citations_path, "r") as f:
-        entries = json.load(f)
+    entries = load_json(citations_path)
 
     by_title = {}
     for entry in entries:
@@ -587,11 +583,9 @@ def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> Non
     papers_list, norm_to_id = build_paper_index(authors_list, existing_by_title, max_paper_id)
 
     # Write paper index
-    with open(index_path, "w") as f:
-        json.dump(papers_list, f, indent=2, ensure_ascii=False)
+    save_json(index_path, papers_list)
     assets_papers = os.path.join(output_dir, "assets/data/papers.json")
-    with open(assets_papers, "w") as f:
-        json.dump(papers_list, f, ensure_ascii=False)
+    save_json(assets_papers, papers_list, indent=None)
     artifact_count = sum(1 for p in papers_list if p.get("has_artifact", True))
     logger.info(f"Paper index: {len(papers_list)} papers ({artifact_count} with artifacts)")
 
@@ -625,19 +619,15 @@ def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> Non
             if k not in ("papers", "papers_without_artifacts", "total_papers_by_conf", "total_papers_by_conf_year")
         }
         authors_for_yaml.append(entry)
-    with open(os.path.join(output_dir, "_data/authors.yml"), "w") as f:
-        yaml.dump(authors_for_yaml, f, default_flow_style=False, allow_unicode=True)
+    save_yaml(os.path.join(output_dir, "_data/authors.yml"), authors_for_yaml)
 
-    with open(os.path.join(output_dir, "_data/author_summary.yml"), "w") as f:
-        yaml.dump(author_summary, f, default_flow_style=False)
+    save_yaml(os.path.join(output_dir, "_data/author_summary.yml"), author_summary)
 
     # JSON for download (full data including embedded papers for backward compat)
-    with open(os.path.join(output_dir, "assets/data/authors.json"), "w") as f:
-        json.dump(authors_list, f, indent=2, ensure_ascii=False)
+    save_json(os.path.join(output_dir, "assets/data/authors.json"), authors_list)
 
     # Paper -> authors mapping for citation attribution
-    with open(os.path.join(output_dir, "assets/data/paper_authors_map.json"), "w") as f:
-        json.dump(papers_with_authors, f, indent=2, ensure_ascii=False)
+    save_json(os.path.join(output_dir, "assets/data/paper_authors_map.json"), papers_with_authors)
 
     logger.info(f"Author data written to {output_dir} ({len(authors_list)} authors, {len(papers_with_authors)} papers)")
 

@@ -10,14 +10,14 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
 from collections import defaultdict
 
-import yaml
-
 from src.utils.conference import canonicalize_name
+from src.utils.io import load_json, save_json
+from src.utils.io import load_yaml as _load_yaml
+from src.utils.io import save_yaml as _save_yaml
 
 from ..utils.conference import clean_name
 from .generate_combined_rankings import _normalize_affiliation
@@ -27,13 +27,11 @@ DATA_DIR = None  # Set via CLI
 
 
 def load_yaml(filename):
-    with open(os.path.join(DATA_DIR, filename), "r") as f:
-        return yaml.safe_load(f)
+    return _load_yaml(os.path.join(DATA_DIR, filename))
 
 
 def save_yaml(filename, data):
-    with open(os.path.join(DATA_DIR, filename), "w") as f:
-        yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+    _save_yaml(os.path.join(DATA_DIR, filename), data)
 
 
 def _normalize_name_key(name):
@@ -45,8 +43,7 @@ def _load_ae_affiliation_fallback():
     ae_path = os.path.join(DATA_DIR, "..", "assets", "data", "ae_members.json")
     if not os.path.exists(ae_path):
         return {}
-    with open(ae_path, "r") as f:
-        ae_members = json.load(f)
+    ae_members = load_json(ae_path)
 
     fallback = {}
     for member in ae_members:
@@ -73,8 +70,7 @@ def _load_authors():
     """Load authors from authors.json (has inline papers) with YAML fallback."""
     json_path = os.path.join(DATA_DIR, "..", "assets", "data", "authors.json")
     if os.path.exists(json_path):
-        with open(json_path) as f:
-            data = json.load(f)
+        data = load_json(json_path)
         # Verify the JSON actually has papers embedded
         if data and data[0].get("papers"):
             logger.info(f"Loaded {len(data)} authors from authors.json (with inline papers)")
@@ -291,10 +287,8 @@ def generate_area_authors():
     # Save JSON for dynamic client-side loading (much faster page load)
     assets_data = os.path.join(DATA_DIR, "..", "assets", "data")
     os.makedirs(assets_data, exist_ok=True)
-    with open(os.path.join(assets_data, "systems_authors.json"), "w") as f:
-        json.dump(systems_authors, f, ensure_ascii=False)
-    with open(os.path.join(assets_data, "security_authors.json"), "w") as f:
-        json.dump(security_authors, f, ensure_ascii=False)
+    save_json(os.path.join(assets_data, "systems_authors.json"), systems_authors, indent=None)
+    save_json(os.path.join(assets_data, "security_authors.json"), security_authors, indent=None)
 
     # --- Generate per-conference author JSON files ---
     all_confs = systems_confs | security_confs
@@ -307,8 +301,7 @@ def generate_area_authors():
                 if aid is not None:
                     entry["author_id"] = aid
         fname = f"{conf.lower()}_conf_authors.json"
-        with open(os.path.join(assets_data, fname), "w") as f:
-            json.dump(conf_authors, f, ensure_ascii=False)
+        save_json(os.path.join(assets_data, fname), conf_authors, indent=None)
         logger.info(f"  {conf}: {len(conf_authors)} authors -> assets/data/{fname}")
 
     # Update author_summary with correct counts

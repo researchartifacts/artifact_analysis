@@ -38,6 +38,7 @@ from pathlib import Path
 
 from src.utils.cache import _MISSING, read_cache, write_cache
 from src.utils.conference import normalize_title
+from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
 # ── Configuration ────────────────────────────────────────────────────────────
@@ -139,8 +140,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
     if not os.path.exists(artifacts_path):
         log(f"Error: {artifacts_path} not found.")
         return
-    with open(artifacts_path) as f:
-        artifacts = json.load(f)
+    artifacts = load_json(artifacts_path)
     log(f"✓ {len(artifacts)} artifacts loaded")
 
     # Deduplicate by normalized title
@@ -361,8 +361,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
         log("  ⚠ Stopped early due to blocking — run again later to fill gaps")
 
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    with open(out_path, "w") as f:
-        json.dump(entries, f, indent=2)
+    save_json(out_path, entries)
     log(f"✓ Written {out_path}")
 
     summary = {
@@ -376,8 +375,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
         "stopped_early": stopped_early,
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
-    with open(summary_path, "w") as f:
-        json.dump(summary, f, indent=2)
+    save_json(summary_path, summary)
     log(f"✓ Written {summary_path}")
 
 

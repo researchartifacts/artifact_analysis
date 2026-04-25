@@ -10,7 +10,6 @@ Compares results with EuroSys claim of "very little retention"
 """
 
 import argparse
-import json
 import logging
 import re
 from collections import defaultdict
@@ -32,6 +31,7 @@ from src.utils.conference import (
 from src.utils.conference import (
     parse_conf_year as _extract_conf_year,
 )
+from src.utils.io import save_json
 
 logger = logging.getLogger(__name__)
 
@@ -398,8 +398,7 @@ def main():
         output_data = {}
         for norm, conf_years in sorted(member_map.items()):
             output_data[norm] = sorted([[c, y] for c, y in conf_years])
-        with open(args.output, "w") as f:
-            json.dump(output_data, f, indent=2)
+        save_json(args.output, output_data)
         logger.info(f"\nSaved member→conference_years mapping to {args.output}")
 
 

@@ -6,14 +6,13 @@ and generates YAML/JSON files for Jekyll to render.
 """
 
 import argparse
-import json
 import logging
 import os
 import re
 from collections import defaultdict
 from datetime import datetime
 
-import yaml
+from src.utils.io import save_json, save_yaml
 
 from ..scrapers.acm_scrape import (
     get_acm_conferences,
@@ -336,8 +335,7 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
     _cache_dir = os.path.join(output_dir, "_data") if output_dir else ".cache"
     os.makedirs(_cache_dir, exist_ok=True)
     _cache_path = os.path.join(_cache_dir, "all_results_cache.yml")
-    with open(_cache_path, "w") as _f:
-        yaml.dump(all_results, _f, default_flow_style=False, sort_keys=False)
+    save_yaml(_cache_path, all_results)
     logger.info(f"Cached raw results ({sum(len(v) for v in all_results.values())} artifacts) → {_cache_path}")
 
     # Organize by conference
@@ -513,21 +511,16 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
         os.makedirs(os.path.join(output_dir, "assets/data"), exist_ok=True)
 
         # Write YAML files for Jekyll _data directory
-        with open(os.path.join(output_dir, "_data/summary.yml"), "w") as f:
-            yaml.dump(summary, f, default_flow_style=False)
+        save_yaml(os.path.join(output_dir, "_data/summary.yml"), summary)
 
-        with open(os.path.join(output_dir, "_data/artifacts_by_conference.yml"), "w") as f:
-            yaml.dump(artifacts_by_conference, f, default_flow_style=False)
+        save_yaml(os.path.join(output_dir, "_data/artifacts_by_conference.yml"), artifacts_by_conference)
 
-        with open(os.path.join(output_dir, "_data/artifacts_by_year.yml"), "w") as f:
-            yaml.dump(artifacts_by_year, f, default_flow_style=False)
+        save_yaml(os.path.join(output_dir, "_data/artifacts_by_year.yml"), artifacts_by_year)
 
         # Write JSON files for download
-        with open(os.path.join(output_dir, "assets/data/artifacts.json"), "w") as f:
-            json.dump(all_artifacts, f, indent=2)
+        save_json(os.path.join(output_dir, "assets/data/artifacts.json"), all_artifacts)
 
-        with open(os.path.join(output_dir, "assets/data/summary.json"), "w") as f:
-            json.dump(summary, f, indent=2)
+        save_json(os.path.join(output_dir, "assets/data/summary.json"), summary)
 
         # Auto-generate per-conference .md pages for Jekyll
         _generate_conference_pages(output_dir, systems_confs, security_confs)

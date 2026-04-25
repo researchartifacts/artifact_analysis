@@ -9,11 +9,12 @@ affiliations.
 """
 
 import argparse
-import json
 import logging
 import os
 from pathlib import Path
 from typing import Optional
+
+from src.utils.io import load_json, save_json
 
 from ..utils.conference import normalize_name
 
@@ -32,8 +33,7 @@ def load_ae_members(data_dir: str) -> dict[str, str]:
         logger.warning(f"AE members file not found: {ae_path}")
         return {}
 
-    with open(ae_path, encoding="utf-8") as f:
-        members = json.load(f)
+    members = load_json(ae_path)
 
     # Build exact-name and normalized-name lookup
     name_to_affil: dict[str, str] = {}
@@ -60,8 +60,7 @@ def enrich_affiliations(
     Only fills in missing affiliations — does NOT overwrite existing ones
     (unlike CSRankings which takes precedence as a curated source).
     """
-    with open(authors_file, encoding="utf-8") as f:
-        authors = json.load(f)
+    authors = load_json(authors_file)
 
     ae_affils = load_ae_members(data_dir)
     if not ae_affils:
@@ -126,8 +125,7 @@ def enrich_affiliations(
     stats["final_coverage"] = 100 * (stats["total"] - stats["remaining"]) / stats["total"] if stats["total"] else 0
 
     if not dry_run:
-        with open(output_file, "w", encoding="utf-8") as f:
-            json.dump(authors, f, indent=2, ensure_ascii=False)
+        save_json(output_file, authors)
         logger.info(f"Enriched authors saved to: {output_file}")
         if _save_index_fn and index_by_name:
             _save_index_fn()

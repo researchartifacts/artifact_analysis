@@ -17,10 +17,11 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
 from datetime import datetime
+
+from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +30,7 @@ def load_existing_index(path):
     """Load the previous author index, return (list, name->entry dict, max_id)."""
     if not os.path.exists(path):
         return [], {}, 0
-    with open(path, "r", encoding="utf-8") as f:
-        entries = json.load(f)
+    entries = load_json(path)
     by_name = {e["name"]: e for e in entries}
     max_id = max((e["id"] for e in entries), default=0)
     return entries, by_name, max_id
@@ -40,8 +40,7 @@ def load_authors_json(path):
     """Load authors.json produced by generate_author_stats."""
     if not os.path.exists(path):
         return []
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return load_json(path)
 
 
 def build_index(authors: list[dict], existing_by_name: dict[str, dict], max_id: int) -> list[dict]:
@@ -176,8 +175,7 @@ def main():
     )
 
     # Write
-    with open(index_path, "w", encoding="utf-8") as f:
-        json.dump(index, f, indent=2, ensure_ascii=False)
+    save_json(index_path, index)
     logger.info(f"Written to {index_path}")
 
     return index

@@ -17,7 +17,6 @@ from datetime import datetime
 
 import matplotlib
 import numpy as np
-import yaml
 from pytrie import Trie
 from thefuzz import fuzz
 
@@ -47,6 +46,7 @@ from src.utils.conference import (
 from src.utils.conference import (
     parse_conf_year as _extract_conf_year,
 )
+from src.utils.io import load_yaml, save_json, save_yaml
 
 # ── Country → Continent mapping ──────────────────────────────────────────────
 
@@ -54,8 +54,7 @@ COUNTRY_TO_CONTINENT: dict[str, str] = {}
 _DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 _CONTINENT_FILE = os.path.join(_DATA_DIR, "country_to_continent.yml")
 if os.path.exists(_CONTINENT_FILE):
-    with open(_CONTINENT_FILE) as _f:
-        COUNTRY_TO_CONTINENT = yaml.safe_load(_f) or {}
+    COUNTRY_TO_CONTINENT = load_yaml(_CONTINENT_FILE, default={})
 
 
 def _build_university_index():
@@ -869,35 +868,29 @@ def generate_committee_data(conf_regex, output_dir):
         os.makedirs(os.path.join(output_dir, "assets/charts"), exist_ok=True)
 
         yml_path = os.path.join(output_dir, "_data/committee_stats.yml")
-        with open(yml_path, "w") as f:
-            yaml.dump(committee_summary, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        save_yaml(yml_path, committee_summary)
         logger.info(f"  Wrote {yml_path}")
 
         json_path = os.path.join(output_dir, "assets/data/committee_stats.json")
-        with open(json_path, "w") as f:
-            json.dump(detail_json, f, indent=2, ensure_ascii=False)
+        save_json(json_path, detail_json)
         logger.info(f"  Wrote {json_path}")
 
         # Write recurring AE member JSON files
         ae_all_path = os.path.join(output_dir, "assets/data/ae_members.json")
-        with open(ae_all_path, "w") as f:
-            json.dump(all_members, f, indent=2, ensure_ascii=False)
+        save_json(ae_all_path, all_members)
         logger.info(f"  Wrote {ae_all_path} ({len(all_members)} members)")
 
         ae_sys_path = os.path.join(output_dir, "assets/data/systems_ae_members.json")
-        with open(ae_sys_path, "w") as f:
-            json.dump(sys_members, f, indent=2, ensure_ascii=False)
+        save_json(ae_sys_path, sys_members)
         logger.info(f"  Wrote {ae_sys_path} ({len(sys_members)} members)")
 
         ae_sec_path = os.path.join(output_dir, "assets/data/security_ae_members.json")
-        with open(ae_sec_path, "w") as f:
-            json.dump(sec_members, f, indent=2, ensure_ascii=False)
+        save_json(ae_sec_path, sec_members)
         logger.info(f"  Wrote {ae_sec_path} ({len(sec_members)} members)")
 
         # Write institution timeline JSON
         inst_timeline_path = os.path.join(output_dir, "assets/data/institution_timeline.json")
-        with open(inst_timeline_path, "w") as f:
-            json.dump(inst_timeline, f, indent=2, ensure_ascii=False)
+        save_json(inst_timeline_path, inst_timeline)
         logger.info(f"  Wrote {inst_timeline_path}")
 
     # ── 6. Generate charts ───────────────────────────────────────────────────

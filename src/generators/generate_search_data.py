@@ -2,10 +2,11 @@
 """Generate search_data.json by merging artifacts.json, paper_authors_map.json, and authors.json."""
 
 import argparse
-import json
 import logging
 import os
 import re
+
+from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
 
@@ -18,20 +19,17 @@ def _title_key(t: str) -> str:
 def generate_search_data(data_dir: str) -> list:
     assets_data = os.path.join(data_dir, "assets", "data")
 
-    with open(os.path.join(assets_data, "artifacts.json")) as f:
-        artifacts = json.load(f)
+    artifacts = load_json(os.path.join(assets_data, "artifacts.json"))
 
     pa_path = os.path.join(assets_data, "paper_authors_map.json")
     paper_authors = []
     if os.path.exists(pa_path):
-        with open(pa_path) as f:
-            paper_authors = json.load(f)
+        paper_authors = load_json(pa_path)
 
     authors_path = os.path.join(assets_data, "authors.json")
     authors_data = []
     if os.path.exists(authors_path):
-        with open(authors_path) as f:
-            authors_data = json.load(f)
+        authors_data = load_json(authors_path)
 
     # Build author -> affiliation lookup
     author_affiliation = {}
@@ -76,8 +74,7 @@ def generate_search_data(data_dir: str) -> list:
     merged.sort(key=lambda x: (-x["year"], x["conference"], x["title"]))
 
     out_path = os.path.join(assets_data, "search_data.json")
-    with open(out_path, "w") as f:
-        json.dump(merged, f)
+    save_json(out_path, merged, indent=None)
 
     logger.info(
         f"search_data.json: {len(merged)} artifacts "

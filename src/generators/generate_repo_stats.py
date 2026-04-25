@@ -10,7 +10,6 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
 import re
@@ -19,12 +18,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
-import yaml
-
 from ..scrapers.parse_results_md import get_ae_results
 from ..utils.collect_artifact_stats import figshare_stats, github_stats, zenodo_stats
 from ..utils.conference import conf_area as _conf_area
 from ..utils.conference import parse_conf_year as extract_conference_name
+from ..utils.io import load_json, load_yaml, save_json, save_yaml
 from ..utils.test_artifact_repositories import check_artifact_exists
 
 logger = logging.getLogger(__name__)
@@ -352,8 +350,7 @@ def main():
 
     if os.path.exists(cache_path):
         logger.info(f"Loading cached results from {cache_path}...")
-        with open(cache_path, "r") as f:
-            all_results = yaml.safe_load(f) or {}
+        all_results = load_yaml(cache_path) or {}
         # Filter by conf_regex (cache may contain more conferences)
         all_results = {k: v for k, v in all_results.items() if re.search(args.conf_regex, k)}
         logger.info(
@@ -376,8 +373,7 @@ def main():
     if not args.refresh and args.output_dir:
         detail_path = os.path.join(args.output_dir, "assets", "data", "repo_stats_detail.json")
         if os.path.exists(detail_path):
-            with open(detail_path, "r") as f:
-                raw_existing = json.load(f)
+            raw_existing = load_json(detail_path)
             # Normalize existing entries to the format collect_stats_for_results produces
             for entry in raw_existing:
                 if "source" not in entry:
@@ -462,13 +458,8 @@ def main():
         os.makedirs(data_dir, exist_ok=True)
         os.makedirs(assets_dir, exist_ok=True)
         out_path = os.path.join(data_dir, "repo_stats.yml")
-        with open(out_path, "w") as f:
-            yaml.dump(
-                {k: v for k, v in aggregated.items() if k != "all_github_repos"},
-                f,
-                default_flow_style=False,
-                sort_keys=False,
-            )
+        yaml_data = {k: v for k, v in aggregated.items() if k != "all_github_repos"}
+        save_yaml(out_path, yaml_data)
         logger.info(f"Written to {out_path}")
 
         # Write per-repo detail JSON for CDF generation
@@ -479,8 +470,7 @@ def main():
             key=lambda e: (e.get("conference", ""), e.get("year", 0), e.get("url", "")),
         )
         detail_path = os.path.join(assets_dir, "repo_stats_detail.json")
-        with open(detail_path, "w") as f:
-            json.dump(detail_repos, f, indent=2)
+        save_json(detail_path, detail_repos)
         logger.info(f"Written per-repo detail ({len(aggregated.get('all_github_repos', []))} repos) to {detail_path}")
 
         # Write repo_stats_yearly.json — per-year stats split by area (all/systems/security)
@@ -491,8 +481,7 @@ def main():
         abc_path = os.path.join(data_dir, "artifacts_by_conference.yml")
         area_lookup = {}
         if os.path.exists(abc_path):
-            with open(abc_path, "r") as f:
-                abc = yaml.safe_load(f) or []
+            abc = load_yaml(abc_path) or []
             for c in abc:
                 area_lookup[c.get("name", "")] = c.get("category", "")
         yearly_by_year = defaultdict(
@@ -530,8 +519,7 @@ def main():
                         "max_forks": round(max(fl), 1),
                     }
             yearly_json.append(entry)
-        with open(yearly_path, "w") as f:
-            json.dump(yearly_json, f, indent=2)
+        save_json(yearly_path, yearly_json)
         logger.info(f"Written yearly stats ({len(yearly_json)} years) to {yearly_path}")
 
         # ---- Historical time-series tracking ----
@@ -543,8 +531,7 @@ def main():
         # Load existing history
         history = {}
         if os.path.exists(history_path):
-            with open(history_path, "r") as f:
-                history = json.load(f)
+            history = load_json(history_path)
             logger.info(f"Loaded history for {len(history)} URLs")
 
         # Build snapshots from the raw all_stats (which have full metric detail)
@@ -595,8 +582,7 @@ def main():
                 snapshots.append(snapshot)
             updated += 1
 
-        with open(history_path, "w") as f:
-            json.dump(history, f, indent=2)
+        save_json(history_path, history)
         logger.info(f"Written history ({len(history)} URLs, {updated} snapshots updated) to {history_path}")
 
     return aggregated

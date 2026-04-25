@@ -5,20 +5,19 @@ Creates JSON files for overall, systems, and security institution rankings.
 """
 
 import argparse
-import json
 import logging
 from collections import defaultdict
 from pathlib import Path
 
 from src.generators.generate_combined_rankings import _normalize_affiliation
+from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
 
 
 def load_combined_ranking(path):
     """Load combined ranking JSON."""
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return load_json(path)
 
 
 def aggregate_by_institution(combined_data):
@@ -170,8 +169,7 @@ def main():
         institutions = aggregate_by_institution(combined_data)
 
         output_path = data_dir / "institution_rankings.json"
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(institutions, f, indent=2, ensure_ascii=False)
+        save_json(output_path, institutions)
         logger.info(f"  ✓ Generated {output_path} ({len(institutions)} institutions)")
     else:
         logger.info(f"  ✗ {combined_path} not found")
@@ -184,8 +182,7 @@ def main():
         systems_institutions = aggregate_by_institution(systems_data)
 
         output_path = data_dir / "systems_institution_rankings.json"
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(systems_institutions, f, indent=2, ensure_ascii=False)
+        save_json(output_path, systems_institutions)
         logger.info(f"  ✓ Generated {output_path} ({len(systems_institutions)} institutions)")
     else:
         logger.info(f"  ✗ {systems_path} not found")
@@ -198,8 +195,7 @@ def main():
         security_institutions = aggregate_by_institution(security_data)
 
         output_path = data_dir / "security_institution_rankings.json"
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(security_institutions, f, indent=2, ensure_ascii=False)
+        save_json(output_path, security_institutions)
         logger.info(f"  ✓ Generated {output_path} ({len(security_institutions)} institutions)")
     else:
         logger.info(f"  ✗ {security_path} not found")
@@ -215,8 +211,7 @@ def main():
         conf_data = load_combined_ranking(conf_path)
         conf_institutions = aggregate_by_institution(conf_data)
         output_path = data_dir / f"{prefix}_institution_rankings.json"
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(conf_institutions, f, indent=2, ensure_ascii=False)
+        save_json(output_path, conf_institutions)
         logger.info(f"  ✓ Generated {output_path} ({len(conf_institutions)} institutions)")
 
 

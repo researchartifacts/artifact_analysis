@@ -20,12 +20,11 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
 from collections import defaultdict
 
-import yaml
+from src.utils.io import load_yaml, save_json, save_yaml
 
 from ..utils.conference import conf_area
 from ..utils.dblp_extract import paper_count_by_venue_year
@@ -55,8 +54,7 @@ def generate_participation_stats(dblp_file, output_dir):
         logger.error(f"Error: {abc_path} not found — run generate_statistics first")
         return None
 
-    with open(abc_path) as f:
-        by_conference = yaml.safe_load(f)
+    by_conference = load_yaml(abc_path)
 
     # Build per-conference/year AE counts and badge counts from pipeline data
     ae_data = {}  # (conf, year) -> {ae_papers, available, functional, ...}
@@ -153,12 +151,10 @@ def generate_participation_stats(dblp_file, output_dir):
     os.makedirs(os.path.join(output_dir, "assets/data"), exist_ok=True)
 
     yml_path = os.path.join(output_dir, "_data/participation_stats.yml")
-    with open(yml_path, "w") as f:
-        yaml.dump(output, f, default_flow_style=False, sort_keys=False)
+    save_yaml(yml_path, output)
 
     json_path = os.path.join(output_dir, "assets/data/participation_stats.json")
-    with open(json_path, "w") as f:
-        json.dump(output, f, indent=2)
+    save_json(json_path, output)
 
     logger.info(f"\n✅ Participation stats: {len(stats)} conference/year entries")
     logger.info(f"   → {yml_path}")

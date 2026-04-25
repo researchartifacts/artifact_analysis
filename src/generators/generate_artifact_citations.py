@@ -21,6 +21,7 @@ import urllib.request
 from collections import defaultdict
 
 from src.utils.conference import normalize_title
+from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
 DOI_REGEX = re.compile(r"10\.[0-9]{4,9}/[-._;()/:A-Za-z0-9]+")
@@ -331,8 +332,7 @@ def generate(data_dir: str) -> None:
         logger.error(f"Error: {artifacts_path} not found. Run generate_statistics.py first.")
         return
 
-    with open(artifacts_path, "r") as f:
-        artifacts = json.load(f)
+    artifacts = load_json(artifacts_path)
 
     logger.info(f"✓ Loaded {len(artifacts)} artifacts")
 
@@ -502,11 +502,9 @@ def generate(data_dir: str) -> None:
         "by_year": {str(k): v for k, v in sorted(by_year.items())},
     }
 
-    with open(out_path, "w") as f:
-        json.dump(entries, f, indent=2, ensure_ascii=False)
+    save_json(out_path, entries)
 
-    with open(summary_path, "w") as f:
-        json.dump(summary, f, indent=2, ensure_ascii=False)
+    save_json(summary_path, summary)
 
     logger.info("")
     logger.info("✓ Processing complete!")

@@ -13,7 +13,6 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
 import re
@@ -22,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import yaml
+from src.utils.io import load_yaml, save_json
 
 from ..scrapers.parse_results_md import get_ae_results
 from ..utils.conference import conf_area as _conf_area
@@ -200,8 +199,7 @@ def main():
 
     if os.path.exists(cache_path):
         logger.info(f"Loading cached results from {cache_path}...")
-        with open(cache_path, "r") as f:
-            all_results = yaml.safe_load(f) or {}
+        all_results = load_yaml(cache_path, default={})
         all_results = {k: v for k, v in all_results.items() if re.search(args.conf_regex, k)}
         logger.info(
             f"Loaded {sum(len(v) for v in all_results.values())} artifacts "
@@ -248,8 +246,7 @@ def main():
             "summary": summary,
             "records": records,
         }
-        with open(out_path, "w") as f:
-            json.dump(output, f, indent=2)
+        save_json(out_path, output)
         logger.info(f"\n✓ Wrote {out_path}")
 
 
