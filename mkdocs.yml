@@ -1,5 +1,5 @@
 site_name: ReproDB Pipeline
-site_description: Documentation for the ReproDB ReproDB pipeline
+site_description: Documentation for the ReproDB data pipeline
 site_url: https://reprodb.github.io/reprodb-pipeline/
 repo_url: https://github.com/reprodb/reprodb-pipeline
 repo_name: reprodb-pipeline
