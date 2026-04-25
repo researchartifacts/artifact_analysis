@@ -9,5 +9,7 @@ thefuzz==0.22.1
 urllib3==2.6.3
 pydantic>=2.0
 pytest>=8.0
+pytest-cov>=6.0
+pip-audit>=2.7
 types-PyYAML>=6.0
 types-requests>=2.31

@@ -59,12 +59,30 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements-ci.txt
-          pip install pytest
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
-          pytest tests/ -v --tb=short -m "not slow"
+          pytest tests/ -v --tb=short -m "not slow" --cov=src --cov-report=term-missing --cov-fail-under=15
 
       - name: Run integration tests
         run: |
           pytest tests/ -v --tb=short -m "integration"
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-ci.txt
+
+      - name: Audit dependencies
+        run: pip-audit -r requirements-ci.txt
+        continue-on-error: true  # advisory — fix flagged CVEs as follow-up
