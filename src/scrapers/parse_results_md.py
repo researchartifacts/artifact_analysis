@@ -1,3 +1,14 @@
+"""Parse artifact evaluation results from sysartifacts/secartifacts GitHub repos.
+
+Downloads and parses ``results.md`` (or ``result.md``) files that contain
+YAML front-matter with artifact metadata (titles, badges, URLs).  Also
+handles the HTML-table variant used by some conferences (OSDI, ATC, etc.)
+where badges are encoded as ``<span>`` tags inside markdown tables.
+
+Public API:
+    get_ae_results(conf_regex, prefix) -> dict[str, list[dict]]
+"""
+
 import argparse
 import logging
 import re

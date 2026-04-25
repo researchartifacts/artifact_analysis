@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 
 def load_data(data_dir):
-    """Load the generated data files"""
+    """Load YAML/JSON data files needed for chart generation."""
     with open(os.path.join(data_dir, "_data/artifacts_by_year.yml"), "r") as f:
         by_year = yaml.safe_load(f)
 
@@ -33,14 +33,14 @@ def load_data(data_dir):
 
 
 def _normalize_badges(badges):
-    """Normalize badges field to a list."""
+    """Normalize a badges field to a list (handles comma-separated strings)."""
     if isinstance(badges, str):
         return [b.strip() for b in badges.split(",")]
     return badges or []
 
 
 def _conf_label(conf):
-    """Return display label with venue type suffix."""
+    """Return display label, appending '(W)' suffix for workshops."""
     vtype = conf.get("venue_type", "conference")
     suffix = " (W)" if vtype == "workshop" else ""
     return conf["name"] + suffix

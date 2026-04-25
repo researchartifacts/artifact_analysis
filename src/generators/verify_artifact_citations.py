@@ -32,10 +32,6 @@ logger = logging.getLogger(__name__)
 ARTIFACT_DOI_PREFIXES = ("10.5281/zenodo.", "10.6084/m9.figshare.")
 
 
-def log(msg: str) -> None:
-    logger.info(msg)
-
-
 def fetch_json(url: str, timeout: int = 20, headers: dict = None) -> dict:
     hdrs = {"User-Agent": "reprodb-verify/0.1 (mailto:reprodb@example.com)"}
     if headers:
@@ -58,7 +54,7 @@ def fetch_crossref_references(doi: str) -> list[dict] | None:
         data = fetch_json(url, timeout=30)
         return data.get("message", {}).get("reference", [])
     except Exception as e:
-        log(f"      [WARN] Crossref lookup failed for {doi}: {e}")
+        logger.info(f"      [WARN] Crossref lookup failed for {doi}: {e}")
         return None
 
 
@@ -115,7 +111,7 @@ def fetch_zenodo_authors(record_id: str) -> list[str]:
         creators = data.get("metadata", {}).get("creators", [])
         return [c.get("name", "") for c in creators if c.get("name")]
     except Exception as e:
-        log(f"      [WARN] Zenodo author lookup failed: {e}")
+        logger.info(f"      [WARN] Zenodo author lookup failed: {e}")
         return []
 
 
@@ -162,7 +158,7 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
 
     citations_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
     if not os.path.exists(citations_path):
-        log(f"Error: {citations_path} not found.")
+        logger.info(f"Error: {citations_path} not found.")
         sys.exit(1)
 
     with open(citations_path, "r") as f:
@@ -188,23 +184,23 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
             )
 
     if not cited_artifacts:
-        log("No artifacts with citing DOIs found.")
+        logger.info("No artifacts with citing DOIs found.")
         return
 
     total_citing = sum(len(a["citing_dois"]) for a in cited_artifacts)
-    log(f"Found {len(cited_artifacts)} artifacts with {total_citing} citing DOIs to verify")
-    log("Strategy: check Crossref reference lists for artifact DOIs")
-    log("=" * 70)
+    logger.info(f"Found {len(cited_artifacts)} artifacts with {total_citing} citing DOIs to verify")
+    logger.info("Strategy: check Crossref reference lists for artifact DOIs")
+    logger.info("=" * 70)
 
     # Test Crossref connectivity
-    log("Testing Crossref connectivity...")
+    logger.info("Testing Crossref connectivity...")
     try:
         test_url = "https://api.crossref.org/works?rows=0"
         fetch_json(test_url, timeout=10)
-        log("  Crossref API reachable ✓")
+        logger.info("  Crossref API reachable ✓")
     except Exception as e:
-        log(f"  [ERROR] Crossref API unreachable: {e}")
-        log("  Make sure HTTP_PROXY/HTTPS_PROXY are set if behind a proxy.")
+        logger.info(f"  [ERROR] Crossref API unreachable: {e}")
+        logger.info("  Make sure HTTP_PROXY/HTTPS_PROXY are set if behind a proxy.")
         sys.exit(1)
 
     results = []
@@ -218,10 +214,10 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
         artifact_title = art["title"]
         citing_dois = art["citing_dois"]
 
-        log(f"\n{'─' * 70}")
-        log(f"Artifact: {artifact_title[:70]}")
-        log(f"  DOI: {artifact_doi}")
-        log(f"  Citing DOIs to check: {len(citing_dois)}")
+        logger.info(f"\n{'─' * 70}")
+        logger.info(f"Artifact: {artifact_title[:70]}")
+        logger.info(f"  DOI: {artifact_doi}")
+        logger.info(f"  Citing DOIs to check: {len(citing_dois)}")
 
         # Pre-fetch artifact authors (Zenodo or Figshare)
         artifact_authors = []
@@ -233,18 +229,18 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
             artifact_authors = fetch_figshare_authors(artifact_doi)
             time.sleep(0.3)
         if artifact_authors:
-            log(
+            logger.info(
                 f"  Artifact authors: {', '.join(a[:30] for a in artifact_authors[:5])}{'...' if len(artifact_authors) > 5 else ''}"
             )
         else:
-            log("  Artifact authors: (could not fetch)")
+            logger.info("  Artifact authors: (could not fetch)")
 
         for cdoi in citing_dois:
-            log(f"\n  Checking: {cdoi}")
+            logger.info(f"\n  Checking: {cdoi}")
 
             # Special case: citing DOI is the artifact DOI itself
             if cdoi.lower() == artifact_doi.lower():
-                log("    → SELF_CITATION: citing DOI is the artifact itself")
+                logger.info("    → SELF_CITATION: citing DOI is the artifact itself")
                 results.append(
                     {
                         "artifact_doi": artifact_doi,
@@ -262,7 +258,7 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
             time.sleep(0.5)  # Rate limit courtesy
 
             if refs is None:
-                log("    → UNKNOWN: Crossref lookup failed")
+                logger.info("    → UNKNOWN: Crossref lookup failed")
                 results.append(
                     {
                         "artifact_doi": artifact_doi,
@@ -275,7 +271,7 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
                 total_unknown += 1
                 continue
 
-            log(f"    Crossref refs: {len(refs)} total")
+            logger.info(f"    Crossref refs: {len(refs)} total")
 
             # Check if the exact artifact DOI appears in references
             has_exact = references_contain_artifact_doi(refs, artifact_doi)
@@ -293,22 +289,22 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
                 )
 
                 if has_overlap:
-                    log(f"    → SELF_CITATION: refs contain artifact DOI, but authors overlap: {common}")
+                    logger.info(f"    → SELF_CITATION: refs contain artifact DOI, but authors overlap: {common}")
                     verdict = "SELF_CITATION"
                     reason = f"paper cites its own artifact (shared authors: {', '.join(common)})"
                     total_self_citation += 1
                 else:
-                    log(f"    → GENUINE: reference list contains artifact DOI {artifact_doi}")
+                    logger.info(f"    → GENUINE: reference list contains artifact DOI {artifact_doi}")
                     verdict = "GENUINE"
                     reason = f"Crossref references contain artifact DOI {artifact_doi}"
                     total_genuine += 1
             elif any_artifact_dois:
-                log(f"    → GENUINE_SIMILAR: has artifact DOIs {any_artifact_dois} but not exact match")
+                logger.info(f"    → GENUINE_SIMILAR: has artifact DOIs {any_artifact_dois} but not exact match")
                 verdict = "GENUINE_SIMILAR"
                 reason = f"references contain other artifact DOIs: {any_artifact_dois}"
                 total_genuine += 1
             else:
-                log(f"    → FALSE_POSITIVE: no artifact DOIs found in {len(refs)} references")
+                logger.info(f"    → FALSE_POSITIVE: no artifact DOIs found in {len(refs)} references")
                 verdict = "FALSE_POSITIVE"
                 reason = f"no artifact-repository DOIs in {len(refs)} Crossref references"
                 total_false_positive += 1
@@ -327,43 +323,43 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
             )
 
     # Summary
-    log("\n" + "=" * 70)
-    log("VERIFICATION SUMMARY")
-    log("=" * 70)
-    log(f"Total citing DOIs verified: {len(results)}")
-    log(f"  GENUINE (artifact DOI in refs):  {total_genuine}")
-    log(f"  FALSE_POSITIVE (no artifact DOI):{total_false_positive}")
-    log(f"  SELF_CITATION:                   {total_self_citation}")
-    log(f"  UNKNOWN (lookup failed):         {total_unknown}")
+    logger.info("\n" + "=" * 70)
+    logger.info("VERIFICATION SUMMARY")
+    logger.info("=" * 70)
+    logger.info(f"Total citing DOIs verified: {len(results)}")
+    logger.info(f"  GENUINE (artifact DOI in refs):  {total_genuine}")
+    logger.info(f"  FALSE_POSITIVE (no artifact DOI):{total_false_positive}")
+    logger.info(f"  SELF_CITATION:                   {total_self_citation}")
+    logger.info(f"  UNKNOWN (lookup failed):         {total_unknown}")
 
     # Group by verdict
-    log("\n--- GENUINE artifact citations ---")
+    logger.info("\n--- GENUINE artifact citations ---")
     for r in results:
         if r["verdict"] in ("GENUINE", "GENUINE_SIMILAR"):
-            log(f"  {r['artifact_doi']} ← {r['citing_doi']}")
+            logger.info(f"  {r['artifact_doi']} ← {r['citing_doi']}")
 
-    log("\n--- FALSE POSITIVES (citing paper, not artifact) ---")
+    logger.info("\n--- FALSE POSITIVES (citing paper, not artifact) ---")
     for r in results:
         if r["verdict"] == "FALSE_POSITIVE":
-            log(f"  {r['artifact_doi']} ← {r['citing_doi']}")
-            log(f"    ({r['reason']})")
+            logger.info(f"  {r['artifact_doi']} ← {r['citing_doi']}")
+            logger.info(f"    ({r['reason']})")
 
-    log("\n--- SELF CITATIONS ---")
+    logger.info("\n--- SELF CITATIONS ---")
     for r in results:
         if r["verdict"] == "SELF_CITATION":
-            log(f"  {r['artifact_doi']} ← {r['citing_doi']}")
+            logger.info(f"  {r['artifact_doi']} ← {r['citing_doi']}")
 
-    log("\n--- UNKNOWN ---")
+    logger.info("\n--- UNKNOWN ---")
     for r in results:
         if r["verdict"] == "UNKNOWN":
-            log(f"  {r['artifact_doi']} ← {r['citing_doi']}")
-            log(f"    ({r['reason']})")
+            logger.info(f"  {r['artifact_doi']} ← {r['citing_doi']}")
+            logger.info(f"    ({r['reason']})")
 
     # Write results to file
     if output_file:
         with open(output_file, "w") as f:
             json.dump(results, f, indent=2)
-        log(f"\nDetailed results written to: {output_file}")
+        logger.info(f"\nDetailed results written to: {output_file}")
 
     # Write verified citing dois file (genuine only)
     verified_output = output_file.replace(".json", "_genuine.txt") if output_file else None
@@ -377,7 +373,7 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
         with open(verified_output, "w") as f:
             for adoi, cdois in sorted(genuine_map.items()):
                 f.write(f"{adoi}: {json.dumps(sorted(cdois))}\n")
-        log(f"Verified genuine citations written to: {verified_output}")
+        logger.info(f"Verified genuine citations written to: {verified_output}")
 
     # Write false positives list
     fp_output = output_file.replace(".json", "_false_positives.txt") if output_file else None
@@ -392,7 +388,7 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
             with open(fp_output, "w") as f:
                 for adoi, cdois in sorted(fp_map.items()):
                     f.write(f"{adoi}: {json.dumps(sorted(cdois))}\n")
-            log(f"False positives written to: {fp_output}")
+            logger.info(f"False positives written to: {fp_output}")
 
 
 def main():

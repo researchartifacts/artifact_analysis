@@ -1,3 +1,10 @@
+"""Thin wrappers around cached repository-stats functions.
+
+Provides a unified API for fetching GitHub/Zenodo/Figshare stats and
+attaching them to artifact dictionaries in-place.  All HTTP work is
+delegated to the cached helpers in ``scrapers.repo_utils``.
+"""
+
 import argparse
 import logging
 
@@ -22,6 +29,11 @@ def figshare_stats(url):
 
 
 def get_all_artifact_stats(results, url_keys):
+    """Fetch repository stats and attach them to each artifact entry in-place.
+
+    For each artifact with a valid URL (GitHub/Zenodo/Figshare), fetches
+    metadata and merges it into ``artifact['stats']``.
+    """
     for name, artifacts in results.items():
         for url_key in url_keys:
             logger.info(f"Getting stats for {len(artifacts)}")

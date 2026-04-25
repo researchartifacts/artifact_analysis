@@ -21,79 +21,13 @@ from test_artifact_repositories import _normalise_url
 
 logger = logging.getLogger(__name__)
 
-
-def _resolve_doi_prefix(url):
-    """Resolve DOI prefix to actual repository. Returns repository name or None."""
-    doi_match = re.search(r"(?:doi\.org/)?(?:https?://doi\.org/)?(10\.\d+(?:[/\.][\w.\-]+)*)", url)
-    if not doi_match:
-        return None
-
-    doi_prefix = doi_match.group(1).split("/")[0].split(".")[0:2]
-    doi_prefix_str = ".".join(doi_prefix)
-
-    # Map DOI prefixes to repositories
-    doi_to_repo = {
-        "10.5281": "Zenodo",  # Zenodo
-        "10.6084": "Figshare",  # Figshare
-        "10.17605": "OSF",  # Open Science Framework
-        "10.4121": "Dataverse",  # Royal Data Repository
-        "10.60517": "Zenodo",  # Zenodo (alternative prefix)
-        "10.7278": "Figshare",  # Figshare (alternative)
-        "10.25835": "NIST",  # NIST Data
-    }
-
-    return doi_to_repo.get(doi_prefix_str)
-
-
-def extract_source(url):
-    """Determine the source of an artifact from its URL."""
-    if not url:
-        return None
-
-    url_lower = url.lower()
-
-    if "github.com" in url_lower or "github.io" in url_lower:
-        return "GitHub"
-    if "zenodo" in url_lower or "zenodo.org" in url_lower:
-        return "Zenodo"
-    if "figshare" in url_lower:
-        return "Figshare"
-    if "osf.io" in url_lower:
-        return "OSF"
-    if "gitlab" in url_lower:
-        return "GitLab"
-    if "bitbucket" in url_lower:
-        return "Bitbucket"
-    if "archive.org" in url_lower or "arxiv" in url_lower:
-        return "Archive"
-    if "dataverse" in url_lower:
-        return "Dataverse"
-    if "doi.org" in url_lower:
-        # Try to resolve DOI to actual repository
-        resolved = _resolve_doi_prefix(url_lower)
-        return resolved if resolved else "DOI"
-    return "Other"
-
-
-def get_artifact_url(artifact):
-    """Extract the first valid URL from an artifact."""
-    # New format: artifact_urls is the canonical list
-    urls = artifact.get("artifact_urls", [])
-    if isinstance(urls, list):
-        for u in urls:
-            norm = _normalise_url(u)
-            if norm:
-                return norm
-    # Legacy fallback
-    for key in ["repository_url", "artifact_url", "github_url", "second_repository_url", "bitbucket_url"]:
-        val = artifact.get(key, "")
-        if isinstance(val, list):
-            val = val[0] if val else ""
-        val = _normalise_url(val)
-        if val:
-            return val
-
-    return None
+# ── Shared URL classification helpers ───────────────────────────────────────
+# Import from the shared module when running as a package, otherwise fall back
+# to a local copy (standalone execution for the paper).
+try:
+    from src.utils.artifact_urls import extract_source, get_artifact_url, resolve_doi_prefix  # noqa: F401
+except ImportError:
+    from utils.artifact_urls import extract_source, get_artifact_url, resolve_doi_prefix  # noqa: F401
 
 
 def extract_year_from_confname(conf_year_str):
@@ -121,7 +55,7 @@ def count_sources_by_year(all_results: dict[str, list[dict]]) -> dict[int, int]:
             continue
 
         for artifact in artifacts:
-            url = get_artifact_url(artifact)
+            url = get_artifact_url(artifact, normalise_fn=_normalise_url)
             source = extract_source(url)
             if source:
                 stats[year][source] += 1

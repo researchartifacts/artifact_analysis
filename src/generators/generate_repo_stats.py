@@ -31,7 +31,12 @@ logger = logging.getLogger(__name__)
 
 
 def collect_stats_for_results(results, url_keys=None):
-    """Collect repository stats for all artifacts."""
+    """Collect repository stats for all artifacts.
+
+    Expands multi-valued URL fields, deduplicates URLs, then fetches
+    GitHub/Zenodo/Figshare stats in parallel.  Returns a list of
+    per-URL stat dicts.
+    """
     if url_keys is None:
         url_keys = ["repository_url", "artifact_url", "github_url", "second_repository_url", "bitbucket_url"]
 
@@ -92,9 +97,9 @@ def collect_stats_for_results(results, url_keys=None):
     # Check which URLs exist
     results, _, _ = check_artifact_exists(results, url_keys)
 
-    # Build deduplicated list of (url, conf_name, year, title) jobs
-    jobs = []
-    seen_urls = set()
+    # Build deduplicated list of (url, conf_name, year, title) tuples to fetch
+    fetch_tasks = []
+    seen_urls: set[str] = set()
     for conf_year, artifacts in results.items():
         conf_name, year = extract_conference_name(conf_year)
         if year is None:
@@ -109,10 +114,10 @@ def collect_stats_for_results(results, url_keys=None):
                 if url_normalized in seen_urls:
                     continue
                 seen_urls.add(url_normalized)
-                jobs.append((url, conf_name, year, artifact.get("title", "Unknown")))
+                fetch_tasks.append((url, conf_name, year, artifact.get("title", "Unknown")))
 
     max_workers = 8
-    logger.info(f"  Collecting stats for {len(jobs)} unique URLs ({max_workers} workers)")
+    logger.info(f"  Collecting stats for {len(fetch_tasks)} unique URLs ({max_workers} workers)")
 
     def _fetch_stats(url):
         """Fetch stats for a single URL (thread-safe via disk cache)."""
@@ -128,14 +133,14 @@ def collect_stats_for_results(results, url_keys=None):
         return None, "unknown"
 
     all_stats = []
-    collected = 0
+    stats_collected = 0
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        future_to_job = {pool.submit(_fetch_stats, url): (url, conf, yr, title) for url, conf, yr, title in jobs}
-        for i, future in enumerate(as_completed(future_to_job), 1):
-            url, conf_name, year, title = future_to_job[future]
+        pending = {pool.submit(_fetch_stats, url): (url, conf, yr, title) for url, conf, yr, title in fetch_tasks}
+        for i, future in enumerate(as_completed(pending), 1):
+            url, conf_name, year, title = pending[future]
             stats, source = future.result()
             if stats:
-                collected += 1
+                stats_collected += 1
                 entry = {
                     "conference": conf_name,
                     "year": year,
@@ -145,8 +150,8 @@ def collect_stats_for_results(results, url_keys=None):
                 }
                 entry.update(stats)
                 all_stats.append(entry)
-            if i % 100 == 0 or i == len(jobs):
-                logger.info(f"  Progress: {i}/{len(jobs)} URLs fetched, {collected} stats collected")
+            if i % 100 == 0 or i == len(fetch_tasks):
+                logger.info(f"  Progress: {i}/{len(fetch_tasks)} URLs fetched, {stats_collected} stats collected")
 
     return all_stats
 

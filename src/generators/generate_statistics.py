@@ -99,7 +99,11 @@ USENIX_CONF_MAP = {
 
 
 def count_badges(artifacts):
-    """Count different badge types in artifacts list"""
+    """Count occurrences of each badge type across *artifacts*.
+
+    Handles both list-valued and comma-separated string badge fields.
+    Returns a dict with keys: available, functional, reproducible, reusable, replicated.
+    """
     badges = {"available": 0, "functional": 0, "reproducible": 0, "reusable": 0, "replicated": 0}
 
     for artifact in artifacts:
