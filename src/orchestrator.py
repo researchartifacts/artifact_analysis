@@ -257,31 +257,6 @@ def run_pipeline(cfg: PipelineConfig, *, max_workers: int = 4) -> bool:
         dblp_file=cfg.dblp_file,
     )
 
-
-    # ── Post-pipeline invariant checks ───────────────────────────────────
-    logger.info("── Running invariant checks ──")
-    violations = check_invariants(cfg.output_dir)
-    errors = [v for v in violations if v.severity == "error"]
-    warnings = [v for v in violations if v.severity == "warning"]
-    for v in warnings:
-        logger.warning("⚠ %s", v)
-    for v in errors:
-        logger.error("✗ %s", v)
-    if errors:
-        logger.error("Invariant check failed: %d error(s), %d warning(s)", len(errors), len(warnings))
-        return False
-    if warnings:
-        logger.info("Invariant checks passed with %d warning(s)", len(warnings))
-    else:
-        logger.info("✓ All invariant checks passed")
-
-    # ── Write run metadata ───────────────────────────────────────────────
-    write_run_metadata(
-        cfg.output_dir,
-        timings=timings,
-        dblp_file=cfg.dblp_file,
-    )
-
     return True
 
 

@@ -200,7 +200,8 @@ def compare_summaries(old: dict, new: dict) -> list[str]:
         # Content hash change (catch-all: if sha256 changed but nothing above triggered)
         if o.get("sha256") and n.get("sha256") and o["sha256"] != n["sha256"]:
             # Only flag if we haven't already listed specific changes for this file
-            file_specific = [d for d in diffs if key in d]
+            prefix = f"  {key}: "
+            file_specific = [d for d in diffs if d.startswith(prefix)]
             if not file_specific:
                 diffs.append(f"  {key}: content changed (sha256 differs)")
 
