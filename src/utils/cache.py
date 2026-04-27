@@ -15,9 +15,19 @@ import logging
 import os
 import tempfile
 import time
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# Time constants (shared across the pipeline).
+SECONDS_PER_DAY = 86400
+
+# Default cache root: <repo>/src/.cache (siblings of utils/, scrapers/, enrichers/).
+# All scrapers/enrichers should resolve cache paths from this constant rather than
+# computing their own. Override via the ``REPRODB_CACHE_ROOT`` environment variable.
+_DEFAULT_CACHE_ROOT = Path(__file__).resolve().parent.parent / ".cache"
+CACHE_ROOT: Path = Path(os.environ.get("REPRODB_CACHE_ROOT", str(_DEFAULT_CACHE_ROOT)))
 
 
 def cache_path(base_dir: str, key: str, namespace: str = "default") -> str:

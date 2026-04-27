@@ -75,10 +75,16 @@ class TestAggregateByInstitution:
         assert all(r["affiliation"] != "" for r in result)
 
     def test_below_threshold_excluded(self):
-        data = [_person(
-            affiliation="TinyU", combined_score=2,
-            artifacts=0, badges_functional=0, badges_reproducible=0, total_papers=1,
-        )]
+        data = [
+            _person(
+                affiliation="TinyU",
+                combined_score=2,
+                artifacts=0,
+                badges_functional=0,
+                badges_reproducible=0,
+                total_papers=1,
+            )
+        ]
         result = aggregate_by_institution(data)
         assert len(result) == 0
 

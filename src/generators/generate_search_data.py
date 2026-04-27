@@ -3,8 +3,8 @@
 
 import argparse
 import logging
-import os
 import re
+from pathlib import Path
 
 from src.utils.io import load_json, save_validated_json
 
@@ -19,23 +19,23 @@ def _title_key(t: str) -> str:
 
 
 def generate_search_data(data_dir: str) -> list:
-    assets_data = os.path.join(data_dir, "assets", "data")
+    assets_data = Path(data_dir) / "assets" / "data"
 
-    artifacts = load_json(os.path.join(assets_data, "artifacts.json"))
+    artifacts = load_json(assets_data / "artifacts.json")
 
     # paper_authors_map is an intermediate file in _build/
-    build_dir = os.path.join(data_dir, "_build")
-    pa_path = os.path.join(build_dir, "paper_authors_map.json")
+    build_dir = Path(data_dir) / "_build"
+    pa_path = build_dir / "paper_authors_map.json"
     # Fall back to legacy location for backward compatibility
-    if not os.path.exists(pa_path):
-        pa_path = os.path.join(assets_data, "paper_authors_map.json")
+    if not pa_path.exists():
+        pa_path = assets_data / "paper_authors_map.json"
     paper_authors = []
-    if os.path.exists(pa_path):
+    if pa_path.exists():
         paper_authors = load_json(pa_path)
 
-    authors_path = os.path.join(assets_data, "authors.json")
+    authors_path = assets_data / "authors.json"
     authors_data = []
-    if os.path.exists(authors_path):
+    if authors_path.exists():
         authors_data = load_json(authors_path)
 
     # Build author -> affiliation lookup
@@ -80,7 +80,7 @@ def generate_search_data(data_dir: str) -> list:
 
     merged.sort(key=lambda x: (-x["year"], x["conference"], x["title"]))
 
-    out_path = os.path.join(assets_data, "search_data.json")
+    out_path = assets_data / "search_data.json"
     save_validated_json(out_path, merged, SearchEntry, indent=None)
 
     logger.info(

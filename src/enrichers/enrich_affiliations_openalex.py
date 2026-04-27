@@ -32,7 +32,7 @@ from urllib.parse import quote
 
 import requests
 
-from src.utils.cache import _MISSING
+from src.utils.cache import _MISSING, CACHE_ROOT, SECONDS_PER_DAY
 from src.utils.cache import read_cache as _read_cache
 from src.utils.cache import write_cache as _write_cache
 from src.utils.conference import normalize_name, normalize_title
@@ -45,9 +45,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent.parent  # reprodb-pipeline/
-CACHE_DIR = REPO_ROOT / ".cache" / "openalex"
-_SECONDS_PER_DAY = 86400
-CACHE_TTL = _SECONDS_PER_DAY * 90  # 90 days
+CACHE_DIR = CACHE_ROOT / "openalex"
+CACHE_TTL = SECONDS_PER_DAY * 90  # 90 days
 
 REQUEST_DELAY = 0.15  # polite delay between API calls
 OPENALEX_DELAY = 0.12  # OpenAlex asks for 10 req/s max

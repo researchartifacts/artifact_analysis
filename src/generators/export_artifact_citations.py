@@ -11,8 +11,8 @@ import argparse
 import contextlib
 import json
 import logging
-import os
 import sys
+from pathlib import Path
 
 from src.utils.io import load_json
 
@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 def export_citations(data_dir: str, output_file: str = None) -> None:
     """Export artifact citations to a simple DOI mapping format."""
 
-    citations_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
+    citations_path = Path(data_dir) / "assets" / "data" / "artifact_citations.json"
 
-    if not os.path.exists(citations_path):
+    if not citations_path.exists():
         logger.error(f"Error: {citations_path} not found.")
         logger.info("Run generate_artifact_citations.py first.")
         sys.exit(1)

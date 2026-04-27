@@ -16,9 +16,9 @@ Usage:
 
 import argparse
 import logging
-import os
 import re
 from collections import defaultdict
+from pathlib import Path
 
 from src.utils.affiliation import normalize_affiliation as _normalize_affiliation
 from src.utils.conference import canonicalize_name
@@ -352,13 +352,13 @@ def _build_entry(
 def generate_combined_rankings(data_dir: str) -> None:
     """Read author + AE data, write combined ranking files."""
 
-    assets_data = os.path.join(data_dir, "assets", "data")
-    yaml_dir = os.path.join(data_dir, "_data")
+    assets_data = Path(data_dir) / "assets" / "data"
+    yaml_dir = Path(data_dir) / "_data"
 
     # Load author data
     def _load_json(name):
-        path = os.path.join(assets_data, name)
-        if not os.path.exists(path):
+        path = assets_data / name
+        if not path.exists():
             logger.warning(f"  Warning: {name} not found, skipping")
             return []
         return load_json(path)
@@ -527,13 +527,13 @@ def generate_combined_rankings(data_dir: str) -> None:
         logger.debug("Optional module not available, skipping enrichment")
 
     # Write JSON
-    os.makedirs(assets_data, exist_ok=True)
+    assets_data.mkdir(parents=True, exist_ok=True)
     for fname, data in [
         ("combined_rankings.json", combined_all),
         ("systems_combined_rankings.json", combined_sys),
         ("security_combined_rankings.json", combined_sec),
     ]:
-        path = os.path.join(assets_data, fname)
+        path = assets_data / fname
         save_validated_json(path, data, AuthorRanking, indent=None)
         logger.info(f"  Wrote {path} ({len(data)} entries)")
 
@@ -541,13 +541,13 @@ def generate_combined_rankings(data_dir: str) -> None:
     # Discover conferences from {conf}_conf_authors.json files in _build/
     import glob
 
-    build_dir = os.path.join(os.path.dirname(assets_data), "_build")
-    conf_author_files = glob.glob(os.path.join(build_dir, "*_conf_authors.json"))
+    build_dir = assets_data.parent / "_build"
+    conf_author_files = glob.glob(str(build_dir / "*_conf_authors.json"))
     # Fall back to legacy location (assets/data/) for backward compatibility
     if not conf_author_files:
-        conf_author_files = glob.glob(os.path.join(assets_data, "*_conf_authors.json"))
+        conf_author_files = glob.glob(str(assets_data / "*_conf_authors.json"))
     for conf_author_path in sorted(conf_author_files):
-        conf_lower = os.path.basename(conf_author_path).replace("_conf_authors.json", "")
+        conf_lower = Path(conf_author_path).name.replace("_conf_authors.json", "")
         conf_upper = conf_lower.upper()
 
         # Load per-conference authors (already filtered & scored for this conf)
@@ -598,7 +598,7 @@ def generate_combined_rankings(data_dir: str) -> None:
             pass
 
         fname = f"{conf_lower}_combined_rankings.json"
-        path = os.path.join(assets_data, fname)
+        path = assets_data / fname
         save_validated_json(path, conf_combined, AuthorRanking, indent=None)
         logger.info(f"  Wrote {path} ({len(conf_combined)} entries)")
 
@@ -617,7 +617,7 @@ def generate_combined_rankings(data_dir: str) -> None:
         "both_artifacts_and_ae_security": both_sec,
         "top_combined_score": combined_all[0]["combined_score"] if combined_all else 0,
     }
-    yml_path = os.path.join(yaml_dir, "combined_summary.yml")
+    yml_path = yaml_dir / "combined_summary.yml"
     save_yaml(yml_path, summary)
     logger.info(f"  Wrote {yml_path}")
 

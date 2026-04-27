@@ -188,46 +188,70 @@ jobs:
         run: |
           python -c "
           import json, sys, pathlib
-          try:
-              import jsonschema
-          except ImportError:
-              print('⚠️ jsonschema not installed, skipping validation')
-              sys.exit(0)
+          import jsonschema
 
           schemas_dir = pathlib.Path('data-schemas/schemas')
           if not schemas_dir.exists():
-              print('⚠️ data-schemas not checked out, skipping validation')
-              sys.exit(0)
+              print('::error::data-schemas not checked out — cannot validate outputs')
+              sys.exit(1)
 
+          # Map schema → produced output file. Schemas are validated against the
+          # corresponding pipeline output. Add new mappings here as schemas/outputs
+          # are added.
           validations = [
-              ('artifacts.schema.json', 'results_archive/output/artifacts.json'),
-              ('institution_rankings.schema.json', 'website/_data/institution_rankings.json'),
+              # Top-level / collection outputs
+              ('artifacts.schema.json',                'results_archive/output/artifacts.json'),
+              ('combined_rankings.schema.json',        'website/assets/data/combined_rankings.json'),
+              ('institution_rankings.schema.json',     'website/_data/institution_rankings.json'),
+              ('institution_ranking_history.schema.json', 'website/assets/data/institution_ranking_history.json'),
+              ('ranking_history.schema.json',          'website/assets/data/ranking_history.json'),
+              ('search_data.schema.json',              'website/assets/data/search_data.json'),
+              ('artifact_availability.schema.json',    'website/assets/data/artifact_availability.json'),
+              ('author_profiles.schema.json',          'website/assets/data/author_profiles.json'),
+              ('ae_members.schema.json',               'website/assets/data/ae_members.json'),
+              ('committee_stats.schema.json',          'website/assets/data/committee_stats.json'),
+              ('participation_stats.schema.json',      'website/assets/data/participation_stats.json'),
+              ('repo_stats.schema.json',               'website/assets/data/repo_stats.json'),
+              ('repo_stats_yearly.schema.json',        'website/assets/data/repo_stats_yearly.json'),
+              ('top_repos.schema.json',                'website/assets/data/top_repos.json'),
+              # _data/ Liquid-consumed outputs
+              ('summary.schema.json',                  'website/_data/summary.yml'),
+              ('artifacts_by_conference.schema.json',  'website/_data/artifacts_by_conference.yml'),
+              ('artifacts_by_year.schema.json',        'website/_data/artifacts_by_year.yml'),
+              ('repo_stats_summary.schema.json',       'website/_data/repo_stats.yml'),
           ]
-          
+
+          import yaml
           errors = 0
+          missing = 0
+          validated = 0
           for schema_file, data_file in validations:
               schema_path = schemas_dir / schema_file
               data_path = pathlib.Path(data_file)
               if not schema_path.exists():
-                  print(f'⚠️  Schema not found: {schema_file}')
+                  print(f'::warning::Schema not found: {schema_file}')
                   continue
               if not data_path.exists():
-                  print(f'⚠️  Data not found: {data_file}')
+                  print(f'::notice::Output not produced this run: {data_file}')
+                  missing += 1
                   continue
               schema = json.loads(schema_path.read_text())
-              data = json.loads(data_path.read_text())
+              text = data_path.read_text()
+              data = yaml.safe_load(text) if data_path.suffix in ('.yml', '.yaml') else json.loads(text)
               try:
                   jsonschema.validate(data, schema)
                   print(f'✅ {data_file} validates against {schema_file}')
+                  validated += 1
               except jsonschema.ValidationError as e:
-                  print(f'❌ {data_file} FAILS {schema_file}: {e.message}')
+                  print(f'::error file={data_file}::FAILS {schema_file}: {e.message}')
                   print(f'   Path: {list(e.absolute_path)[:5]}')
                   errors += 1
-          
+
+          print()
+          print(f'Validated: {validated}, Missing: {missing}, Errors: {errors}')
           if errors:
-              print(f'\n⚠️ {errors} validation error(s) — schemas in data-schemas may need updating')
-          else:
-              print('\n✅ All outputs match their schemas')
+              sys.exit(1)
+          "
           "
       
       - name: Push to results archive

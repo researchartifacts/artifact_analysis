@@ -11,6 +11,7 @@ import os
 import re
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 
 from src.utils.io import save_validated_json, save_yaml
 
@@ -62,8 +63,8 @@ def _generate_conference_pages(
     template are preserved for non-auto-generated pages.
     """
     for area, confs in [("systems", systems_confs), ("security", security_confs)]:
-        area_dir = os.path.join(output_dir, area)
-        os.makedirs(area_dir, exist_ok=True)
+        area_dir = Path(output_dir) / area
+        area_dir.mkdir(parents=True, exist_ok=True)
         for conf_upper in confs:
             slug = conf_upper.lower()
             display = CONF_DISPLAY_NAMES.get(conf_upper, conf_upper)
@@ -73,9 +74,9 @@ def _generate_conference_pages(
                 slug=slug,
                 conf_upper=conf_upper,
             )
-            path = os.path.join(area_dir, f"{slug}.md")
+            path = area_dir / f"{slug}.md"
             # Only write when the file is absent or differs.
-            if os.path.exists(path):
+            if path.exists():
                 with open(path) as fh:
                     if fh.read() == content:
                         continue
@@ -334,9 +335,9 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
     # Persist raw results so downstream steps (e.g. generate_repo_stats) can
     # skip re-scraping.  The cache file is written next to the other _data/
     # YAML files when an output_dir is given, otherwise to a local .cache dir.
-    _cache_dir = os.path.join(output_dir, "_data") if output_dir else ".cache"
-    os.makedirs(_cache_dir, exist_ok=True)
-    _cache_path = os.path.join(_cache_dir, "all_results_cache.yml")
+    _cache_dir = Path(output_dir) / "_data" if output_dir else Path(".cache")
+    _cache_dir.mkdir(parents=True, exist_ok=True)
+    _cache_path = _cache_dir / "all_results_cache.yml"
     save_yaml(_cache_path, all_results)
     logger.info(f"Cached raw results ({sum(len(v) for v in all_results.values())} artifacts) → {_cache_path}")
 
@@ -509,20 +510,21 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
 
     # Write output files
     if output_dir:
-        os.makedirs(output_dir, exist_ok=True)
-        os.makedirs(os.path.join(output_dir, "assets/data"), exist_ok=True)
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        (output_dir / "assets/data").mkdir(parents=True, exist_ok=True)
 
         # Write YAML files for Jekyll _data directory
-        save_yaml(os.path.join(output_dir, "_data/summary.yml"), summary)
+        save_yaml(output_dir / "_data/summary.yml", summary)
 
-        save_yaml(os.path.join(output_dir, "_data/artifacts_by_conference.yml"), artifacts_by_conference)
+        save_yaml(output_dir / "_data/artifacts_by_conference.yml", artifacts_by_conference)
 
-        save_yaml(os.path.join(output_dir, "_data/artifacts_by_year.yml"), artifacts_by_year)
+        save_yaml(output_dir / "_data/artifacts_by_year.yml", artifacts_by_year)
 
         # Write JSON files for download
-        save_validated_json(os.path.join(output_dir, "assets/data/artifacts.json"), all_artifacts, Artifact)
+        save_validated_json(output_dir / "assets/data/artifacts.json", all_artifacts, Artifact)
 
-        save_validated_json(os.path.join(output_dir, "assets/data/summary.json"), summary, Summary)
+        save_validated_json(output_dir / "assets/data/summary.json", summary, Summary)
 
         # Auto-generate per-conference .md pages for Jekyll
         _generate_conference_pages(output_dir, systems_confs, security_confs)

@@ -11,7 +11,7 @@ Usage:
 
 import argparse
 import logging
-import os
+from pathlib import Path
 
 from src.utils.conference import normalize_title
 from src.utils.io import load_json, load_yaml, save_json, save_validated_json
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 def load_existing_index(path):
     """Load existing paper index to preserve IDs across runs."""
-    if not os.path.exists(path):
+    if not Path(path).exists():
         return [], {}
     entries = load_json(path)
     by_norm_title = {}
@@ -107,13 +107,13 @@ def main():
     parser.add_argument("--data_dir", type=str, required=True, help="Path to the website repo root (containing _data/)")
     args = parser.parse_args()
 
-    data_dir = args.data_dir
-    authors_path = os.path.join(data_dir, "_data", "authors.yml")
-    index_path = os.path.join(data_dir, "_data", "papers.json")
+    data_dir = Path(args.data_dir)
+    authors_path = data_dir / "_data" / "authors.yml"
+    index_path = data_dir / "_data" / "papers.json"
 
     # Load authors (use JSON if available, else YAML)
-    json_path = os.path.join(data_dir, "assets", "data", "authors.json")
-    if os.path.exists(json_path):
+    json_path = data_dir / "assets" / "data" / "authors.json"
+    if json_path.exists():
         authors_data = load_json(json_path)
     else:
         authors_data = load_yaml(authors_path)
@@ -124,12 +124,12 @@ def main():
     papers, norm_to_id = build_paper_index(authors_data, existing_by_title, max_id)
 
     # Write paper index
-    os.makedirs(os.path.dirname(index_path), exist_ok=True)
+    index_path.parent.mkdir(parents=True, exist_ok=True)
     save_validated_json(index_path, papers, Paper)
 
     # Also write to assets/data for client-side loading
-    assets_path = os.path.join(data_dir, "assets", "data", "papers.json")
-    os.makedirs(os.path.dirname(assets_path), exist_ok=True)
+    assets_path = data_dir / "assets" / "data" / "papers.json"
+    assets_path.parent.mkdir(parents=True, exist_ok=True)
     save_json(assets_path, papers, indent=None)
 
     logger.info(f"Paper index: {len(papers)} unique papers -> {index_path}")

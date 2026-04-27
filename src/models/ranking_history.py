@@ -29,8 +29,6 @@ class RankingHistoryEntry(BaseModel):
     """A dated snapshot of all author rankings."""
 
     date: str = Field(description="ISO date string (YYYY-MM-DD) of the snapshot.")
-    entries: dict[str, RankingSnapshot] = Field(
-        description="Author name → ranking snapshot mapping."
-    )
+    entries: dict[str, RankingSnapshot] = Field(description="Author name → ranking snapshot mapping.")
 
     model_config = {"extra": "forbid"}

@@ -17,9 +17,7 @@ class AEMember(BaseModel):
     affiliation: str = Field(description="Current institutional affiliation.")
     total_memberships: int = Field(ge=0, description="Total number of AE committee memberships.")
     chair_count: int = Field(ge=0, description="Number of times served as AE chair.")
-    conferences: list[list] = Field(
-        description="List of [conference, year, role] tuples for each membership."
-    )
+    conferences: list[list] = Field(description="List of [conference, year, role] tuples for each membership.")
     years: dict[str, int] = Field(description="Year → membership count mapping.")
     area: str = Field(description="Research area: 'systems', 'security', or 'both'.")
     first_year: int | None = Field(default=None, description="Earliest year of AE service.")

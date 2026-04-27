@@ -20,12 +20,12 @@ Usage:
 import argparse
 import json
 import logging
-import os
 import re
 import sys
 import time
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 from src.utils.io import load_json, save_json
 
@@ -158,8 +158,8 @@ def authors_overlap(artifact_authors: list[str], citing_authors: list[str]) -> t
 def verify_citations(data_dir: str, output_file: str = None) -> None:
     """Verify each citing DOI actually references the artifact, not the paper."""
 
-    citations_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
-    if not os.path.exists(citations_path):
+    citations_path = Path(data_dir) / "assets" / "data" / "artifact_citations.json"
+    if not citations_path.exists():
         logger.info(f"Error: {citations_path} not found.")
         sys.exit(1)
 

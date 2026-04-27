@@ -21,7 +21,6 @@ from src.models.repo_stats import (
 from src.models.search_data import SearchEntry
 from src.models.summary import Summary
 
-
 # ── YearBreakdown & ConferenceEntry ────────────────────────────────
 
 

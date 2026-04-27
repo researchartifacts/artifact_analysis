@@ -11,8 +11,8 @@ Usage:
 
 import argparse
 import logging
-import os
 from collections import defaultdict
+from pathlib import Path
 
 from src.utils.conference import canonicalize_name
 from src.utils.io import load_json, save_json
@@ -27,11 +27,11 @@ DATA_DIR = None  # Set via CLI
 
 
 def load_yaml(filename):
-    return _load_yaml(os.path.join(DATA_DIR, filename))
+    return _load_yaml(DATA_DIR / filename)
 
 
 def save_yaml(filename, data):
-    _save_yaml(os.path.join(DATA_DIR, filename), data)
+    _save_yaml(DATA_DIR / filename, data)
 
 
 def _normalize_name_key(name):
@@ -40,8 +40,8 @@ def _normalize_name_key(name):
 
 def _load_ae_affiliation_fallback():
     """Load AE affiliation fallback map by normalized name, if available."""
-    ae_path = os.path.join(DATA_DIR, "..", "assets", "data", "ae_members.json")
-    if not os.path.exists(ae_path):
+    ae_path = DATA_DIR.parent / "assets" / "data" / "ae_members.json"
+    if not ae_path.exists():
         return {}
     ae_members = load_json(ae_path)
 
@@ -59,7 +59,7 @@ def _load_author_index_affiliations():
     try:
         from src.utils.author_index import load_author_index
 
-        website_root = os.path.join(DATA_DIR, "..")
+        website_root = DATA_DIR.parent
         _, index_by_name = load_author_index(website_root)
         return {name: entry.get("affiliation", "") for name, entry in index_by_name.items() if entry.get("affiliation")}
     except (ImportError, Exception):
@@ -68,8 +68,8 @@ def _load_author_index_affiliations():
 
 def _load_authors():
     """Load authors from authors.json (has inline papers) with YAML fallback."""
-    json_path = os.path.join(DATA_DIR, "..", "assets", "data", "authors.json")
-    if os.path.exists(json_path):
+    json_path = DATA_DIR.parent / "assets" / "data" / "authors.json"
+    if json_path.exists():
         data = load_json(json_path)
         # Verify the JSON actually has papers embedded
         if data and data[0].get("papers"):
@@ -269,7 +269,7 @@ def generate_area_authors():
     try:
         from src.utils.author_index import build_name_to_id
 
-        website_root = os.path.join(DATA_DIR, "..")
+        website_root = DATA_DIR.parent
         name_to_id = build_name_to_id(website_root)
         if name_to_id:
             for lst in (systems_authors, security_authors):
@@ -285,14 +285,14 @@ def generate_area_authors():
     save_yaml("security_authors.yml", security_authors)
 
     # Save JSON for dynamic client-side loading (much faster page load)
-    assets_data = os.path.join(DATA_DIR, "..", "assets", "data")
-    os.makedirs(assets_data, exist_ok=True)
-    save_json(os.path.join(assets_data, "systems_authors.json"), systems_authors, indent=None)
-    save_json(os.path.join(assets_data, "security_authors.json"), security_authors, indent=None)
+    assets_data = DATA_DIR.parent / "assets" / "data"
+    assets_data.mkdir(parents=True, exist_ok=True)
+    save_json(assets_data / "systems_authors.json", systems_authors, indent=None)
+    save_json(assets_data / "security_authors.json", security_authors, indent=None)
 
     # --- Generate per-conference author JSON files (intermediate, not deployed) ---
-    build_dir = os.path.join(DATA_DIR, "..", "_build")
-    os.makedirs(build_dir, exist_ok=True)
+    build_dir = DATA_DIR.parent / "_build"
+    build_dir.mkdir(parents=True, exist_ok=True)
     all_confs = systems_confs | security_confs
     for conf in sorted(all_confs):
         conf_authors = process_authors_for_area(authors, {conf}, conf)
@@ -303,7 +303,7 @@ def generate_area_authors():
                 if aid is not None:
                     entry["author_id"] = aid
         fname = f"{conf.lower()}_conf_authors.json"
-        save_json(os.path.join(build_dir, fname), conf_authors, indent=None)
+        save_json(build_dir / fname, conf_authors, indent=None)
         logger.info(f"  {conf}: {len(conf_authors)} authors -> _build/{fname}")
 
     # Update author_summary with correct counts
@@ -336,5 +336,5 @@ if __name__ == "__main__":
         help="Path to the website repo root (containing _data/)",
     )
     args = parser.parse_args()
-    DATA_DIR = os.path.join(args.data_dir, "_data")
+    DATA_DIR = Path(args.data_dir) / "_data"
     generate_area_authors()

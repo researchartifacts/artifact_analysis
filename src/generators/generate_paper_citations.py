@@ -32,17 +32,17 @@ import argparse
 import hashlib
 import json
 import logging
-import os
 import time
+from pathlib import Path
 
 from src.utils.cache import _MISSING, read_cache, write_cache
 from src.utils.conference import normalize_title
 from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
-# ── Configuration ────────────────────────────────────────────────────────────
-_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(_SCRIPT_DIR)), ".cache", "paper_citations")
+# ── Configuration ────────────────────────────────────────────────────────────────────
+_SCRIPT_DIR = Path(__file__).resolve().parent
+CACHE_DIR = _SCRIPT_DIR.parent.parent / ".cache" / "paper_citations"
 CACHE_NS = "scholar"  # single namespace — one source
 
 SCHOLAR_DELAY = 3.0  # seconds between queries (conservative)
@@ -128,15 +128,15 @@ def scholar_lookup(title: str) -> dict | None:
 
 
 def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
-    artifacts_path = os.path.join(data_dir, "assets", "data", "artifacts.json")
-    out_path = os.path.join(data_dir, "assets", "data", "paper_citations.json")
+    artifacts_path = Path(data_dir) / "assets" / "data" / "artifacts.json"
+    out_path = Path(data_dir) / "assets" / "data" / "paper_citations.json"
 
     log("=" * 60)
     log("Paper Citation Enricher  (source: Google Scholar)")
     log("=" * 60)
 
     # Load artifacts
-    if not os.path.exists(artifacts_path):
+    if not artifacts_path.exists():
         log(f"Error: {artifacts_path} not found.")
         return
     artifacts = load_json(artifacts_path)
@@ -359,7 +359,7 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
     if stopped_early:
         log("  ⚠ Stopped early due to blocking — run again later to fill gaps")
 
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     save_json(out_path, entries)
     log(f"✓ Written {out_path}")
 

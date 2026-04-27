@@ -86,13 +86,15 @@ def _make_array_schema(item_schema: dict[str, Any], title: str, description: str
 
 
 def _make_object_schema(obj_schema: dict[str, Any], schema_id: str) -> dict:
-    """Add standard JSON Schema metadata to an object schema."""
+    """Add standard JSON Schema metadata to an object schema (placed first)."""
     from src.models import SCHEMA_VERSION
 
-    obj_schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
-    obj_schema["$id"] = schema_id
-    obj_schema["version"] = SCHEMA_VERSION
-    return obj_schema
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": schema_id,
+        "version": SCHEMA_VERSION,
+        **obj_schema,
+    }
 
 
 def export_all(output_dir: str) -> list[str]:

@@ -9,7 +9,7 @@ import logging
 from collections import defaultdict
 from pathlib import Path
 
-from src.generators.generate_combined_rankings import _normalize_affiliation
+from src.utils.affiliation import normalize_affiliation as _normalize_affiliation
 from src.utils.io import load_json, save_validated_json
 
 from ..models.institution_rankings import InstitutionRanking

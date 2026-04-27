@@ -21,8 +21,8 @@ Usage:
 
 import argparse
 import logging
-import os
 from collections import defaultdict
+from pathlib import Path
 
 from src.utils.io import load_yaml, save_json, save_yaml
 
@@ -43,14 +43,15 @@ def _count_papers_from_dblp(dblp_file, target_conf_years):
 def generate_participation_stats(dblp_file, output_dir):
     """Generate AE participation and badge-rate statistics."""
 
-    if not os.path.exists(dblp_file):
+    if not Path(dblp_file).exists():
         logger.error(f"Error: DBLP file not found: {dblp_file}")
         logger.info("  Run scripts/download_dblp.sh first.")
         return None
 
+    output_dir = Path(output_dir)
     # Load artifacts_by_conference for per-conference badge counts
-    abc_path = os.path.join(output_dir, "_data/artifacts_by_conference.yml")
-    if not os.path.exists(abc_path):
+    abc_path = output_dir / "_data/artifacts_by_conference.yml"
+    if not abc_path.exists():
         logger.error(f"Error: {abc_path} not found — run generate_statistics first")
         return None
 
@@ -147,13 +148,13 @@ def generate_participation_stats(dblp_file, output_dir):
     }
 
     # Write outputs
-    os.makedirs(os.path.join(output_dir, "_data"), exist_ok=True)
-    os.makedirs(os.path.join(output_dir, "assets/data"), exist_ok=True)
+    (output_dir / "_data").mkdir(parents=True, exist_ok=True)
+    (output_dir / "assets/data").mkdir(parents=True, exist_ok=True)
 
-    yml_path = os.path.join(output_dir, "_data/participation_stats.yml")
+    yml_path = output_dir / "_data/participation_stats.yml"
     save_yaml(yml_path, output)
 
-    json_path = os.path.join(output_dir, "assets/data/participation_stats.json")
+    json_path = output_dir / "assets/data/participation_stats.json"
     save_json(json_path, output)
 
     logger.info(f"\n✅ Participation stats: {len(stats)} conference/year entries")

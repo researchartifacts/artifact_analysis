@@ -7,7 +7,6 @@ from src.utils.artifact_urls import (
     resolve_doi_prefix,
 )
 
-
 # ── resolve_doi_prefix ─────────────────────────────────────────────
 
 

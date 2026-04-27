@@ -11,11 +11,11 @@ Usage:
 
 import argparse
 import logging
-import os
 import re
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
+from pathlib import Path
 
 from ..scrapers.parse_results_md import get_ae_results
 from ..utils.collect_artifact_stats import figshare_stats, github_stats, zenodo_stats
@@ -341,13 +341,13 @@ def main():
     # avoid re-scraping every results.md file.
     cache_path = None
     if args.output_dir:
-        cache_path = os.path.join(args.output_dir, "_data", "all_results_cache.yml")
-    if not cache_path or not os.path.exists(cache_path):
+        cache_path = Path(args.output_dir) / "_data" / "all_results_cache.yml"
+    if not cache_path or not cache_path.exists():
         # Fallback: repo root .cache directory
-        repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        cache_path = os.path.join(repo_root, ".cache", "all_results_cache.yml")
+        repo_root = Path(__file__).resolve().parent.parent
+        cache_path = repo_root / ".cache" / "all_results_cache.yml"
 
-    if os.path.exists(cache_path):
+    if cache_path.exists():
         logger.info(f"Loading cached results from {cache_path}...")
         all_results = load_yaml(cache_path) or {}
         # Filter by conf_regex (cache may contain more conferences)
@@ -370,12 +370,12 @@ def main():
     existing_stats = []
     existing_urls = set()
     if not args.refresh and args.output_dir:
-        build_dir = os.path.join(args.output_dir, "_build")
-        detail_path = os.path.join(build_dir, "repo_stats_detail.json")
+        build_dir = Path(args.output_dir) / "_build"
+        detail_path = build_dir / "repo_stats_detail.json"
         # Fall back to legacy location for backward compatibility
-        if not os.path.exists(detail_path):
-            detail_path = os.path.join(args.output_dir, "assets", "data", "repo_stats_detail.json")
-        if os.path.exists(detail_path):
+        if not detail_path.exists():
+            detail_path = Path(args.output_dir) / "assets" / "data" / "repo_stats_detail.json"
+        if detail_path.exists():
             raw_existing = load_json(detail_path)
             # Normalize existing entries to the format collect_stats_for_results produces
             for entry in raw_existing:
@@ -456,11 +456,11 @@ def main():
     )
 
     if args.output_dir:
-        data_dir = os.path.join(args.output_dir, "_data")
-        assets_dir = os.path.join(args.output_dir, "assets", "data")
-        os.makedirs(data_dir, exist_ok=True)
-        os.makedirs(assets_dir, exist_ok=True)
-        out_path = os.path.join(data_dir, "repo_stats.yml")
+        data_dir = Path(args.output_dir) / "_data"
+        assets_dir = Path(args.output_dir) / "assets" / "data"
+        data_dir.mkdir(parents=True, exist_ok=True)
+        assets_dir.mkdir(parents=True, exist_ok=True)
+        out_path = data_dir / "repo_stats.yml"
         yaml_data = {k: v for k, v in aggregated.items() if k != "all_github_repos"}
         save_yaml(out_path, yaml_data)
         logger.info(f"Written to {out_path}")
@@ -472,20 +472,20 @@ def main():
             aggregated.get("all_github_repos", []),
             key=lambda e: (e.get("conference", ""), e.get("year", 0), e.get("url", "")),
         )
-        build_dir = os.path.join(data_dir, "..", "_build")
-        os.makedirs(build_dir, exist_ok=True)
-        detail_path = os.path.join(build_dir, "repo_stats_detail.json")
+        build_dir = data_dir.parent / "_build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        detail_path = build_dir / "repo_stats_detail.json"
         save_json(detail_path, detail_repos)
         logger.info(f"Written per-repo detail ({len(aggregated.get('all_github_repos', []))} repos) to {detail_path}")
 
         # Write repo_stats_yearly.json — per-year stats split by area (all/systems/security)
         # Used by website repo_stats pages as a downloadable data file
-        yearly_path = os.path.join(assets_dir, "repo_stats_yearly.json")
+        yearly_path = assets_dir / "repo_stats_yearly.json"
         conf_stats = aggregated.get("by_conference", [])
         # Build area lookup from artifacts_by_conference if available
-        abc_path = os.path.join(data_dir, "artifacts_by_conference.yml")
+        abc_path = data_dir / "artifacts_by_conference.yml"
         area_lookup = {}
-        if os.path.exists(abc_path):
+        if abc_path.exists():
             abc = load_yaml(abc_path) or []
             for c in abc:
                 area_lookup[c.get("name", "")] = c.get("category", "")
@@ -531,18 +531,18 @@ def main():
         # Append a dated snapshot for each fetched artifact so we can track
         # stars/forks/views/downloads over time across monthly runs.
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        history_load_path = os.path.join(build_dir, "repo_stats_history.json")
+        history_load_path = build_dir / "repo_stats_history.json"
         # Fall back to legacy location for loading existing history
-        if not os.path.exists(history_load_path):
-            legacy_history = os.path.join(assets_dir, "repo_stats_history.json")
-            if os.path.exists(legacy_history):
+        if not history_load_path.exists():
+            legacy_history = assets_dir / "repo_stats_history.json"
+            if legacy_history.exists():
                 history_load_path = legacy_history
         # Always write to _build/
-        history_write_path = os.path.join(build_dir, "repo_stats_history.json")
+        history_write_path = build_dir / "repo_stats_history.json"
 
         # Load existing history
         history = {}
-        if os.path.exists(history_load_path):
+        if history_load_path.exists():
             history = load_json(history_load_path)
             logger.info(f"Loaded history for {len(history)} URLs")
 

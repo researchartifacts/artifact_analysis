@@ -113,10 +113,22 @@ class TestGenerateSearchData:
             data_dir,
             "artifacts.json",
             [
-                {"title": "Old", "conference": "OSDI", "category": "systems",
-                 "year": 2020, "badges": [], "artifact_urls": []},
-                {"title": "New", "conference": "OSDI", "category": "systems",
-                 "year": 2024, "badges": [], "artifact_urls": []},
+                {
+                    "title": "Old",
+                    "conference": "OSDI",
+                    "category": "systems",
+                    "year": 2020,
+                    "badges": [],
+                    "artifact_urls": [],
+                },
+                {
+                    "title": "New",
+                    "conference": "OSDI",
+                    "category": "systems",
+                    "year": 2024,
+                    "badges": [],
+                    "artifact_urls": [],
+                },
             ],
         )
         result = generate_search_data(str(data_dir))

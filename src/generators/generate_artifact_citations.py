@@ -18,6 +18,7 @@ import re
 import time
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 from src.utils.conference import normalize_title
 from src.utils.io import load_json, save_json
@@ -43,7 +44,7 @@ def short_url(url: str, max_len: int = 120) -> str:
 
 
 def load_local_env_file(file_path: str) -> None:
-    if not os.path.exists(file_path):
+    if not Path(file_path).exists():
         return
     try:
         with open(file_path, "r", encoding="utf-8") as env_file:
@@ -313,20 +314,20 @@ def fetch_semantic_scholar_citing_dois(base_url: str, headers: dict, limit: int)
 
 
 def generate(data_dir: str) -> None:
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    local_env_path = os.path.join(repo_root, ".env.local")
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    local_env_path = repo_root / ".env.local"
     load_local_env_file(local_env_path)
 
     logger.info("=" * 60)
     logger.info("Starting artifact citation generation...")
     logger.info("=" * 60)
 
-    artifacts_path = os.path.join(data_dir, "assets", "data", "artifacts.json")
-    out_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
+    artifacts_path = Path(data_dir) / "assets" / "data" / "artifacts.json"
+    out_path = Path(data_dir) / "assets" / "data" / "artifact_citations.json"
 
     logger.info(f"Loading artifacts from: {artifacts_path}")
 
-    if not os.path.exists(artifacts_path):
+    if not artifacts_path.exists():
         logger.error(f"Error: {artifacts_path} not found. Run generate_statistics.py first.")
         return
 

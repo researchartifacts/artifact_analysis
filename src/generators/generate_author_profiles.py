@@ -15,7 +15,7 @@ Usage:
 
 import argparse
 import logging
-import os
+from pathlib import Path
 
 from src.utils.affiliation import normalize_affiliation as _normalize_affiliation
 from src.utils.conference import canonicalize_name
@@ -26,10 +26,11 @@ logger = logging.getLogger(__name__)
 
 
 def generate_profiles(data_dir: str) -> None:
-    authors_path = os.path.join(data_dir, "assets/data/authors.json")
-    ae_path = os.path.join(data_dir, "assets/data/ae_members.json")
-    cr_path = os.path.join(data_dir, "assets/data/combined_rankings.json")
-    out_path = os.path.join(data_dir, "assets/data/author_profiles.json")
+    data_dir = Path(data_dir)
+    authors_path = data_dir / "assets/data/authors.json"
+    ae_path = data_dir / "assets/data/ae_members.json"
+    cr_path = data_dir / "assets/data/combined_rankings.json"
+    out_path = data_dir / "assets/data/author_profiles.json"
 
     # Load data sources
     authors = load_json(authors_path)
@@ -204,7 +205,7 @@ def generate_profiles(data_dir: str) -> None:
     # Write compact JSON
     save_json(out_path, profile_list, compact=True)
 
-    logger.info(f"Wrote {out_path} ({len(profile_list)} profiles, {os.path.getsize(out_path) / 1024:.0f}KB)")
+    logger.info(f"Wrote {out_path} ({len(profile_list)} profiles, {out_path.stat().st_size / 1024:.0f}KB)")
     logger.info(f"  Authors with papers: {sum(1 for p in profile_list if p['papers'])}")
     logger.info(f"  Authors with AE service: {sum(1 for p in profile_list if p.get('ae_memberships', 0) > 0)}")
 

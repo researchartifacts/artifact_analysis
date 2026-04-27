@@ -28,12 +28,8 @@ class AvailabilitySummary(BaseModel):
     by_platform: dict[str, PlatformStats] = Field(description="Stats per hosting platform.")
     by_area: dict[str, PlatformStats] = Field(description="Stats per research area.")
     by_year: dict[str, PlatformStats] = Field(description="Stats per year.")
-    by_year_area: dict[str, dict[str, PlatformStats]] = Field(
-        description="Stats per year per area."
-    )
-    by_year_platform: dict[str, dict[str, PlatformStats]] = Field(
-        description="Stats per year per platform."
-    )
+    by_year_area: dict[str, dict[str, PlatformStats]] = Field(description="Stats per year per area.")
+    by_year_platform: dict[str, dict[str, PlatformStats]] = Field(description="Stats per year per platform.")
     by_conference: dict[str, PlatformStats] = Field(description="Stats per conference.")
 
     model_config = {"extra": "forbid"}

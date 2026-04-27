@@ -7,9 +7,9 @@ Download from: https://dblp.org/xml/dblp.xml.gz
 
 import argparse
 import logging
-import os
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 
 from src.utils.affiliation import normalize_affiliation as _normalize_affiliation
 from src.utils.io import load_json, load_yaml, save_json, save_validated_json, save_yaml
@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
 
 def load_artifacts(data_dir: str) -> list[dict] | None:
     """Load artifacts from generated data file"""
-    artifacts_path = os.path.join(data_dir, "assets/data/artifacts.json")
-    if not os.path.exists(artifacts_path):
+    artifacts_path = Path(data_dir) / "assets/data/artifacts.json"
+    if not artifacts_path.exists():
         logger.error(f"Error: {artifacts_path} not found")
         logger.info("Please run generate_statistics.py first")
         return None
@@ -43,8 +43,8 @@ def load_conference_active_years(data_dir):
 
     Returns dict: conference_name -> set of years when that conference had artifact evaluation.
     """
-    conf_path = os.path.join(data_dir, "_data/artifacts_by_conference.yml")
-    if not os.path.exists(conf_path):
+    conf_path = Path(data_dir) / "_data/artifacts_by_conference.yml"
+    if not conf_path.exists():
         logger.warning(f"Warning: {conf_path} not found, will count all years")
         return {}
 
@@ -74,8 +74,8 @@ def load_artifact_citations(data_dir: str) -> dict[str, int]:
 
     Returns dict: normalized_title -> cited_by_count (max across duplicates).
     """
-    citations_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
-    if not os.path.exists(citations_path):
+    citations_path = Path(data_dir) / "assets" / "data" / "artifact_citations.json"
+    if not citations_path.exists():
         logger.info("Artifact citation data not available (collection disabled — see generate_artifact_citations.py)")
         return {}
 
@@ -132,7 +132,7 @@ def parse_dblp_for_authors(
             for ALL papers at tracked venues (venue_papers)
           - Dict mapping author_name -> affiliation string (from DBLP <www> entries)
     """
-    if not os.path.exists(dblp_file):
+    if not Path(dblp_file).exists():
         logger.error(f"Error: DBLP file not found: {dblp_file}")
         logger.info("Please download from: https://dblp.org/xml/dblp.xml.gz")
         return [], {}, {}
@@ -570,15 +570,16 @@ def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> Non
     }
 
     # Write output files
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(os.path.join(output_dir, "_data"), exist_ok=True)
-    os.makedirs(os.path.join(output_dir, "assets/data"), exist_ok=True)
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / "_data").mkdir(parents=True, exist_ok=True)
+    (output_dir / "assets/data").mkdir(parents=True, exist_ok=True)
 
     # --- Build paper index and replace embedded papers with IDs ---
     from .generate_paper_index import build_paper_index, load_existing_index, normalize_title
 
     # Load existing index from the canonical location (assets/data)
-    assets_papers = os.path.join(output_dir, "assets/data/papers.json")
+    assets_papers = output_dir / "assets/data/papers.json"
     existing_papers, existing_by_title = load_existing_index(assets_papers)
     max_paper_id = max((e["id"] for e in existing_papers), default=0)
     papers_list, norm_to_id = build_paper_index(authors_list, existing_by_title, max_paper_id)
@@ -618,17 +619,17 @@ def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> Non
             if k not in ("papers", "papers_without_artifacts", "total_papers_by_conf", "total_papers_by_conf_year")
         }
         authors_for_yaml.append(entry)
-    save_yaml(os.path.join(output_dir, "_data/authors.yml"), authors_for_yaml)
+    save_yaml(output_dir / "_data/authors.yml", authors_for_yaml)
 
-    save_yaml(os.path.join(output_dir, "_data/author_summary.yml"), author_summary)
+    save_yaml(output_dir / "_data/author_summary.yml", author_summary)
 
     # JSON for download (full data including embedded papers for backward compat)
-    save_validated_json(os.path.join(output_dir, "assets/data/authors.json"), authors_list, AuthorStats)
+    save_validated_json(output_dir / "assets/data/authors.json", authors_list, AuthorStats)
 
     # Paper -> authors mapping for citation attribution (intermediate, not deployed)
-    build_dir = os.path.join(output_dir, "_build")
-    os.makedirs(build_dir, exist_ok=True)
-    save_json(os.path.join(build_dir, "paper_authors_map.json"), papers_with_authors)
+    build_dir = output_dir / "_build"
+    build_dir.mkdir(parents=True, exist_ok=True)
+    save_json(build_dir / "paper_authors_map.json", papers_with_authors)
 
     logger.info(f"Author data written to {output_dir} ({len(authors_list)} authors, {len(papers_with_authors)} papers)")
 
@@ -637,8 +638,8 @@ def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> Non
 
 def main():
     parser = argparse.ArgumentParser(description="Generate author statistics from DBLP")
-    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    default_dblp = os.path.join(repo_root, "data", "dblp", "dblp.xml.gz")
+    repo_root = Path(__file__).resolve().parent.parent
+    default_dblp = str(repo_root / "data" / "dblp" / "dblp.xml.gz")
     parser.add_argument(
         "--dblp_file",
         type=str,

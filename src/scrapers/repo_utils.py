@@ -11,6 +11,10 @@ import yaml
 
 from src.utils.cache import (
     _MISSING,
+    CACHE_ROOT,
+)
+from src.utils.cache import (
+    SECONDS_PER_DAY as _SECONDS_PER_DAY,
 )
 from src.utils.cache import (
     read_cache as _read_cache,
@@ -27,7 +31,7 @@ from src.utils.cache import (
 
 logger = logging.getLogger(__name__)
 _SCRIPT_DIR = Path(__file__).resolve().parent
-CACHE_DIR = str(_SCRIPT_DIR.parent / ".cache")
+CACHE_DIR = str(CACHE_ROOT)
 
 _KNOWN_DEAD_HOSTS_PATH = _SCRIPT_DIR.parent.parent / "data" / "known_dead_hosts.yaml"
 _known_dead_hosts: set[str] | None = None
@@ -46,7 +50,6 @@ def _load_known_dead_hosts() -> set[str]:
     return _known_dead_hosts
 
 
-_SECONDS_PER_DAY = 86400
 CACHE_TTL = _SECONDS_PER_DAY * 30  # 30 days – conference listings & raw file downloads
 CACHE_TTL_URL = _SECONDS_PER_DAY * 90  # 90 days – URL existence checks (positive)
 CACHE_TTL_URL_NEG = _SECONDS_PER_DAY * 7  # 7 days  – URL non-existence checks (re-check weekly)

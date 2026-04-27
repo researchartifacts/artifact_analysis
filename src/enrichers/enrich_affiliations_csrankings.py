@@ -19,16 +19,16 @@ from typing import Optional
 
 import requests
 
+from src.utils.cache import CACHE_ROOT, SECONDS_PER_DAY
 from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
 CSRANKINGS_URL = "https://raw.githubusercontent.com/emeryberger/CSrankings/gh-pages/csrankings.csv"
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
-CACHE_DIR = REPO_ROOT / ".cache" / "csrankings"
+CACHE_DIR = CACHE_ROOT / "csrankings"
 CACHE_FILE = CACHE_DIR / "csrankings.csv"
 CACHE_TTL_DAYS = 30  # CSRankings data changes monthly
-_SECONDS_PER_DAY = 86400
 
 
 def download_csrankings(force_refresh: bool = False, verbose: bool = False) -> Path:
@@ -37,7 +37,7 @@ def download_csrankings(force_refresh: bool = False, verbose: bool = False) -> P
 
     # Check cache freshness
     if CACHE_FILE.exists() and not force_refresh:
-        age_days = (time.time() - CACHE_FILE.stat().st_mtime) / _SECONDS_PER_DAY
+        age_days = (time.time() - CACHE_FILE.stat().st_mtime) / SECONDS_PER_DAY
         if age_days < CACHE_TTL_DAYS:
             if verbose:
                 logger.info(f"Using cached CSRankings data (age: {age_days:.1f} days)")

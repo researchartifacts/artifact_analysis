@@ -17,9 +17,7 @@ class PaperCitation(BaseModel):
     year: int = Field(description="Publication year.")
     category: str = Field(default="", description="Paper category/track.")
     badges: str = Field(default="", description="Comma-separated badge names.")
-    cited_by_count: int | None = Field(
-        default=None, description="Citation count from Google Scholar."
-    )
+    cited_by_count: int | None = Field(default=None, description="Citation count from Google Scholar.")
     source: str = Field(default="", description="Source used for lookup (e.g. 'scholar').")
     error: str | None = Field(default=None, description="Error message if lookup failed.")
 

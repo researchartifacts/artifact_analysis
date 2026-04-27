@@ -58,16 +58,32 @@ class TestGenerateRankingHistory:
         assets.mkdir(parents=True)
 
         rankings = [
-            {"name": "Alice", "combined_score": 50, "artifact_score": 30, "ae_score": 20,
-             "total_papers": 10, "artifacts": 5, "artifact_rate": 50.0, "repro_rate": 40.0},
+            {
+                "name": "Alice",
+                "combined_score": 50,
+                "artifact_score": 30,
+                "ae_score": 20,
+                "total_papers": 10,
+                "artifacts": 5,
+                "artifact_rate": 50.0,
+                "repro_rate": 40.0,
+            },
         ]
         with open(assets / "combined_rankings.json", "w") as f:
             json.dump(rankings, f)
 
         inst_rankings = [
-            {"affiliation": "MIT", "combined_score": 80, "artifact_score": 50, "ae_score": 30,
-             "total_papers": 20, "artifacts": 10, "artifact_rate": 50.0, "badges_reproducible": 4,
-             "num_authors": 3},
+            {
+                "affiliation": "MIT",
+                "combined_score": 80,
+                "artifact_score": 50,
+                "ae_score": 30,
+                "total_papers": 20,
+                "artifacts": 10,
+                "artifact_rate": 50.0,
+                "badges_reproducible": 4,
+                "num_authors": 3,
+            },
         ]
         with open(assets / "institution_rankings.json", "w") as f:
             json.dump(inst_rankings, f)

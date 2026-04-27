@@ -27,8 +27,8 @@ Usage:
 
 import argparse
 import logging
-import os
 from datetime import datetime
+from pathlib import Path
 
 from src.utils.io import load_json, save_json
 
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 def _load_json(path: str) -> list | dict:
-    if os.path.exists(path):
+    if Path(path).exists():
         return load_json(path)
     return []
 
@@ -66,8 +66,8 @@ def generate_ranking_history(data_dir: str, force: bool = False) -> None:
     date = _snapshot_date()
 
     # ── Author rankings ──────────────────────────────────────────────────
-    cr_path = os.path.join(data_dir, "assets/data/combined_rankings.json")
-    author_hist_path = os.path.join(data_dir, "assets/data/ranking_history.json")
+    cr_path = Path(data_dir) / "assets/data/combined_rankings.json"
+    author_hist_path = Path(data_dir) / "assets/data/ranking_history.json"
 
     rankings = _load_json(cr_path)
     author_history: list = _load_json(author_hist_path)  # type: ignore[assignment]
@@ -100,11 +100,11 @@ def generate_ranking_history(data_dir: str, force: bool = False) -> None:
         logger.info(
             f"  Author ranking history: {len(author_history)} snapshots, {len(author_entries)} entries for {date}"
         )
-        logger.info(f"  Wrote {author_hist_path} ({os.path.getsize(author_hist_path) / 1024:.0f}KB)")
+        logger.info(f"  Wrote {author_hist_path} ({author_hist_path.stat().st_size / 1024:.0f}KB)")
 
     # ── Institution rankings ─────────────────────────────────────────────
-    ir_path = os.path.join(data_dir, "assets/data/institution_rankings.json")
-    inst_hist_path = os.path.join(data_dir, "assets/data/institution_ranking_history.json")
+    ir_path = Path(data_dir) / "assets/data/institution_rankings.json"
+    inst_hist_path = Path(data_dir) / "assets/data/institution_ranking_history.json"
 
     inst_rankings = _load_json(ir_path)
     inst_history: list = _load_json(inst_hist_path)  # type: ignore[assignment]
@@ -142,7 +142,7 @@ def generate_ranking_history(data_dir: str, force: bool = False) -> None:
         logger.info(
             f"  Institution ranking history: {len(inst_history)} snapshots, {len(inst_entries)} entries for {date}"
         )
-        logger.info(f"  Wrote {inst_hist_path} ({os.path.getsize(inst_hist_path) / 1024:.0f}KB)")
+        logger.info(f"  Wrote {inst_hist_path} ({inst_hist_path.stat().st_size / 1024:.0f}KB)")
 
 
 def main():

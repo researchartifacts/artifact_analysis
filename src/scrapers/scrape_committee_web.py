@@ -20,6 +20,8 @@ import requests
 import yaml
 from bs4 import BeautifulSoup
 
+from src.utils.cache import CACHE_ROOT, SECONDS_PER_DAY
+
 # ── USENIX conference URL patterns ──────────────────────────────────────────
 
 
@@ -63,9 +65,9 @@ def _get_session():
 # This means the first full run populates the cache and all subsequent
 # CI runs re-use it, eliminating the need for live scraping entirely.
 
-_SCRAPE_CACHE_DIR = str(Path(__file__).resolve().parent.parent / ".cache")
+_SCRAPE_CACHE_DIR = str(CACHE_ROOT)
 # Committee pages rarely change — 90-day TTL.
-_SCRAPE_CACHE_TTL = 90 * 24 * 3600
+_SCRAPE_CACHE_TTL = 90 * SECONDS_PER_DAY
 
 
 def _cached_fetch(url, session=None, cache_only=False, timeout=30):

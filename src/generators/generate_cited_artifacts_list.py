@@ -17,8 +17,8 @@ Usage:
 
 import argparse
 import logging
-import os
 from collections import defaultdict
+from pathlib import Path
 
 from src.utils.conference import normalize_title
 from src.utils.io import load_json, save_json
@@ -29,23 +29,24 @@ logger = logging.getLogger(__name__)
 def generate(data_dir: str) -> None:
     """Generate cited artifacts mappings"""
 
+    data_dir = Path(data_dir)
     # Paths to required files
-    citations_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
+    citations_path = data_dir / "assets" / "data" / "artifact_citations.json"
     # paper_authors_map is an intermediate file in _build/
-    build_dir = os.path.join(data_dir, "_build")
-    paper_authors_map_path = os.path.join(build_dir, "paper_authors_map.json")
+    build_dir = data_dir / "_build"
+    paper_authors_map_path = build_dir / "paper_authors_map.json"
     # Fall back to legacy location for backward compatibility
-    if not os.path.exists(paper_authors_map_path):
-        paper_authors_map_path = os.path.join(data_dir, "assets", "data", "paper_authors_map.json")
-    combined_rankings_path = os.path.join(data_dir, "assets", "data", "combined_rankings.json")
-    institution_rankings_path = os.path.join(data_dir, "assets", "data", "institution_rankings.json")
+    if not paper_authors_map_path.exists():
+        paper_authors_map_path = data_dir / "assets" / "data" / "paper_authors_map.json"
+    combined_rankings_path = data_dir / "assets" / "data" / "combined_rankings.json"
+    institution_rankings_path = data_dir / "assets" / "data" / "institution_rankings.json"
 
-    out_author_cited = os.path.join(data_dir, "assets", "data", "cited_artifacts_by_author.json")
-    out_institution_cited = os.path.join(data_dir, "assets", "data", "cited_artifacts_by_institution.json")
-    out_cited_list = os.path.join(data_dir, "assets", "data", "cited_artifacts_list.json")
+    out_author_cited = data_dir / "assets" / "data" / "cited_artifacts_by_author.json"
+    out_institution_cited = data_dir / "assets" / "data" / "cited_artifacts_by_institution.json"
+    out_cited_list = data_dir / "assets" / "data" / "cited_artifacts_list.json"
 
     # Load data
-    if not os.path.exists(citations_path):
+    if not citations_path.exists():
         logger.error(f"Error: {citations_path} not found. Run generate_artifact_citations.py first")
         return
 
@@ -67,7 +68,7 @@ def generate(data_dir: str) -> None:
 
     # Load paper-to-authors mapping
     paper_author_map = {}
-    if os.path.exists(paper_authors_map_path):
+    if paper_authors_map_path.exists():
         papers = load_json(paper_authors_map_path)
         for paper in papers:
             norm_title = normalize_title(paper.get("title", ""))
@@ -82,7 +83,7 @@ def generate(data_dir: str) -> None:
     author_info = {}
     institution_info = {}
 
-    if os.path.exists(combined_rankings_path):
+    if combined_rankings_path.exists():
         rankings = load_json(combined_rankings_path)
         for author in rankings:
             author_name = author.get("name", "")
@@ -92,7 +93,7 @@ def generate(data_dir: str) -> None:
                 "display_affiliation": author.get("display_affiliation", ""),
             }
 
-    if os.path.exists(institution_rankings_path):
+    if institution_rankings_path.exists():
         institutions = load_json(institution_rankings_path)
         for inst in institutions:
             inst_name = inst.get("institution", "")
@@ -189,7 +190,7 @@ def generate(data_dir: str) -> None:
         cited_artifacts_list.append(artifact_entry)
 
     # Write output files
-    os.makedirs(os.path.dirname(out_author_cited), exist_ok=True)
+    out_author_cited.parent.mkdir(parents=True, exist_ok=True)
 
     # Convert defaultdict to regular dict and sort by total citations
     author_dict = {k: v for k, v in cited_by_author.items()}

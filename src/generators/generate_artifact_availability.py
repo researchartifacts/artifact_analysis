@@ -14,10 +14,10 @@ Usage:
 
 import argparse
 import logging
-import os
 import re
 from collections import defaultdict
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from src.utils.io import load_yaml, save_json
@@ -191,12 +191,12 @@ def main():
     # Try loading from cache first (same as generate_repo_stats.py)
     cache_path = None
     if output_dir:
-        cache_path = os.path.join(output_dir, "_data", "all_results_cache.yml")
-    if not cache_path or not os.path.exists(cache_path):
-        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        cache_path = os.path.join(repo_root, ".cache", "all_results_cache.yml")
+        cache_path = Path(output_dir) / "_data" / "all_results_cache.yml"
+    if not cache_path or not cache_path.exists():
+        repo_root = Path(__file__).resolve().parent.parent.parent
+        cache_path = repo_root / ".cache" / "all_results_cache.yml"
 
-    if os.path.exists(cache_path):
+    if cache_path.exists():
         logger.info(f"Loading cached results from {cache_path}...")
         all_results = load_yaml(cache_path, default={})
         all_results = {k: v for k, v in all_results.items() if re.search(args.conf_regex, k)}
@@ -239,8 +239,8 @@ def main():
 
     # Write output
     if output_dir:
-        out_path = os.path.join(output_dir, "assets/data/artifact_availability.json")
-        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        out_path = Path(output_dir) / "assets/data/artifact_availability.json"
+        out_path.parent.mkdir(parents=True, exist_ok=True)
         output = {
             "summary": summary,
             "records": records,

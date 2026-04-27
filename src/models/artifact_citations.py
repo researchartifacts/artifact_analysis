@@ -21,12 +21,8 @@ class ArtifactCitation(BaseModel):
         default=None, description="Aggregate citation count (best of OpenAlex/Semantic Scholar)."
     )
     citations_openalex: int | None = Field(default=None, description="Citation count from OpenAlex.")
-    citations_semantic_scholar: int | None = Field(
-        default=None, description="Citation count from Semantic Scholar."
-    )
-    citing_dois_openalex: list[str] = Field(
-        default_factory=list, description="DOIs of citing works from OpenAlex."
-    )
+    citations_semantic_scholar: int | None = Field(default=None, description="Citation count from Semantic Scholar.")
+    citing_dois_openalex: list[str] = Field(default_factory=list, description="DOIs of citing works from OpenAlex.")
     citing_dois_semantic_scholar: list[str] = Field(
         default_factory=list, description="DOIs of citing works from Semantic Scholar."
     )

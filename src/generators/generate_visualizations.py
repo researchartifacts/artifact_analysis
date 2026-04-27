@@ -6,8 +6,8 @@ Creates SVG charts that can be embedded in the Jekyll site.
 
 import argparse
 import logging
-import os
 from collections import defaultdict
+from pathlib import Path
 
 import matplotlib
 
@@ -20,11 +20,12 @@ from src.utils.io import load_json, load_yaml
 
 def load_data(data_dir):
     """Load YAML/JSON data files needed for chart generation."""
-    by_year = load_yaml(os.path.join(data_dir, "_data/artifacts_by_year.yml"))
+    data_dir = Path(data_dir)
+    by_year = load_yaml(data_dir / "_data/artifacts_by_year.yml")
 
-    by_conference = load_yaml(os.path.join(data_dir, "_data/artifacts_by_conference.yml"))
+    by_conference = load_yaml(data_dir / "_data/artifacts_by_conference.yml")
 
-    all_artifacts = load_json(os.path.join(data_dir, "assets/data/artifacts.json"))
+    all_artifacts = load_json(data_dir / "assets/data/artifacts.json")
 
     return by_year, by_conference, all_artifacts
 
@@ -283,21 +284,21 @@ def generate_all_charts(data_dir):
     """Generate all charts"""
     by_year, by_conference, all_artifacts = load_data(data_dir)
 
-    charts_dir = os.path.join(data_dir, "assets/charts")
-    os.makedirs(charts_dir, exist_ok=True)
+    charts_dir = Path(data_dir) / "assets/charts"
+    charts_dir.mkdir(parents=True, exist_ok=True)
 
     # Per-category timelines
-    create_category_timeline_chart(by_conference, "systems", os.path.join(charts_dir, "systems_artifacts.svg"))
-    create_category_timeline_chart(by_conference, "security", os.path.join(charts_dir, "security_artifacts.svg"))
+    create_category_timeline_chart(by_conference, "systems", charts_dir / "systems_artifacts.svg")
+    create_category_timeline_chart(by_conference, "security", charts_dir / "security_artifacts.svg")
 
     # Total artifacts (stacked systems + security)
-    create_total_artifacts_chart(by_year, os.path.join(charts_dir, "total_artifacts.svg"))
+    create_total_artifacts_chart(by_year, charts_dir / "total_artifacts.svg")
 
     # Badge chart (combines distribution + trends into one line chart)
-    create_badge_distribution_chart(all_artifacts, os.path.join(charts_dir, "badge_distribution.svg"))
+    create_badge_distribution_chart(all_artifacts, charts_dir / "badge_distribution.svg")
 
     # Coverage table
-    create_coverage_table(by_conference, os.path.join(charts_dir, "coverage_table.svg"))
+    create_coverage_table(by_conference, charts_dir / "coverage_table.svg")
 
     logger.info(f"Charts generated in {charts_dir}")
 
@@ -308,7 +309,7 @@ def main():
 
     args = parser.parse_args()
 
-    if not os.path.exists(args.data_dir):
+    if not Path(args.data_dir).exists():
         logger.error(f"Error: Data directory '{args.data_dir}' not found")
         logger.info("Please run generate_statistics.py first")
         return 1
