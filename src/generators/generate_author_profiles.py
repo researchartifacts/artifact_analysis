@@ -17,7 +17,7 @@ import argparse
 import logging
 import os
 
-from src.generators.generate_combined_rankings import _normalize_affiliation
+from src.utils.affiliation import normalize_affiliation as _normalize_affiliation
 from src.utils.conference import canonicalize_name
 from src.utils.conference import normalize_name as _base_normalize_name
 from src.utils.io import load_json, save_json

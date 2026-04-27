@@ -19,8 +19,8 @@ from src.utils.io import load_json, save_json
 from src.utils.io import load_yaml as _load_yaml
 from src.utils.io import save_yaml as _save_yaml
 
+from ..utils.affiliation import normalize_affiliation as _normalize_affiliation
 from ..utils.conference import clean_name
-from .generate_combined_rankings import _normalize_affiliation
 
 logger = logging.getLogger(__name__)
 DATA_DIR = None  # Set via CLI

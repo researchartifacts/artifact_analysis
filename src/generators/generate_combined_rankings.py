@@ -19,11 +19,11 @@ import logging
 import os
 import re
 from collections import defaultdict
-from pathlib import Path
 
+from src.utils.affiliation import normalize_affiliation as _normalize_affiliation
 from src.utils.conference import canonicalize_name
 from src.utils.conference import normalize_name as _base_normalize_name
-from src.utils.io import load_json, load_yaml, save_validated_json, save_yaml
+from src.utils.io import load_json, save_validated_json, save_yaml
 
 from ..models.combined_rankings import AuthorRanking
 
@@ -36,91 +36,6 @@ logger = logging.getLogger(__name__)
 def _normalize_name(name: str) -> str:
     """Normalise a name for cross-dataset matching (strips initials)."""
     return _base_normalize_name(name, strip_initials=True)
-
-
-# ── Affiliation normalization rules (loaded from YAML) ────────────────────────
-
-_RULES_PATH = Path(__file__).resolve().parents[2] / "data" / "affiliation_rules.yaml"
-
-
-def _load_affiliation_rules(path: Path = _RULES_PATH) -> list[tuple[re.Pattern, str]]:
-    """Load affiliation regex rules from a YAML data file."""
-    entries = load_yaml(path)
-    rules: list[tuple[re.Pattern, str]] = []
-    for entry in entries:
-        combined = "|".join(entry["patterns"])
-        rules.append((re.compile(combined, re.I), entry["canonical"]))
-    return rules
-
-
-_AFFILIATION_RULES = _load_affiliation_rules()
-
-
-def _strip_trailing_location(aff: str) -> str:
-    """Strip everything after the first comma.
-
-    The explicit YAML rules and the university-regex steps above handle all
-    cases where a comma is semantically meaningful (e.g. "University of
-    California, Berkeley").  For everything else the first comma-separated
-    segment is the core institution name; the rest is location, department,
-    or sub-unit detail that should be dropped.
-    """
-    idx = aff.find(",")
-    if idx <= 0:
-        return aff
-    core = aff[:idx].strip()
-    return core if core else aff
-
-
-def _normalize_affiliation(affiliation: str) -> str:
-    """Normalize affiliation string to a canonical form.
-
-    Strategy:
-    1. Try each regex rule; if one matches, return its canonical name.
-    2. Strip sub-units after a university name core.
-    3. Strip trailing location tokens (city, state, country).
-    """
-    if not affiliation:
-        return ""
-    aff = affiliation.strip()
-    if not aff:
-        return ""
-
-    # 1. Apply explicit pattern rules
-    for pat, canonical in _AFFILIATION_RULES:
-        if pat.search(aff):
-            return canonical
-
-    # 2. Generic: strip sub-unit details after the university name
-    #    Match "<Name> University" or "University of <Name>" then drop the rest.
-    m = re.match(
-        r"((?:The\s+)?(?:University|Universität|Universidade|Università|Université)"
-        r"\s+(?:of\s+)?[\w''\-\–\—.]+(?:\s+[\w''\-\–\—.]+){0,4}?)"
-        r"\s*[,(]",
-        aff,
-        re.IGNORECASE,
-    )
-    if m:
-        core = m.group(1).strip()
-        # Keep it only if the core is long enough to be meaningful
-        if len(core) > 10:
-            return core
-
-    # Same for "<Name> University" pattern (e.g. "Tsinghua University, ...")
-    m = re.match(
-        r"([\w''\-\–\—.]+(?:\s+[\w''\-\–\—.]+){0,4}?\s+"
-        r"(?:University|Institute|Universität|Polytechnic|College))"
-        r"\s*[,(]",
-        aff,
-        re.IGNORECASE,
-    )
-    if m:
-        core = m.group(1).strip()
-        if len(core) > 10:
-            return core
-
-    # 3. Strip trailing location (city, state, country) from any affiliation
-    return _strip_trailing_location(aff)
 
 
 # ── Merge logic ───────────────────────────────────────────────────────────────
@@ -623,10 +538,14 @@ def generate_combined_rankings(data_dir: str) -> None:
         logger.info(f"  Wrote {path} ({len(data)} entries)")
 
     # ── Per-conference combined rankings ──────────────────────────────────
-    # Discover conferences from existing {conf}_conf_authors.json files
+    # Discover conferences from {conf}_conf_authors.json files in _build/
     import glob
 
-    conf_author_files = glob.glob(os.path.join(assets_data, "*_conf_authors.json"))
+    build_dir = os.path.join(os.path.dirname(assets_data), "_build")
+    conf_author_files = glob.glob(os.path.join(build_dir, "*_conf_authors.json"))
+    # Fall back to legacy location (assets/data/) for backward compatibility
+    if not conf_author_files:
+        conf_author_files = glob.glob(os.path.join(assets_data, "*_conf_authors.json"))
     for conf_author_path in sorted(conf_author_files):
         conf_lower = os.path.basename(conf_author_path).replace("_conf_authors.json", "")
         conf_upper = conf_lower.upper()

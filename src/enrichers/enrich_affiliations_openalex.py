@@ -26,7 +26,6 @@ import logging
 import os
 import re
 import time
-import unicodedata
 from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
@@ -36,6 +35,7 @@ import requests
 from src.utils.cache import _MISSING
 from src.utils.cache import read_cache as _read_cache
 from src.utils.cache import write_cache as _write_cache
+from src.utils.conference import normalize_name, normalize_title
 from src.utils.http import create_session
 from src.utils.io import load_json
 
@@ -62,28 +62,20 @@ HTTP_TIMEOUT = 10  # seconds per request (prevent hangs)
 # ---------------------------------------------------------------------------
 # Name normalisation helpers
 # ---------------------------------------------------------------------------
-def _normalise_name(name: str) -> str:
-    """Lower-case, strip accents, remove punctuation, collapse whitespace."""
-    # Remove DBLP numeric suffixes like " 0001"
-    name = re.sub(r"\s+\d{4}$", "", name).strip()
-    # Unicode → ASCII
-    name = unicodedata.normalize("NFKD", name)
-    name = "".join(c for c in name if not unicodedata.combining(c))
-    name = name.lower()
-    # Remove non-alpha except spaces
-    name = re.sub(r"[^a-z\s]", "", name)
-    return " ".join(name.split())
+# Core name/title normalisation is provided by src.utils.conference:
+#   normalize_name()  – cross-source person-name matching
+#   normalize_title() – paper-title matching
 
 
 def _last_name(name: str) -> str:
-    parts = _normalise_name(name).split()
+    parts = normalize_name(name).split()
     return parts[-1] if parts else ""
 
 
 def _names_match(query: str, candidate: str) -> bool:
     """Fuzzy two-way name match (last-name required, first name prefix ok)."""
-    q = _normalise_name(query)
-    c = _normalise_name(candidate)
+    q = normalize_name(query)
+    c = normalize_name(candidate)
     if q == c:
         return True
     q_parts = q.split()
@@ -107,7 +99,7 @@ def _openalex_affiliation_by_title(
     verbose: bool = False,
 ) -> Optional[str]:
     """Search OpenAlex for a paper title and return the matching author's affiliation."""
-    cache_key = f"oa_title:{_normalise_name(title)}:{_normalise_name(author_name)}"
+    cache_key = f"oa_title:{normalize_title(title)}:{normalize_name(author_name)}"
     cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "openalex_title")
     if cached is not _MISSING:
         return cached if cached else None
@@ -123,7 +115,7 @@ def _openalex_affiliation_by_title(
 
         for work in data.get("results", []):
             work_title = (work.get("title") or "").strip().rstrip(".")
-            if _normalise_name(work_title) != _normalise_name(clean_title):
+            if normalize_title(work_title) != normalize_title(clean_title):
                 continue
             # Found the paper – look for the author
             for authorship in work.get("authorships", []):
@@ -156,7 +148,7 @@ def _crossref_affiliation_by_title(
     verbose: bool = False,
 ) -> Optional[str]:
     """Search CrossRef for a paper title and return the matching author's affiliation."""
-    cache_key = f"cr_title:{_normalise_name(title)}:{_normalise_name(author_name)}"
+    cache_key = f"cr_title:{normalize_title(title)}:{normalize_name(author_name)}"
     cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "crossref_title")
     if cached is not _MISSING:
         return cached if cached else None
@@ -173,7 +165,7 @@ def _crossref_affiliation_by_title(
         for item in data.get("message", {}).get("items", []):
             item_titles = item.get("title", [])
             item_title = item_titles[0] if item_titles else ""
-            if _normalise_name(item_title) != _normalise_name(clean_title):
+            if normalize_title(item_title) != normalize_title(clean_title):
                 continue
             for author in item.get("author", []):
                 family = author.get("family", "")
@@ -217,7 +209,7 @@ def _crossref_affiliation_by_doi(
     if not doi_url or not _is_real_doi(doi_url):
         return None
 
-    cache_key = f"cr_doi:{doi_url}:{_normalise_name(author_name)}"
+    cache_key = f"cr_doi:{doi_url}:{normalize_name(author_name)}"
     cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "crossref_doi")
     if cached is not _MISSING:
         return cached if cached else None
@@ -263,7 +255,7 @@ def _s2_affiliation_by_title(
     verbose: bool = False,
 ) -> Optional[str]:
     """Search Semantic Scholar for a paper by title and return the matching author's affiliation."""
-    cache_key = f"s2_title:{_normalise_name(title)}:{_normalise_name(author_name)}"
+    cache_key = f"s2_title:{normalize_title(title)}:{normalize_name(author_name)}"
     cached = _read_cache(str(CACHE_DIR), cache_key, CACHE_TTL, "s2_title")
     if cached is not _MISSING:
         return cached if cached else None
@@ -288,7 +280,7 @@ def _s2_affiliation_by_title(
 
         for paper in data.get("data", []):
             paper_title = (paper.get("title") or "").strip().rstrip(".")
-            if _normalise_name(paper_title) != _normalise_name(clean_title):
+            if normalize_title(paper_title) != normalize_title(clean_title):
                 continue
             for author in paper.get("authors", []):
                 display = author.get("name", "")

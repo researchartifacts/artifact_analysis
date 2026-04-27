@@ -96,7 +96,7 @@ def load_csrankings(csv_path: Path, verbose: bool = False) -> dict[str, list[dic
             }
 
             # Index by normalized full name
-            normalized_name = normalize_name(name)
+            normalized_name = _normalize_for_csrankings(name)
             name_index[normalized_name].append(record)
 
             # Also index by last name for partial matching
@@ -113,7 +113,7 @@ def load_csrankings(csv_path: Path, verbose: bool = False) -> dict[str, list[dic
     return name_index
 
 
-def normalize_name(name: str) -> str:
+def _normalize_for_csrankings(name: str) -> str:
     """Normalize name for matching: lowercase, remove punctuation."""
     name = re.sub(r"\s*\[[^\]]+\]\s*", " ", name)
     return "".join(c.lower() for c in name if c.isalnum() or c.isspace()).strip()
@@ -126,8 +126,8 @@ def fuzzy_name_match(author_name: str, csrankings_name: str) -> bool:
     - Name order (First Last vs Last, First)
     - Accents and Unicode normalization
     """
-    auth_norm = normalize_name(author_name)
-    cs_norm = normalize_name(csrankings_name)
+    auth_norm = _normalize_for_csrankings(author_name)
+    cs_norm = _normalize_for_csrankings(csrankings_name)
 
     # Exact match
     if auth_norm == cs_norm:
@@ -167,7 +167,7 @@ def match_author_to_csrankings(
     Match author to CSRankings record and return affiliation.
     Returns None if no match found.
     """
-    normalized = normalize_name(author_name)
+    normalized = _normalize_for_csrankings(author_name)
 
     # Try exact normalized match first
     candidates = name_index.get(normalized, [])

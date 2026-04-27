@@ -24,12 +24,12 @@ logger = logging.getLogger(__name__)
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-from src.generators.generate_combined_rankings import _normalize_affiliation
 from src.scrapers.parse_committee_md import get_committees
 from src.scrapers.repo_utils import download_file
 from src.scrapers.scrape_committee_web import (
     get_alternative_committees,
 )
+from src.utils.affiliation import normalize_affiliation as _normalize_affiliation
 from src.utils.conference import (
     PLACEHOLDER_NAMES,
     clean_member_name,

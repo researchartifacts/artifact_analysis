@@ -260,20 +260,20 @@ class TestAffiliationNormalization:
     """Spot-check the regex-based normalization."""
 
     def test_ethz_variants(self):
-        from src.generators.generate_combined_rankings import _normalize_affiliation
+        from src.utils.affiliation import normalize_affiliation as _normalize_affiliation
 
         assert _normalize_affiliation("ETH Zürich") == _normalize_affiliation("ETHZ")
         assert "ETH" in _normalize_affiliation("ETH Zürich")
 
     def test_empty_string(self):
-        from src.generators.generate_combined_rankings import _normalize_affiliation
+        from src.utils.affiliation import normalize_affiliation as _normalize_affiliation
 
         assert _normalize_affiliation("") == ""
         assert _normalize_affiliation("   ") == ""
 
     def test_preserves_leading_underscore(self):
         """Underscores are stripped at display time, not during normalization."""
-        from src.generators.generate_combined_rankings import _normalize_affiliation
+        from src.utils.affiliation import normalize_affiliation as _normalize_affiliation
 
         result = _normalize_affiliation("_MIT")
         # Normalization preserves the underscore (display layer strips it)
