@@ -21,8 +21,8 @@ visualizations, and author/institution rankings for
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-./run_pipeline.sh            # writes to output/staging by default
-./run_pipeline.sh --deploy   # writes directly to ../reprodb.github.io
+python -m src.orchestrator            # writes to output/staging by default
+python -m src.orchestrator --deploy   # writes directly to ../reprodb.github.io
 ```
 
 ### Common Options
@@ -40,7 +40,7 @@ pip install -r requirements.txt
 
 ## What the Pipeline Does
 
-The pipeline runs **14 steps** in sequence (see `run_pipeline.sh`):
+The pipeline runs **14 steps** in sequence (see `src/orchestrator.py`):
 
 | # | Step | Key script |
 |---|------|-----------|
@@ -186,8 +186,6 @@ reprodb-pipeline/
 │   ├── name_aliases.yaml      Author name alias mappings
 │   └── university_country_overrides.yaml
 ├── logs/                      Pipeline logs and argument history
-├── run_pipeline.sh            Main orchestration script
-├── save_results.sh            Snapshot results into reprodb-pipeline-results
 └── .github/workflows/         CI/CD (tests, monthly pipeline, schema export, docs)
 ```
 

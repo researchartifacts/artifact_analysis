@@ -11,10 +11,10 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # Run the full pipeline (local staging)
-./run_pipeline.sh
+python -m src.orchestrator
 
 # Run the full pipeline (deploy to website)
-./run_pipeline.sh --deploy
+python -m src.orchestrator --deploy
 
 # Run tests
 pytest tests/ -v

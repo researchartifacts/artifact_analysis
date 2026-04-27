@@ -1,6 +1,6 @@
 """Python pipeline orchestrator.
 
-Replaces ``run_pipeline.sh`` with a Python-native orchestrator that uses
+Python-native pipeline orchestrator that uses
 :mod:`src.stages` for dependency ordering and :mod:`src.config` for
 configuration.  Independent stages within the same tier run in parallel
 via :class:`concurrent.futures.ThreadPoolExecutor`.
@@ -27,6 +27,7 @@ from pathlib import Path
 from src.config import PipelineConfig
 from src.invariants import check_all as check_invariants
 from src.run_metadata import write_run_metadata
+from src.save_results import save_results
 from src.stages import STAGES, Stage, parallel_groups
 from src.utils.logging_config import setup_logging
 
@@ -174,7 +175,7 @@ def _run_stage(stage: Stage, cfg: PipelineConfig, python: str) -> tuple[str, boo
 # ── Main orchestrator ────────────────────────────────────────────────────────
 
 
-def run_pipeline(cfg: PipelineConfig, *, max_workers: int = 4) -> bool:
+def run_pipeline(cfg: PipelineConfig, *, max_workers: int = 4, message: str = "") -> bool:
     """Execute the full pipeline using the stage dependency graph.
 
     Returns True if all required stages succeeded.
@@ -257,6 +258,11 @@ def run_pipeline(cfg: PipelineConfig, *, max_workers: int = 4) -> bool:
         dblp_file=cfg.dblp_file,
     )
 
+    # ── Save results snapshot ────────────────────────────────────────────
+    if cfg.save_results:
+        logger.info("── Saving results snapshot ──")
+        save_results(cfg, message=message)
+
     return True
 
 
@@ -278,6 +284,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--save-results", action="store_true", help="Save results snapshot")
     parser.add_argument("--results_dir", type=str, default=None)
     parser.add_argument("--push", action="store_true", help="Push results after saving")
+    parser.add_argument("--message", type=str, default="", help="Extra text for the results commit message")
     parser.add_argument("--max-workers", type=int, default=4, help="Max parallel stages per tier")
     add_log_level_arg(parser)
     return parser
@@ -313,7 +320,7 @@ def main() -> None:
     logger.info("Output directory: %s", cfg.output_dir)
     logger.info("Conference regex: %s", cfg.conf_regex)
 
-    success = run_pipeline(cfg, max_workers=args.max_workers)
+    success = run_pipeline(cfg, max_workers=args.max_workers, message=args.message)
     sys.exit(0 if success else 1)
 
 

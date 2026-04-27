@@ -2,7 +2,7 @@
 
 Writes ``output_dir/_build/run_metadata.json`` with git revisions,
 timestamps, input hashes, and stage timings.  This file is committed
-to ``reprodb-pipeline-results`` by ``save_results.sh`` so every
+to ``reprodb-pipeline-results`` by :func:`src.save_results.save_results` so every
 historical run is traceable.
 
 Usage::
