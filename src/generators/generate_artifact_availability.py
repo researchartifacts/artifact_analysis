@@ -18,7 +18,6 @@ import os
 import re
 from collections import defaultdict
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 from src.utils.io import load_yaml, save_json
@@ -194,7 +193,7 @@ def main():
     if output_dir:
         cache_path = os.path.join(output_dir, "_data", "all_results_cache.yml")
     if not cache_path or not os.path.exists(cache_path):
-        repo_root = Path(__file__).resolve().parents[2]
+        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         cache_path = os.path.join(repo_root, ".cache", "all_results_cache.yml")
 
     if os.path.exists(cache_path):

@@ -34,7 +34,6 @@ import json
 import logging
 import os
 import time
-from pathlib import Path
 
 from src.utils.cache import _MISSING, read_cache, write_cache
 from src.utils.conference import normalize_title
@@ -42,7 +41,8 @@ from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
 # ── Configuration ────────────────────────────────────────────────────────────
-CACHE_DIR = Path(__file__).resolve().parent.parent.parent / ".cache" / "paper_citations"
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(_SCRIPT_DIR)), ".cache", "paper_citations")
 CACHE_NS = "scholar"  # single namespace — one source
 
 SCHOLAR_DELAY = 3.0  # seconds between queries (conservative)

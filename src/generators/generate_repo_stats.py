@@ -16,7 +16,6 @@ import re
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from pathlib import Path
 
 from ..scrapers.parse_results_md import get_ae_results
 from ..utils.collect_artifact_stats import figshare_stats, github_stats, zenodo_stats
@@ -345,7 +344,7 @@ def main():
         cache_path = os.path.join(args.output_dir, "_data", "all_results_cache.yml")
     if not cache_path or not os.path.exists(cache_path):
         # Fallback: repo root .cache directory
-        repo_root = str(Path(__file__).resolve().parents[1])
+        repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         cache_path = os.path.join(repo_root, ".cache", "all_results_cache.yml")
 
     if os.path.exists(cache_path):

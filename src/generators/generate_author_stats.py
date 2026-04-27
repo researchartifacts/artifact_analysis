@@ -10,14 +10,13 @@ import logging
 import os
 from collections import defaultdict
 from datetime import datetime
-from pathlib import Path
 
+from src.utils.affiliation import normalize_affiliation as _normalize_affiliation
 from src.utils.io import load_json, load_yaml, save_json, save_validated_json, save_yaml
 
 from ..models.author_stats import AuthorStats
 from ..utils.conference import clean_name as clean_display_name
 from ..utils.conference import normalize_title
-from .generate_combined_rankings import _normalize_affiliation
 
 # Conference categorization is derived from the source (sys vs sec artifacts)
 # and stored in the 'category' field of each artifact by generate_statistics.py
@@ -638,7 +637,7 @@ def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> Non
 
 def main():
     parser = argparse.ArgumentParser(description="Generate author statistics from DBLP")
-    repo_root = str(Path(__file__).resolve().parents[1])
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     default_dblp = os.path.join(repo_root, "data", "dblp", "dblp.xml.gz")
     parser.add_argument(
         "--dblp_file",
