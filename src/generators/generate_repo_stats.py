@@ -274,8 +274,8 @@ def aggregate_stats(all_stats):
                 {
                     "year": yr,
                     "github_repos": yd["github_repos"],
-                    "stars": yd["stars"],
-                    "forks": yd["forks"],
+                    "total_stars": yd["stars"],
+                    "total_forks": yd["forks"],
                     "avg_stars": round(yd["stars"] / yd["github_repos"], 1) if yd["github_repos"] > 0 else 0,
                     "avg_forks": round(yd["forks"] / yd["github_repos"], 1) if yd["github_repos"] > 0 else 0,
                 }
