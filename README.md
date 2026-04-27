@@ -44,7 +44,7 @@ The pipeline runs **14 steps** in sequence (see `src/orchestrator.py`):
 
 | # | Step | Key script |
 |---|------|-----------|
-| 1 | Download/refresh DBLP XML dump | `scripts/download_dblp.sh` |
+| 1 | Download/refresh DBLP XML dump | `scripts/download_dblp.py` |
 | 1b | Extract DBLP lookup data (papers, affiliations) | `src/utils/dblp_extract.py` |
 | 2 | Scrape artifact results from sysartifacts, secartifacts, USENIX | `generate_statistics.py` |
 | 3 | Collect GitHub repo metadata (stars, forks, languages) | `generate_repo_stats.py` |
@@ -204,7 +204,7 @@ The `.cache/` directory is gitignored and never committed.
 ## DBLP Data Policy
 
 All DBLP lookups use the **local XML dump** (`data/dblp/dblp.xml.gz`), never the
-HTTP API. `scripts/download_dblp.sh` fetches the file; `src/utils/dblp_extract.py`
+HTTP API. `scripts/download_dblp.py` fetches the file; `src/utils/dblp_extract.py`
 parses it into JSON lookup files consumed by downstream modules.
 
 ## Conferences Tracked

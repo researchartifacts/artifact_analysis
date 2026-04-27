@@ -7,7 +7,7 @@ For each conference/year in the pipeline's artifacts data, this script:
 2. Computes AE participation rate (ae_papers / total_papers).
 3. Computes badge rates as % of all papers (not just AE papers).
 
-Requires: data/dblp/dblp.xml.gz (downloaded by scripts/download_dblp.sh)
+Requires: data/dblp/dblp.xml.gz (downloaded by scripts/download_dblp.py)
 
 Writes:
   _data/participation_stats.yml     — per-conference/year participation data
@@ -45,7 +45,7 @@ def generate_participation_stats(dblp_file, output_dir):
 
     if not Path(dblp_file).exists():
         logger.error(f"Error: DBLP file not found: {dblp_file}")
-        logger.info("  Run scripts/download_dblp.sh first.")
+        logger.info("  Run python -m scripts.download_dblp first.")
         return None
 
     output_dir = Path(output_dir)

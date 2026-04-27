@@ -322,7 +322,7 @@ def main():
 
     if not os.path.exists(args.dblp_file):
         logger.error(f"Error: {args.dblp_file} not found")
-        logger.info("Run scripts/download_dblp.sh first.")
+        logger.info("Run python -m scripts.download_dblp first.")
         return
 
     extract_dblp(args.dblp_file)

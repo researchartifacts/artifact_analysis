@@ -113,15 +113,11 @@ def _seed_staging(cfg: PipelineConfig) -> None:
 
 
 def _check_dblp(cfg: PipelineConfig) -> None:
-    """Run the DBLP download script if it exists."""
-    script = Path("scripts/download_dblp.sh")
-    if not script.is_file():
-        return
+    """Download or update the DBLP XML if needed."""
+    from scripts.download_dblp import download_dblp
+
     logger.info("Checking DBLP freshness...")
-    try:
-        subprocess.run(["bash", str(script), "--auto"], check=False, timeout=600)
-    except (subprocess.TimeoutExpired, OSError) as e:
-        logger.warning("DBLP download check failed: %s", e)
+    download_dblp(auto=True)
 
 
 def _should_skip(stage: Stage, cfg: PipelineConfig) -> bool:
