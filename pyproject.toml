@@ -88,6 +88,8 @@ module = [
     "src.enrichers.enrich_affiliations_openalex",
     "src.enrichers.enrich_affiliations_csrankings",
     "src.enrichers.enrich_affiliations_ae_members",
+    "src.generators.generate_author_profiles",
+    "src.generators.committee_stats.charting",
 ]
 ignore_errors = true
 

@@ -169,30 +169,33 @@ class TestMonotonicity:
         total_conferences: int = 10,
     ) -> dict:
         """Build a minimal snapshot dict for monotonicity testing."""
-        snap: dict = {"_version": 1, "files": {
-            "assets/data/artifacts.json": {"record_count": record_count},
-            "assets/data/ae_members.json": {"record_count": 50},
-            "assets/data/combined_rankings.json": {
-                "record_count": record_count,
-                "numeric": {
-                    "artifacts": {"sum": artifacts_sum},
-                    "badges_available": {"sum": badges_available_sum},
-                    "badges_functional": {"sum": badges_functional_sum},
-                    "badges_reproducible": {"sum": badges_reproducible_sum},
-                    "ae_memberships": {"sum": ae_memberships_sum},
+        snap: dict = {
+            "_version": 1,
+            "files": {
+                "assets/data/artifacts.json": {"record_count": record_count},
+                "assets/data/ae_members.json": {"record_count": 50},
+                "assets/data/combined_rankings.json": {
+                    "record_count": record_count,
+                    "numeric": {
+                        "artifacts": {"sum": artifacts_sum},
+                        "badges_available": {"sum": badges_available_sum},
+                        "badges_functional": {"sum": badges_functional_sum},
+                        "badges_reproducible": {"sum": badges_reproducible_sum},
+                        "ae_memberships": {"sum": ae_memberships_sum},
+                    },
+                },
+                "assets/data/search_data.json": {"record_count": record_count},
+                "assets/data/institution_rankings.json": {"record_count": 30},
+                "assets/data/top_repos.json": {"record_count": 20},
+                "assets/data/summary.json": {
+                    "key_count": 9,
+                    "dict_numeric": {
+                        "total_artifacts": total_artifacts,
+                        "total_conferences": total_conferences,
+                    },
                 },
             },
-            "assets/data/search_data.json": {"record_count": record_count},
-            "assets/data/institution_rankings.json": {"record_count": 30},
-            "assets/data/top_repos.json": {"record_count": 20},
-            "assets/data/summary.json": {
-                "key_count": 9,
-                "dict_numeric": {
-                    "total_artifacts": total_artifacts,
-                    "total_conferences": total_conferences,
-                },
-            },
-        }}
+        }
         if names is not None:
             snap["files"]["assets/data/combined_rankings.json"]["names"] = names
         return snap

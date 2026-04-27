@@ -28,18 +28,35 @@ def _git_info(repo_dir: Path) -> dict:
     """Collect git revision info for a repository."""
     info: dict = {}
     try:
-        info["commit"] = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True, text=True, cwd=repo_dir, timeout=5,
-        ).stdout.strip() or "unknown"
-        info["branch"] = subprocess.run(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True, text=True, cwd=repo_dir, timeout=5,
-        ).stdout.strip() or "unknown"
-        info["dirty"] = subprocess.run(
-            ["git", "diff", "--quiet"],
-            capture_output=True, cwd=repo_dir, timeout=5,
-        ).returncode != 0
+        info["commit"] = (
+            subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=repo_dir,
+                timeout=5,
+            ).stdout.strip()
+            or "unknown"
+        )
+        info["branch"] = (
+            subprocess.run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=repo_dir,
+                timeout=5,
+            ).stdout.strip()
+            or "unknown"
+        )
+        info["dirty"] = (
+            subprocess.run(
+                ["git", "diff", "--quiet"],
+                capture_output=True,
+                cwd=repo_dir,
+                timeout=5,
+            ).returncode
+            != 0
+        )
     except (subprocess.TimeoutExpired, OSError):
         info["commit"] = "unknown"
         info["branch"] = "unknown"
@@ -93,13 +110,12 @@ def write_run_metadata(
 
     # Stage timings
     if timings:
-        metadata["stage_timings"] = {
-            k: round(v, 2) for k, v in sorted(timings.items(), key=lambda x: -x[1])
-        }
+        metadata["stage_timings"] = {k: round(v, 2) for k, v in sorted(timings.items(), key=lambda x: -x[1])}
         metadata["total_elapsed"] = round(sum(timings.values()), 2)
 
     # Python version
     import sys
+
     metadata["python_version"] = sys.version.split()[0]
 
     # Environment hints

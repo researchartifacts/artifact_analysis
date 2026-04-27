@@ -46,22 +46,30 @@ def _git_info(repo_dir: Path) -> dict[str, str]:
         info["commit"] = (
             subprocess.run(
                 ["git", "rev-parse", "HEAD"],
-                capture_output=True, text=True, cwd=repo_dir, timeout=10,
+                capture_output=True,
+                text=True,
+                cwd=repo_dir,
+                timeout=10,
             ).stdout.strip()
             or "unknown"
         )
         info["branch"] = (
             subprocess.run(
                 ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-                capture_output=True, text=True, cwd=repo_dir, timeout=10,
+                capture_output=True,
+                text=True,
+                cwd=repo_dir,
+                timeout=10,
             ).stdout.strip()
             or "unknown"
         )
         info["dirty"] = str(
             subprocess.run(
                 ["git", "diff", "--quiet"],
-                cwd=repo_dir, timeout=10,
-            ).returncode != 0
+                cwd=repo_dir,
+                timeout=10,
+            ).returncode
+            != 0
         ).lower()
     except (subprocess.TimeoutExpired, OSError):
         info.setdefault("commit", "unknown")
@@ -78,7 +86,9 @@ def _gh_token() -> str | None:
     try:
         result = subprocess.run(
             [gh, "auth", "token"],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         token = result.stdout.strip()
         return token or None
@@ -230,14 +240,17 @@ def save_results(cfg: PipelineConfig, *, message: str = "") -> None:
     # Check if there are changes to commit
     diff_result = subprocess.run(
         ["git", "diff", "--cached", "--quiet"],
-        cwd=results_dir, timeout=10,
+        cwd=results_dir,
+        timeout=10,
     )
     if diff_result.returncode == 0:
         logger.info("  No changes since last snapshot — skipping commit")
     else:
         subprocess.run(
             ["git", "commit", "-m", commit_msg, "--quiet"],
-            cwd=results_dir, check=True, timeout=30,
+            cwd=results_dir,
+            check=True,
+            timeout=30,
         )
         logger.info("  Committed: %s", commit_msg)
 
@@ -245,19 +258,16 @@ def save_results(cfg: PipelineConfig, *, message: str = "") -> None:
     if cfg.push:
         logger.info("  Pushing to remote...")
         token = _gh_token()
-        push_url = (
-            f"https://vahldiek:{token}@github.com/reprodb/reprodb-pipeline-results.git"
-            if token
-            else None
-        )
+        push_url = f"https://vahldiek:{token}@github.com/reprodb/reprodb-pipeline-results.git" if token else None
         push_cmd: list[str] = (
-            ["git", "push", push_url, "main", "--force"]
-            if push_url
-            else ["git", "push", "origin", "main"]
+            ["git", "push", push_url, "main", "--force"] if push_url else ["git", "push", "origin", "main"]
         )
         push_result = subprocess.run(
             push_cmd,
-            cwd=results_dir, capture_output=True, text=True, timeout=60,
+            cwd=results_dir,
+            capture_output=True,
+            text=True,
+            timeout=60,
         )
         if push_result.returncode != 0:
             err = push_result.stderr.strip()

@@ -44,13 +44,15 @@ class Violation:
 def _load_json(path: Path) -> list | dict | None:
     if not path.is_file():
         return None
-    return json.loads(path.read_text())
+    result: list | dict = json.loads(path.read_text())
+    return result
 
 
 def _load_yaml(path: Path) -> dict | list | None:
     if not path.is_file():
         return None
-    return yaml.safe_load(path.read_text())
+    result: dict | list = yaml.safe_load(path.read_text())
+    return result
 
 
 # ── Individual invariant checks ──────────────────────────────────────────────
@@ -99,10 +101,13 @@ def check_combined_rankings(output_dir: Path) -> list[Violation]:
         cis = r.get("citation_score", 0)
         expected = ars + aes + cis
         if abs(cs - expected) > 0.01:
-            vs.append(Violation(
-                fname, "score_sum",
-                f"{name}: combined_score={cs} != artifact_score({ars}) + ae_score({aes}) + citation_score({cis}) = {expected}",
-            ))
+            vs.append(
+                Violation(
+                    fname,
+                    "score_sum",
+                    f"{name}: combined_score={cs} != artifact_score({ars}) + ae_score({aes}) + citation_score({cis}) = {expected}",
+                )
+            )
 
         # Badge counts ≤ artifacts
         artifacts = r.get("artifacts", 0)
@@ -222,14 +227,17 @@ def check_cross_file_consistency(output_dir: Path) -> list[Violation]:
     # search_data records should equal the artifact count in summary
     summary = _load_yaml(output_dir / "_data" / "summary.yml")
     search = _load_json(output_dir / "assets" / "data" / "search_data.json")
-    if summary and search and isinstance(search, list):
+    if summary and search and isinstance(search, list) and isinstance(summary, dict):
         expected = summary.get("total_artifacts", 0)
         actual = len(search)
         if expected > 0 and abs(actual - expected) > expected * 0.1:
-            vs.append(Violation(
-                "cross-file", "search_data_count",
-                f"search_data has {actual} records but summary.total_artifacts={expected} (>10% drift)",
-            ))
+            vs.append(
+                Violation(
+                    "cross-file",
+                    "search_data_count",
+                    f"search_data has {actual} records but summary.total_artifacts={expected} (>10% drift)",
+                )
+            )
 
     # combined_rankings authors should all have non-empty name
     # (already checked per-file; this is for cross-file: every author in
@@ -244,11 +252,14 @@ def check_cross_file_consistency(output_dir: Path) -> list[Violation]:
             if name and name not in profile_names:
                 missing += 1
         if missing > 0:
-            vs.append(Violation(
-                "cross-file", "rankings_in_profiles",
-                f"{missing} ranked authors not found in author_profiles.json",
-                severity="warning",
-            ))
+            vs.append(
+                Violation(
+                    "cross-file",
+                    "rankings_in_profiles",
+                    f"{missing} ranked authors not found in author_profiles.json",
+                    severity="warning",
+                )
+            )
 
     return vs
 
@@ -272,10 +283,13 @@ def check_all(output_dir: Path) -> list[Violation]:
         try:
             violations.extend(check_fn(output_dir))
         except Exception as exc:
-            violations.append(Violation(
-                "runner", check_fn.__name__,
-                f"Check raised an exception: {exc}",
-            ))
+            violations.append(
+                Violation(
+                    "runner",
+                    check_fn.__name__,
+                    f"Check raised an exception: {exc}",
+                )
+            )
     return violations
 
 

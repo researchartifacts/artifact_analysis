@@ -234,7 +234,6 @@ def run_pipeline(cfg: PipelineConfig, *, max_workers: int = 4, message: str = ""
         if elapsed > 0:
             logger.info("  %-25s %6.1fs", name, elapsed)
 
-
     # ── Post-pipeline invariant checks ───────────────────────────────────
     logger.info("── Running invariant checks ──")
     violations = check_invariants(cfg.output_dir)
@@ -258,16 +257,17 @@ def run_pipeline(cfg: PipelineConfig, *, max_workers: int = 4, message: str = ""
     if reference is not None:
         logger.info("── Running monotonicity checks ──")
         mono_violations = check_monotonicity(reference, current_snapshot)
-        mono_errors = [v for v in mono_violations if v.severity == "error"]
-        mono_warnings = [v for v in mono_violations if v.severity == "warning"]
-        for v in mono_warnings:
-            logger.warning("⚠ %s", v)
-        for v in mono_errors:
-            logger.error("✗ %s", v)
+        mono_errors = [mv for mv in mono_violations if mv.severity == "error"]
+        mono_warnings = [mw for mw in mono_violations if mw.severity == "warning"]
+        for mw in mono_warnings:
+            logger.warning("⚠ %s", mw)
+        for me in mono_errors:
+            logger.error("✗ %s", me)
         if mono_errors:
             logger.error(
                 "Monotonicity check failed: %d error(s), %d warning(s)",
-                len(mono_errors), len(mono_warnings),
+                len(mono_errors),
+                len(mono_warnings),
             )
             return False
         if mono_warnings:

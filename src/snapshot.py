@@ -241,9 +241,7 @@ _MONOTONIC_SUMS: dict[str, tuple[str, ...]] = {
 }
 
 # Files whose record_count is allowed to increase but names must not vanish.
-_MONOTONIC_NAMES: tuple[str, ...] = (
-    "assets/data/combined_rankings.json",
-)
+_MONOTONIC_NAMES: tuple[str, ...] = ("assets/data/combined_rankings.json",)
 
 # dict_numeric keys that must never decrease (flat-dict files like summary.json).
 _MONOTONIC_DICT_NUMERIC: dict[str, tuple[str, ...]] = {
@@ -291,10 +289,13 @@ def check_monotonicity(old: dict, new: dict) -> list[MonotonicityViolation]:
         ov = o.get("record_count")
         nv = n.get("record_count")
         if ov is not None and nv is not None and nv < ov:
-            violations.append(MonotonicityViolation(
-                key, "record_count",
-                f"decreased from {ov} to {nv} (lost {ov - nv} records)",
-            ))
+            violations.append(
+                MonotonicityViolation(
+                    key,
+                    "record_count",
+                    f"decreased from {ov} to {nv} (lost {ov - nv} records)",
+                )
+            )
 
     # ── numeric sums must not decrease ───────────────────────────────────
     for key, fields in _MONOTONIC_SUMS.items():
@@ -304,10 +305,13 @@ def check_monotonicity(old: dict, new: dict) -> list[MonotonicityViolation]:
             ov = o_num.get(field, {}).get("sum")
             nv = n_num.get(field, {}).get("sum")
             if ov is not None and nv is not None and nv < ov:
-                violations.append(MonotonicityViolation(
-                    key, f"{field}.sum",
-                    f"decreased from {ov} to {nv}",
-                ))
+                violations.append(
+                    MonotonicityViolation(
+                        key,
+                        f"{field}.sum",
+                        f"decreased from {ov} to {nv}",
+                    )
+                )
 
     # ── author/entity names must not vanish ──────────────────────────────
     for key in _MONOTONIC_NAMES:
@@ -318,10 +322,13 @@ def check_monotonicity(old: dict, new: dict) -> list[MonotonicityViolation]:
             if vanished:
                 sample = sorted(vanished)[:5]
                 extra = f" (and {len(vanished) - 5} more)" if len(vanished) > 5 else ""
-                violations.append(MonotonicityViolation(
-                    key, "names",
-                    f"{len(vanished)} name(s) vanished: {sample}{extra}",
-                ))
+                violations.append(
+                    MonotonicityViolation(
+                        key,
+                        "names",
+                        f"{len(vanished)} name(s) vanished: {sample}{extra}",
+                    )
+                )
 
     # ── dict-level numeric keys must not decrease ────────────────────────
     for key, fields in _MONOTONIC_DICT_NUMERIC.items():
@@ -331,10 +338,13 @@ def check_monotonicity(old: dict, new: dict) -> list[MonotonicityViolation]:
             ov = o_dn.get(field)
             nv = n_dn.get(field)
             if ov is not None and nv is not None and nv < ov:
-                violations.append(MonotonicityViolation(
-                    key, field,
-                    f"decreased from {ov} to {nv}",
-                ))
+                violations.append(
+                    MonotonicityViolation(
+                        key,
+                        field,
+                        f"decreased from {ov} to {nv}",
+                    )
+                )
 
     return violations
 
@@ -353,7 +363,8 @@ def load_snapshot(path: Path | None = None) -> dict | None:
     path = path or SNAPSHOT_PATH
     if not path.is_file():
         return None
-    return json.loads(path.read_text())
+    result: dict = json.loads(path.read_text())
+    return result
 
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
