@@ -1,19 +1,8 @@
-"""Save pipeline results to the reprodb-pipeline-results repository.
-
-Saves pipeline results into the results repository so the
-orchestrator can call it directly when ``--save-results`` is passed.
-
-Steps:
-    1. Archive ``.cache/`` → ``results_dir/cache.tar.gz``
-    2. Archive output YAML/JSON → ``results_dir/output/data.tar.gz``,
-       copy SVG charts individually for easy diffing
-    3. Record input metadata (DBLP hash, git revisions, pipeline args)
-    4. ``git add -A && git commit``
-    5. Optionally push (when ``cfg.push`` is *True*)
-"""
+"""Save pipeline results to the reprodb-pipeline-results repository."""
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import logging
 import shutil
@@ -27,253 +16,159 @@ from src.config import PipelineConfig
 logger = logging.getLogger(__name__)
 
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
-
-
-def _file_hash(path: Path) -> str:
-    """SHA-256 hex digest of a file."""
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 16), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
-def _git_info(repo_dir: Path) -> dict[str, str]:
-    """Collect git revision info for a repository."""
-    info: dict[str, str] = {}
+def _run_git(*args: str, cwd: Path) -> str:
+    """Run a git command, return stripped stdout (empty on failure)."""
     try:
-        info["commit"] = (
-            subprocess.run(
-                ["git", "rev-parse", "HEAD"],
-                capture_output=True,
-                text=True,
-                cwd=repo_dir,
-                timeout=10,
-            ).stdout.strip()
-            or "unknown"
-        )
-        info["branch"] = (
-            subprocess.run(
-                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-                capture_output=True,
-                text=True,
-                cwd=repo_dir,
-                timeout=10,
-            ).stdout.strip()
-            or "unknown"
-        )
-        info["dirty"] = str(
-            subprocess.run(
-                ["git", "diff", "--quiet"],
-                cwd=repo_dir,
-                timeout=10,
-            ).returncode
-            != 0
-        ).lower()
+        return subprocess.run(["git", *args], capture_output=True, text=True, cwd=cwd, timeout=10).stdout.strip()
     except (subprocess.TimeoutExpired, OSError):
-        info.setdefault("commit", "unknown")
-        info.setdefault("branch", "unknown")
-        info.setdefault("dirty", "unknown")
-    return info
-
-
-def _gh_token() -> str | None:
-    """Try to get a GitHub token from the ``gh`` CLI."""
-    gh = shutil.which("gh") or str(Path.home() / ".local" / "bin" / "gh")
-    if not Path(gh).is_file():
-        return None
-    try:
-        result = subprocess.run(
-            [gh, "auth", "token"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        token = result.stdout.strip()
-        return token or None
-    except (subprocess.TimeoutExpired, OSError):
-        return None
-
-
-# ── Main entry point ─────────────────────────────────────────────────────────
+        return ""
 
 
 def save_results(cfg: PipelineConfig, *, message: str = "") -> None:
-    """Copy pipeline outputs into the results repo and commit.
+    """Copy pipeline outputs into the results repo and commit."""
+    results = cfg.results_dir.resolve()
+    output = cfg.output_dir.resolve()
+    pipeline = Path.cwd().resolve()
 
-    Parameters
-    ----------
-    cfg:
-        Pipeline configuration (``results_dir``, ``output_dir``, ``push``, etc.).
-    message:
-        Optional extra text appended to the commit message.
-    """
-    results_dir = cfg.results_dir.resolve()
-    output_dir = cfg.output_dir.resolve()
-    pipeline_dir = Path.cwd().resolve()
-
-    # ── Validate ─────────────────────────────────────────────────────────
-    if not (results_dir / ".git").is_dir():
-        logger.error("Results repository not found: %s", results_dir)
-        logger.error("  Initialize it first: git init %s", results_dir)
+    if not (results / ".git").is_dir():
+        logger.error("Results repo not found: %s", results)
         return
-
-    if not output_dir.is_dir():
-        logger.error("Output directory not found: %s", output_dir)
+    if not output.is_dir():
+        logger.error("Output directory not found: %s", output)
         return
 
     now = datetime.now(tz=timezone.utc).astimezone()
     run_date = now.strftime("%Y-%m-%d")
-    run_timestamp = now.strftime("%Y-%m-%d %H:%M:%S %Z")
+    ts = now.strftime("%Y-%m-%d %H:%M:%S %Z")
+    logger.info("Saving pipeline results to %s (%s)", results, ts)
 
-    logger.info("Saving pipeline results to %s", results_dir)
-    logger.info("  Output dir: %s", output_dir)
-    logger.info("  Date: %s", run_timestamp)
-
-    # ── 1. Cache archive ─────────────────────────────────────────────────
-    logger.info("  [1/4] Archiving cache...")
-    cache_dir = pipeline_dir / ".cache"
-    cache_tar = results_dir / "cache.tar.gz"
+    # -- 1. Cache archive -------------------------------------------------
+    cache_dir = pipeline / ".cache"
+    cache_tar = results / "cache.tar.gz"
     cache_tar.unlink(missing_ok=True)
-    old_cache = results_dir / "cache"
+    old_cache = results / "cache"
     if old_cache.is_dir():
         shutil.rmtree(old_cache)
     if cache_dir.is_dir():
         with tarfile.open(cache_tar, "w:gz") as tar:
             tar.add(str(cache_dir), arcname=".cache")
 
-    # ── 2. Output (data archive + SVG charts) ───────────────────────────
-    logger.info("  [2/4] Syncing output...")
-    charts_dst = results_dir / "output" / "charts"
+    # -- 2. Output data + SVG charts --------------------------------------
+    charts_dst = results / "output" / "charts"
     charts_dst.mkdir(parents=True, exist_ok=True)
-
-    # Tar YAML + JSON data files
-    data_tar = results_dir / "output" / "data.tar.gz"
+    data_tar = results / "output" / "data.tar.gz"
     data_tar.unlink(missing_ok=True)
-    # Remove old uncompressed trees
     for old in ("_data", "assets"):
-        p = results_dir / "output" / old
+        p = results / "output" / old
         if p.is_dir():
             shutil.rmtree(p)
 
     data_files: list[Path] = []
-    yml_dir = output_dir / "_data"
-    json_dir = output_dir / "assets" / "data"
-    if yml_dir.is_dir():
-        data_files.extend(yml_dir.rglob("*.yml"))
-    if json_dir.is_dir():
-        data_files.extend(json_dir.rglob("*.json"))
-
+    if (output / "_data").is_dir():
+        data_files.extend((output / "_data").rglob("*.yml"))
+    if (output / "assets" / "data").is_dir():
+        data_files.extend((output / "assets" / "data").rglob("*.json"))
     if data_files:
         with tarfile.open(data_tar, "w:gz") as tar:
             for f in data_files:
-                arcname = str(f.relative_to(output_dir))
-                tar.add(str(f), arcname=arcname)
+                tar.add(str(f), arcname=str(f.relative_to(output)))
 
-    # Copy SVG charts individually (useful to diff between runs)
-    charts_src = output_dir / "assets" / "charts"
+    charts_src = output / "assets" / "charts"
     if charts_src.is_dir():
         for svg in charts_src.glob("*.svg"):
             shutil.copy2(svg, charts_dst / svg.name)
 
-    # ── 3. Input metadata ────────────────────────────────────────────────
-    logger.info("  [3/4] Recording input metadata...")
-    input_dir = results_dir / "input"
+    # -- 3. Input metadata ------------------------------------------------
+    input_dir = results / "input"
     input_dir.mkdir(parents=True, exist_ok=True)
 
-    # DBLP checksum
-    dblp_cksum = input_dir / "dblp_checksum.txt"
     if cfg.dblp_file.is_file():
-        digest = _file_hash(cfg.dblp_file)
-        stat = cfg.dblp_file.stat()
-        dblp_cksum.write_text(
-            f"{digest}\n{stat.st_size} bytes, modified {datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)}\n"
-        )
+        h = hashlib.sha256()
+        with open(cfg.dblp_file, "rb") as fh:
+            for chunk in iter(lambda: fh.read(1 << 16), b""):
+                h.update(chunk)
+        st = cfg.dblp_file.stat()
+        mtime = datetime.fromtimestamp(st.st_mtime, tz=timezone.utc)
+        (input_dir / "dblp_checksum.txt").write_text(f"{h.hexdigest()}\n{st.st_size} bytes, modified {mtime}\n")
     else:
-        dblp_cksum.write_text("not available\n")
+        (input_dir / "dblp_checksum.txt").write_text("not available\n")
 
-    # Pipeline args log
-    args_file = cfg.log_dir / "last_pipeline_args"
-    if args_file.is_file():
-        shutil.copy2(args_file, input_dir / "pipeline_args.txt")
+    for src_name, dst_name in [
+        ("last_pipeline_args", "pipeline_args.txt"),
+        ("last_pipeline.log", "pipeline.log"),
+    ]:
+        src = cfg.log_dir / src_name
+        if src.is_file():
+            shutil.copy2(src, input_dir / dst_name)
 
-    # Pipeline log
-    log_file = cfg.log_dir / "last_pipeline.log"
-    if log_file.is_file():
-        shutil.copy2(log_file, input_dir / "pipeline.log")
-
-    # Git revisions of source repos
-    pipeline_git = _git_info(pipeline_dir)
-    website_git = _git_info(output_dir)
-    cache_version_file = pipeline_dir / "config" / "cache-version.txt"
-    cache_version = (
-        cache_version_file.read_text().strip()
-        if cache_version_file.is_file()
-        else "none (cache was empty or no cache-version.txt)"
-    )
-
-    metadata_lines = [
-        f"timestamp: {run_timestamp}",
+    dirty = "false" if _run_git("diff", "--quiet", cwd=pipeline) == "" else "true"
+    cv_file = pipeline / "config" / "cache-version.txt"
+    cv = cv_file.read_text().strip() if cv_file.is_file() else "none"
+    lines = [
+        f"timestamp: {ts}",
         "",
         "reprodb-pipeline:",
-        f"  commit: {pipeline_git.get('commit', 'unknown')}",
-        f"  branch: {pipeline_git.get('branch', 'unknown')}",
-        f"  dirty: {pipeline_git.get('dirty', 'unknown')}",
+        f"  commit: {_run_git('rev-parse', 'HEAD', cwd=pipeline) or 'unknown'}",
+        f"  branch: {_run_git('rev-parse', '--abbrev-ref', 'HEAD', cwd=pipeline) or 'unknown'}",
+        f"  dirty: {dirty}",
         "",
         "website:",
-        f"  commit: {website_git.get('commit', 'unknown')}",
-        f"  branch: {website_git.get('branch', 'unknown')}",
+        f"  commit: {_run_git('rev-parse', 'HEAD', cwd=output) or 'unknown'}",
+        f"  branch: {_run_git('rev-parse', '--abbrev-ref', 'HEAD', cwd=output) or 'unknown'}",
         "",
-        f"cache_version: {cache_version}",
+        f"cache_version: {cv}",
     ]
-    (input_dir / "run_metadata.txt").write_text("\n".join(metadata_lines) + "\n")
+    (input_dir / "run_metadata.txt").write_text("\n".join(lines) + "\n")
 
-    # ── 4. Commit ────────────────────────────────────────────────────────
-    logger.info("  [4/4] Committing...")
-    subprocess.run(["git", "add", "-A"], cwd=results_dir, check=True, timeout=30)
+    # -- 4. Commit --------------------------------------------------------
+    subprocess.run(["git", "add", "-A"], cwd=results, check=True, timeout=30)
+    commit_msg = f"Pipeline run {run_date}" + (f" \u2014 {message}" if message else "")
 
-    commit_msg = f"Pipeline run {run_date}"
-    if message:
-        commit_msg += f" — {message}"
-
-    # Check if there are changes to commit
-    diff_result = subprocess.run(
-        ["git", "diff", "--cached", "--quiet"],
-        cwd=results_dir,
-        timeout=10,
-    )
-    if diff_result.returncode == 0:
-        logger.info("  No changes since last snapshot — skipping commit")
+    if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=results, timeout=10).returncode == 0:
+        logger.info("No changes since last snapshot \u2014 skipping commit")
     else:
         subprocess.run(
             ["git", "commit", "-m", commit_msg, "--quiet"],
-            cwd=results_dir,
+            cwd=results,
             check=True,
             timeout=30,
         )
-        logger.info("  Committed: %s", commit_msg)
+        logger.info("Committed: %s", commit_msg)
 
-    # ── 5. Push (optional) ───────────────────────────────────────────────
+    # -- 5. Push (optional) -----------------------------------------------
     if cfg.push:
-        logger.info("  Pushing to remote...")
-        token = _gh_token()
-        push_url = f"https://vahldiek:{token}@github.com/reprodb/reprodb-pipeline-results.git" if token else None
-        push_cmd: list[str] = (
-            ["git", "push", push_url, "main", "--force"] if push_url else ["git", "push", "origin", "main"]
+        gh = shutil.which("gh") or str(Path.home() / ".local" / "bin" / "gh")
+        token = ""
+        if Path(gh).is_file():
+            with contextlib.suppress(subprocess.TimeoutExpired, OSError):
+                token = subprocess.run(
+                    [gh, "auth", "token"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                ).stdout.strip()
+        push_cmd = (
+            [
+                "git",
+                "push",
+                f"https://vahldiek:{token}@github.com/reprodb/reprodb-pipeline-results.git",
+                "main",
+                "--force",
+            ]
+            if token
+            else ["git", "push", "origin", "main"]
         )
-        push_result = subprocess.run(
+        result = subprocess.run(
             push_cmd,
-            cwd=results_dir,
+            cwd=results,
             capture_output=True,
             text=True,
             timeout=60,
         )
-        if push_result.returncode != 0:
-            err = push_result.stderr.strip()
-            # Sanitize potential token from error output
+        if result.returncode != 0:
+            err = result.stderr.strip()
             if token and token in err:
                 err = err.replace(token, "***")
             logger.warning("Push failed: %s", err)
 
-    logger.info("Results saved to %s", results_dir)
+    logger.info("Results saved to %s", results)
