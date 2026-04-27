@@ -47,6 +47,8 @@ def _import_class(module_path: str, class_name: str):
 
 def _make_array_schema(item_schema: dict[str, Any], title: str, description: str, schema_id: str) -> dict:
     """Wrap an item schema in a JSON Schema array with $defs."""
+    from src.models import SCHEMA_VERSION
+
     # Pydantic generates a schema with $defs for nested models.
     # We hoist $defs to top level and use $ref for items.
     defs = item_schema.pop("$defs", {})
@@ -60,6 +62,7 @@ def _make_array_schema(item_schema: dict[str, Any], title: str, description: str
         "$id": schema_id,
         "title": title,
         "description": description,
+        "version": SCHEMA_VERSION,
         "type": "array",
         "items": {"$ref": f"#/$defs/{class_name}"},
         "$defs": defs,
@@ -68,8 +71,11 @@ def _make_array_schema(item_schema: dict[str, Any], title: str, description: str
 
 def _make_object_schema(obj_schema: dict[str, Any], schema_id: str) -> dict:
     """Add standard JSON Schema metadata to an object schema."""
+    from src.models import SCHEMA_VERSION
+
     obj_schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
     obj_schema["$id"] = schema_id
+    obj_schema["version"] = SCHEMA_VERSION
     return obj_schema
 
 
