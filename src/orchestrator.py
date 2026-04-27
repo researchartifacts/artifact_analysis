@@ -62,6 +62,7 @@ def _stage_args(stage: Stage, cfg: PipelineConfig) -> list[str]:
         "search_data": ["--data_dir", out],
         "ranking_history": ["--data_dir", out],
         "visualizations": ["--data_dir", out],
+        "paper_citations_doi": ["--data_dir", out],
     }
     return mapping.get(name, [])
 

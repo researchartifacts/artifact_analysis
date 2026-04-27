@@ -179,6 +179,12 @@ jobs:
           cd reprodb-pipeline
           python -m src.generators.generate_visualizations --data_dir ../website || echo "⚠️ Visualization generation failed"
 
+      - name: Collect paper citation counts
+        timeout-minutes: 60
+        run: |
+          cd reprodb-pipeline
+          python -m src.generators.generate_paper_citations_doi --data_dir ../website || echo "⚠️ Paper citation collection failed"
+
       - name: Verify generated files
         run: |
           echo "Checking generated files..."
@@ -266,6 +272,7 @@ jobs:
           mkdir -p output/website_data
           cp -r ../website/_data output/website_data/ 2>/dev/null || true
           cp -r ../website/assets output/website_data/ 2>/dev/null || true
+          cp -r ../website/_build output/website_data/ 2>/dev/null || true
           
           # Copy the scraped artifacts.json (pipeline input) to output root
           cp ../website/assets/data/artifacts.json output/artifacts.json 2>/dev/null || true
@@ -309,7 +316,7 @@ jobs:
           git config user.email "actions@github.com"
           
           # Add all generated files
-          git add _data/ assets/
+          git add _data/ assets/ _build/
           
           # Check if there are changes
           if git diff --staged --quiet; then

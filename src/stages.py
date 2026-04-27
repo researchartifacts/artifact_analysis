@@ -160,6 +160,14 @@ STAGES: tuple[Stage, ...] = (
         depends_on=("statistics", "author_stats", "committee_stats"),
         outputs=("assets/charts/",),
     ),
+    Stage(
+        name="paper_citations_doi",
+        module="src.generators.generate_paper_citations_doi",
+        description="Collect paper citation counts via OpenAlex/Semantic Scholar",
+        depends_on=("statistics",),
+        optional=True,
+        outputs=("_build/paper_citations.json", "_build/citation_history.json"),
+    ),
 )
 
 STAGE_MAP: dict[str, Stage] = {s.name: s for s in STAGES}
