@@ -33,7 +33,6 @@ logger = logging.getLogger(__name__)
 
 # ── Stage → CLI arguments mapping ────────────────────────────────────────────
 
-
 def _stage_args(stage: Stage, cfg: PipelineConfig) -> list[str]:
     """Return the CLI arguments for a given stage based on its module's argparse interface."""
     name = stage.name
@@ -61,7 +60,6 @@ def _stage_args(stage: Stage, cfg: PipelineConfig) -> list[str]:
 
 
 # ── Pre-flight checks ───────────────────────────────────────────────────────
-
 
 def _detect_github_token() -> None:
     """Try to auto-detect GITHUB_TOKEN from ``gh`` CLI if not set."""
@@ -128,7 +126,6 @@ def _should_skip(stage: Stage, cfg: PipelineConfig) -> bool:
 
 # ── Stage execution ──────────────────────────────────────────────────────────
 
-
 def _run_stage(stage: Stage, cfg: PipelineConfig, python: str) -> tuple[str, bool, float]:
     """Run a single stage as a subprocess. Returns (name, success, elapsed)."""
     if _should_skip(stage, cfg):
@@ -170,7 +167,6 @@ def _run_stage(stage: Stage, cfg: PipelineConfig, python: str) -> tuple[str, boo
 
 
 # ── Main orchestrator ────────────────────────────────────────────────────────
-
 
 def run_pipeline(cfg: PipelineConfig, *, max_workers: int = 4) -> bool:
     """Execute the full pipeline using the stage dependency graph.
@@ -235,9 +231,7 @@ def run_pipeline(cfg: PipelineConfig, *, max_workers: int = 4) -> bool:
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
 
-
 def _build_parser() -> argparse.ArgumentParser:
-
     from src.utils.logging_config import add_log_level_arg
 
     parser = argparse.ArgumentParser(

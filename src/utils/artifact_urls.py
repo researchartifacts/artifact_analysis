@@ -5,9 +5,6 @@ Provides:
     extract_source(url)     — Determine the hosting source of an artifact URL.
     get_artifact_url(artifact, normalise_fn) — Extract the first valid URL from an artifact dict.
     get_artifact_urls(artifact, normalise_fn) — Extract all valid URLs from an artifact dict.
-
-These were originally duplicated across ``generate_artifact_sources_table.py`` and
-``generate_artifact_sources_timeline.py``.
 """
 
 from __future__ import annotations

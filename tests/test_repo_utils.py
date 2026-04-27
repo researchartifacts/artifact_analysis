@@ -6,15 +6,14 @@ requests are made.
 
 from __future__ import annotations
 
-from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 import src.scrapers.repo_utils as repo_utils
 
-
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 def _fake_response(status_code: int = 200, json_data=None, text: str = "", headers=None):
     """Build a minimal mock response object."""
@@ -42,6 +41,7 @@ def mock_session(monkeypatch):
 
 
 # ── check_url_cached ─────────────────────────────────────────────────────────
+
 
 class TestCheckUrlCached:
     def test_non_http_returns_false(self):
@@ -72,6 +72,7 @@ class TestCheckUrlCached:
 
 
 # ── cached_github_stats ──────────────────────────────────────────────────────
+
 
 class TestCachedGithubStats:
     def test_200_returns_stats(self, mock_session, monkeypatch):
@@ -132,6 +133,7 @@ class TestCachedGithubStats:
 
 # ── cached_zenodo_stats ──────────────────────────────────────────────────────
 
+
 class TestCachedZenodoStats:
     def test_200_returns_stats(self, mock_session):
         mock_session.get.return_value = _fake_response(
@@ -154,11 +156,12 @@ class TestCachedZenodoStats:
 
 # ── cached_figshare_stats ────────────────────────────────────────────────────
 
+
 class TestCachedFigshareStats:
     def test_200_returns_stats(self, mock_session):
         mock_session.get.side_effect = [
-            _fake_response(200, json_data={"totals": 200}),   # views
-            _fake_response(200, json_data={"totals": 80}),    # downloads
+            _fake_response(200, json_data={"totals": 200}),  # views
+            _fake_response(200, json_data={"totals": 80}),  # downloads
             _fake_response(200, json_data={"modified_date": "2024-06-01", "created_date": "2024-01-01"}),  # meta
         ]
         stats = repo_utils.cached_figshare_stats("https://figshare.com/articles/dataset/foo/999999")
@@ -175,6 +178,7 @@ class TestCachedFigshareStats:
 
 
 # ── download_file / _cached_get ──────────────────────────────────────────────
+
 
 class TestDownloadFile:
     def test_returns_body(self, mock_session, monkeypatch):
