@@ -1,8 +1,8 @@
 # ReproDB Pipeline
 
-[![Tests](https://github.com/reprodb/reprodb-pipeline/actions/workflows/tests.yml/badge.svg)](https://github.com/reprodb/reprodb-pipeline/actions/workflows/tests.yml)
-[![Docs](https://github.com/reprodb/reprodb-pipeline/actions/workflows/deploy-docs.yml/badge.svg)](https://reprodb.github.io/reprodb-pipeline/)
-[![Schemas](https://github.com/reprodb/reprodb-pipeline/actions/workflows/export-schemas.yml/badge.svg)](https://reprodb.github.io/data-schemas/)
+[![Tests](https://github.com/ReproDB/reprodb-pipeline/actions/workflows/tests.yml/badge.svg)](https://github.com/ReproDB/reprodb-pipeline/actions/workflows/tests.yml)
+[![Docs](https://github.com/ReproDB/reprodb-pipeline/actions/workflows/deploy-docs.yml/badge.svg)](https://reprodb.github.io/reprodb-pipeline/)
+[![Schemas](https://github.com/ReproDB/reprodb-pipeline/actions/workflows/export-schemas.yml/badge.svg)](https://reprodb.github.io/data-schemas/)
 
 Data pipeline that scrapes artifact evaluation results from
 [sysartifacts](https://sysartifacts.github.io),
