@@ -15,6 +15,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import importlib
 import logging
 import os
 import shutil
@@ -24,6 +25,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+from src import cache
 from src.config import PipelineConfig
 from src.invariants import check_all as check_invariants
 from src.run_metadata import write_run_metadata
@@ -130,47 +132,56 @@ def _should_skip(stage: Stage, cfg: PipelineConfig) -> bool:
     return False
 
 
-# ── Stage execution ──────────────────────────────────────────────────────────
+# ── In-process stage runner ──────────────────────────────────────────────────
 
 
-def _run_stage(stage: Stage, cfg: PipelineConfig, python: str) -> tuple[str, bool, float]:
-    """Run a single stage as a subprocess. Returns (name, success, elapsed)."""
+def _call_main(module_name: str, argv: list[str]) -> None:
+    """Run ``module.main()`` in-process with ``argv`` injected as ``sys.argv``.
+
+    Compared to ``subprocess`` this preserves the parent process state,
+    surfaces real tracebacks, and avoids ~150 ms of fork+import overhead per
+    stage.  ``SystemExit(0)`` from clean argparse exits is suppressed; any
+    other exit code is re-raised.
+    """
+    module = importlib.import_module(module_name)
+    if not hasattr(module, "main"):
+        msg = f"{module_name} does not expose a main() entry point"
+        raise AttributeError(msg)
+    old_argv = sys.argv
+    sys.argv = [module_name, *argv]
+    try:
+        module.main()
+    except SystemExit as exc:
+        if exc.code not in (None, 0):
+            raise
+    finally:
+        sys.argv = old_argv
+
+
+def _run_stage(stage: Stage, cfg: PipelineConfig) -> tuple[str, bool, float]:
+    """Run a single stage in-process. Returns (name, success, elapsed)."""
     if _should_skip(stage, cfg):
         return stage.name, True, 0.0
 
-    cmd = [python, "-m", stage.module, *_stage_args(stage, cfg)]
+    if cache.should_skip(stage, cfg.output_dir):
+        logger.info("↻ %s: skipped (inputs unchanged, outputs present)", stage.name)
+        return stage.name, True, 0.0
+
     logger.info("▶ %s: %s", stage.name, stage.description)
     start = time.monotonic()
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=3600,
-        )
+        _call_main(stage.module, _stage_args(stage, cfg))
+    except Exception:
         elapsed = time.monotonic() - start
-        if result.stdout:
-            for line in result.stdout.rstrip().split("\n"):
-                logger.info("  %s", line)
-        if result.returncode != 0:
-            for line in (result.stderr or "").rstrip().split("\n"):
-                if line:
-                    logger.error("  %s", line)
-            if stage.optional:
-                logger.warning("⚠ %s failed (optional, continuing)", stage.name)
-                return stage.name, True, elapsed
-            logger.error("✗ %s failed (exit %d)", stage.name, result.returncode)
-            return stage.name, False, elapsed
-        logger.info("✓ %s completed (%.1fs)", stage.name, elapsed)
-        return stage.name, True, elapsed
-    except subprocess.TimeoutExpired:
-        elapsed = time.monotonic() - start
-        logger.error("✗ %s timed out after %.0fs", stage.name, elapsed)
+        if stage.optional:
+            logger.exception("⚠ %s failed (optional, continuing)", stage.name)
+            return stage.name, True, elapsed
+        logger.exception("✗ %s failed", stage.name)
         return stage.name, False, elapsed
-    except OSError as e:
-        elapsed = time.monotonic() - start
-        logger.error("✗ %s failed to start: %s", stage.name, e)
-        return stage.name, False, elapsed
+    elapsed = time.monotonic() - start
+    cache.mark_done(stage, cfg.output_dir)
+    logger.info("✓ %s completed (%.1fs)", stage.name, elapsed)
+    return stage.name, True, elapsed
 
 
 # ── Main orchestrator ────────────────────────────────────────────────────────
@@ -193,7 +204,6 @@ def run_pipeline(cfg: PipelineConfig, *, max_workers: int = 4, message: str = ""
         os.environ.setdefault("https_proxy", cfg.https_proxy)
         os.environ.setdefault("HTTPS_PROXY", cfg.https_proxy)
 
-    python = sys.executable
     groups = parallel_groups(STAGES)
     total_stages = sum(len(g) for g in groups)
     completed = 0
@@ -206,7 +216,7 @@ def run_pipeline(cfg: PipelineConfig, *, max_workers: int = 4, message: str = ""
         logger.info("── Tier %d/%d (%d stages) ──", tier_idx + 1, len(groups), len(tier))
 
         if len(tier) == 1:
-            name, ok, elapsed = _run_stage(tier[0], cfg, python)
+            name, ok, elapsed = _run_stage(tier[0], cfg)
             completed += 1
             timings[name] = elapsed
             if not ok:
@@ -214,7 +224,7 @@ def run_pipeline(cfg: PipelineConfig, *, max_workers: int = 4, message: str = ""
                 return False
         else:
             with ThreadPoolExecutor(max_workers=min(max_workers, len(tier))) as pool:
-                futures = {pool.submit(_run_stage, stage, cfg, python): stage for stage in tier}
+                futures = {pool.submit(_run_stage, stage, cfg): stage for stage in tier}
                 for future in as_completed(futures):
                     name, ok, elapsed = future.result()
                     completed += 1

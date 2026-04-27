@@ -85,7 +85,7 @@ class TestRunPipeline:
         tmp_path,
     ):
         """All stages return cleanly → pipeline succeeds."""
-        mock_run.side_effect = lambda stage, cfg, python: (stage.name, True, 0.1)
+        mock_run.side_effect = lambda stage, cfg: (stage.name, True, 0.1)
         cfg = PipelineConfig(output_dir=tmp_path / "out", log_dir=tmp_path / "logs")
         dblp = tmp_path / "dblp.xml.gz"
         dblp.touch()
@@ -117,7 +117,7 @@ class TestRunPipeline:
     ):
         """A required stage failure (in tier 0) returns False."""
         # statistics is required and runs in tier 0
-        mock_run.side_effect = lambda stage, cfg, python: (stage.name, False, 0.1)
+        mock_run.side_effect = lambda stage, cfg: (stage.name, False, 0.1)
         cfg = PipelineConfig(output_dir=tmp_path / "out", log_dir=tmp_path / "logs")
         dblp = tmp_path / "dblp.xml.gz"
         dblp.touch()
@@ -148,7 +148,7 @@ class TestRunPipeline:
     ):
         """Optional stages failing should not abort the pipeline."""
 
-        def side_effect(stage, cfg, python):
+        def side_effect(stage, cfg):
             # _run_stage returns ok=True even for optional failures
             return stage.name, True, 0.1
 
