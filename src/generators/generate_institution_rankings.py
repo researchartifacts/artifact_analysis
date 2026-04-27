@@ -141,6 +141,7 @@ def aggregate_by_institution(combined_data):
                     "num_authors": data["num_authors"],
                     "conferences": sorted(list(data["conferences"])),
                     "years": {str(k): v for k, v in data["years"].items()},
+                    "top_authors": [],
                 }
             )
 
