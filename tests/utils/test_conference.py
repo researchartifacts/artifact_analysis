@@ -86,10 +86,10 @@ class TestEnsureConferencePages:
 
     def test_creates_missing_page(self, tmp_path):
         """A page is created for a conference dir not yet on the website."""
-        (tmp_path / "systems").mkdir()
-        (tmp_path / "security").mkdir()
+        (tmp_path / "content" / "systems").mkdir(parents=True)
+        (tmp_path / "content" / "security").mkdir(parents=True)
         # Pre-existing page
-        (tmp_path / "security" / "ndss.md").write_text("existing\n")
+        (tmp_path / "content" / "security" / "ndss.md").write_text("existing\n")
 
         created = ensure_conference_pages(
             sys_dirs=set(),
@@ -98,7 +98,7 @@ class TestEnsureConferencePages:
         )
 
         assert len(created) == 1
-        page = tmp_path / "security" / "newconf.md"
+        page = tmp_path / "content" / "security" / "newconf.md"
         assert page.exists()
         content = page.read_text()
         assert 'conf_name: "NEWCONF"' in content
@@ -107,9 +107,9 @@ class TestEnsureConferencePages:
 
     def test_skips_existing_page(self, tmp_path):
         """No new page if the conference already has a .md file."""
-        (tmp_path / "systems").mkdir()
-        (tmp_path / "security").mkdir()
-        (tmp_path / "security" / "ches.md").write_text("existing\n")
+        (tmp_path / "content" / "systems").mkdir(parents=True)
+        (tmp_path / "content" / "security").mkdir(parents=True)
+        (tmp_path / "content" / "security" / "ches.md").write_text("existing\n")
 
         created = ensure_conference_pages(
             sys_dirs=set(),
@@ -120,21 +120,21 @@ class TestEnsureConferencePages:
 
     def test_uses_display_name(self, tmp_path):
         """Pages use CONF_DISPLAY_NAMES when available."""
-        (tmp_path / "systems").mkdir()
-        (tmp_path / "security").mkdir()
+        (tmp_path / "content" / "systems").mkdir(parents=True)
+        (tmp_path / "content" / "security").mkdir(parents=True)
 
         ensure_conference_pages(
             sys_dirs={"atc2024"},
             sec_dirs=set(),
             website_root=str(tmp_path),
         )
-        content = (tmp_path / "systems" / "atc.md").read_text()
+        content = (tmp_path / "content" / "systems" / "atc.md").read_text()
         assert CONF_DISPLAY_NAMES["ATC"] in content
 
     def test_deduplicates_across_years(self, tmp_path):
         """Multiple years of same conference produce only one page."""
-        (tmp_path / "systems").mkdir()
-        (tmp_path / "security").mkdir()
+        (tmp_path / "content" / "systems").mkdir(parents=True)
+        (tmp_path / "content" / "security").mkdir(parents=True)
 
         created = ensure_conference_pages(
             sys_dirs={"osdi2023", "osdi2024"},
@@ -154,8 +154,8 @@ class TestEnsureConferencePages:
 
     def test_both_areas(self, tmp_path):
         """Creates pages in both systems and security areas."""
-        (tmp_path / "systems").mkdir()
-        (tmp_path / "security").mkdir()
+        (tmp_path / "content" / "systems").mkdir(parents=True)
+        (tmp_path / "content" / "security").mkdir(parents=True)
 
         created = ensure_conference_pages(
             sys_dirs={"newsy2024"},
@@ -163,8 +163,8 @@ class TestEnsureConferencePages:
             website_root=str(tmp_path),
         )
         assert len(created) == 2
-        assert (tmp_path / "systems" / "newsy.md").exists()
-        assert (tmp_path / "security" / "newsec.md").exists()
+        assert (tmp_path / "content" / "systems" / "newsy.md").exists()
+        assert (tmp_path / "content" / "security" / "newsec.md").exists()
 
     def test_collapses_whitespace(self):
         assert normalize_name("  Jane   Doe  ") == "jane doe"

@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 # ── Conference → area classification ────────────────────────────────────────
 # Conferences are discovered from the website directory structure:
-#   {website_root}/systems/*.md  → systems conferences
-#   {website_root}/security/*.md → security conferences
+#   {website_root}/content/systems/*.md  → systems conferences
+#   {website_root}/content/security/*.md → security conferences
 # Pages like index.md, ae_members.md, etc. are excluded.
 
 # Non-conference pages present in each area directory.
@@ -29,8 +29,8 @@ _AREA_NON_CONF_PAGES = frozenset({"ae_members", "authors", "combined_rankings", 
 
 
 def _scan_area_confs(website_root: str, area: str) -> frozenset[str]:
-    """Scan ``{website_root}/{area}/`` for conference ``.md`` files."""
-    area_dir = os.path.join(website_root, area)
+    """Scan ``{website_root}/content/{area}/`` for conference ``.md`` files."""
+    area_dir = os.path.join(website_root, "content", area)
     if not os.path.isdir(area_dir):
         return frozenset()
     confs: set[str] = set()
@@ -48,7 +48,7 @@ def _find_website_root() -> str | None:
     """Try to locate the website repo relative to the pipeline."""
     # Common locations when running from reprodb-pipeline/
     for candidate in ("../reprodb.github.io", "reprodb.github.io"):
-        if os.path.isdir(os.path.join(candidate, "systems")):
+        if os.path.isdir(os.path.join(candidate, "content", "systems")):
             return candidate
     return None
 
@@ -155,7 +155,7 @@ def ensure_conference_pages(
 
     created: list[str] = []
     for area, dirs in [("systems", sys_dirs), ("security", sec_dirs)]:
-        area_dir = os.path.join(root, area)
+        area_dir = os.path.join(root, "content", area)
         if not os.path.isdir(area_dir):
             continue
         existing = {fname[:-3].upper() for fname in os.listdir(area_dir) if fname.endswith(".md")}

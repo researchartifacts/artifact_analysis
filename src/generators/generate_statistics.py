@@ -57,13 +57,13 @@ def _generate_conference_pages(
 ) -> None:
     """Create conference ``.md`` pages for every known conference.
 
-    Pages are written to ``{output_dir}/systems/`` and
-    ``{output_dir}/security/``.  Existing pages are only overwritten when
+    Pages are written to ``{output_dir}/content/systems/`` and
+    ``{output_dir}/content/security/``.  Existing pages are only overwritten when
     their content differs so that manual edits *not* covered by the
     template are preserved for non-auto-generated pages.
     """
     for area, confs in [("systems", systems_confs), ("security", security_confs)]:
-        area_dir = Path(output_dir) / area
+        area_dir = Path(output_dir) / "content" / area
         area_dir.mkdir(parents=True, exist_ok=True)
         for conf_upper in confs:
             slug = conf_upper.lower()
