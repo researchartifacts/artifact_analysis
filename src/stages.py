@@ -20,10 +20,14 @@ class Stage:
     depends_on: tuple[str, ...] = ()
     optional: bool = False
     outputs: tuple[str, ...] = ()
+    #: Files this stage reads. When non-empty the stage participates in the
+    #: content-hash skip cache (see :mod:`src.cache`).  Paths are resolved
+    #: relative to the pipeline ``output_dir`` unless absolute.
+    inputs: tuple[str, ...] = ()
 
 
 # ── Stage definitions ────────────────────────────────────────────────────────
-# Order mirrors run_pipeline.sh; depends_on encodes the *data* dependencies.
+# Order mirrors the orchestrator stage sequence; depends_on encodes the *data* dependencies.
 
 STAGES: tuple[Stage, ...] = (
     Stage(
@@ -51,6 +55,9 @@ STAGES: tuple[Stage, ...] = (
         description="Generate repository statistics (stars, forks, etc.)",
         depends_on=("statistics",),
         optional=True,
+        # Hits the GitHub API for every artifact — by far the slowest stage.
+        # The cache lets re-runs without input changes finish in <1s.
+        inputs=("_data/all_results_cache.yml",),
         outputs=(
             "_data/repo_stats.yml",
             "_build/repo_stats_detail.json",
@@ -64,6 +71,9 @@ STAGES: tuple[Stage, ...] = (
         description="Check artifact URL liveness",
         depends_on=("statistics",),
         optional=True,
+        # HEAD-checks every artifact URL — slow, fully idempotent given
+        # identical input artifacts.
+        inputs=("assets/data/artifacts.json",),
         outputs=("assets/data/artifact_availability.json",),
     ),
     Stage(

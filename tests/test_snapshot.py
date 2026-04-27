@@ -18,7 +18,14 @@ from pathlib import Path
 
 import pytest
 
-from src.snapshot import compare_summaries, create_summary, load_snapshot, save_snapshot
+from src.snapshot import (
+    MonotonicityViolation,
+    check_monotonicity,
+    compare_summaries,
+    create_summary,
+    load_snapshot,
+    save_snapshot,
+)
 
 SNAPSHOT_DIR = Path("tests/snapshots")
 SNAPSHOT_FILE = SNAPSHOT_DIR / "pipeline_snapshot.json"
@@ -143,3 +150,132 @@ class TestSnapshotAgainstReference:
             msg += "\n".join(f"  {d}" for d in diffs)
             msg += "\n\nTo accept these changes: python -m src.snapshot --output_dir " + str(output_dir) + " --update"
             pytest.fail(msg)
+
+
+class TestMonotonicity:
+    """Unit tests for cross-run monotonicity checks."""
+
+    @staticmethod
+    def _make_snapshot(
+        *,
+        record_count: int = 100,
+        artifacts_sum: float = 500,
+        badges_available_sum: float = 400,
+        badges_functional_sum: float = 300,
+        badges_reproducible_sum: float = 200,
+        ae_memberships_sum: float = 150,
+        names: list[str] | None = None,
+        total_artifacts: int = 2000,
+        total_conferences: int = 10,
+    ) -> dict:
+        """Build a minimal snapshot dict for monotonicity testing."""
+        snap: dict = {"_version": 1, "files": {
+            "assets/data/artifacts.json": {"record_count": record_count},
+            "assets/data/ae_members.json": {"record_count": 50},
+            "assets/data/combined_rankings.json": {
+                "record_count": record_count,
+                "numeric": {
+                    "artifacts": {"sum": artifacts_sum},
+                    "badges_available": {"sum": badges_available_sum},
+                    "badges_functional": {"sum": badges_functional_sum},
+                    "badges_reproducible": {"sum": badges_reproducible_sum},
+                    "ae_memberships": {"sum": ae_memberships_sum},
+                },
+            },
+            "assets/data/search_data.json": {"record_count": record_count},
+            "assets/data/institution_rankings.json": {"record_count": 30},
+            "assets/data/top_repos.json": {"record_count": 20},
+            "assets/data/summary.json": {
+                "key_count": 9,
+                "dict_numeric": {
+                    "total_artifacts": total_artifacts,
+                    "total_conferences": total_conferences,
+                },
+            },
+        }}
+        if names is not None:
+            snap["files"]["assets/data/combined_rankings.json"]["names"] = names
+        return snap
+
+    def test_no_violations_when_counts_increase(self):
+        old = self._make_snapshot(record_count=100, artifacts_sum=500)
+        new = self._make_snapshot(record_count=110, artifacts_sum=550)
+        assert check_monotonicity(old, new) == []
+
+    def test_no_violations_when_unchanged(self):
+        snap = self._make_snapshot()
+        assert check_monotonicity(snap, snap) == []
+
+    def test_record_count_decrease_detected(self):
+        old = self._make_snapshot(record_count=100)
+        new = self._make_snapshot(record_count=95)
+        violations = check_monotonicity(old, new)
+        rc_violations = [v for v in violations if v.check == "record_count"]
+        # artifacts.json, combined_rankings.json, search_data.json all have record_count=95
+        assert len(rc_violations) >= 1
+        assert any("decreased" in v.message for v in rc_violations)
+
+    def test_artifacts_sum_decrease_detected(self):
+        old = self._make_snapshot(artifacts_sum=500)
+        new = self._make_snapshot(artifacts_sum=490)
+        violations = check_monotonicity(old, new)
+        assert any(v.check == "artifacts.sum" for v in violations)
+
+    def test_badges_sum_decrease_detected(self):
+        old = self._make_snapshot(badges_available_sum=400)
+        new = self._make_snapshot(badges_available_sum=395)
+        violations = check_monotonicity(old, new)
+        assert any(v.check == "badges_available.sum" for v in violations)
+
+    def test_ae_memberships_decrease_detected(self):
+        old = self._make_snapshot(ae_memberships_sum=150)
+        new = self._make_snapshot(ae_memberships_sum=140)
+        violations = check_monotonicity(old, new)
+        assert any(v.check == "ae_memberships.sum" for v in violations)
+
+    def test_name_vanished_detected(self):
+        old = self._make_snapshot(names=["Alice", "Bob", "Charlie"])
+        new = self._make_snapshot(names=["Alice", "Charlie"])
+        violations = check_monotonicity(old, new)
+        assert any(v.check == "names" and "Bob" in v.message for v in violations)
+
+    def test_name_added_is_fine(self):
+        old = self._make_snapshot(names=["Alice", "Bob"])
+        new = self._make_snapshot(names=["Alice", "Bob", "Charlie"])
+        violations = check_monotonicity(old, new)
+        name_violations = [v for v in violations if v.check == "names"]
+        assert name_violations == []
+
+    def test_total_artifacts_decrease_detected(self):
+        old = self._make_snapshot(total_artifacts=2000)
+        new = self._make_snapshot(total_artifacts=1990)
+        violations = check_monotonicity(old, new)
+        assert any(v.check == "total_artifacts" for v in violations)
+
+    def test_total_conferences_decrease_detected(self):
+        old = self._make_snapshot(total_conferences=10)
+        new = self._make_snapshot(total_conferences=9)
+        violations = check_monotonicity(old, new)
+        assert any(v.check == "total_conferences" for v in violations)
+
+    def test_missing_reference_file_no_crash(self):
+        """If the old snapshot doesn't have a file, skip it gracefully."""
+        old: dict = {"_version": 1, "files": {}}
+        new = self._make_snapshot()
+        # Should not raise
+        violations = check_monotonicity(old, new)
+        assert violations == []
+
+    def test_missing_new_file_no_crash(self):
+        """If the new snapshot doesn't have a file, skip it gracefully."""
+        old = self._make_snapshot()
+        new: dict = {"_version": 1, "files": {}}
+        # record_count checks: old has values, new has None → no violation (None guard)
+        violations = check_monotonicity(old, new)
+        assert violations == []
+
+    def test_violation_str_format(self):
+        v = MonotonicityViolation("file.json", "record_count", "decreased from 100 to 90")
+        assert "[ERROR]" in str(v)
+        assert "file.json" in str(v)
+        assert "decreased" in str(v)

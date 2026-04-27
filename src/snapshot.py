@@ -94,8 +94,17 @@ def _summarise_json(path: Path) -> dict:
                 stats = _numeric_stats(data, field)
                 if stats:
                     summary.setdefault("numeric", {})[field] = stats
+        # Identity keys for membership-style checks (only for specific files)
+        if data and isinstance(data[0], dict) and "name" in data[0]:
+            names = sorted({r["name"] for r in data if isinstance(r.get("name"), str)})
+            if names:
+                summary["names"] = names
     elif isinstance(data, dict):
         summary["key_count"] = len(data)
+        # Capture top-level numeric values from dict-shaped files
+        dict_nums = {k: v for k, v in data.items() if isinstance(v, (int, float))}
+        if dict_nums:
+            summary["dict_numeric"] = dict_nums
     return summary
 
 
@@ -206,6 +215,128 @@ def compare_summaries(old: dict, new: dict) -> list[str]:
                 diffs.append(f"  {key}: content changed (sha256 differs)")
 
     return diffs
+
+
+# ── Monotonicity checks ─────────────────────────────────────────────────────
+
+# Files whose record_count must never decrease between runs.
+_MONOTONIC_RECORD_COUNT: tuple[str, ...] = (
+    "assets/data/artifacts.json",
+    "assets/data/ae_members.json",
+    "assets/data/combined_rankings.json",
+    "assets/data/search_data.json",
+    "assets/data/institution_rankings.json",
+    "assets/data/top_repos.json",
+)
+
+# numeric.<field>.sum values that must never decrease (within a given file).
+_MONOTONIC_SUMS: dict[str, tuple[str, ...]] = {
+    "assets/data/combined_rankings.json": (
+        "artifacts",
+        "badges_available",
+        "badges_functional",
+        "badges_reproducible",
+        "ae_memberships",
+    ),
+}
+
+# Files whose record_count is allowed to increase but names must not vanish.
+_MONOTONIC_NAMES: tuple[str, ...] = (
+    "assets/data/combined_rankings.json",
+)
+
+# dict_numeric keys that must never decrease (flat-dict files like summary.json).
+_MONOTONIC_DICT_NUMERIC: dict[str, tuple[str, ...]] = {
+    "assets/data/summary.json": (
+        "total_artifacts",
+        "total_conferences",
+    ),
+}
+
+
+class MonotonicityViolation:
+    """A single monotonicity violation."""
+
+    def __init__(self, file: str, check: str, message: str, *, severity: str = "error") -> None:
+        self.file = file
+        self.check = check
+        self.message = message
+        self.severity = severity
+
+    def __str__(self) -> str:
+        return f"[{self.severity.upper()}] {self.file}: {self.check} — {self.message}"
+
+    def __repr__(self) -> str:
+        return f"MonotonicityViolation({self.file!r}, {self.check!r}, {self.message!r})"
+
+
+def check_monotonicity(old: dict, new: dict) -> list[MonotonicityViolation]:
+    """Compare two snapshots and flag any fields that decreased unexpectedly.
+
+    Returns a list of :class:`MonotonicityViolation` objects (empty = OK).
+
+    Designed to catch regressions like:
+    - A conference or author disappearing due to a scraper bug
+    - Badge/artifact counts dropping because of a parser change
+    - Record counts shrinking when they should be append-only
+    """
+    violations: list[MonotonicityViolation] = []
+    old_files = old.get("files", {})
+    new_files = new.get("files", {})
+
+    # ── record_count must not decrease ───────────────────────────────────
+    for key in _MONOTONIC_RECORD_COUNT:
+        o = old_files.get(key, {})
+        n = new_files.get(key, {})
+        ov = o.get("record_count")
+        nv = n.get("record_count")
+        if ov is not None and nv is not None and nv < ov:
+            violations.append(MonotonicityViolation(
+                key, "record_count",
+                f"decreased from {ov} to {nv} (lost {ov - nv} records)",
+            ))
+
+    # ── numeric sums must not decrease ───────────────────────────────────
+    for key, fields in _MONOTONIC_SUMS.items():
+        o_num = old_files.get(key, {}).get("numeric", {})
+        n_num = new_files.get(key, {}).get("numeric", {})
+        for field in fields:
+            ov = o_num.get(field, {}).get("sum")
+            nv = n_num.get(field, {}).get("sum")
+            if ov is not None and nv is not None and nv < ov:
+                violations.append(MonotonicityViolation(
+                    key, f"{field}.sum",
+                    f"decreased from {ov} to {nv}",
+                ))
+
+    # ── author/entity names must not vanish ──────────────────────────────
+    for key in _MONOTONIC_NAMES:
+        o_names = set(old_files.get(key, {}).get("names", []))
+        n_names = set(new_files.get(key, {}).get("names", []))
+        if o_names and n_names:
+            vanished = o_names - n_names
+            if vanished:
+                sample = sorted(vanished)[:5]
+                extra = f" (and {len(vanished) - 5} more)" if len(vanished) > 5 else ""
+                violations.append(MonotonicityViolation(
+                    key, "names",
+                    f"{len(vanished)} name(s) vanished: {sample}{extra}",
+                ))
+
+    # ── dict-level numeric keys must not decrease ────────────────────────
+    for key, fields in _MONOTONIC_DICT_NUMERIC.items():
+        o_dn = old_files.get(key, {}).get("dict_numeric", {})
+        n_dn = new_files.get(key, {}).get("dict_numeric", {})
+        for field in fields:
+            ov = o_dn.get(field)
+            nv = n_dn.get(field)
+            if ov is not None and nv is not None and nv < ov:
+                violations.append(MonotonicityViolation(
+                    key, field,
+                    f"decreased from {ov} to {nv}",
+                ))
+
+    return violations
 
 
 def save_snapshot(summary: dict, path: Path | None = None) -> Path:

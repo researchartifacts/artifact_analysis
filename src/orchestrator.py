@@ -28,6 +28,7 @@ from src.config import PipelineConfig
 from src.invariants import check_all as check_invariants
 from src.run_metadata import write_run_metadata
 from src.save_results import save_results
+from src.snapshot import check_monotonicity, create_summary, load_snapshot, save_snapshot
 from src.stages import STAGES, Stage, parallel_groups
 from src.utils.logging_config import setup_logging
 
@@ -250,6 +251,34 @@ def run_pipeline(cfg: PipelineConfig, *, max_workers: int = 4, message: str = ""
         logger.info("Invariant checks passed with %d warning(s)", len(warnings))
     else:
         logger.info("✓ All invariant checks passed")
+
+    # ── Cross-run monotonicity checks ────────────────────────────────────
+    reference = load_snapshot()
+    current_snapshot = create_summary(cfg.output_dir)
+    if reference is not None:
+        logger.info("── Running monotonicity checks ──")
+        mono_violations = check_monotonicity(reference, current_snapshot)
+        mono_errors = [v for v in mono_violations if v.severity == "error"]
+        mono_warnings = [v for v in mono_violations if v.severity == "warning"]
+        for v in mono_warnings:
+            logger.warning("⚠ %s", v)
+        for v in mono_errors:
+            logger.error("✗ %s", v)
+        if mono_errors:
+            logger.error(
+                "Monotonicity check failed: %d error(s), %d warning(s)",
+                len(mono_errors), len(mono_warnings),
+            )
+            return False
+        if mono_warnings:
+            logger.info("Monotonicity checks passed with %d warning(s)", len(mono_warnings))
+        else:
+            logger.info("✓ All monotonicity checks passed")
+    else:
+        logger.info("No reference snapshot — skipping monotonicity checks")
+
+    # Update reference snapshot
+    save_snapshot(current_snapshot)
 
     # ── Write run metadata ───────────────────────────────────────────────
     write_run_metadata(
