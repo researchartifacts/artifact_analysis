@@ -89,6 +89,8 @@ class YearRepoStats(BaseModel):
     github_repos: int = Field(ge=0)
     total_stars: int = Field(ge=0)
     total_forks: int | None = Field(default=None, ge=0)
+    max_stars: int = Field(default=0, ge=0)
+    max_forks: int = Field(default=0, ge=0)
     avg_stars: float | None = Field(default=None, ge=0)
     avg_forks: float | None = Field(default=None, ge=0)
 

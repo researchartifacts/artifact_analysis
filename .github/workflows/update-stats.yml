@@ -203,7 +203,7 @@ jobs:
           # are added.
           validations = [
               # Top-level / collection outputs
-              ('artifacts.schema.json',                'results_archive/output/artifacts.json'),
+              ('artifacts.schema.json',                'website/assets/data/artifacts.json'),
               ('combined_rankings.schema.json',        'website/assets/data/combined_rankings.json'),
               ('institution_rankings.schema.json',     'website/_data/institution_rankings.json'),
               ('institution_ranking_history.schema.json', 'website/assets/data/institution_ranking_history.json'),
