@@ -37,8 +37,8 @@ jobs:
       - name: Ruff format check
         run: ruff format --check src/ tests/
 
-      - name: mypy (models + utils)
-        run: mypy --follow-imports=silent src/models/ src/utils/
+      - name: mypy
+        run: mypy --follow-imports=silent src/
 
   test:
     runs-on: ubuntu-latest

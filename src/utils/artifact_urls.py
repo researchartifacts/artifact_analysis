@@ -10,7 +10,10 @@ These were originally duplicated across ``generate_artifact_sources_table.py`` a
 ``generate_artifact_sources_timeline.py``.
 """
 
+from __future__ import annotations
+
 import re
+from collections.abc import Callable
 
 # ── DOI prefix → repository mapping ────────────────────────────────────────
 
@@ -85,7 +88,7 @@ def extract_source(url: str) -> str:
     return "Other"
 
 
-def get_artifact_url(artifact: dict, normalise_fn=None) -> str | None:
+def get_artifact_url(artifact: dict, normalise_fn: object = None) -> str | None:
     """Return the first valid URL from *artifact*, or ``None``.
 
     Parameters
@@ -96,7 +99,7 @@ def get_artifact_url(artifact: dict, normalise_fn=None) -> str | None:
         A function ``str -> str|None`` that normalises raw URL values.
         Defaults to identity (returns the value as-is).
     """
-    normalise = normalise_fn or (lambda v: v or None)
+    normalise: Callable[[str], str | None] = normalise_fn or (lambda v: v or None)  # type: ignore[assignment]
 
     # New format: ``artifact_urls`` is the canonical list
     urls = artifact.get("artifact_urls", [])

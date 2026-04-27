@@ -78,7 +78,8 @@ def save_validated_json(
     handle them.  The ``TypeAdapter`` approach supports both ``list[Model]``
     and single-model payloads.
     """
-    adapter = TypeAdapter(list[model] if isinstance(data, list) else model)
+    tp = list[model] if isinstance(data, list) else model  # type: ignore[valid-type]
+    adapter = TypeAdapter(tp)
     validated = adapter.validate_python(data)
     # Serialize through Pydantic so aliases and custom encoders are honoured
     serialized = adapter.dump_python(validated, mode="python")

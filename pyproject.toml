@@ -56,6 +56,41 @@ ignore_missing_imports = true
 explicit_package_bases = true
 mypy_path = "."
 
+# Per-module overrides — silence noisy files, fix incrementally
+[[tool.mypy.overrides]]
+module = [
+    "src.generators.generate_repo_stats",
+    "src.generators.generate_author_stats",
+    "src.generators.generate_area_authors",
+    "src.generators.generate_artifact_sources_table",
+    "src.generators.generate_institution_rankings",
+    "src.generators.generate_committee_stats",
+    "src.generators.generate_artifact_citations",
+    "src.generators.generate_cited_artifacts_list",
+    "src.generators.generate_statistics",
+    "src.generators.generate_artifact_sources_timeline",
+    "src.generators.verify_artifact_citations",
+    "src.generators.generate_artifact_availability",
+    "src.generators.generate_visualizations",
+    "src.generators.export_artifact_citations",
+    "src.generators.analyze_retention",
+    "src.generators.generate_ranking_history",
+    "src.generators.generate_participation_stats",
+    "src.generators.generate_author_index",
+    "src.scrapers.usenix_scrape",
+    "src.scrapers.repo_utils",
+    "src.scrapers.acm_scrape",
+    "src.scrapers.parse_results_md",
+    "src.scrapers.scrape_committee_web",
+    "src.scrapers.parse_committee_md",
+    "src.scrapers.generate_results",
+    "src.scrapers.acsac_scrape",
+    "src.enrichers.enrich_affiliations_openalex",
+    "src.enrichers.enrich_affiliations_csrankings",
+    "src.enrichers.enrich_affiliations_ae_members",
+]
+ignore_errors = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
