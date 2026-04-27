@@ -255,7 +255,6 @@ jobs:
           if errors:
               sys.exit(1)
           "
-          "
       
       - name: Push to results archive
         run: |
