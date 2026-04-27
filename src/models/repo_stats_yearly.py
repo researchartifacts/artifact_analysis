@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 class YearlyRepoMetrics(BaseModel):
     """Aggregate GitHub metrics for a group of repositories in a given year."""
 
-    repos: int = Field(ge=0, description="Number of repositories.")
+    github_repos: int = Field(ge=0, description="Number of repositories.")
     avg_stars: float = Field(ge=0, description="Average star count.")
     avg_forks: float = Field(ge=0, description="Average fork count.")
     min_stars: float = Field(ge=0, description="Minimum star count.")

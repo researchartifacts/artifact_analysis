@@ -21,7 +21,7 @@ class TopAuthor(BaseModel):
     )
     affiliation: str = Field(description="Author's institution affiliation.")
     combined_score: int = Field(ge=0, description="Author's combined artifact + AE score.")
-    artifacts: int = Field(ge=0, description="Number of artifacts authored.")
+    artifact_count: int = Field(ge=0, description="Number of artifacts authored.")
     ae_memberships: int = Field(ge=0, description="Number of AE committee memberships.")
     total_papers: int = Field(ge=0, description="Total papers at tracked conferences.")
 
@@ -58,14 +58,14 @@ class InstitutionRanking(BaseModel):
     role: Literal["Producer", "Consumer", "Balanced"] = Field(
         description="Classification based on A:E ratio.",
     )
-    artifacts: int = Field(ge=0, description="Total number of artifacts produced by this institution.")
+    artifact_count: int = Field(ge=0, description="Total number of artifacts produced by this institution.")
     badges_functional: int = Field(ge=0, description="Count of functional badges.")
     badges_reproducible: int = Field(ge=0, description="Count of reproduced/replicated badges.")
     ae_memberships: int = Field(ge=0, description="Number of AE committee memberships.")
     chair_count: int = Field(ge=0, description="Number of AE chair roles.")
     total_papers: int = Field(ge=0, description="Total DBLP paper count at tracked conferences.")
-    artifact_rate: float = Field(ge=0, le=100, description="Percentage of papers with artifacts.")
-    num_authors: int = Field(ge=1, description="Count of unique authors.")
+    artifact_pct: float = Field(ge=0, le=100, description="Percentage of papers with artifacts.")
+    author_count: int = Field(ge=1, description="Count of unique authors.")
     conferences: list[str] = Field(description="List of conferences where the institution contributes.")
     years: dict[str, int] = Field(description="Mapping of year (as string) to activity count.")
     top_authors: list[TopAuthor] = Field(

@@ -211,9 +211,9 @@ def generate_area_authors():
                 )
 
             # Rates
-            artifact_rate = round(total / area_total_papers * 100, 1) if area_total_papers > 0 else 0.0
-            repro_rate = round(badges_reproducible / total * 100, 1) if total > 0 else 0.0
-            functional_rate = round(badges_functional / total * 100, 1) if total > 0 else 0.0
+            artifact_pct = round(total / area_total_papers * 100, 1) if area_total_papers > 0 else 0.0
+            repro_pct = round(badges_reproducible / total * 100, 1) if total > 0 else 0.0
+            functional_pct = round(badges_functional / total * 100, 1) if total > 0 else 0.0
 
             # Additive artifact score (same as combined rankings):
             #   Each badge level adds 1 pt: Available=1, Functional=1, Reproducible=1 (max 3 per artifact)
@@ -233,12 +233,12 @@ def generate_area_authors():
                 "display_name": author.get("display_name", author_name),
                 "affiliation": aff,
                 "artifact_score": artifact_score,
-                "artifacts": total,
+                "artifact_count": total,
                 "total": total,
                 "total_papers": area_total_papers,
-                "artifact_rate": artifact_rate,
-                "repro_rate": repro_rate,
-                "functional_rate": functional_rate,
+                "artifact_pct": artifact_pct,
+                "repro_pct": repro_pct,
+                "functional_pct": functional_pct,
                 "last_5_years": last_5,
                 "artifact_citations": artifact_citations,
                 "badges_available": badges_available,

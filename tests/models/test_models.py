@@ -169,9 +169,9 @@ class TestAuthorStats:
             total_papers=10,
             total_papers_by_conf={"OSDI": 5, "SOSP": 5},
             total_papers_by_conf_year={"OSDI": {"2023": 3}, "SOSP": {"2022": 2}},
-            artifact_rate=30.0,
-            repro_rate=50.0,
-            functional_rate=66.7,
+            artifact_pct=30.0,
+            repro_pct=50.0,
+            functional_pct=66.7,
             category="systems",
             conferences=["OSDI", "SOSP"],
             years=[2022, 2023],
@@ -189,9 +189,9 @@ class TestAuthorStats:
         s = self._make()
         assert s.artifact_count == 3
 
-    def test_artifact_rate_out_of_range(self):
+    def test_artifact_pct_out_of_range(self):
         with pytest.raises(ValidationError):
-            self._make(artifact_rate=101.0)
+            self._make(artifact_pct=101.0)
 
     def test_year_range_format(self):
         with pytest.raises(ValidationError):
@@ -213,7 +213,7 @@ class TestTopAuthor:
             name="Alice",
             affiliation="MIT",
             combined_score=10,
-            artifacts=3,
+            artifact_count=3,
             ae_memberships=2,
             total_papers=8,
         )
@@ -228,14 +228,14 @@ class TestInstitutionRanking:
             artifact_score=30,
             ae_score=20,
             role="Balanced",
-            artifacts=10,
+            artifact_count=10,
             badges_functional=8,
             badges_reproducible=5,
             ae_memberships=4,
             chair_count=1,
             total_papers=20,
-            artifact_rate=50.0,
-            num_authors=5,
+            artifact_pct=50.0,
+            author_count=5,
             conferences=["OSDI", "SOSP"],
             years={"2023": 3, "2022": 2},
             top_authors=[],

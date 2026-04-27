@@ -109,22 +109,22 @@ def check_combined_rankings(output_dir: Path) -> list[Violation]:
                 )
             )
 
-        # Badge counts ≤ artifacts
-        artifacts = r.get("artifacts", 0)
+        # Badge counts ≤ artifact_count
+        artifacts = r.get("artifact_count", 0)
         for badge in ("badges_available", "badges_functional", "badges_reproducible"):
             bv = r.get(badge, 0)
             if bv > artifacts:
-                vs.append(Violation(fname, "badge_le_artifacts", f"{name}: {badge}={bv} > artifacts={artifacts}"))
+                vs.append(Violation(fname, "badge_le_artifacts", f"{name}: {badge}={bv} > artifact_count={artifacts}"))
 
         # ae_memberships non-negative
         ae = r.get("ae_memberships", 0)
         if ae < 0:
             vs.append(Violation(fname, "ae_nonneg", f"{name}: ae_memberships={ae} < 0"))
 
-        # artifact_rate in [0, 100]
-        rate = r.get("artifact_rate")
+        # artifact_pct in [0, 100]
+        rate = r.get("artifact_pct")
         if rate is not None and (rate < 0 or rate > 100):
-            vs.append(Violation(fname, "rate_range", f"{name}: artifact_rate={rate} outside [0,100]"))
+            vs.append(Violation(fname, "rate_range", f"{name}: artifact_pct={rate} outside [0,100]"))
 
     return vs
 

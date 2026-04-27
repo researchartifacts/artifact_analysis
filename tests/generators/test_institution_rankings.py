@@ -15,7 +15,7 @@ def _person(**overrides):
         "artifact_citations": 5,
         "citation_score": 2,
         "ae_score": 4,
-        "artifacts": 2,
+        "artifact_count": 2,
         "badges_functional": 1,
         "badges_reproducible": 1,
         "ae_memberships": 1,
@@ -37,14 +37,14 @@ class TestAggregateByInstitution:
 
     def test_aggregates_same_institution(self):
         data = [
-            _person(name="Alice", combined_score=10, artifacts=2, total_papers=5),
-            _person(name="Bob", combined_score=8, artifacts=1, total_papers=3),
+            _person(name="Alice", combined_score=10, artifact_count=2, total_papers=5),
+            _person(name="Bob", combined_score=8, artifact_count=1, total_papers=3),
         ]
         result = aggregate_by_institution(data)
         assert len(result) == 1
         assert result[0]["combined_score"] == 18
-        assert result[0]["num_authors"] == 2
-        assert result[0]["artifacts"] == 3
+        assert result[0]["author_count"] == 2
+        assert result[0]["artifact_count"] == 3
         assert result[0]["total_papers"] == 8
 
     def test_different_institutions(self):
@@ -79,7 +79,7 @@ class TestAggregateByInstitution:
             _person(
                 affiliation="TinyU",
                 combined_score=2,
-                artifacts=0,
+                artifact_count=0,
                 badges_functional=0,
                 badges_reproducible=0,
                 total_papers=1,
@@ -112,10 +112,10 @@ class TestAggregateByInstitution:
         assert result[0]["ae_ratio"] is None
         assert result[0]["role"] == "Producer"
 
-    def test_artifact_rate(self):
-        data = [_person(artifacts=5, total_papers=10, combined_score=10)]
+    def test_artifact_pct(self):
+        data = [_person(artifact_count=5, total_papers=10, combined_score=10)]
         result = aggregate_by_institution(data)
-        assert result[0]["artifact_rate"] == 50.0
+        assert result[0]["artifact_pct"] == 50.0
 
     def test_conferences_merged(self):
         data = [
@@ -126,11 +126,11 @@ class TestAggregateByInstitution:
         assert set(result[0]["conferences"]) == {"OSDI", "SOSP", "FAST"}
 
     def test_invariant_artifacts_gt_papers_raises(self):
-        data = [_person(artifacts=10, total_papers=5, combined_score=10)]
+        data = [_person(artifact_count=10, total_papers=5, combined_score=10)]
         with pytest.raises(ValueError, match="Invariant violation"):
             aggregate_by_institution(data)
 
     def test_invariant_badges_gt_artifacts_raises(self):
-        data = [_person(artifacts=2, badges_reproducible=5, combined_score=10)]
+        data = [_person(artifact_count=2, badges_reproducible=5, combined_score=10)]
         with pytest.raises(ValueError, match="Invariant violation"):
             aggregate_by_institution(data)

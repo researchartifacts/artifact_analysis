@@ -77,11 +77,11 @@ def _summarise_json(path: Path) -> dict:
                 "combined_score",
                 "artifact_score",
                 "ae_score",
-                "artifacts",
+                "artifact_count",
                 "ae_memberships",
                 "total_papers",
-                "artifact_rate",
-                "repro_rate",
+                "artifact_pct",
+                "repro_pct",
                 "badges_available",
                 "badges_functional",
                 "badges_reproducible",
@@ -232,7 +232,7 @@ _MONOTONIC_RECORD_COUNT: tuple[str, ...] = (
 # numeric.<field>.sum values that must never decrease (within a given file).
 _MONOTONIC_SUMS: dict[str, tuple[str, ...]] = {
     "assets/data/combined_rankings.json": (
-        "artifacts",
+        "artifact_count",
         "badges_available",
         "badges_functional",
         "badges_reproducible",

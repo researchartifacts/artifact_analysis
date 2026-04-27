@@ -88,9 +88,9 @@ def generate_ranking_history(data_dir: str, force: bool = False) -> None:
                 "as": r.get("artifact_score", 0),
                 "aes": r.get("ae_score", 0),
                 "tp": r.get("total_papers", 0),
-                "ta": r.get("artifacts", 0),
-                "ar": r.get("artifact_rate", 0),
-                "rr": r.get("repro_rate", 0),
+                "ta": r.get("artifact_count", 0),
+                "ar": r.get("artifact_pct", 0),
+                "rr": r.get("repro_pct", 0),
             }
 
         author_history = _update_history(author_history, author_entries, date)
@@ -121,18 +121,18 @@ def generate_ranking_history(data_dir: str, force: bool = False) -> None:
                 continue
             # Calculate repro rate for institution
             inst_rr = 0
-            if r.get("artifacts", 0) > 0:
-                inst_rr = round((r.get("badges_reproducible", 0) / r["artifacts"]) * 100, 1)
+            if r.get("artifact_count", 0) > 0:
+                inst_rr = round((r.get("badges_reproducible", 0) / r["artifact_count"]) * 100, 1)
             inst_entries[name] = {
                 "rank": idx + 1,
                 "score": r.get("combined_score", 0),
                 "as": r.get("artifact_score", 0),
                 "aes": r.get("ae_score", 0),
                 "tp": r.get("total_papers", 0),
-                "ta": r.get("artifacts", 0),
-                "ar": r.get("artifact_rate", 0),
+                "ta": r.get("artifact_count", 0),
+                "ar": r.get("artifact_pct", 0),
                 "rr": inst_rr,
-                "r": r.get("num_authors", 0),
+                "r": r.get("author_count", 0),
             }
 
         inst_history = _update_history(inst_history, inst_entries, date)

@@ -181,9 +181,9 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
             affiliation=_normalize_affiliation(
                 (a.get("affiliation", "") or m.get("affiliation", "")) if m else a.get("affiliation", "")
             ),
-            artifacts=artifacts,
+            artifact_count=artifacts,
             total_papers=a.get("total_papers", 0) or 0,
-            artifact_rate=a.get("artifact_rate", 0) or 0,
+            artifact_pct=a.get("artifact_pct", 0) or 0,
             ae_memberships=ae_memberships,
             chair_count=chair_count,
             conferences=sorted(a_confs | m_confs),
@@ -208,9 +208,9 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
         entry = _build_entry(
             name=m["name"],
             affiliation=_normalize_affiliation(m.get("affiliation", "")),
-            artifacts=0,
+            artifact_count=0,
             total_papers=0,
-            artifact_rate=0,
+            artifact_pct=0,
             ae_memberships=m.get("total_memberships", 0),
             chair_count=m.get("chair_count", 0),
             conferences=sorted(set(c[0] if isinstance(c, list) else c for c in m.get("conferences", []))),
@@ -222,8 +222,8 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
         )
         combined.append(entry)
 
-    # Sort by combined_score desc, then artifacts desc, then name asc
-    combined.sort(key=lambda x: (-x["combined_score"], -x["artifacts"], x["name"]))
+    # Sort by combined_score desc, then artifact_count desc, then name asc
+    combined.sort(key=lambda x: (-x["combined_score"], -x["artifact_count"], x["name"]))
 
     # Assign ranks (with ties on combined_score)
     rank = 1
@@ -253,9 +253,9 @@ def _build_entry(
     *,
     name,
     affiliation,
-    artifacts,
+    artifact_count,
     total_papers,
-    artifact_rate,
+    artifact_pct,
     ae_memberships,
     chair_count,
     conferences,
@@ -292,24 +292,24 @@ def _build_entry(
 
     yr_keys = [int(y) for y in years] if years else []
 
-    if artifacts > total_papers:
+    if artifact_count > total_papers:
         logger.info(
-            f"  ⚠ DBLP undercount for '{name}': artifacts ({artifacts}) > total_papers ({total_papers}), clamping"
+            f"  ⚠ DBLP undercount for '{name}': artifact_count ({artifact_count}) > total_papers ({total_papers}), clamping"
         )
-        total_papers = artifacts
-    if badges_reproducible > artifacts:
+        total_papers = artifact_count
+    if badges_reproducible > artifact_count:
         raise ValueError(
-            f"Invariant violation for '{name}': reproduced_badges ({badges_reproducible}) > artifacts ({artifacts})"
+            f"Invariant violation for '{name}': reproduced_badges ({badges_reproducible}) > artifact_count ({artifact_count})"
         )
-    if badges_functional > artifacts:
+    if badges_functional > artifact_count:
         raise ValueError(
-            f"Invariant violation for '{name}': functional_badges ({badges_functional}) > artifacts ({artifacts})"
+            f"Invariant violation for '{name}': functional_badges ({badges_functional}) > artifact_count ({artifact_count})"
         )
 
     # Calculate reproducibility rate (% of artifacts that are reproducible)
-    repro_rate = 0
-    if artifacts > 0:
-        repro_rate = int(round((badges_reproducible / artifacts) * 100))
+    repro_pct = 0
+    if artifact_count > 0:
+        repro_pct = int(round((badges_reproducible / artifact_count) * 100))
 
     # Sanitise raw name for storage/matching stability
     name = re.sub(r"[\t\n\r]+", " ", name)
@@ -324,13 +324,13 @@ def _build_entry(
         "display_name": display_name,
         "affiliation": affiliation,
         "display_affiliation": display_affiliation,
-        "artifacts": artifacts,
+        "artifact_count": artifact_count,
         "artifact_score": artifact_score,
         "artifact_citations": artifact_citations or 0,
         "citation_score": citation_score,
         "total_papers": total_papers,
-        "artifact_rate": artifact_rate,
-        "repro_rate": repro_rate,
+        "artifact_pct": artifact_pct,
+        "repro_pct": repro_pct,
         "ae_memberships": ae_memberships,
         "chair_count": chair_count,
         "ae_score": ae_score,
@@ -431,7 +431,7 @@ def generate_combined_rankings(data_dir: str) -> None:
             existing = combined_all_dict[key]
 
             # Sum all contribution metrics
-            existing["artifacts"] += person["artifacts"]
+            existing["artifact_count"] += person["artifact_count"]
             existing["artifact_score"] += person["artifact_score"]
             existing["artifact_citations"] += person.get("artifact_citations", 0)
             existing["citation_score"] += person.get("citation_score", 0)
@@ -463,26 +463,26 @@ def generate_combined_rankings(data_dir: str) -> None:
                 existing["first_year"] = min(all_years)
                 existing["last_year"] = max(all_years)
 
-            if existing["artifacts"] > existing["total_papers"]:
+            if existing["artifact_count"] > existing["total_papers"]:
                 logger.info(
                     f"  ⚠ DBLP undercount after merge for '{existing['name']}': "
-                    f"artifacts ({existing['artifacts']}) > total_papers ({existing['total_papers']}), clamping"
+                    f"artifact_count ({existing['artifact_count']}) > total_papers ({existing['total_papers']}), clamping"
                 )
-                existing["total_papers"] = existing["artifacts"]
-            if existing["badges_reproducible"] > existing["artifacts"]:
+                existing["total_papers"] = existing["artifact_count"]
+            if existing["badges_reproducible"] > existing["artifact_count"]:
                 raise ValueError(
-                    f"Invariant violation after systems+security merge for '{existing['name']}': reproduced_badges ({existing['badges_reproducible']}) > artifacts ({existing['artifacts']})"
+                    f"Invariant violation after systems+security merge for '{existing['name']}': reproduced_badges ({existing['badges_reproducible']}) > artifact_count ({existing['artifact_count']})"
                 )
-            if existing["badges_functional"] > existing["artifacts"]:
+            if existing["badges_functional"] > existing["artifact_count"]:
                 raise ValueError(
-                    f"Invariant violation after systems+security merge for '{existing['name']}': functional_badges ({existing['badges_functional']}) > artifacts ({existing['artifacts']})"
+                    f"Invariant violation after systems+security merge for '{existing['name']}': functional_badges ({existing['badges_functional']}) > artifact_count ({existing['artifact_count']})"
                 )
 
             # Recalculate rates based on summed totals
             if existing["total_papers"] > 0:
-                existing["artifact_rate"] = int(round((existing["artifacts"] / existing["total_papers"]) * 100))
-            if existing["artifacts"] > 0:
-                existing["repro_rate"] = int(round((existing["badges_reproducible"] / existing["artifacts"]) * 100))
+                existing["artifact_pct"] = int(round((existing["artifact_count"] / existing["total_papers"]) * 100))
+            if existing["artifact_count"] > 0:
+                existing["repro_pct"] = int(round((existing["badges_reproducible"] / existing["artifact_count"]) * 100))
             # Recalculate ae_ratio based on merged scores
             if existing["ae_score"] > 0:
                 existing["ae_ratio"] = round(existing["artifact_score"] / existing["ae_score"], 2)
@@ -604,9 +604,9 @@ def generate_combined_rankings(data_dir: str) -> None:
 
     # Summary YAML
     # Count people who have both artifacts AND AE service
-    both_all = sum(1 for c in combined_all if c["artifacts"] > 0 and c["ae_memberships"] > 0)
-    both_sys = sum(1 for c in combined_sys if c["artifacts"] > 0 and c["ae_memberships"] > 0)
-    both_sec = sum(1 for c in combined_sec if c["artifacts"] > 0 and c["ae_memberships"] > 0)
+    both_all = sum(1 for c in combined_all if c["artifact_count"] > 0 and c["ae_memberships"] > 0)
+    both_sys = sum(1 for c in combined_sys if c["artifact_count"] > 0 and c["ae_memberships"] > 0)
+    both_sec = sum(1 for c in combined_sec if c["artifact_count"] > 0 and c["ae_memberships"] > 0)
 
     summary = {
         "combined_total": len(combined_all),

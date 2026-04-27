@@ -23,7 +23,7 @@ class AuthorProfile(BaseModel):
     years: list[int] | dict[str, int] = Field(description="Years of activity (list of years or year → count mapping).")
     artifact_count: int = Field(ge=0, description="Number of artifacts authored.")
     total_papers: int = Field(ge=0, description="Total papers at tracked conferences.")
-    artifact_rate: float = Field(ge=0, le=100, description="Percentage of papers with artifacts.")
+    artifact_pct: float = Field(ge=0, le=100, description="Percentage of papers with artifacts.")
     artifact_citations: int = Field(ge=0, description="Total artifact citations.")
     badges_available: int = Field(ge=0, description="Count of 'available' badges.")
     badges_functional: int = Field(ge=0, description="Count of 'functional' badges.")

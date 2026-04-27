@@ -14,9 +14,9 @@ def _entry_kwargs(**overrides):
     defaults = {
         "name": "Alice",
         "affiliation": "MIT",
-        "artifacts": 2,
+        "artifact_count": 2,
         "total_papers": 5,
-        "artifact_rate": 40.0,
+        "artifact_pct": 40.0,
         "ae_memberships": 0,
         "chair_count": 0,
         "conferences": ["SOSP"],
@@ -76,34 +76,34 @@ class TestBuildEntry:
         assert entry["last_year"] is None
 
     def test_repro_rate(self):
-        entry = _build_entry(**_entry_kwargs(artifacts=4, badges_reproducible=2))
-        assert entry["repro_rate"] == 50
+        entry = _build_entry(**_entry_kwargs(artifact_count=4, badges_reproducible=2))
+        assert entry["repro_pct"] == 50
 
     def test_repro_rate_zero_artifacts(self):
         entry = _build_entry(
             **_entry_kwargs(
-                artifacts=0,
+                artifact_count=0,
                 total_papers=0,
                 badges_available=0,
                 badges_functional=0,
                 badges_reproducible=0,
             )
         )
-        assert entry["repro_rate"] == 0
+        assert entry["repro_pct"] == 0
 
     def test_artifacts_clamped_to_total_papers(self):
-        # When artifacts > total_papers, total_papers gets clamped up (logger warning).
-        entry = _build_entry(**_entry_kwargs(artifacts=10, total_papers=5))
+        # When artifact_count > total_papers, total_papers gets clamped up (logger warning).
+        entry = _build_entry(**_entry_kwargs(artifact_count=10, total_papers=5))
         assert entry["total_papers"] == 10
-        assert entry["artifacts"] == 10
+        assert entry["artifact_count"] == 10
 
     def test_invariant_reproducible_gt_artifacts_raises(self):
         with pytest.raises(ValueError, match="Invariant violation"):
-            _build_entry(**_entry_kwargs(artifacts=2, badges_reproducible=5))
+            _build_entry(**_entry_kwargs(artifact_count=2, badges_reproducible=5))
 
     def test_invariant_functional_gt_artifacts_raises(self):
         with pytest.raises(ValueError, match="Invariant violation"):
-            _build_entry(**_entry_kwargs(artifacts=2, badges_functional=5))
+            _build_entry(**_entry_kwargs(artifact_count=2, badges_functional=5))
 
     def test_display_name_strips_dblp_year_suffix(self):
         # The display_name regex strips a trailing " <4-digits>" DBLP suffix.
@@ -123,7 +123,7 @@ class TestMergeRankings:
                 "affiliation": "MIT",
                 "total": 2,
                 "total_papers": 5,
-                "artifact_rate": 40.0,
+                "artifact_pct": 40.0,
                 "conferences": ["SOSP"],
                 "years": [2023],
                 "badges_available": 2,
@@ -152,7 +152,7 @@ class TestMergeRankings:
         result = _merge_rankings([], members)
         assert len(result) == 1
         assert result[0]["name"] == "Bob Jones"
-        assert result[0]["artifacts"] == 0
+        assert result[0]["artifact_count"] == 0
         assert result[0]["ae_memberships"] == 2
         assert result[0]["chair_count"] == 1
 
@@ -163,7 +163,7 @@ class TestMergeRankings:
                 "affiliation": "MIT",
                 "total": 2,
                 "total_papers": 5,
-                "artifact_rate": 40.0,
+                "artifact_pct": 40.0,
                 "conferences": ["SOSP"],
                 "years": [2023],
                 "badges_available": 2,
@@ -185,7 +185,7 @@ class TestMergeRankings:
         result = _merge_rankings(authors, members)
         # Should be merged into one entry
         assert len(result) == 1
-        assert result[0]["artifacts"] == 2
+        assert result[0]["artifact_count"] == 2
         assert result[0]["ae_memberships"] == 1
 
     def test_sorted_by_combined_score_desc(self):
@@ -195,7 +195,7 @@ class TestMergeRankings:
                 "affiliation": "U1",
                 "total": 1,
                 "total_papers": 1,
-                "artifact_rate": 100.0,
+                "artifact_pct": 100.0,
                 "conferences": [],
                 "years": [],
                 "badges_available": 1,
@@ -208,7 +208,7 @@ class TestMergeRankings:
                 "affiliation": "U2",
                 "total": 3,
                 "total_papers": 3,
-                "artifact_rate": 100.0,
+                "artifact_pct": 100.0,
                 "conferences": [],
                 "years": [],
                 "badges_available": 3,
@@ -230,7 +230,7 @@ class TestMergeRankings:
                 "affiliation": "U",
                 "total": 1,
                 "total_papers": 1,
-                "artifact_rate": 100.0,
+                "artifact_pct": 100.0,
                 "conferences": [],
                 "years": [],
                 "badges_available": 1,
@@ -243,7 +243,7 @@ class TestMergeRankings:
                 "affiliation": "U",
                 "total": 1,
                 "total_papers": 1,
-                "artifact_rate": 100.0,
+                "artifact_pct": 100.0,
                 "conferences": [],
                 "years": [],
                 "badges_available": 1,

@@ -42,12 +42,12 @@ class TestCombinedRankings:
                     "artifact_score": 12,
                     "ae_score": 3,
                     "citation_score": 0,
-                    "artifacts": 5,
+                    "artifact_count": 5,
                     "ae_memberships": 1,
                     "badges_available": 5,
                     "badges_functional": 4,
                     "badges_reproducible": 3,
-                    "artifact_rate": 50.0,
+                    "artifact_pct": 50.0,
                 }
             ],
         )
@@ -65,7 +65,7 @@ class TestCombinedRankings:
                     "artifact_score": -5,
                     "ae_score": 0,
                     "citation_score": 0,
-                    "artifacts": 0,
+                    "artifact_count": 0,
                 }
             ],
         )
@@ -82,7 +82,7 @@ class TestCombinedRankings:
                     "artifact_score": 10,
                     "ae_score": 5,
                     "citation_score": 0,
-                    "artifacts": 10,
+                    "artifact_count": 10,
                 }
             ],
         )
@@ -99,7 +99,7 @@ class TestCombinedRankings:
                     "artifact_score": 5,
                     "ae_score": 0,
                     "citation_score": 0,
-                    "artifacts": 2,
+                    "artifact_count": 2,
                     "badges_available": 2,
                     "badges_functional": 3,
                     "badges_reproducible": 0,
@@ -124,13 +124,13 @@ class TestCombinedRankings:
             "artifact_score": 5,
             "ae_score": 0,
             "citation_score": 0,
-            "artifacts": 5,
+            "artifact_count": 5,
         }
         _write_json(output_dir / "assets/data/combined_rankings.json", [rec, rec])
         vs = check_combined_rankings(output_dir)
         assert any("name_unique" in v.check for v in vs)
 
-    def test_artifact_rate_out_of_range(self, output_dir):
+    def test_artifact_pct_out_of_range(self, output_dir):
         _write_json(
             output_dir / "assets/data/combined_rankings.json",
             [
@@ -140,8 +140,8 @@ class TestCombinedRankings:
                     "artifact_score": 0,
                     "ae_score": 0,
                     "citation_score": 0,
-                    "artifacts": 0,
-                    "artifact_rate": 150.0,
+                    "artifact_count": 0,
+                    "artifact_pct": 150.0,
                 }
             ],
         )
@@ -244,12 +244,12 @@ class TestCheckAll:
                     "artifact_score": 5,
                     "ae_score": 0,
                     "citation_score": 0,
-                    "artifacts": 5,
+                    "artifact_count": 5,
                     "ae_memberships": 0,
                     "badges_available": 5,
                     "badges_functional": 3,
                     "badges_reproducible": 1,
-                    "artifact_rate": 50.0,
+                    "artifact_pct": 50.0,
                 }
             ],
         )

@@ -84,7 +84,7 @@ def generate_profiles(data_dir: str) -> None:
             "years": a.get("years", []),
             "artifact_count": a.get("artifact_count", 0),
             "total_papers": a.get("total_papers", 0),
-            "artifact_rate": a.get("artifact_rate", 0),
+            "artifact_pct": a.get("artifact_pct", 0),
             "artifact_citations": a.get("artifact_citations", 0),
             "badges_available": a.get("badges_available", 0),
             "badges_functional": a.get("badges_functional", 0),
@@ -99,9 +99,9 @@ def generate_profiles(data_dir: str) -> None:
             profile["citation_score"] = cr.get("citation_score", 0)
             profile["ae_score"] = cr.get("ae_score", 0)
             profile["rank"] = cr.get("rank", 0)
-            profile["artifact_count"] = cr.get("artifacts", profile["artifact_count"])
+            profile["artifact_count"] = cr.get("artifact_count", profile["artifact_count"])
             profile["total_papers"] = cr.get("total_papers", profile["total_papers"])
-            profile["artifact_rate"] = cr.get("artifact_rate", profile["artifact_rate"])
+            profile["artifact_pct"] = cr.get("artifact_pct", profile["artifact_pct"])
             profile["artifact_citations"] = cr.get("artifact_citations", profile["artifact_citations"])
             profile["badges_available"] = cr.get("badges_available", profile["badges_available"])
             profile["badges_functional"] = cr.get("badges_functional", profile["badges_functional"])
@@ -152,7 +152,7 @@ def generate_profiles(data_dir: str) -> None:
             "years": sorted(int(y) for y in m.get("years", {})),
             "artifact_count": 0,
             "total_papers": 0,
-            "artifact_rate": 0,
+            "artifact_pct": 0,
             "artifact_citations": 0,
             "badges_available": 0,
             "badges_functional": 0,

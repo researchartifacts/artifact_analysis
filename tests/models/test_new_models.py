@@ -372,7 +372,7 @@ class TestAuthorProfile:
             years=[2023],
             artifact_count=0,
             total_papers=0,
-            artifact_rate=0,
+            artifact_pct=0,
             artifact_citations=0,
             badges_available=0,
             badges_functional=0,
@@ -398,7 +398,7 @@ class TestAuthorProfile:
             years=[2023],
             artifact_count=1,
             total_papers=1,
-            artifact_rate=100,
+            artifact_pct=100,
             artifact_citations=0,
             badges_available=1,
             badges_functional=0,
@@ -424,7 +424,7 @@ class TestAuthorProfile:
                 years=[],
                 artifact_count=0,
                 total_papers=0,
-                artifact_rate=0,
+                artifact_pct=0,
                 artifact_citations=0,
                 badges_available=0,
                 badges_functional=0,
@@ -480,7 +480,7 @@ class TestArtifactAvailability:
 class TestRepoStatsYearly:
     def test_all_areas(self):
         m = YearlyRepoMetrics(
-            repos=10,
+            github_repos=10,
             avg_stars=5.0,
             avg_forks=2.0,
             min_stars=1.0,
@@ -493,7 +493,7 @@ class TestRepoStatsYearly:
 
     def test_without_systems(self):
         m = YearlyRepoMetrics(
-            repos=5,
+            github_repos=5,
             avg_stars=3.0,
             avg_forks=1.0,
             min_stars=1.0,
@@ -507,7 +507,7 @@ class TestRepoStatsYearly:
     def test_extra_field_rejected(self):
         with pytest.raises(ValidationError):
             YearlyRepoMetrics(
-                repos=1,
+                github_repos=1,
                 avg_stars=0,
                 avg_forks=0,
                 min_stars=0,

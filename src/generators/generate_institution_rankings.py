@@ -32,13 +32,13 @@ def aggregate_by_institution(combined_data):
             "artifact_citations": 0,
             "citation_score": 0,
             "ae_score": 0,
-            "artifacts": 0,
+            "artifact_count": 0,
             "badges_functional": 0,
             "badges_reproducible": 0,
             "ae_memberships": 0,
             "chair_count": 0,
             "total_papers": 0,
-            "num_authors": 0,
+            "author_count": 0,
             "conferences": set(),
             "years": defaultdict(int),
         }
@@ -58,13 +58,13 @@ def aggregate_by_institution(combined_data):
         inst["artifact_citations"] += person.get("artifact_citations", 0)
         inst["citation_score"] += person.get("citation_score", 0)
         inst["ae_score"] += person.get("ae_score", 0)
-        inst["artifacts"] += person.get("artifacts", 0)
+        inst["artifact_count"] += person.get("artifact_count", 0)
         inst["badges_functional"] += person.get("badges_functional", 0)
         inst["badges_reproducible"] += person.get("badges_reproducible", 0)
         inst["ae_memberships"] += person.get("ae_memberships", 0)
         inst["chair_count"] += person.get("chair_count", 0)
         inst["total_papers"] += person.get("total_papers", 0)
-        inst["num_authors"] += 1
+        inst["author_count"] += 1
 
         # Aggregate conferences
         if person.get("conferences"):
@@ -78,23 +78,23 @@ def aggregate_by_institution(combined_data):
     # Convert to list and calculate derived fields
     institutions = []
     for affiliation, data in inst_data.items():
-        if data["artifacts"] > data["total_papers"]:
+        if data["artifact_count"] > data["total_papers"]:
             raise ValueError(
-                f"Invariant violation for institution '{affiliation}': artifacts ({data['artifacts']}) > total_papers ({data['total_papers']})"
+                f"Invariant violation for institution '{affiliation}': artifact_count ({data['artifact_count']}) > total_papers ({data['total_papers']})"
             )
-        if data["badges_reproducible"] > data["artifacts"]:
+        if data["badges_reproducible"] > data["artifact_count"]:
             raise ValueError(
-                f"Invariant violation for institution '{affiliation}': reproduced_badges ({data['badges_reproducible']}) > artifacts ({data['artifacts']})"
+                f"Invariant violation for institution '{affiliation}': reproduced_badges ({data['badges_reproducible']}) > artifact_count ({data['artifact_count']})"
             )
-        if data["badges_functional"] > data["artifacts"]:
+        if data["badges_functional"] > data["artifact_count"]:
             raise ValueError(
-                f"Invariant violation for institution '{affiliation}': functional_badges ({data['badges_functional']}) > artifacts ({data['artifacts']})"
+                f"Invariant violation for institution '{affiliation}': functional_badges ({data['badges_functional']}) > artifact_count ({data['artifact_count']})"
             )
 
         # Calculate artifact rate
-        artifact_rate = 0
+        artifact_pct = 0
         if data["total_papers"] > 0:
-            artifact_rate = round((data["artifacts"] / data["total_papers"]) * 100, 1)
+            artifact_pct = round((data["artifact_count"] / data["total_papers"]) * 100, 1)
 
         # Calculate A:E ratio
         ae_ratio = None
@@ -131,14 +131,14 @@ def aggregate_by_institution(combined_data):
                     "ae_score": data["ae_score"],
                     "ae_ratio": ae_ratio,
                     "role": role,
-                    "artifacts": data["artifacts"],
+                    "artifact_count": data["artifact_count"],
                     "badges_functional": data["badges_functional"],
                     "badges_reproducible": data["badges_reproducible"],
                     "ae_memberships": data["ae_memberships"],
                     "chair_count": data["chair_count"],
                     "total_papers": data["total_papers"],
-                    "artifact_rate": artifact_rate,
-                    "num_authors": data["num_authors"],
+                    "artifact_pct": artifact_pct,
+                    "author_count": data["author_count"],
                     "conferences": sorted(list(data["conferences"])),
                     "years": {str(k): v for k, v in data["years"].items()},
                     "top_authors": [],

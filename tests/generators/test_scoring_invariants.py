@@ -18,9 +18,9 @@ class TestScoringFormulas:
         entry = _build_entry(
             name="Test",
             affiliation="MIT",
-            artifacts=5,
+            artifact_count=5,
             total_papers=10,
-            artifact_rate=50,
+            artifact_pct=50,
             ae_memberships=0,
             chair_count=0,
             conferences=["SOSP"],
@@ -39,9 +39,9 @@ class TestScoringFormulas:
         entry = _build_entry(
             name="Test",
             affiliation="MIT",
-            artifacts=0,
+            artifact_count=0,
             total_papers=0,
-            artifact_rate=0,
+            artifact_pct=0,
             ae_memberships=3,
             chair_count=1,
             conferences=["SOSP"],
@@ -60,9 +60,9 @@ class TestScoringFormulas:
         entry = _build_entry(
             name="Test",
             affiliation="MIT",
-            artifacts=2,
+            artifact_count=2,
             total_papers=5,
-            artifact_rate=40,
+            artifact_pct=40,
             ae_memberships=1,
             chair_count=0,
             conferences=["CCS"],
@@ -80,9 +80,9 @@ class TestScoringFormulas:
         entry = _build_entry(
             name="Test",
             affiliation="MIT",
-            artifacts=1,
+            artifact_count=1,
             total_papers=1,
-            artifact_rate=100,
+            artifact_pct=100,
             ae_memberships=0,
             chair_count=0,
             conferences=[],
@@ -100,9 +100,9 @@ class TestScoringFormulas:
         entry = _build_entry(
             name="Test",
             affiliation="MIT",
-            artifacts=3,
+            artifact_count=3,
             total_papers=5,
-            artifact_rate=60,
+            artifact_pct=60,
             ae_memberships=1,
             chair_count=0,
             conferences=[],
@@ -115,15 +115,15 @@ class TestScoringFormulas:
         # artifact_score = 3+2+1=6, ae_score = 3, ratio = 2.0
         assert entry["ae_ratio"] == 2.0
 
-    def test_repro_rate_zero_when_no_artifacts(self):
+    def test_repro_pct_zero_when_no_artifacts(self):
         from src.generators.generate_combined_rankings import _build_entry
 
         entry = _build_entry(
             name="Test",
             affiliation="MIT",
-            artifacts=0,
+            artifact_count=0,
             total_papers=0,
-            artifact_rate=0,
+            artifact_pct=0,
             ae_memberships=1,
             chair_count=0,
             conferences=[],
@@ -133,7 +133,7 @@ class TestScoringFormulas:
             badges_functional=0,
             badges_reproducible=0,
         )
-        assert entry["repro_rate"] == 0
+        assert entry["repro_pct"] == 0
 
 
 # ── Invariant violations ─────────────────────────────────────────────────────
@@ -145,13 +145,13 @@ class TestInvariantViolations:
     def test_reproducible_exceeds_artifacts_raises(self):
         from src.generators.generate_combined_rankings import _build_entry
 
-        with pytest.raises(ValueError, match="reproduced_badges.*>.*artifacts"):
+        with pytest.raises(ValueError, match="reproduced_badges.*>.*artifact_count"):
             _build_entry(
                 name="Bad",
                 affiliation="",
-                artifacts=2,
+                artifact_count=2,
                 total_papers=5,
-                artifact_rate=40,
+                artifact_pct=40,
                 ae_memberships=0,
                 chair_count=0,
                 conferences=[],
@@ -165,13 +165,13 @@ class TestInvariantViolations:
     def test_functional_exceeds_artifacts_raises(self):
         from src.generators.generate_combined_rankings import _build_entry
 
-        with pytest.raises(ValueError, match="functional_badges.*>.*artifacts"):
+        with pytest.raises(ValueError, match="functional_badges.*>.*artifact_count"):
             _build_entry(
                 name="Bad",
                 affiliation="",
-                artifacts=1,
+                artifact_count=1,
                 total_papers=5,
-                artifact_rate=20,
+                artifact_pct=20,
                 ae_memberships=0,
                 chair_count=0,
                 conferences=[],
@@ -192,9 +192,9 @@ class TestInvariantViolations:
         entry = _build_entry(
             name="Clamped",
             affiliation="",
-            artifacts=5,
-            total_papers=3,  # < artifacts
-            artifact_rate=100,
+            artifact_count=5,
+            total_papers=3,  # < artifact_count
+            artifact_pct=100,
             ae_memberships=0,
             chair_count=0,
             conferences=[],
@@ -205,7 +205,7 @@ class TestInvariantViolations:
             badges_reproducible=0,
         )
         # total_papers is clamped up to artifacts
-        assert entry["total_papers"] >= entry["artifacts"]
+        assert entry["total_papers"] >= entry["artifact_count"]
         assert "undercount" in caplog.text.lower() or "clamping" in caplog.text.lower()
 
 
@@ -224,9 +224,9 @@ class TestRankingContract:
                 _build_entry(
                     name=name,
                     affiliation="",
-                    artifacts=arts,
+                    artifact_count=arts,
                     total_papers=arts,
-                    artifact_rate=100,
+                    artifact_pct=100,
                     ae_memberships=ae,
                     chair_count=0,
                     conferences=[],
@@ -239,7 +239,7 @@ class TestRankingContract:
             )
 
         # Sort and assign ranks like the generator does
-        entries.sort(key=lambda x: (-x["combined_score"], -x["artifacts"], x["name"]))
+        entries.sort(key=lambda x: (-x["combined_score"], -x["artifact_count"], x["name"]))
         rank = 1
         for i, c in enumerate(entries):
             if i > 0 and c["combined_score"] < entries[i - 1]["combined_score"]:

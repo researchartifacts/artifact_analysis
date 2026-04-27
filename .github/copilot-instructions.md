@@ -19,6 +19,23 @@ JSON Schema files in `data-schemas` are auto-generated from these models via
 
 To export locally: `python -m src.models.export_schemas --output_dir ../data-schemas/schemas`
 
+### When renaming or removing model fields
+
+Renaming or removing a field in `src/models/` is a **breaking change** that requires
+a coordinated update across multiple repos. Bump the **minor** version (pre-1.0) or
+**major** version (post-1.0) in `pyproject.toml` and update all of these:
+
+1. **Generator** (`src/generators/`) — produce the new field name.
+2. **Pydantic model** (`src/models/`) — rename the field.
+3. **Tests** (`tests/`) — update assertions, fixtures, and snapshot JSON.
+4. **Invariants** (`src/invariants.py`) — update any field-name references.
+5. **Snapshot** (`src/snapshot.py`) — update `_MONOTONIC_SUMS` and numeric field lists.
+6. **JSON schemas** (`data-schemas/schemas/`) — auto-exported by CI, but verify locally.
+7. **Website JS** (`reprodb.github.io/_includes/`) — update column `key:` values and
+   dot-property access (e.g. `d.old_name` → `d.new_name`).
+8. **Website data** (`reprodb.github.io/assets/data/` and `_data/`) — regenerate via
+   pipeline or bulk-rename; these are pipeline output consumed by the site.
+
 ### Pydantic model mapping
 
 | Generator | Pydantic model (`src/models/`) |
@@ -30,6 +47,22 @@ To export locally: `python -m src.models.export_schemas --output_dir ../data-sch
 | `generate_author_stats.py` | `author_stats.py`, `paper_index.py` |
 | `generate_search_data.py` | `search_data.py` |
 | `generate_author_index.py` | `author_index.py` |
+
+### Field naming conventions
+
+New model fields **must** follow these suffixes so names are self-describing:
+
+| Suffix | Meaning | Example |
+|--------|---------|---------|
+| `_count` | Count of discrete items | `artifact_count`, `author_count` |
+| `_pct` | Percentage (0–100) | `artifact_pct`, `repro_pct` |
+| `_score` | Computed ranking/weighting value | `combined_score`, `ae_score` |
+| `_rate` | *(deprecated — use `_pct`)* | — |
+| `total_` | Sum across a collection | `total_papers`, `total_artifacts` |
+| `avg_` | Arithmetic mean | `avg_score` |
+| `max_` / `min_` | Extremes | `max_stars` |
+| `badges_` | Badge-type count | `badges_functional` |
+| `github_` | Single-repo raw GitHub API value | `github_repos` |
 
 ### Validation
 

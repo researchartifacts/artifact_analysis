@@ -177,7 +177,7 @@ class TestMonotonicity:
                 "assets/data/combined_rankings.json": {
                     "record_count": record_count,
                     "numeric": {
-                        "artifacts": {"sum": artifacts_sum},
+                        "artifact_count": {"sum": artifacts_sum},
                         "badges_available": {"sum": badges_available_sum},
                         "badges_functional": {"sum": badges_functional_sum},
                         "badges_reproducible": {"sum": badges_reproducible_sum},
@@ -222,7 +222,7 @@ class TestMonotonicity:
         old = self._make_snapshot(artifacts_sum=500)
         new = self._make_snapshot(artifacts_sum=490)
         violations = check_monotonicity(old, new)
-        assert any(v.check == "artifacts.sum" for v in violations)
+        assert any(v.check == "artifact_count.sum" for v in violations)
 
     def test_badges_sum_decrease_detected(self):
         old = self._make_snapshot(badges_available_sum=400)

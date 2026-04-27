@@ -447,11 +447,11 @@ def aggregate_author_statistics(
             )
 
         # Artifact rate: % of tracked-conference papers that have an artifact.
-        artifact_rate = round(art_count / total_papers * 100, 1) if total_papers > 0 else 0.0
+        artifact_pct = round(art_count / total_papers * 100, 1) if total_papers > 0 else 0.0
         # Reproducibility rate: % of artifact papers with a "reproduced" badge
-        repro_rate = round(repro / art_count * 100, 1) if art_count > 0 else 0.0
+        repro_pct = round(repro / art_count * 100, 1) if art_count > 0 else 0.0
         # Functional rate: % of artifact papers with a "functional" badge
-        functional_rate = round(func / art_count * 100, 1) if art_count > 0 else 0.0
+        functional_pct = round(func / art_count * 100, 1) if art_count > 0 else 0.0
 
         # Look up affiliation from DBLP
         affiliation_raw = affiliations.get(stats["name"], "")
@@ -465,9 +465,9 @@ def aggregate_author_statistics(
             "total_papers": total_papers,
             "total_papers_by_conf": total_papers_by_conf,
             "total_papers_by_conf_year": total_papers_by_conf_year,
-            "artifact_rate": artifact_rate,
-            "repro_rate": repro_rate,
-            "functional_rate": functional_rate,
+            "artifact_pct": artifact_pct,
+            "repro_pct": repro_pct,
+            "functional_pct": functional_pct,
             "category": category,
             "conferences": sorted(list(stats["conferences"])),
             "years": years_sorted,

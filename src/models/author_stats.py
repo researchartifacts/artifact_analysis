@@ -61,9 +61,9 @@ class AuthorStats(BaseModel):
     total_papers_by_conf_year: dict[str, dict[str, int]] = Field(
         description="Nested mapping: conference name → { year → count }.",
     )
-    artifact_rate: float = Field(ge=0, le=100, description="Percentage of papers with artifacts.")
-    repro_rate: float = Field(ge=0, le=100, description="Percentage of artifacts with a reproducibility badge.")
-    functional_rate: float = Field(ge=0, le=100, description="Percentage of artifacts with a functional badge.")
+    artifact_pct: float = Field(ge=0, le=100, description="Percentage of papers with artifacts.")
+    repro_pct: float = Field(ge=0, le=100, description="Percentage of artifacts with a reproducibility badge.")
+    functional_pct: float = Field(ge=0, le=100, description="Percentage of artifacts with a functional badge.")
     category: Literal["systems", "security", "both", "unknown"] = Field(
         description="Research domain based on conferences published at.",
     )

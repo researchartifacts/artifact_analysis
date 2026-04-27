@@ -515,7 +515,7 @@ def main():
                     total_stars = sum(r * s for r, s in zip(rl, sl))
                     total_forks = sum(r * f for r, f in zip(rl, fl))
                     entry[bucket] = {
-                        "repos": total_repos,
+                        "github_repos": total_repos,
                         "avg_stars": round(total_stars / total_repos, 1) if total_repos else 0,
                         "avg_forks": round(total_forks / total_repos, 1) if total_repos else 0,
                         "min_stars": round(min(sl), 1),

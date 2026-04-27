@@ -82,9 +82,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
@@ -99,7 +99,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -264,7 +264,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 137,
           "max": 100.0,
           "mean": 23.519,
@@ -278,7 +278,7 @@
           "min": 0,
           "sum": 83
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 137,
           "max": 5,
           "mean": 0.5839,
@@ -320,7 +320,7 @@
           "min": 3,
           "sum": 469
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 137,
           "max": 100,
           "mean": 18.7299,
@@ -343,20 +343,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -1277,7 +1277,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 906,
           "max": 100.0,
           "mean": 91.8425,
@@ -1291,7 +1291,7 @@
           "min": 1,
           "sum": 1960
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 906,
           "max": 5,
           "mean": 1.1313,
@@ -1319,7 +1319,7 @@
           "min": 0,
           "sum": 438
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 906,
           "max": 100.0,
           "mean": 42.6215,
@@ -1345,16 +1345,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -1381,7 +1381,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 59,
           "max": 100.0,
           "mean": 37.2966,
@@ -1395,7 +1395,7 @@
           "min": 0,
           "sum": 83
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 59,
           "max": 16,
           "mean": 1.3559,
@@ -3627,9 +3627,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
@@ -3644,7 +3644,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -4469,7 +4469,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 797,
           "max": 100.0,
           "mean": 45.6945,
@@ -4483,7 +4483,7 @@
           "min": 0,
           "sum": 1316
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 797,
           "max": 5,
           "mean": 0.5859,
@@ -4525,7 +4525,7 @@
           "min": 3,
           "sum": 2934
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 797,
           "max": 100,
           "mean": 44.6838,
@@ -4548,20 +4548,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -5225,7 +5225,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 649,
           "max": 100.0,
           "mean": 95.8296,
@@ -5239,7 +5239,7 @@
           "min": 1,
           "sum": 1774
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 649,
           "max": 5,
           "mean": 1.1325,
@@ -5267,7 +5267,7 @@
           "min": 0,
           "sum": 438
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 649,
           "max": 100.0,
           "mean": 58.418,
@@ -5293,16 +5293,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -5329,7 +5329,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 215,
           "max": 100.0,
           "mean": 45.2028,
@@ -5343,7 +5343,7 @@
           "min": 0,
           "sum": 819
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 215,
           "max": 32,
           "mean": 1.3953,
@@ -13055,7 +13055,7 @@
         "affiliation",
         "artifact_citations",
         "artifact_count",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
         "badges_available",
         "badges_functional",
@@ -22573,7 +22573,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 9478,
           "max": 100,
           "mean": 67.9076,
@@ -22639,7 +22639,7 @@
         "affiliation",
         "artifact_citations",
         "artifact_count",
-        "artifact_rate",
+        "artifact_pct",
         "author_id",
         "badges_available",
         "badges_functional",
@@ -22647,14 +22647,14 @@
         "category",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "name",
         "paper_ids",
         "papers",
         "papers_without_artifact_ids",
         "papers_without_artifacts",
         "recent_count",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "total_papers_by_conf",
         "total_papers_by_conf_year",
@@ -30614,7 +30614,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 7943,
           "max": 100.0,
           "mean": 78.4836,
@@ -30642,7 +30642,7 @@
           "min": 0,
           "sum": 5367
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 7943,
           "max": 100.0,
           "mean": 44.1868,
@@ -30668,9 +30668,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
@@ -30685,7 +30685,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -30764,7 +30764,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 51,
           "max": 100.0,
           "mean": 45.7275,
@@ -30778,7 +30778,7 @@
           "min": 0,
           "sum": 115
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 51,
           "max": 9,
           "mean": 2.2549,
@@ -30820,7 +30820,7 @@
           "min": 3,
           "sum": 206
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 51,
           "max": 0,
           "mean": 0.0,
@@ -30843,20 +30843,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -31317,7 +31317,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 446,
           "max": 100.0,
           "mean": 80.0092,
@@ -31331,7 +31331,7 @@
           "min": 1,
           "sum": 573
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 446,
           "max": 9,
           "mean": 1.2848,
@@ -31359,7 +31359,7 @@
           "min": 0,
           "sum": 0
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 446,
           "max": 0.0,
           "mean": 0.0,
@@ -31385,16 +31385,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -31421,7 +31421,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 36,
           "max": 100.0,
           "mean": 44.4222,
@@ -31435,7 +31435,7 @@
           "min": 0,
           "sum": 115
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 36,
           "max": 21,
           "mean": 3.1944,
@@ -31504,9 +31504,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
@@ -31520,7 +31520,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -37121,7 +37121,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 5573,
           "max": 100,
           "mean": 60.1715,
@@ -37135,7 +37135,7 @@
           "min": 0,
           "sum": 18018
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 5573,
           "max": 18,
           "mean": 1.3614,
@@ -37177,7 +37177,7 @@
           "min": 3,
           "sum": 29611
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 5573,
           "max": 100,
           "mean": 57.2446,
@@ -37208,9 +37208,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
@@ -37224,7 +37224,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -38020,7 +38020,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 768,
           "max": 100.0,
           "mean": 49.3268,
@@ -38034,7 +38034,7 @@
           "min": 0,
           "sum": 1361
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 768,
           "max": 3,
           "mean": 0.6315,
@@ -38076,7 +38076,7 @@
           "min": 3,
           "sum": 2721
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 768,
           "max": 100,
           "mean": 48.8281,
@@ -38099,20 +38099,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -38918,7 +38918,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 791,
           "max": 100.0,
           "mean": 92.235,
@@ -38932,7 +38932,7 @@
           "min": 1,
           "sum": 2015
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 791,
           "max": 3,
           "mean": 1.0936,
@@ -38960,7 +38960,7 @@
           "min": 0,
           "sum": 412
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 791,
           "max": 100.0,
           "mean": 47.7876,
@@ -38986,16 +38986,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -39022,7 +39022,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 290,
           "max": 100.0,
           "mean": 43.4286,
@@ -39036,7 +39036,7 @@
           "min": 0,
           "sum": 1115
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 290,
           "max": 26,
           "mean": 1.3897,
@@ -39090,9 +39090,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
@@ -39106,7 +39106,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -39365,7 +39365,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 231,
           "max": 100.0,
           "mean": 35.9312,
@@ -39379,7 +39379,7 @@
           "min": 0,
           "sum": 288
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 231,
           "max": 2,
           "mean": 0.4286,
@@ -39421,7 +39421,7 @@
           "min": 3,
           "sum": 807
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 231,
           "max": 100,
           "mean": 35.9307,
@@ -39444,20 +39444,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -39651,7 +39651,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 179,
           "max": 100.0,
           "mean": 93.2966,
@@ -39665,7 +39665,7 @@
           "min": 1,
           "sum": 434
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 179,
           "max": 2,
           "mean": 1.0615,
@@ -39693,7 +39693,7 @@
           "min": 0,
           "sum": 91
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 179,
           "max": 100.0,
           "mean": 46.3687,
@@ -39719,16 +39719,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -39755,7 +39755,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 99,
           "max": 100.0,
           "mean": 29.7141,
@@ -39769,7 +39769,7 @@
           "min": 0,
           "sum": 162
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 99,
           "max": 6,
           "mean": 0.5758,
@@ -39840,16 +39840,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -39876,7 +39876,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 853,
           "max": 100.0,
           "mean": 50.9165,
@@ -39890,7 +39890,7 @@
           "min": 0,
           "sum": 13634
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 853,
           "max": 172,
           "mean": 7.0856,
@@ -39949,9 +39949,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
@@ -39966,7 +39966,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -40478,7 +40478,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 484,
           "max": 100.0,
           "mean": 54.6903,
@@ -40492,7 +40492,7 @@
           "min": 0,
           "sum": 934
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 484,
           "max": 4,
           "mean": 0.655,
@@ -40534,7 +40534,7 @@
           "min": 3,
           "sum": 1699
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 484,
           "max": 100,
           "mean": 58.6942,
@@ -40557,20 +40557,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -41017,7 +41017,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 432,
           "max": 100.0,
           "mean": 90.6134,
@@ -41031,7 +41031,7 @@
           "min": 1,
           "sum": 1211
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 432,
           "max": 4,
           "mean": 1.0579,
@@ -41059,7 +41059,7 @@
           "min": 0,
           "sum": 325
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 432,
           "max": 100.0,
           "mean": 71.084,
@@ -41085,16 +41085,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -41121,7 +41121,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 192,
           "max": 100.0,
           "mean": 51.9401,
@@ -41135,7 +41135,7 @@
           "min": 0,
           "sum": 628
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 192,
           "max": 8,
           "mean": 1.1198,
@@ -41189,9 +41189,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
@@ -41206,7 +41206,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -42431,7 +42431,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 1197,
           "max": 100.0,
           "mean": 50.8547,
@@ -42445,7 +42445,7 @@
           "min": 0,
           "sum": 2637
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 1197,
           "max": 9,
           "mean": 0.7694,
@@ -42487,7 +42487,7 @@
           "min": 3,
           "sum": 4789
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 1197,
           "max": 100,
           "mean": 53.6057,
@@ -42510,20 +42510,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -43470,7 +43470,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 932,
           "max": 100.0,
           "mean": 91.0922,
@@ -43484,7 +43484,7 @@
           "min": 1,
           "sum": 3126
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 932,
           "max": 9,
           "mean": 1.2607,
@@ -43512,7 +43512,7 @@
           "min": 0,
           "sum": 871
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 932,
           "max": 100.0,
           "mean": 72.9218,
@@ -43538,16 +43538,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -43574,7 +43574,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 236,
           "max": 100.0,
           "mean": 45.0686,
@@ -43588,7 +43588,7 @@
           "min": 0,
           "sum": 1867
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 236,
           "max": 65,
           "mean": 2.7966,
@@ -43689,9 +43689,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
@@ -43706,7 +43706,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -43961,7 +43961,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 227,
           "max": 100.0,
           "mean": 77.9203,
@@ -43975,7 +43975,7 @@
           "min": 0,
           "sum": 716
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 227,
           "max": 7,
           "mean": 1.5771,
@@ -44017,7 +44017,7 @@
           "min": 3,
           "sum": 809
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 227,
           "max": 100,
           "mean": 57.3833,
@@ -44040,20 +44040,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -45154,7 +45154,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 1086,
           "max": 100.0,
           "mean": 87.1205,
@@ -45168,7 +45168,7 @@
           "min": 1,
           "sum": 1752
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 1086,
           "max": 7,
           "mean": 1.1998,
@@ -45196,7 +45196,7 @@
           "min": 0,
           "sum": 161
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 1086,
           "max": 100.0,
           "mean": 11.995,
@@ -45222,16 +45222,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -45258,7 +45258,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 114,
           "max": 100.0,
           "mean": 75.5518,
@@ -45272,7 +45272,7 @@
           "min": 0,
           "sum": 554
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 114,
           "max": 11,
           "mean": 2.6667,
@@ -46659,9 +46659,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
@@ -46676,7 +46676,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -46928,7 +46928,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 224,
           "max": 100.0,
           "mean": 82.4701,
@@ -46942,7 +46942,7 @@
           "min": 0,
           "sum": 614
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 224,
           "max": 5,
           "mean": 0.9688,
@@ -46984,7 +46984,7 @@
           "min": 3,
           "sum": 762
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 224,
           "max": 100,
           "mean": 77.2054,
@@ -47007,20 +47007,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -47358,7 +47358,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 323,
           "max": 100.0,
           "mean": 96.2124,
@@ -47372,7 +47372,7 @@
           "min": 1,
           "sum": 817
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 323,
           "max": 5,
           "mean": 1.096,
@@ -47400,7 +47400,7 @@
           "min": 0,
           "sum": 191
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 323,
           "max": 100.0,
           "mean": 53.5399,
@@ -47426,16 +47426,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -47462,7 +47462,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 106,
           "max": 100.0,
           "mean": 75.5915,
@@ -47476,7 +47476,7 @@
           "min": 0,
           "sum": 609
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 106,
           "max": 24,
           "mean": 2.0283,
@@ -48586,20 +48586,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -53924,7 +53924,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 5310,
           "max": 100.0,
           "mean": 79.784,
@@ -53938,7 +53938,7 @@
           "min": 1,
           "sum": 14454
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 5310,
           "max": 17,
           "mean": 1.445,
@@ -53966,7 +53966,7 @@
           "min": 0,
           "sum": 2867
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 5310,
           "max": 100.0,
           "mean": 35.903,
@@ -53992,9 +53992,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
@@ -54009,7 +54009,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -56933,7 +56933,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 2901,
           "max": 100.0,
           "mean": 61.2584,
@@ -56947,7 +56947,7 @@
           "min": 0,
           "sum": 9535
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 2901,
           "max": 17,
           "mean": 1.5178,
@@ -56989,7 +56989,7 @@
           "min": 3,
           "sum": 14126
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 2901,
           "max": 100,
           "mean": 56.1617,
@@ -57015,16 +57015,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -57051,7 +57051,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 571,
           "max": 100.0,
           "mean": 53.6639,
@@ -57065,7 +57065,7 @@
           "min": 0,
           "sum": 6872
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 571,
           "max": 169,
           "mean": 6.0508,
@@ -57139,9 +57139,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
@@ -57156,7 +57156,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -57920,7 +57920,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 736,
           "max": 100.0,
           "mean": 51.8334,
@@ -57934,7 +57934,7 @@
           "min": 0,
           "sum": 1525
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 736,
           "max": 7,
           "mean": 0.7133,
@@ -57976,7 +57976,7 @@
           "min": 3,
           "sum": 2730
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 736,
           "max": 100,
           "mean": 52.6399,
@@ -57999,20 +57999,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -58561,7 +58561,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 534,
           "max": 100.0,
           "mean": 93.3507,
@@ -58575,7 +58575,7 @@
           "min": 1,
           "sum": 1780
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 534,
           "max": 7,
           "mean": 1.221,
@@ -58603,7 +58603,7 @@
           "min": 0,
           "sum": 497
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 534,
           "max": 100.0,
           "mean": 75.7345,
@@ -58629,16 +58629,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -58665,7 +58665,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 223,
           "max": 100.0,
           "mean": 48.5628,
@@ -58679,7 +58679,7 @@
           "min": 0,
           "sum": 1477
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 223,
           "max": 41,
           "mean": 2.2825,
@@ -59961,20 +59961,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -62794,7 +62794,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 2805,
           "max": 100.0,
           "mean": 86.6854,
@@ -62808,7 +62808,7 @@
           "min": 1,
           "sum": 9946
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 2805,
           "max": 16,
           "mean": 1.4157,
@@ -62836,7 +62836,7 @@
           "min": 0,
           "sum": 2500
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 2805,
           "max": 100.0,
           "mean": 60.2962,
@@ -62862,9 +62862,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
@@ -62878,7 +62878,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -65710,7 +65710,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 2806,
           "max": 100.0,
           "mean": 57.1925,
@@ -65724,7 +65724,7 @@
           "min": 0,
           "sum": 8312
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 2806,
           "max": 16,
           "mean": 1.0834,
@@ -65766,7 +65766,7 @@
           "min": 3,
           "sum": 15323
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 2806,
           "max": 100,
           "mean": 58.3525,
@@ -65792,16 +65792,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -65828,7 +65828,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 521,
           "max": 100.0,
           "mean": 48.9893,
@@ -65842,7 +65842,7 @@
           "min": 0,
           "sum": 6609
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 521,
           "max": 125,
           "mean": 4.7159,
@@ -65916,9 +65916,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
@@ -65933,7 +65933,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -65967,7 +65967,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 6,
           "max": 0,
           "mean": 0.0,
@@ -65981,7 +65981,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 6,
           "max": 0,
           "mean": 0.0,
@@ -66023,7 +66023,7 @@
           "min": 3,
           "sum": 20
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 6,
           "max": 0,
           "mean": 0.0,
@@ -66054,16 +66054,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -66090,7 +66090,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 6,
           "max": 0,
           "mean": 0.0,
@@ -66104,7 +66104,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 6,
           "max": 0,
           "mean": 0.0,
@@ -66178,9 +66178,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
@@ -66195,7 +66195,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -68403,7 +68403,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 2183,
           "max": 100.0,
           "mean": 64.7008,
@@ -68417,7 +68417,7 @@
           "min": 0,
           "sum": 6834
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 2183,
           "max": 13,
           "mean": 1.2854,
@@ -68459,7 +68459,7 @@
           "min": 3,
           "sum": 9719
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 2183,
           "max": 100,
           "mean": 62.1851,
@@ -68482,20 +68482,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -71548,7 +71548,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 3038,
           "max": 100.0,
           "mean": 82.6219,
@@ -71562,7 +71562,7 @@
           "min": 1,
           "sum": 8732
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 3038,
           "max": 13,
           "mean": 1.3792,
@@ -71590,7 +71590,7 @@
           "min": 0,
           "sum": 1928
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 3038,
           "max": 100.0,
           "mean": 44.9642,
@@ -71616,16 +71616,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -71652,7 +71652,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 437,
           "max": 100.0,
           "mean": 55.0366,
@@ -71666,7 +71666,7 @@
           "min": 0,
           "sum": 4675
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 437,
           "max": 128,
           "mean": 4.6568,
@@ -71720,9 +71720,9 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
@@ -71736,7 +71736,7 @@
         "last_year",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total_papers",
         "years"
       ],
@@ -71873,7 +71873,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 109,
           "max": 100.0,
           "mean": 18.3486,
@@ -71887,7 +71887,7 @@
           "min": 0,
           "sum": 57
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 109,
           "max": 2,
           "mean": 0.211,
@@ -71929,7 +71929,7 @@
           "min": 3,
           "sum": 398
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 109,
           "max": 100,
           "mean": 13.7615,
@@ -71952,20 +71952,20 @@
       "fields": [
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "author_id",
         "badges_available",
         "badges_functional",
         "badges_reproducible",
         "conferences",
         "display_name",
-        "functional_rate",
+        "functional_pct",
         "last_5_years",
         "name",
         "rank",
-        "repro_rate",
+        "repro_pct",
         "total",
         "total_papers",
         "years"
@@ -72101,7 +72101,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 121,
           "max": 100.0,
           "mean": 100.0,
@@ -72115,7 +72115,7 @@
           "min": 1,
           "sum": 226
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 121,
           "max": 2,
           "mean": 1.0331,
@@ -72143,7 +72143,7 @@
           "min": 0,
           "sum": 15
         },
-        "repro_rate": {
+        "repro_pct": {
           "count": 121,
           "max": 100.0,
           "mean": 12.3967,
@@ -72169,16 +72169,16 @@
         "ae_score",
         "affiliation",
         "artifact_citations",
-        "artifact_rate",
+        "artifact_pct",
         "artifact_score",
-        "artifacts",
+        "artifact_count",
         "badges_functional",
         "badges_reproducible",
         "chair_count",
         "citation_score",
         "combined_score",
         "conferences",
-        "num_authors",
+        "author_count",
         "role",
         "total_papers",
         "years"
@@ -72205,7 +72205,7 @@
           "min": 0,
           "sum": 0
         },
-        "artifact_rate": {
+        "artifact_pct": {
           "count": 73,
           "max": 100.0,
           "mean": 13.6986,
@@ -72219,7 +72219,7 @@
           "min": 0,
           "sum": 33
         },
-        "artifacts": {
+        "artifact_count": {
           "count": 73,
           "max": 2,
           "mean": 0.2055,

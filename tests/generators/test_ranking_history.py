@@ -64,9 +64,9 @@ class TestGenerateRankingHistory:
                 "artifact_score": 30,
                 "ae_score": 20,
                 "total_papers": 10,
-                "artifacts": 5,
-                "artifact_rate": 50.0,
-                "repro_rate": 40.0,
+                "artifact_count": 5,
+                "artifact_pct": 50.0,
+                "repro_pct": 40.0,
             },
         ]
         with open(assets / "combined_rankings.json", "w") as f:
@@ -79,10 +79,10 @@ class TestGenerateRankingHistory:
                 "artifact_score": 50,
                 "ae_score": 30,
                 "total_papers": 20,
-                "artifacts": 10,
-                "artifact_rate": 50.0,
+                "artifact_count": 10,
+                "artifact_pct": 50.0,
                 "badges_reproducible": 4,
-                "num_authors": 3,
+                "author_count": 3,
             },
         ]
         with open(assets / "institution_rankings.json", "w") as f:

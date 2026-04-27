@@ -22,7 +22,7 @@ class AuthorRanking(BaseModel):
     display_name: str = Field(description="Author name without DBLP disambiguation suffix.")
     affiliation: str = Field(description="Raw affiliation string from DBLP.")
     display_affiliation: str = Field(description="Normalized/cleaned institution name.")
-    artifacts: int = Field(ge=0, description="Total number of artifacts authored.")
+    artifact_count: int = Field(ge=0, description="Total number of artifacts authored.")
     artifact_score: int = Field(
         ge=0,
         description="Points from artifacts: each artifact scores 1 (available) + 1 (functional) + 1 (reproducible).",
@@ -30,8 +30,8 @@ class AuthorRanking(BaseModel):
     artifact_citations: int = Field(ge=0, description="Citation count for artifacts (currently 0).")
     citation_score: int = Field(ge=0, description="Points from citations (currently 0).")
     total_papers: int = Field(ge=0, description="Total papers published at tracked conferences (from DBLP).")
-    artifact_rate: float = Field(ge=0, le=100, description="Percentage of papers with artifacts.")
-    repro_rate: int = Field(ge=0, le=100, description="Percentage of artifacts with a reproducibility badge.")
+    artifact_pct: float = Field(ge=0, le=100, description="Percentage of papers with artifacts.")
+    repro_pct: int = Field(ge=0, le=100, description="Percentage of artifacts with a reproducibility badge.")
     ae_memberships: int = Field(ge=0, description="Number of AE committee memberships.")
     chair_count: int = Field(ge=0, description="Number of AE chair roles.")
     ae_score: int = Field(ge=0, description="Points from AE service: memberships * 3 + chairs * 2.")
