@@ -140,7 +140,7 @@ def aggregate_by_institution(combined_data):
                     "artifact_rate": artifact_rate,
                     "num_authors": data["num_authors"],
                     "conferences": sorted(list(data["conferences"])),
-                    "years": dict(data["years"]),
+                    "years": {str(k): v for k, v in data["years"].items()},
                 }
             )
 
@@ -176,45 +176,34 @@ def main():
     else:
         logger.info(f"  ✗ {combined_path} not found")
 
-    # Process systems combined ranking
-    logger.info("Processing systems combined ranking...")
-    systems_path = data_dir / "systems_combined_rankings.json"
-    if systems_path.exists():
-        systems_data = load_combined_ranking(systems_path)
-        systems_institutions = aggregate_by_institution(systems_data)
+    # Process scoped combined rankings (per-area + per-conference) into a single
+    # consolidated institution_rankings_scoped.json. Each row tagged with `scope`.
+    scoped_path = data_dir / "combined_rankings_scoped.json"
+    if scoped_path.exists():
+        logger.info("Processing scoped institution rankings...")
+        scoped_authors = load_combined_ranking(scoped_path)
+        # Group rows by scope, then aggregate independently per scope.
+        from collections import defaultdict
 
-        output_path = data_dir / "systems_institution_rankings.json"
-        save_validated_json(output_path, systems_institutions, InstitutionRanking)
-        logger.info(f"  ✓ Generated {output_path} ({len(systems_institutions)} institutions)")
+        by_scope: dict[str, list[dict]] = defaultdict(list)
+        for row in scoped_authors:
+            scope = row.get("scope")
+            if scope:
+                by_scope[scope].append(row)
+
+        scoped_institutions: list[dict] = []
+        for scope in sorted(by_scope.keys()):
+            insts = aggregate_by_institution(by_scope[scope])
+            for inst in insts:
+                inst["scope"] = scope
+                scoped_institutions.append(inst)
+            logger.info(f"  ✓ {scope}: {len(insts)} institutions")
+
+        out = data_dir / "institution_rankings_scoped.json"
+        save_validated_json(out, scoped_institutions, InstitutionRanking)
+        logger.info(f"  ✓ Generated {out} ({len(scoped_institutions)} entries across all scopes)")
     else:
-        logger.info(f"  ✗ {systems_path} not found")
-
-    # Process security combined ranking
-    logger.info("Processing security combined ranking...")
-    security_path = data_dir / "security_combined_rankings.json"
-    if security_path.exists():
-        security_data = load_combined_ranking(security_path)
-        security_institutions = aggregate_by_institution(security_data)
-
-        output_path = data_dir / "security_institution_rankings.json"
-        save_validated_json(output_path, security_institutions, InstitutionRanking)
-        logger.info(f"  ✓ Generated {output_path} ({len(security_institutions)} institutions)")
-    else:
-        logger.info(f"  ✗ {security_path} not found")
-
-    # Process per-conference combined rankings
-    logger.info("Processing per-conference institution rankings...")
-    for conf_path in sorted(data_dir.glob("*_combined_rankings.json")):
-        stem = conf_path.stem  # e.g. "osdi_combined_rankings"
-        prefix = stem.replace("_combined_rankings", "")
-        # Skip overall/systems/security (already handled above)
-        if prefix in ("combined", "systems", "security", "systems_combined", "security_combined"):
-            continue
-        conf_data = load_combined_ranking(conf_path)
-        conf_institutions = aggregate_by_institution(conf_data)
-        output_path = data_dir / f"{prefix}_institution_rankings.json"
-        save_validated_json(output_path, conf_institutions, InstitutionRanking)
-        logger.info(f"  ✓ Generated {output_path} ({len(conf_institutions)} institutions)")
+        logger.info(f"  ✗ {scoped_path} not found")
 
 
 if __name__ == "__main__":

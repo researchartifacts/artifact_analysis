@@ -340,7 +340,7 @@ def _build_entry(
         "badges_functional": badges_functional,
         "badges_reproducible": badges_reproducible,
         "conferences": conferences,
-        "years": years,
+        "years": {str(k): v for k, v in years.items()},
         "first_year": min(yr_keys) if yr_keys else None,
         "last_year": max(yr_keys) if yr_keys else None,
     }

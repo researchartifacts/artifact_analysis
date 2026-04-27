@@ -461,7 +461,7 @@ def _compute_recurring_members(all_results: dict, conf_to_area: dict, classified
                 key=lambda x: (x[0], x[1] or 0),
             ),
             "area": rec["area"],
-            "years": {y: rec["years_count"][y] for y in sorted(rec["years"])},
+            "years": {str(y): rec["years_count"][y] for y in sorted(rec["years"])},
             "first_year": min(rec["years"]) if rec["years"] else None,
             "last_year": max(rec["years"]) if rec["years"] else None,
         }
@@ -488,7 +488,7 @@ def _compute_recurring_members(all_results: dict, conf_to_area: dict, classified
                 key=lambda x: (x[0], x[1] or 0),
             ),
             "area": rec["area"],
-            "years": {y: rec["sys_years_count"][y] for y in sorted(rec["sys_years"])},
+            "years": {str(y): rec["sys_years_count"][y] for y in sorted(rec["sys_years"])},
             "first_year": min(rec["sys_years"]) if rec["sys_years"] else None,
             "last_year": max(rec["sys_years"]) if rec["sys_years"] else None,
         }
@@ -514,7 +514,7 @@ def _compute_recurring_members(all_results: dict, conf_to_area: dict, classified
                 key=lambda x: (x[0], x[1] or 0),
             ),
             "area": rec["area"],
-            "years": {y: rec["sec_years_count"][y] for y in sorted(rec["sec_years"])},
+            "years": {str(y): rec["sec_years_count"][y] for y in sorted(rec["sec_years"])},
             "first_year": min(rec["sec_years"]) if rec["sec_years"] else None,
             "last_year": max(rec["sec_years"]) if rec["sec_years"] else None,
         }
