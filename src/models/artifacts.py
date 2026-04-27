@@ -58,6 +58,10 @@ class Artifact(BaseModel):
             "Canonical field replacing repository_url, artifact_url, and github_url."
         ),
     )
+    doi: str = Field(
+        default="",
+        description="Canonical artifact DOI (e.g. '10.5281/zenodo.12345'). Extracted from artifact_urls.",
+    )
     paper_url: str | None = Field(
         default=None,
         description="DOI or direct link to the published paper.",

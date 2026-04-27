@@ -13,6 +13,8 @@ import argparse
 import json
 import logging
 import os
+import subprocess
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -128,6 +130,49 @@ def export_all(output_dir: str) -> list[str]:
     return written
 
 
+def tag_schema_repo(schema_repo: str | Path) -> str | None:
+    """Create a git tag ``v{SCHEMA_VERSION}`` in the data-schemas repo.
+
+    If the tag already exists the function is a no-op.  Returns the tag
+    name on success, ``None`` when the tag was already present.
+    """
+    from src.models import SCHEMA_VERSION
+
+    repo = Path(schema_repo).resolve()
+    tag = f"v{SCHEMA_VERSION}"
+
+    # Check if tag exists
+    result = subprocess.run(
+        ["git", "tag", "-l", tag],
+        capture_output=True,
+        text=True,
+        cwd=repo,
+        timeout=10,
+    )
+    if tag in result.stdout.strip().splitlines():
+        logger.info("Tag %s already exists in %s", tag, repo)
+        return None
+
+    # Stage, commit, then tag
+    subprocess.run(["git", "add", "-A"], cwd=repo, check=True, timeout=10)
+    diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo, timeout=10)
+    if diff.returncode != 0:
+        subprocess.run(
+            ["git", "commit", "-m", f"Schema {tag}"],
+            cwd=repo,
+            check=True,
+            timeout=30,
+        )
+    subprocess.run(
+        ["git", "tag", "-a", tag, "-m", f"Data schema version {SCHEMA_VERSION}"],
+        cwd=repo,
+        check=True,
+        timeout=10,
+    )
+    logger.info("Created tag %s in %s", tag, repo)
+    return tag
+
+
 def main():
     parser = argparse.ArgumentParser(description="Export JSON Schemas from Pydantic models.")
     parser.add_argument(
@@ -136,11 +181,20 @@ def main():
         default="../data-schemas/schemas",
         help="Output directory for .schema.json files (default: ../data-schemas/schemas)",
     )
+    parser.add_argument(
+        "--tag",
+        action="store_true",
+        help="Git-tag the data-schemas repo with the current SCHEMA_VERSION",
+    )
     args = parser.parse_args()
 
     logger.info(f"Exporting {len(SCHEMA_REGISTRY)} schemas to {args.output_dir}")
     written = export_all(args.output_dir)
     logger.info(f"\nDone. {len(written)} schema files written.")
+
+    if args.tag:
+        repo_dir = Path(args.output_dir).resolve().parent
+        tag_schema_repo(repo_dir)
 
 
 if __name__ == "__main__":

@@ -15,6 +15,7 @@ from pathlib import Path
 
 from src.utils.io import save_validated_json, save_yaml
 
+from ..models import SCHEMA_VERSION
 from ..models.artifacts import Artifact
 from ..models.summary import Summary
 from ..scrapers.acm_scrape import (
@@ -127,6 +128,25 @@ def count_badges(artifacts):
     return badges
 
 
+_DOI_RE = re.compile(r"10\.[0-9]{4,9}/[-._;()/:A-Za-z0-9]+")
+_ARTIFACT_DOI_PREFIXES = ("10.5281/zenodo.", "10.6084/m9.figshare.")
+
+
+def _extract_artifact_doi(urls: list[str]) -> str:
+    """Return the first artifact-repository DOI found in *urls*, or ``""``."""
+    for url in urls:
+        m = _DOI_RE.search(url)
+        if m:
+            doi = m.group(0).rstrip(".,);").lower()
+            if doi.startswith(_ARTIFACT_DOI_PREFIXES):
+                return doi
+        # Zenodo record URL without explicit DOI
+        zm = re.search(r"zenodo\.org/(?:record|records)/(\d+)", url, re.I)
+        if zm:
+            return f"10.5281/zenodo.{zm.group(1)}"
+    return ""
+
+
 def _collect_artifact_urls(artifact: dict) -> list[str]:
     """Collect and deduplicate all artifact-related URLs from a raw artifact dict."""
     urls: list[str] = []
@@ -193,6 +213,7 @@ def _build_artifact_entry(
         "title": artifact.get("title", "Unknown"),
         "badges": raw_badges,
         "artifact_urls": _collect_artifact_urls(artifact),
+        "doi": _extract_artifact_doi(_collect_artifact_urls(artifact)),
     }
 
     # Normalize paper_url: merge doi and paper_doi fields
@@ -418,6 +439,7 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
 
     # Generate summary statistics
     summary = {
+        "schema_version": SCHEMA_VERSION,
         "total_artifacts": len(all_artifacts),
         "total_conferences": len(conferences_set),
         "systems_artifacts": systems_artifacts_count,

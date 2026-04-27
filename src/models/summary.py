@@ -14,6 +14,7 @@ class Summary(BaseModel):
     Written as ``summary.yml`` in ``_data/``.
     """
 
+    schema_version: str = Field(description="Semantic version of the data schema bundle.")
     total_artifacts: int = Field(ge=0, description="Total number of artifacts across all conferences.")
     total_conferences: int = Field(ge=0, description="Total number of tracked conferences.")
     systems_artifacts: int = Field(ge=0, description="Artifacts from systems conferences.")
