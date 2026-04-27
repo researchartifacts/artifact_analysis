@@ -19,6 +19,7 @@ jobs:
   author-analysis:
     runs-on: ubuntu-latest
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
       # Auto-enable recheck on quarterly schedule or manual trigger
       RECHECK: ${{ inputs.recheck == true || github.event.schedule == '0 6 1 1,4,7,10 *' }}
     

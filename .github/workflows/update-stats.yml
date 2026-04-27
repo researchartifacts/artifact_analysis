@@ -20,6 +20,8 @@ permissions:
 jobs:
   update-statistics:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
     
     steps:
       - name: Checkout reprodb-pipeline repository
@@ -114,6 +116,7 @@ jobs:
           name: dblp-analysis-results
           path: dblp-results/
           skip_unpack: false
+          if_no_artifact_found: warn
         continue-on-error: true
       
       - name: Merge DBLP results if available
