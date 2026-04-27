@@ -370,8 +370,9 @@ def scrape_usenix_committee(conference, year, session=None, cache_only=False):
 
 # CHES publishes committee data as JSON (loaded dynamically on the HTML page)
 # for 2023+. Chair info is only available in the static HTML page.
+# CHES 2021 uses a different JSON path (comm2.json instead of artifact.json).
 # CHES 2022 has no JSON API; members must be scraped from HTML.
-CHES_KNOWN_YEARS = range(2022, 2027)
+CHES_KNOWN_YEARS = range(2021, 2027)
 
 
 def _scrape_ches_chairs_html(soup):
@@ -466,6 +467,10 @@ def scrape_ches_committee(year, session=None, cache_only=False):
     # 1. Try JSON API for members (and chairs when available)
     json_url = f"https://ches.iacr.org/{year}/json/artifact.json"
     json_text = _cached_fetch(json_url, session=session, cache_only=cache_only)
+    # Fallback: CHES 2021 uses comm2.json instead of artifact.json
+    if json_text is None:
+        json_url = f"https://ches.iacr.org/{year}/json/comm2.json"
+        json_text = _cached_fetch(json_url, session=session, cache_only=cache_only)
     if json_text is not None:
         try:
             import json as _json
