@@ -1,0 +1,221 @@
+"""Stage dependency graph for the pipeline.
+
+Each stage declares its module, the files it produces, and which stages
+must run before it (``depends_on``).  The orchestrator uses this graph to
+determine valid execution order and to parallelise independent stages.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Stage:
+    """A single pipeline stage."""
+
+    name: str
+    module: str
+    description: str
+    depends_on: tuple[str, ...] = ()
+    optional: bool = False
+    outputs: tuple[str, ...] = ()
+
+
+# ── Stage definitions ────────────────────────────────────────────────────────
+# Order mirrors run_pipeline.sh; depends_on encodes the *data* dependencies.
+
+STAGES: tuple[Stage, ...] = (
+    Stage(
+        name="dblp_extract",
+        module="src.utils.dblp_extract",
+        description="Extract DBLP lookup data",
+        optional=True,
+        outputs=("data/dblp_lookup.json",),
+    ),
+    Stage(
+        name="statistics",
+        module="src.generators.generate_statistics",
+        description="Generate statistics (sysartifacts + secartifacts + USENIX)",
+        outputs=(
+            "_data/summary.yml",
+            "_data/artifacts_by_conference.yml",
+            "_data/artifacts_by_year.yml",
+            "assets/data/artifacts.json",
+            "assets/data/summary.json",
+        ),
+    ),
+    Stage(
+        name="repo_stats",
+        module="src.generators.generate_repo_stats",
+        description="Generate repository statistics (stars, forks, etc.)",
+        depends_on=("statistics",),
+        optional=True,
+        outputs=(
+            "_data/repo_stats.yml",
+            "assets/data/repo_stats_detail.json",
+            "assets/data/repo_stats_yearly.json",
+            "assets/data/repo_stats_history.json",
+        ),
+    ),
+    Stage(
+        name="artifact_availability",
+        module="src.generators.generate_artifact_availability",
+        description="Check artifact URL liveness",
+        depends_on=("statistics",),
+        optional=True,
+        outputs=("assets/data/artifact_availability.json",),
+    ),
+    Stage(
+        name="participation_stats",
+        module="src.generators.generate_participation_stats",
+        description="Generate AE participation statistics (DBLP paper counts)",
+        depends_on=("statistics", "dblp_extract"),
+        optional=True,
+        outputs=("assets/data/participation_stats.json",),
+    ),
+    Stage(
+        name="author_stats",
+        module="src.generators.generate_author_stats",
+        description="Generate author statistics",
+        depends_on=("statistics", "dblp_extract"),
+        outputs=(
+            "assets/data/authors.json",
+            "assets/data/paper_authors_map.json",
+            "_data/papers.json",
+        ),
+    ),
+    Stage(
+        name="area_authors",
+        module="src.generators.generate_area_authors",
+        description="Generate per-area author data",
+        depends_on=("author_stats", "statistics"),
+        outputs=("assets/data/systems_authors.yml", "assets/data/security_authors.yml"),
+    ),
+    Stage(
+        name="committee_stats",
+        module="src.generators.generate_committee_stats",
+        description="Generate committee statistics",
+        depends_on=("statistics",),
+        optional=True,
+        outputs=("_data/committee_stats.yml", "assets/data/committee_stats.json"),
+    ),
+    Stage(
+        name="combined_rankings",
+        module="src.generators.generate_combined_rankings",
+        description="Generate combined author rankings",
+        depends_on=("author_stats", "committee_stats"),
+        outputs=(
+            "assets/data/combined_rankings.json",
+            "assets/data/systems_combined_rankings.json",
+            "assets/data/security_combined_rankings.json",
+        ),
+    ),
+    Stage(
+        name="institution_rankings",
+        module="src.generators.generate_institution_rankings",
+        description="Generate institution rankings",
+        depends_on=("combined_rankings",),
+        outputs=(
+            "assets/data/institution_rankings.json",
+            "assets/data/systems_institution_rankings.json",
+            "assets/data/security_institution_rankings.json",
+        ),
+    ),
+    Stage(
+        name="author_profiles",
+        module="src.generators.generate_author_profiles",
+        description="Generate author profile pages",
+        depends_on=("author_stats", "combined_rankings"),
+        outputs=("author/",),
+    ),
+    Stage(
+        name="search_data",
+        module="src.generators.generate_search_data",
+        description="Generate search index",
+        depends_on=("statistics", "author_stats"),
+        outputs=("assets/data/search_data.json",),
+    ),
+    Stage(
+        name="ranking_history",
+        module="src.generators.generate_ranking_history",
+        description="Update ranking history snapshots",
+        depends_on=("combined_rankings", "institution_rankings"),
+        outputs=("assets/data/ranking_history.json",),
+    ),
+    Stage(
+        name="visualizations",
+        module="src.generators.generate_visualizations",
+        description="Generate SVG charts",
+        depends_on=("statistics", "author_stats", "committee_stats"),
+        outputs=("assets/charts/",),
+    ),
+)
+
+STAGE_MAP: dict[str, Stage] = {s.name: s for s in STAGES}
+
+
+def topological_order(stages: tuple[Stage, ...] = STAGES) -> list[Stage]:
+    """Return stages in a valid execution order (Kahn's algorithm)."""
+    stage_map = {s.name: s for s in stages}
+    in_degree = {s.name: 0 for s in stages}
+    dependants: dict[str, list[str]] = {s.name: [] for s in stages}
+
+    for s in stages:
+        for dep in s.depends_on:
+            if dep in stage_map:
+                in_degree[s.name] += 1
+                dependants[dep].append(s.name)
+
+    queue = [name for name, deg in in_degree.items() if deg == 0]
+    order: list[Stage] = []
+
+    while queue:
+        # Sort for deterministic output
+        queue.sort()
+        name = queue.pop(0)
+        order.append(stage_map[name])
+        for child in dependants[name]:
+            in_degree[child] -= 1
+            if in_degree[child] == 0:
+                queue.append(child)
+
+    if len(order) != len(stages):
+        executed = {s.name for s in order}
+        missing = {s.name for s in stages} - executed
+        msg = f"Cycle detected in stage dependencies: {missing}"
+        raise ValueError(msg)
+
+    return order
+
+
+def parallel_groups(stages: tuple[Stage, ...] = STAGES) -> list[list[Stage]]:
+    """Return stages grouped into parallel tiers.
+
+    Each tier contains stages whose dependencies are fully satisfied by
+    earlier tiers, so all stages within a tier can execute concurrently.
+    """
+    stage_map = {s.name: s for s in stages}
+    in_degree = {s.name: 0 for s in stages}
+    dependants: dict[str, list[str]] = {s.name: [] for s in stages}
+
+    for s in stages:
+        for dep in s.depends_on:
+            if dep in stage_map:
+                in_degree[s.name] += 1
+                dependants[dep].append(s.name)
+
+    groups: list[list[Stage]] = []
+    current = sorted([name for name, deg in in_degree.items() if deg == 0])
+
+    while current:
+        groups.append([stage_map[name] for name in current])
+        next_tier: list[str] = []
+        for name in current:
+            for child in dependants[name]:
+                in_degree[child] -= 1
+                if in_degree[child] == 0:
+                    next_tier.append(child)
+        current = sorted(next_tier)
+
+    return groups
