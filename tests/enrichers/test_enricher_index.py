@@ -43,8 +43,8 @@ class TestCSRankingsIndexIntegration:
             verbose=False,
         )
 
-        # Check that author_index.json was updated
-        updated_index = read_json(str(tmp_website / "assets" / "data" / "author_index.json"))
+        # Check that author_index.json was updated (now written to _build/)
+        updated_index = read_json(str(tmp_website / "_build" / "author_index.json"))
         bob = next(e for e in updated_index if e["name"] == "Bob Jones")
         assert bob["affiliation"] == "UC Berkeley"
         assert bob["affiliation_source"] == "csrankings"
@@ -113,8 +113,8 @@ class TestAEMemberIndexIntegration:
         alice = next(a for a in enriched if a["name"] == "Alice Smith")
         assert alice["affiliation"] == "MIT"
 
-        # Check author_index.json was updated
-        updated_index = read_json(str(tmp_website / "assets" / "data" / "author_index.json"))
+        # Check author_index.json was updated (now written to _build/)
+        updated_index = read_json(str(tmp_website / "_build" / "author_index.json"))
         bob_idx = next(e for e in updated_index if e["name"] == "Bob Jones")
         assert bob_idx["affiliation"] == "Georgia Tech"
         assert bob_idx["affiliation_source"] == "ae_committee"
@@ -184,7 +184,7 @@ class TestOpenAlexIndexIntegration:
             data_dir=str(tmp_website),
         )
 
-        updated_index = read_json(str(tmp_website / "assets" / "data" / "author_index.json"))
+        updated_index = read_json(str(tmp_website / "_build" / "author_index.json"))
         bob = next(e for e in updated_index if e["name"] == "Bob Jones")
         assert bob["affiliation"] == "Carnegie Mellon University"
         assert bob["affiliation_source"] == "openalex"

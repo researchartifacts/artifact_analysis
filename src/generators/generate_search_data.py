@@ -23,7 +23,12 @@ def generate_search_data(data_dir: str) -> list:
 
     artifacts = load_json(os.path.join(assets_data, "artifacts.json"))
 
-    pa_path = os.path.join(assets_data, "paper_authors_map.json")
+    # paper_authors_map is an intermediate file in _build/
+    build_dir = os.path.join(data_dir, "_build")
+    pa_path = os.path.join(build_dir, "paper_authors_map.json")
+    # Fall back to legacy location for backward compatibility
+    if not os.path.exists(pa_path):
+        pa_path = os.path.join(assets_data, "paper_authors_map.json")
     paper_authors = []
     if os.path.exists(pa_path):
         paper_authors = load_json(pa_path)

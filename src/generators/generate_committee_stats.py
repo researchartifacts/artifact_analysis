@@ -888,8 +888,10 @@ def generate_committee_data(conf_regex, output_dir):
         save_json(ae_sec_path, sec_members)
         logger.info(f"  Wrote {ae_sec_path} ({len(sec_members)} members)")
 
-        # Write institution timeline JSON
-        inst_timeline_path = os.path.join(output_dir, "assets/data/institution_timeline.json")
+        # Write institution timeline JSON (intermediate, not deployed)
+        build_dir = os.path.join(output_dir, "_build")
+        os.makedirs(build_dir, exist_ok=True)
+        inst_timeline_path = os.path.join(build_dir, "institution_timeline.json")
         save_json(inst_timeline_path, inst_timeline)
         logger.info(f"  Wrote {inst_timeline_path}")
 

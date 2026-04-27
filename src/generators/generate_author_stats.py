@@ -578,14 +578,13 @@ def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> Non
     # --- Build paper index and replace embedded papers with IDs ---
     from .generate_paper_index import build_paper_index, load_existing_index, normalize_title
 
-    index_path = os.path.join(output_dir, "_data", "papers.json")
-    existing_papers, existing_by_title = load_existing_index(index_path)
+    # Load existing index from the canonical location (assets/data)
+    assets_papers = os.path.join(output_dir, "assets/data/papers.json")
+    existing_papers, existing_by_title = load_existing_index(assets_papers)
     max_paper_id = max((e["id"] for e in existing_papers), default=0)
     papers_list, norm_to_id = build_paper_index(authors_list, existing_by_title, max_paper_id)
 
-    # Write paper index
-    save_json(index_path, papers_list)
-    assets_papers = os.path.join(output_dir, "assets/data/papers.json")
+    # Write paper index (single copy in assets/data)
     save_json(assets_papers, papers_list, indent=None)
     artifact_count = sum(1 for p in papers_list if p.get("has_artifact", True))
     logger.info(f"Paper index: {len(papers_list)} papers ({artifact_count} with artifacts)")
@@ -627,8 +626,10 @@ def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> Non
     # JSON for download (full data including embedded papers for backward compat)
     save_validated_json(os.path.join(output_dir, "assets/data/authors.json"), authors_list, AuthorStats)
 
-    # Paper -> authors mapping for citation attribution
-    save_json(os.path.join(output_dir, "assets/data/paper_authors_map.json"), papers_with_authors)
+    # Paper -> authors mapping for citation attribution (intermediate, not deployed)
+    build_dir = os.path.join(output_dir, "_build")
+    os.makedirs(build_dir, exist_ok=True)
+    save_json(os.path.join(build_dir, "paper_authors_map.json"), papers_with_authors)
 
     logger.info(f"Author data written to {output_dir} ({len(authors_list)} authors, {len(papers_with_authors)} papers)")
 

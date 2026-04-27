@@ -88,9 +88,15 @@ class PipelineConfig:
         """``<output_dir>/_data`` convenience path."""
         return self.output_dir / "_data"
 
+    @property
+    def build_dir(self) -> Path:
+        """``<output_dir>/_build`` — intermediate files consumed by later stages but not deployed to the website."""
+        return self.output_dir / "_build"
+
     def ensure_dirs(self) -> None:
         """Create required output directories."""
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.assets_data.mkdir(parents=True, exist_ok=True)
         self.jekyll_data.mkdir(parents=True, exist_ok=True)
+        self.build_dir.mkdir(parents=True, exist_ok=True)
         self.log_dir.mkdir(parents=True, exist_ok=True)

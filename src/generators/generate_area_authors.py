@@ -290,7 +290,9 @@ def generate_area_authors():
     save_json(os.path.join(assets_data, "systems_authors.json"), systems_authors, indent=None)
     save_json(os.path.join(assets_data, "security_authors.json"), security_authors, indent=None)
 
-    # --- Generate per-conference author JSON files ---
+    # --- Generate per-conference author JSON files (intermediate, not deployed) ---
+    build_dir = os.path.join(DATA_DIR, "..", "_build")
+    os.makedirs(build_dir, exist_ok=True)
     all_confs = systems_confs | security_confs
     for conf in sorted(all_confs):
         conf_authors = process_authors_for_area(authors, {conf}, conf)
@@ -301,8 +303,8 @@ def generate_area_authors():
                 if aid is not None:
                     entry["author_id"] = aid
         fname = f"{conf.lower()}_conf_authors.json"
-        save_json(os.path.join(assets_data, fname), conf_authors, indent=None)
-        logger.info(f"  {conf}: {len(conf_authors)} authors -> assets/data/{fname}")
+        save_json(os.path.join(build_dir, fname), conf_authors, indent=None)
+        logger.info(f"  {conf}: {len(conf_authors)} authors -> _build/{fname}")
 
     # Update author_summary with correct counts
     author_summary = load_yaml("author_summary.yml")

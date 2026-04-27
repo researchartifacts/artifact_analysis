@@ -130,7 +130,6 @@ def scholar_lookup(title: str) -> dict | None:
 def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
     artifacts_path = os.path.join(data_dir, "assets", "data", "artifacts.json")
     out_path = os.path.join(data_dir, "assets", "data", "paper_citations.json")
-    summary_path = os.path.join(data_dir, "assets", "data", "paper_citations_summary.json")
 
     log("=" * 60)
     log("Paper Citation Enricher  (source: Google Scholar)")
@@ -363,20 +362,6 @@ def generate(data_dir: str, cache_ttl: int, cache_only: bool) -> None:
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     save_json(out_path, entries)
     log(f"✓ Written {out_path}")
-
-    summary = {
-        "total_papers": len(entries),
-        "papers_found": found,
-        "papers_with_errors": errors,
-        "new_queries": new_queries,
-        "total_citations": sum(e.get("cited_by_count", 0) or 0 for e in entries),
-        "coverage_pct": round(100 * found / max(1, len(entries)), 1),
-        "source": "scholar",
-        "stopped_early": stopped_early,
-        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-    }
-    save_json(summary_path, summary)
-    log(f"✓ Written {summary_path}")
 
 
 def main() -> None:

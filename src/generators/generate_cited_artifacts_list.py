@@ -31,7 +31,12 @@ def generate(data_dir: str) -> None:
 
     # Paths to required files
     citations_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
-    paper_authors_map_path = os.path.join(data_dir, "assets", "data", "paper_authors_map.json")
+    # paper_authors_map is an intermediate file in _build/
+    build_dir = os.path.join(data_dir, "_build")
+    paper_authors_map_path = os.path.join(build_dir, "paper_authors_map.json")
+    # Fall back to legacy location for backward compatibility
+    if not os.path.exists(paper_authors_map_path):
+        paper_authors_map_path = os.path.join(data_dir, "assets", "data", "paper_authors_map.json")
     combined_rankings_path = os.path.join(data_dir, "assets", "data", "combined_rankings.json")
     institution_rankings_path = os.path.join(data_dir, "assets", "data", "institution_rankings.json")
 

@@ -371,7 +371,11 @@ def main():
     existing_stats = []
     existing_urls = set()
     if not args.refresh and args.output_dir:
-        detail_path = os.path.join(args.output_dir, "assets", "data", "repo_stats_detail.json")
+        build_dir = os.path.join(args.output_dir, "_build")
+        detail_path = os.path.join(build_dir, "repo_stats_detail.json")
+        # Fall back to legacy location for backward compatibility
+        if not os.path.exists(detail_path):
+            detail_path = os.path.join(args.output_dir, "assets", "data", "repo_stats_detail.json")
         if os.path.exists(detail_path):
             raw_existing = load_json(detail_path)
             # Normalize existing entries to the format collect_stats_for_results produces
@@ -469,7 +473,9 @@ def main():
             aggregated.get("all_github_repos", []),
             key=lambda e: (e.get("conference", ""), e.get("year", 0), e.get("url", "")),
         )
-        detail_path = os.path.join(assets_dir, "repo_stats_detail.json")
+        build_dir = os.path.join(data_dir, "..", "_build")
+        os.makedirs(build_dir, exist_ok=True)
+        detail_path = os.path.join(build_dir, "repo_stats_detail.json")
         save_json(detail_path, detail_repos)
         logger.info(f"Written per-repo detail ({len(aggregated.get('all_github_repos', []))} repos) to {detail_path}")
 
@@ -526,12 +532,19 @@ def main():
         # Append a dated snapshot for each fetched artifact so we can track
         # stars/forks/views/downloads over time across monthly runs.
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        history_path = os.path.join(assets_dir, "repo_stats_history.json")
+        history_load_path = os.path.join(build_dir, "repo_stats_history.json")
+        # Fall back to legacy location for loading existing history
+        if not os.path.exists(history_load_path):
+            legacy_history = os.path.join(assets_dir, "repo_stats_history.json")
+            if os.path.exists(legacy_history):
+                history_load_path = legacy_history
+        # Always write to _build/
+        history_write_path = os.path.join(build_dir, "repo_stats_history.json")
 
         # Load existing history
         history = {}
-        if os.path.exists(history_path):
-            history = load_json(history_path)
+        if os.path.exists(history_load_path):
+            history = load_json(history_load_path)
             logger.info(f"Loaded history for {len(history)} URLs")
 
         # Build snapshots from the raw all_stats (which have full metric detail)
@@ -582,8 +595,8 @@ def main():
                 snapshots.append(snapshot)
             updated += 1
 
-        save_json(history_path, history)
-        logger.info(f"Written history ({len(history)} URLs, {updated} snapshots updated) to {history_path}")
+        save_json(history_write_path, history)
+        logger.info(f"Written history ({len(history)} URLs, {updated} snapshots updated) to {history_write_path}")
 
     return aggregated
 

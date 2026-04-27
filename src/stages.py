@@ -53,9 +53,9 @@ STAGES: tuple[Stage, ...] = (
         optional=True,
         outputs=(
             "_data/repo_stats.yml",
-            "assets/data/repo_stats_detail.json",
+            "_build/repo_stats_detail.json",
             "assets/data/repo_stats_yearly.json",
-            "assets/data/repo_stats_history.json",
+            "_build/repo_stats_history.json",
         ),
     ),
     Stage(
@@ -81,8 +81,8 @@ STAGES: tuple[Stage, ...] = (
         depends_on=("statistics", "dblp_extract"),
         outputs=(
             "assets/data/authors.json",
-            "assets/data/paper_authors_map.json",
-            "_data/papers.json",
+            "_build/paper_authors_map.json",
+            "assets/data/papers.json",
         ),
     ),
     Stage(

@@ -16,9 +16,12 @@ from typing import Optional
 def load_author_index(data_dir: str) -> tuple[list, dict[str, dict]]:
     """Load ``author_index.json`` and return (entries, name→entry dict).
 
-    ``data_dir`` is the website repo root (contains ``assets/data/``).
+    ``data_dir`` is the website repo root (contains ``_build/`` and ``assets/data/``).
     """
-    path = os.path.join(data_dir, "assets", "data", "author_index.json")
+    path = os.path.join(data_dir, "_build", "author_index.json")
+    # Fall back to legacy location for backward compatibility
+    if not os.path.exists(path):
+        path = os.path.join(data_dir, "assets", "data", "author_index.json")
     if not os.path.exists(path):
         return [], {}
     with open(path, "r", encoding="utf-8") as f:
@@ -35,7 +38,7 @@ def build_name_to_id(data_dir: str) -> dict[str, int]:
 
 def save_author_index(data_dir: str, entries: list[dict]) -> str:
     """Write ``author_index.json`` back to disk.  Returns the file path."""
-    path = os.path.join(data_dir, "assets", "data", "author_index.json")
+    path = os.path.join(data_dir, "_build", "author_index.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(entries, f, indent=2, ensure_ascii=False)

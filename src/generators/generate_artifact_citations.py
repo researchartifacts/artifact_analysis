@@ -18,7 +18,6 @@ import re
 import time
 import urllib.parse
 import urllib.request
-from collections import defaultdict
 
 from src.utils.conference import normalize_title
 from src.utils.io import load_json, save_json
@@ -324,7 +323,6 @@ def generate(data_dir: str) -> None:
 
     artifacts_path = os.path.join(data_dir, "assets", "data", "artifacts.json")
     out_path = os.path.join(data_dir, "assets", "data", "artifact_citations.json")
-    summary_path = os.path.join(data_dir, "assets", "data", "artifact_citations_summary.json")
 
     logger.info(f"Loading artifacts from: {artifacts_path}")
 
@@ -472,39 +470,10 @@ def generate(data_dir: str) -> None:
         except Exception:
             logger.warning(f"Error processing artifact '{title}', skipping", exc_info=True)
 
-    # Summaries
-    total = len(entries)
-    with_doi = sum(1 for e in entries if e.get("doi"))
-    resolved = sum(1 for e in entries if isinstance(e.get("cited_by_count"), int))
-    openalex_resolved = sum(1 for e in entries if isinstance(e.get("citations_openalex"), int))
-    semantic_resolved = sum(1 for e in entries if isinstance(e.get("citations_semantic_scholar"), int))
+    # Count cited artifacts for logging
     cited = sum(1 for e in entries if isinstance(e.get("cited_by_count"), int) and e["cited_by_count"] > 0)
 
-    by_year = defaultdict(lambda: {"n": 0, "resolved": 0, "cited": 0, "sum_cites": 0})
-    for e in entries:
-        y = e.get("year")
-        if isinstance(y, int):
-            by_year[y]["n"] += 1
-            if isinstance(e.get("cited_by_count"), int):
-                by_year[y]["resolved"] += 1
-                by_year[y]["sum_cites"] += e["cited_by_count"]
-                if e["cited_by_count"] > 0:
-                    by_year[y]["cited"] += 1
-
-    summary = {
-        "total_artifacts": total,
-        "unique_dois": len(seen_doi),
-        "artifacts_with_doi": with_doi,
-        "openalex_resolved": openalex_resolved,
-        "semantic_scholar_resolved": semantic_resolved,
-        "aggregate_resolved": resolved,
-        "artifacts_with_citations": cited,
-        "by_year": {str(k): v for k, v in sorted(by_year.items())},
-    }
-
     save_json(out_path, entries)
-
-    save_json(summary_path, summary)
 
     logger.info("")
     logger.info("✓ Processing complete!")
@@ -514,7 +483,6 @@ def generate(data_dir: str) -> None:
     logger.info(f"  Artifacts with citations: {cited}")
     logger.info("")
     logger.info(f"Wrote {out_path} ({len(entries)} entries)")
-    logger.info(f"Wrote {summary_path}")
 
 
 def main() -> None:
