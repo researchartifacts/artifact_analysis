@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 CONFERENCE_NAMES = Literal[
     "ACSAC",
@@ -70,6 +70,13 @@ class Artifact(BaseModel):
         default=None,
         description="Award designation, if any (e.g., 'Distinguished Artifact').",
     )
+
+    @field_validator("award", mode="before")
+    @classmethod
+    def _coerce_award(cls, v: object) -> str | None:
+        if isinstance(v, bool):
+            return str(v).lower()
+        return v  # type: ignore[return-value]
 
     model_config = {"extra": "forbid"}
 
