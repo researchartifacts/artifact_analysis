@@ -36,6 +36,40 @@ a coordinated update across multiple repos. Bump the **minor** version (pre-1.0)
 8. **Website data** (`reprodb.github.io/assets/data/` and `_data/`) — regenerate via
    pipeline or bulk-rename; these are pipeline output consumed by the site.
 
+### Backward-compatible JSON reading (legacy field migration)
+
+The pipeline must read its own historical output (e.g. `repo_stats_history.json`,
+`ae_members.json`) which may use older field names or formats. All migration logic
+lives in the **Pydantic model layer**, not in generators.
+
+**Pattern — `model_validator(mode="before")`:**
+
+```python
+@model_validator(mode="before")
+@classmethod
+def _migrate_legacy_fields(cls, data):
+    if not isinstance(data, dict):
+        return data
+    # Rename old field → new field; always pop old to satisfy extra="forbid"
+    if "old_name" in data:
+        if "new_name" not in data:
+            data["new_name"] = data["old_name"]
+        data.pop("old_name")
+    return data
+```
+
+**Rules:**
+
+1. **Add migration to the model**, not the generator. See `RepoStatsEntry._migrate_legacy_fields`
+   and `AEMember._coerce_conferences` for examples.
+2. **Always pop the old key** — models use `extra="forbid"`, so leftover keys cause errors.
+3. **New fields take precedence** — when both old and new keys exist, keep the new value.
+4. **Add tests** in `tests/models/test_migration.py` for every migration path.
+5. Use `load_validated_json(path, Model)` from `src/utils/io` to load + validate in one call.
+   It falls back to raw data on validation failure (graceful degradation).
+6. Use `resolve_data_path(data_dir, filename)` from `src/utils/io` for the
+   `_build/` → `assets/data/` path fallback instead of inline `os.path.exists` checks.
+
 ### Pydantic model mapping
 
 | Generator | Pydantic model (`src/models/`) |
