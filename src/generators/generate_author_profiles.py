@@ -148,7 +148,7 @@ def generate_profiles(data_dir: str) -> None:
                 clean((cr.get("affiliation", "") if cr else "") or m.get("affiliation", ""))
             ),
             "papers": [],
-            "conferences": m.get("conferences", []),
+            "conferences": list(dict.fromkeys(c[0] if isinstance(c, list) else c for c in m.get("conferences", []))),
             "years": sorted(int(y) for y in m.get("years", {})),
             "artifact_count": 0,
             "total_papers": 0,

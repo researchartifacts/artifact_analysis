@@ -8,7 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from src.models.artifacts_by_conference import ConferenceEntry, YearBreakdown
-from src.models.artifacts_by_year import YearCount
+from src.models.artifacts_by_year import ArtifactsByYear
 from src.models.author_index import AffiliationHistoryEntry, AuthorIndexEntry, ExternalIds
 from src.models.author_stats import ArtifactPaper, AuthorStats, PlainPaper
 from src.models.institution_rankings import InstitutionRanking, TopAuthor
@@ -56,21 +56,21 @@ class TestConferenceEntry:
             ConferenceEntry(name="X", category="systems", venue_type="journal", total_artifacts=0, years=[])
 
 
-# ── YearCount ──────────────────────────────────────────────────────
+# ── ArtifactsByYear ────────────────────────────────────────────────
 
 
-class TestYearCount:
+class TestArtifactsByYear:
     def test_valid(self):
-        yc = YearCount(year=2024, count=50, systems=30, security=20)
+        yc = ArtifactsByYear(year=2024, count=50, systems=30, security=20)
         assert yc.count == 50
 
     def test_negative_rejected(self):
         with pytest.raises(ValidationError):
-            YearCount(year=2024, count=-1, systems=0, security=0)
+            ArtifactsByYear(year=2024, count=-1, systems=0, security=0)
 
     def test_extra_field_rejected(self):
         with pytest.raises(ValidationError):
-            YearCount(year=2024, count=0, systems=0, security=0, extra=True)
+            ArtifactsByYear(year=2024, count=0, systems=0, security=0, extra=True)
 
 
 # ── AuthorIndex models ─────────────────────────────────────────────
@@ -189,7 +189,7 @@ class TestAuthorStats:
         s = self._make()
         assert s.artifact_count == 3
 
-    def test_artifact_rate_out_of_range(self):
+    def test_artifact_pct_out_of_range(self):
         with pytest.raises(ValidationError):
             self._make(artifact_pct=101.0)
 
@@ -365,7 +365,7 @@ class TestSearchEntry:
 
 class TestPaper:
     def test_round_trip(self):
-        p = Paper(id=1, title="Test", normalized_title="test", conference="OSDI", year=2023)
+        p = Paper(id=1, title="Test", conference="OSDI", year=2023)
         d = p.model_dump()
         assert Paper(**d) == p
 

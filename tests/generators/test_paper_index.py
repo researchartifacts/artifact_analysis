@@ -67,7 +67,7 @@ class TestBuildPaperIndex:
 
     def test_preserves_existing_ids(self):
         existing = {
-            "paper a": {"id": 42, "normalized_title": "paper a"},
+            "paper a": {"id": 42, "title": "Paper A"},
         }
         authors = [
             self._make_author(
@@ -79,7 +79,7 @@ class TestBuildPaperIndex:
             ),
         ]
         papers, norm_to_id = build_paper_index(authors, existing, 42)
-        id_map = {p["normalized_title"]: p["id"] for p in papers}
+        id_map = {normalize_title(p["title"]): p["id"] for p in papers}
         assert id_map["paper a"] == 42  # preserved
         assert id_map["paper b"] == 43  # new, starts after max_id
 
@@ -139,8 +139,8 @@ class TestLoadExistingIndex:
 
     def test_loads_existing_file(self, tmp_path):
         data = [
-            {"id": 1, "title": "Paper A", "normalized_title": "paper a"},
-            {"id": 2, "title": "Paper B", "normalized_title": "paper b"},
+            {"id": 1, "title": "Paper A"},
+            {"id": 2, "title": "Paper B"},
         ]
         path = tmp_path / "papers.json"
         path.write_text(json.dumps(data))

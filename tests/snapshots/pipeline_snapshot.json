@@ -43643,7 +43643,6 @@
         "category",
         "conference",
         "doi_url",
-        "normalized_title",
         "title",
         "venue",
         "year"
@@ -43660,7 +43659,6 @@
         "conference",
         "has_artifact",
         "id",
-        "normalized_title",
         "title",
         "year"
       ],

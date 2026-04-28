@@ -6,7 +6,17 @@ Variants: ``systems_ae_members.json``, ``security_ae_members.json``.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+
+class AEMembership(BaseModel):
+    """A single AE committee membership record."""
+
+    conference: str = Field(description="Conference abbreviation (e.g. 'OSDI', 'USENIXSEC').")
+    year: int = Field(description="Year of service.")
+    role: str = Field(description="Role on the committee: 'chair' or 'member'.")
+
+    model_config = {"extra": "forbid"}
 
 
 class AEMember(BaseModel):
@@ -17,10 +27,21 @@ class AEMember(BaseModel):
     affiliation: str = Field(description="Current institutional affiliation.")
     total_memberships: int = Field(ge=0, description="Total number of AE committee memberships.")
     chair_count: int = Field(ge=0, description="Number of times served as AE chair.")
-    conferences: list[list] = Field(description="List of [conference, year, role] tuples for each membership.")
-    years: dict[str, int] = Field(description="Year → membership count mapping.")
+    conferences: list[AEMembership] = Field(description="AE committee memberships, one per conference-year served.")
+    years: dict[str, int] = Field(description="Year (as string, e.g. '2023') → number of memberships that year.")
     area: str = Field(description="Research area: 'systems', 'security', or 'both'.")
     first_year: int | None = Field(default=None, description="Earliest year of AE service.")
     last_year: int | None = Field(default=None, description="Most recent year of AE service.")
+
+    @field_validator("conferences", mode="before")
+    @classmethod
+    def _coerce_conferences(cls, v: object) -> object:
+        """Accept both [conf, year, role] lists and {conference, year, role} dicts."""
+        if isinstance(v, list):
+            return [
+                {"conference": item[0], "year": item[1], "role": item[2]} if isinstance(item, (list, tuple)) else item
+                for item in v
+            ]
+        return v
 
     model_config = {"extra": "forbid"}

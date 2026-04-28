@@ -12,7 +12,6 @@ class ArtifactCitation(BaseModel):
     """Citation data for a single artifact DOI."""
 
     title: str = Field(description="Paper title.")
-    normalized_title: str = Field(description="Lowercased, stripped title for deduplication.")
     conference: str = Field(description="Conference name.")
     year: int = Field(description="Publication year.")
     doi: str = Field(default="", description="Artifact DOI (empty if not found).")
@@ -25,12 +24,6 @@ class ArtifactCitation(BaseModel):
     citing_dois_openalex: list[str] = Field(default_factory=list, description="DOIs of citing works from OpenAlex.")
     citing_dois_semantic_scholar: list[str] = Field(
         default_factory=list, description="DOIs of citing works from Semantic Scholar."
-    )
-    citing_dois_openalex_truncated: bool = Field(
-        default=False, description="Whether the OpenAlex citing DOI list was truncated."
-    )
-    citing_dois_semantic_scholar_truncated: bool = Field(
-        default=False, description="Whether the Semantic Scholar citing DOI list was truncated."
     )
 
     model_config = {"extra": "forbid"}

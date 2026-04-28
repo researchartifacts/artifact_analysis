@@ -16,9 +16,6 @@ class Paper(BaseModel):
 
     id: int = Field(ge=1, description="Stable integer ID for this paper. Preserved across pipeline runs.")
     title: str = Field(description="Original paper title as found in DBLP.")
-    normalized_title: str = Field(
-        description="Lowercased title with punctuation removed, used for deduplication matching.",
-    )
     conference: str = Field(description="Conference abbreviation.")
     year: int | None = Field(default=None, ge=2017, le=2030, description="Publication year.")
     category: str = Field(default="", description="Research domain category.")

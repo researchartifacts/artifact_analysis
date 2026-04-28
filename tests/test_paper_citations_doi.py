@@ -147,7 +147,6 @@ class TestUpdateHistory:
         entries = [
             {
                 "title": "Paper A",
-                "normalized_title": "paper a",
                 "conference": "SOSP",
                 "year": 2023,
                 "category": "systems",
@@ -172,7 +171,6 @@ class TestUpdateHistory:
         entries = [
             {
                 "title": "Paper B",
-                "normalized_title": "paper b",
                 "conference": "ATC",
                 "year": 2024,
                 "paper_doi": "10.1145/2222",
@@ -197,7 +195,6 @@ class TestUpdateHistory:
         entries = [
             {
                 "title": "No Data",
-                "normalized_title": "no data",
                 "conference": "FAST",
                 "year": 2024,
                 "paper_doi": "",

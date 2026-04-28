@@ -227,7 +227,6 @@ def generate(data_dir: str) -> list[dict] | None:
 
         entry = {
             "title": title,
-            "normalized_title": norm,
             "conference": artifact.get("conference", ""),
             "year": artifact.get("year", 0),
             "category": artifact.get("category", ""),
@@ -286,7 +285,7 @@ def _update_history(entries: list[dict], build_dir: Path) -> None:
             continue  # skip papers without any citation data
 
         # Stable key: conference/year/hash
-        norm = e.get("normalized_title", "")
+        norm = normalize_title(e.get("title", ""))
         key = f"{e.get('conference', '')}/{e.get('year', 0)}/{hashlib.sha256(norm.encode()).hexdigest()[:12]}"
 
         if key not in history:

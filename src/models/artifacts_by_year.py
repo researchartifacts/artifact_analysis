@@ -8,7 +8,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 
-class YearCount(BaseModel):
+class ArtifactsByYear(BaseModel):
     """Artifact count for a single year with systems/security breakdown."""
 
     year: int = Field(description="Publication year.")

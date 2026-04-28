@@ -27,7 +27,6 @@ from src.models.committee_stats import (
 from src.models.institution_ranking_history import (
     InstitutionRankingSnapshot,
 )
-from src.models.paper_citations import PaperCitation
 from src.models.participation_stats import (
     AreaTrend,
     ConferenceYearStats,
@@ -123,7 +122,6 @@ class TestArtifactCitation:
     def test_valid(self):
         c = ArtifactCitation(
             title="Paper",
-            normalized_title="paper",
             conference="NDSS",
             year=2023,
         )
@@ -132,7 +130,6 @@ class TestArtifactCitation:
     def test_with_counts(self):
         c = ArtifactCitation(
             title="P",
-            normalized_title="p",
             conference="C",
             year=2023,
             doi="10.1234/test",
@@ -147,31 +144,6 @@ class TestArtifactCitation:
         with pytest.raises(ValidationError):
             ArtifactCitation(
                 title="P",
-                normalized_title="p",
-                conference="C",
-                year=2023,
-                extra=1,
-            )
-
-
-# ── PaperCitation ──────────────────────────────────────────────────
-
-
-class TestPaperCitation:
-    def test_valid(self):
-        p = PaperCitation(
-            title="Paper",
-            normalized_title="paper",
-            conference="OSDI",
-            year=2023,
-        )
-        assert p.error is None
-
-    def test_extra_field_rejected(self):
-        with pytest.raises(ValidationError):
-            PaperCitation(
-                title="P",
-                normalized_title="p",
                 conference="C",
                 year=2023,
                 extra=1,
@@ -377,7 +349,7 @@ class TestAuthorProfile:
             badges_available=0,
             badges_functional=0,
             badges_reproducible=0,
-            category="ae_only",
+            category="systems",
             combined_score=3,
             artifact_score=0,
             citation_score=0,
@@ -393,7 +365,7 @@ class TestAuthorProfile:
         p = AuthorProfile(
             name="Bob",
             affiliation="Stanford",
-            papers=[{"title": "Paper"}],
+            papers=[{"title": "Paper", "conference": "OSDI", "year": 2023, "badges": ["available"], "category": "systems", "artifact_citations": 0}],
             conferences=["OSDI"],
             years=[2023],
             artifact_count=1,
@@ -403,7 +375,7 @@ class TestAuthorProfile:
             badges_available=1,
             badges_functional=0,
             badges_reproducible=0,
-            category="author",
+            category="systems",
             combined_score=1,
             artifact_score=1,
             citation_score=0,
@@ -429,7 +401,7 @@ class TestAuthorProfile:
                 badges_available=0,
                 badges_functional=0,
                 badges_reproducible=0,
-                category="x",
+                category="systems",
                 combined_score=0,
                 artifact_score=0,
                 citation_score=0,

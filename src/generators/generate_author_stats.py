@@ -83,7 +83,7 @@ def load_artifact_citations(data_dir: str) -> dict[str, int]:
 
     by_title = {}
     for entry in entries:
-        title = entry.get("normalized_title") or normalize_title(entry.get("title", ""))
+        title = normalize_title(entry.get("title", ""))
         if not title:
             continue
         cited = entry.get("cited_by_count")
@@ -629,7 +629,7 @@ def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> Non
     # Paper -> authors mapping for citation attribution (intermediate, not deployed)
     build_dir = output_dir / "_build"
     build_dir.mkdir(parents=True, exist_ok=True)
-    save_json(build_dir / "paper_authors_map.json", papers_with_authors)
+    save_json(build_dir / "paper_authors_map.json", [{k: v for k, v in p.items() if k != "normalized_title"} for p in papers_with_authors])
 
     logger.info(f"Author data written to {output_dir} ({len(authors_list)} authors, {len(papers_with_authors)} papers)")
 

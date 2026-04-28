@@ -20,7 +20,6 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from src.utils.conference import normalize_title
 from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
@@ -160,7 +159,7 @@ def normalize_doi(value: str) -> str:
     return ""
 
 
-def fetch_openalex_citations(doi: str, cache: dict, citing_doi_limit: int) -> dict:
+def fetch_openalex_citations(doi: str, cache: dict, fetch_citing_dois: bool) -> dict:
     if doi in cache:
         return cache[doi]
     url = "https://api.openalex.org/works/https://doi.org/" + urllib.parse.quote(doi, safe="")
@@ -171,22 +170,20 @@ def fetch_openalex_citations(doi: str, cache: dict, citing_doi_limit: int) -> di
             payload = fetch_json(url, timeout=25)
             cited = payload.get("cited_by_count")
             cited_val = cited if isinstance(cited, int) else None
-            citing_dois = []
-            truncated = False
+            citing_dois: list[str] = []
 
             # Construct citing works URL from OpenAlex ID if we need citing DOIs
-            if citing_doi_limit > 0 and cited_val and cited_val > 0:
+            if fetch_citing_dois and cited_val and cited_val > 0:
                 openalex_id = payload.get("id", "")
                 if openalex_id:
                     # Extract work ID from full URL (e.g., https://openalex.org/W12345 -> W12345)
                     work_id = openalex_id.split("/")[-1] if "/" in openalex_id else openalex_id
                     citing_works_url = f"https://api.openalex.org/works?filter=cites:{work_id}"
-                    citing_dois, truncated = fetch_openalex_citing_dois(citing_works_url, citing_doi_limit)
+                    citing_dois = fetch_openalex_citing_dois(citing_works_url)
 
             cache[doi] = {
                 "count": cited_val,
                 "citing_dois": citing_dois,
-                "truncated": truncated,
                 "error": "",
             }
             log(f"[OpenAlex] DOI {doi} -> cited_by_count={cited_val}")
@@ -195,18 +192,17 @@ def fetch_openalex_citations(doi: str, cache: dict, citing_doi_limit: int) -> di
             last_err = f"{type(e).__name__}: {e}"
             log(f"[OpenAlex] retrying DOI {doi} after error: {last_err}")
             time.sleep(0.6 * (attempt + 1))
-    cache[doi] = {"count": None, "citing_dois": [], "truncated": False, "error": last_err}
+    cache[doi] = {"count": None, "citing_dois": [], "error": last_err}
     log(f"[OpenAlex] DOI {doi} failed after 4 attempts")
     return cache[doi]
 
 
-def fetch_openalex_citing_dois(base_url: str, limit: int) -> tuple[list[str], bool]:
+def fetch_openalex_citing_dois(base_url: str) -> list[str]:
     """
-    Fetch citing DOIs from OpenAlex using the filter API.
+    Fetch all citing DOIs from OpenAlex using the filter API.
     base_url should be like: https://api.openalex.org/works?filter=cites:W12345
     """
     citing_dois = set()
-    truncated = False
     cursor = "*"
     while True:
         url = f"{base_url}&per_page=200&cursor={urllib.parse.quote(cursor, safe='')}"
@@ -216,19 +212,14 @@ def fetch_openalex_citing_dois(base_url: str, limit: int) -> tuple[list[str], bo
             norm = normalize_doi(doi_val)
             if norm:
                 citing_dois.add(norm)
-                if len(citing_dois) >= limit:
-                    truncated = True
-                    break
-        if truncated:
-            break
         cursor = (payload.get("meta", {}) or {}).get("next_cursor")
         if not cursor:
             break
         time.sleep(0.2)
-    return sorted(citing_dois), truncated
+    return sorted(citing_dois)
 
 
-def fetch_semantic_scholar_citations(doi: str, cache: dict, citing_doi_limit: int) -> dict:
+def fetch_semantic_scholar_citations(doi: str, cache: dict, fetch_citing_dois: bool) -> dict:
     if doi in cache:
         return cache[doi]
 
@@ -250,14 +241,12 @@ def fetch_semantic_scholar_citations(doi: str, cache: dict, citing_doi_limit: in
             )
             cited = payload.get("citationCount")
             cited_val = cited if isinstance(cited, int) else None
-            citing_dois = []
-            truncated = False
-            if citing_doi_limit > 0:
-                citing_dois, truncated = fetch_semantic_scholar_citing_dois(base_url, headers, citing_doi_limit)
+            citing_dois: list[str] = []
+            if fetch_citing_dois:
+                citing_dois = fetch_semantic_scholar_citing_dois(base_url, headers)
             cache[doi] = {
                 "count": cited_val,
                 "citing_dois": citing_dois,
-                "truncated": truncated,
                 "error": "",
             }
             log(f"[SemanticScholar] DOI {doi} -> citationCount={cited_val}")
@@ -267,7 +256,7 @@ def fetch_semantic_scholar_citations(doi: str, cache: dict, citing_doi_limit: in
             if attempt + 1 < max_attempts:
                 log(f"[SemanticScholar] retrying DOI {doi} after error: {last_err}")
             time.sleep(0.6 * (attempt + 1))
-    cache[doi] = {"count": None, "citing_dois": [], "truncated": False, "error": last_err}
+    cache[doi] = {"count": None, "citing_dois": [], "error": last_err}
     log(f"[SemanticScholar] DOI {doi} failed after {max_attempts} attempts")
     return cache[doi]
 
@@ -283,9 +272,8 @@ def semantic_scholar_reachable() -> bool:
         return False
 
 
-def fetch_semantic_scholar_citing_dois(base_url: str, headers: dict, limit: int) -> tuple[list[str], bool]:
+def fetch_semantic_scholar_citing_dois(base_url: str, headers: dict) -> list[str]:
     citing_dois = set()
-    truncated = False
     offset = 0
     page_size = 100
     while True:
@@ -297,11 +285,6 @@ def fetch_semantic_scholar_citing_dois(base_url: str, headers: dict, limit: int)
             norm = normalize_doi(doi_val)
             if norm:
                 citing_dois.add(norm)
-                if len(citing_dois) >= limit:
-                    truncated = True
-                    break
-        if truncated:
-            break
         next_offset = payload.get("next")
         if next_offset is None:
             if len(payload.get("data", []) or []) < page_size:
@@ -310,7 +293,7 @@ def fetch_semantic_scholar_citing_dois(base_url: str, headers: dict, limit: int)
         else:
             offset = next_offset
         time.sleep(0.2)
-    return sorted(citing_dois), truncated
+    return sorted(citing_dois)
 
 
 def generate(data_dir: str) -> None:
@@ -338,12 +321,10 @@ def generate(data_dir: str) -> None:
     zenodo_cache = {}
     openalex_cache = {}
     semantic_scholar_cache = {}
-    openalex_citing_limit = int(os.environ.get("OPENALEX_CITING_DOI_LIMIT", "200"))
-    semantic_citing_limit = int(os.environ.get("SEMANTIC_SCHOLAR_CITING_DOI_LIMIT", "200"))
+    fetch_citing_dois = os.environ.get("FETCH_CITING_DOIS", "1").strip() != "0"
 
     logger.info(f"Processing {len(artifacts)} artifacts...")
-    logger.info(f"OpenAlex citing DOI limit: {openalex_citing_limit}")
-    logger.info(f"Semantic Scholar citing DOI limit: {semantic_citing_limit}")
+    logger.info(f"Fetch citing DOIs: {fetch_citing_dois}")
     logger.info("")
 
     entries = []
@@ -411,29 +392,22 @@ def generate(data_dir: str) -> None:
             semantic_err = ""
             openalex_count = None
             semantic_count = None
-            openalex_citing_dois = []
-            semantic_citing_dois = []
-            openalex_truncated = False
-            semantic_truncated = False
+            openalex_citing_dois: list[str] = []
+            semantic_citing_dois: list[str] = []
             if doi:
-                openalex_entry = fetch_openalex_citations(doi, openalex_cache, openalex_citing_limit)
+                openalex_entry = fetch_openalex_citations(doi, openalex_cache, fetch_citing_dois)
                 if semantic_disabled:
                     semantic_entry = {
                         "count": None,
                         "citing_dois": [],
-                        "truncated": False,
                         "error": "disabled_after_connect_failures",
                     }
                 else:
-                    semantic_entry = fetch_semantic_scholar_citations(
-                        doi, semantic_scholar_cache, semantic_citing_limit
-                    )
+                    semantic_entry = fetch_semantic_scholar_citations(doi, semantic_scholar_cache, fetch_citing_dois)
                 openalex_count = openalex_entry.get("count")
                 semantic_count = semantic_entry.get("count")
                 openalex_citing_dois = openalex_entry.get("citing_dois", [])
                 semantic_citing_dois = semantic_entry.get("citing_dois", [])
-                openalex_truncated = bool(openalex_entry.get("truncated"))
-                semantic_truncated = bool(semantic_entry.get("truncated"))
                 openalex_err = openalex_entry.get("error", "")
                 semantic_err = semantic_entry.get("error", "")
 
@@ -452,7 +426,6 @@ def generate(data_dir: str) -> None:
             entries.append(
                 {
                     "title": title,
-                    "normalized_title": normalize_title(title),
                     "conference": artifact.get("conference", ""),
                     "year": artifact.get("year", ""),
                     "doi": doi,
@@ -462,8 +435,6 @@ def generate(data_dir: str) -> None:
                     "citations_semantic_scholar": semantic_count,
                     "citing_dois_openalex": openalex_citing_dois,
                     "citing_dois_semantic_scholar": semantic_citing_dois,
-                    "citing_dois_openalex_truncated": openalex_truncated,
-                    "citing_dois_semantic_scholar_truncated": semantic_truncated,
                     "openalex_error": openalex_err,
                     "semantic_scholar_error": semantic_err,
                 }

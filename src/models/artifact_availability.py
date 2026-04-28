@@ -25,12 +25,20 @@ class AvailabilitySummary(BaseModel):
     total_urls: int = Field(ge=0, description="Total URLs checked.")
     accessible_urls: int = Field(ge=0, description="URLs that were accessible.")
     accessibility_pct: float = Field(ge=0, le=100, description="Overall accessibility percentage.")
-    by_platform: dict[str, PlatformStats] = Field(description="Stats per hosting platform.")
-    by_area: dict[str, PlatformStats] = Field(description="Stats per research area.")
-    by_year: dict[str, PlatformStats] = Field(description="Stats per year.")
-    by_year_area: dict[str, dict[str, PlatformStats]] = Field(description="Stats per year per area.")
-    by_year_platform: dict[str, dict[str, PlatformStats]] = Field(description="Stats per year per platform.")
-    by_conference: dict[str, PlatformStats] = Field(description="Stats per conference.")
+    by_platform: dict[str, PlatformStats] = Field(
+        description="Stats keyed by hosting platform domain (e.g. 'github.com', 'zenodo.org', 'figshare.com')."
+    )
+    by_area: dict[str, PlatformStats] = Field(description="Stats keyed by research area ('systems' or 'security').")
+    by_year: dict[str, PlatformStats] = Field(description="Stats keyed by publication year as string (e.g. '2023').")
+    by_year_area: dict[str, dict[str, PlatformStats]] = Field(
+        description="Stats keyed by year (str), then by area ('systems'/'security')."
+    )
+    by_year_platform: dict[str, dict[str, PlatformStats]] = Field(
+        description="Stats keyed by year (str), then by platform domain."
+    )
+    by_conference: dict[str, PlatformStats] = Field(
+        description="Stats keyed by conference abbreviation (e.g. 'OSDI', 'USENIXSEC')."
+    )
 
     model_config = {"extra": "forbid"}
 

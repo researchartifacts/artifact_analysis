@@ -12,7 +12,6 @@ class PaperCitationDoi(BaseModel):
     """Citation data for a single paper looked up by DOI."""
 
     title: str = Field(description="Paper title.")
-    normalized_title: str = Field(description="Lowercased, stripped title for deduplication.")
     conference: str = Field(description="Conference name.")
     year: int = Field(description="Publication year.")
     category: str = Field(default="", description="Research domain category.")

@@ -28,7 +28,7 @@ def load_existing_index(path):
     entries = load_json(path)
     by_norm_title = {}
     for entry in entries:
-        key = entry.get("normalized_title", "")
+        key = normalize_title(entry.get("title", ""))
         if key:
             by_norm_title[key] = entry
     return entries, by_norm_title
@@ -50,7 +50,6 @@ def build_paper_index(authors_data, existing_by_title, max_id):
             if norm not in seen:
                 seen[norm] = {
                     "title": title,
-                    "normalized_title": norm,
                     "conference": paper.get("conference", ""),
                     "year": paper.get("year"),
                     "category": paper.get("category", ""),
@@ -73,7 +72,6 @@ def build_paper_index(authors_data, existing_by_title, max_id):
             if norm not in seen:
                 seen[norm] = {
                     "title": title,
-                    "normalized_title": norm,
                     "conference": paper.get("conference", ""),
                     "year": paper.get("year"),
                     "category": paper.get("category", ""),
@@ -98,7 +96,7 @@ def build_paper_index(authors_data, existing_by_title, max_id):
         papers.append(paper)
 
     papers.sort(key=lambda x: x["id"])
-    norm_to_id = {p["normalized_title"]: p["id"] for p in papers}
+    norm_to_id = {normalize_title(p["title"]): p["id"] for p in papers}
     return papers, norm_to_id
 
 
