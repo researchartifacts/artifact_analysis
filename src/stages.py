@@ -84,6 +84,7 @@ STAGES: tuple[Stage, ...] = (
         # identical input artifacts.
         inputs=("assets/data/artifacts.json",),
         outputs=("assets/data/artifact_availability.json",),
+        ttl=30 * 86400,  # 30 days — re-check URL liveness periodically
     ),
     Stage(
         name="participation_stats",
