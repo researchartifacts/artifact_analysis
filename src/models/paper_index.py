@@ -12,12 +12,21 @@ class Paper(BaseModel):
     """A paper published at a tracked conference, with artifact badges and citation data."""
 
     id: int = Field(
-        ge=1, description="Stable integer ID (starts at 1). Assigned once and preserved across pipeline runs."
+        ge=1,
+        description="Stable integer ID (starts at 1). Assigned once and preserved across pipeline runs.",
+        examples=[42],
     )
-    title: str = Field(description="Full paper title as found in DBLP proceedings.")
-    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC', 'NDSS'.")
+    title: str = Field(
+        description="Full paper title as found in DBLP proceedings.",
+        examples=["Understanding and Detecting Software Upgrade Failures in Distributed Systems"],
+    )
+    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC', 'NDSS'.", examples=["OSDI"])
     year: int | None = Field(
-        default=None, ge=2017, le=2030, description="Publication year (2017–2030), e.g. 2023. Null if unknown."
+        default=None,
+        ge=2017,
+        le=2030,
+        description="Publication year (2017–2030), e.g. 2023. Null if unknown.",
+        examples=[2023],
     )
     category: str = Field(
         default="", description="Research domain: 'systems' or 'security'. Empty string if not yet classified."
@@ -25,15 +34,18 @@ class Paper(BaseModel):
     badges: list[str] = Field(
         default_factory=list,
         description="Artifact evaluation badges, e.g. ['Available', 'Functional', 'Reproduced']. Empty if no artifact.",
+        examples=[["available", "functional", "reproduced"]],
     )
     artifact_citations: int = Field(
         ge=0,
         default=0,
         description="Number of citations to this paper's artifact DOI. 0 if not tracked or no artifact.",
+        examples=[3],
     )
     has_artifact: bool = Field(
         default=True,
         description="True if this paper has an evaluated artifact, false for papers without artifacts.",
+        examples=[True],
     )
 
     model_config = {"extra": "forbid"}

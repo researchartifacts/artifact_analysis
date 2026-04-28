@@ -13,21 +13,32 @@ from pydantic import BaseModel, Field
 class TopAuthor(BaseModel):
     """Summary of a top-contributing author within an institution."""
 
-    name: str = Field(description="Full author name, may include DBLP disambiguation suffix, e.g. 'Jing Liu 0074'.")
+    name: str = Field(
+        description="Full author name, may include DBLP disambiguation suffix, e.g. 'Jing Liu 0074'.",
+        examples=["Mathias Payer"],
+    )
     author_id: int | None = Field(
         default=None,
         ge=1,
         description="Stable integer ID referencing the canonical author_index. Null for authors not yet indexed.",
+        examples=[42],
     )
     affiliation: str = Field(
-        description="Author's institution affiliation, e.g. 'University of Illinois Urbana-Champaign'."
+        description="Author's institution affiliation, e.g. 'University of Illinois Urbana-Champaign'.",
+        examples=["ETH Zurich"],
     )
     combined_score: int = Field(
-        ge=0, description="Author's combined score: artifact_score + citation_score + ae_score."
+        ge=0,
+        description="Author's combined score: artifact_score + citation_score + ae_score.",
+        examples=[15],
     )
-    artifact_count: int = Field(ge=0, description="Number of artifacts authored by this individual.")
-    ae_memberships: int = Field(ge=0, description="Number of AE committee memberships for this individual.")
-    total_papers: int = Field(ge=0, description="Total papers by this individual at tracked conferences.")
+    artifact_count: int = Field(ge=0, description="Number of artifacts authored by this individual.", examples=[5])
+    ae_memberships: int = Field(
+        ge=0, description="Number of AE committee memberships for this individual.", examples=[4]
+    )
+    total_papers: int = Field(
+        ge=0, description="Total papers by this individual at tracked conferences.", examples=[42]
+    )
 
     model_config = {"extra": "forbid"}
 
@@ -36,57 +47,85 @@ class InstitutionRanking(BaseModel):
     """Institution ranking aggregating artifact production, citation impact, and AE committee service across affiliated authors."""
 
     affiliation: str = Field(
-        description="Normalized institution name, e.g. 'University of Illinois Urbana-Champaign', 'EPFL'."
+        description="Normalized institution name, e.g. 'University of Illinois Urbana-Champaign', 'EPFL'.",
+        examples=["ETH Zurich"],
     )
     combined_score: int = Field(
         ge=3,
         description="Total score: artifact_score + citation_score + ae_score. Example: 633.",
+        examples=[15],
     )
     artifact_score: int = Field(
         ge=0,
         description="Points from artifact contributions. Scoring: 1 (available) + 1 (functional) + 1 (reproduced) per artifact.",
+        examples=[9],
     )
     artifact_citations: int | None = Field(
         default=None,
         ge=0,
         description="Sum of artifact citation counts. Currently 0 for most institutions (tracking in progress).",
+        examples=[3],
     )
     citation_score: int | None = Field(
         default=None,
         ge=0,
         description="Points from artifact citations. Currently 0 for most institutions (tracking in progress).",
+        examples=[0],
     )
     ae_score: int = Field(
         ge=0,
         description="Points from AE service: (memberships × 3) + (chairs × 2).",
+        examples=[6],
     )
     ae_ratio: float | None = Field(
         default=None,
         description="Artifact-to-AE score ratio (artifact_score / ae_score). Null when ae_score is 0. E.g. 0.48.",
+        examples=[1.5],
     )
     role: Literal["Producer", "Consumer", "Balanced"] = Field(
         description="Role classification based on artifact-to-AE ratio: 'Producer', 'Consumer', 'Balanced'.",
+        examples=["member"],
     )
-    artifact_count: int = Field(ge=0, description="Total number of artifacts produced by authors at this institution.")
+    artifact_count: int = Field(
+        ge=0, description="Total number of artifacts produced by authors at this institution.", examples=[5]
+    )
     badges_functional: int = Field(
-        ge=0, description="Total 'functional' badges across all artifacts from this institution."
+        ge=0,
+        description="Total 'functional' badges across all artifacts from this institution.",
+        examples=[10],
     )
     badges_reproducible: int = Field(
-        ge=0, description="Total 'reproduced'/'replicated' badges across all artifacts from this institution."
+        ge=0,
+        description="Total 'reproduced'/'replicated' badges across all artifacts from this institution.",
+        examples=[8],
     )
-    ae_memberships: int = Field(ge=0, description="Total AE committee memberships by authors at this institution.")
-    chair_count: int = Field(ge=0, description="Number of AE chair roles held by authors at this institution.")
+    ae_memberships: int = Field(
+        ge=0, description="Total AE committee memberships by authors at this institution.", examples=[4]
+    )
+    chair_count: int = Field(
+        ge=0, description="Number of AE chair roles held by authors at this institution.", examples=[1]
+    )
     total_papers: int = Field(
-        ge=0, description="Total papers at tracked conferences by authors at this institution, sourced from DBLP."
+        ge=0,
+        description="Total papers at tracked conferences by authors at this institution, sourced from DBLP.",
+        examples=[42],
     )
     artifact_pct: float = Field(
         ge=0,
         le=100,
         description="Percentage of papers with artifacts: (artifact_count / total_papers) * 100. E.g. 53.4.",
+        examples=[71.4],
     )
-    author_count: int = Field(ge=1, description="Number of unique authors affiliated with this institution.")
-    conferences: list[str] = Field(description="Distinct conference abbreviations, e.g. ['ATC', 'OSDI', 'USENIXSEC'].")
-    years: dict[str, int] = Field(description="Year (as string) → activity count, e.g. {'2023': 31, '2024': 59}.")
+    author_count: int = Field(
+        ge=1, description="Number of unique authors affiliated with this institution.", examples=[15]
+    )
+    conferences: list[str] = Field(
+        description="Distinct conference abbreviations, e.g. ['ATC', 'OSDI', 'USENIXSEC'].",
+        examples=[["OSDI", "ATC", "USENIXSEC"]],
+    )
+    years: dict[str, int] = Field(
+        description="Year (as string) → activity count, e.g. {'2023': 31, '2024': 59}.", examples=[[2021, 2022, 2023]]
+    )
     top_authors: list[TopAuthor] = Field(
         max_length=20,
         description="Up to 20 top-scoring authors from this institution, sorted by combined_score descending.",

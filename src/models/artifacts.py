@@ -33,6 +33,7 @@ class Artifact(BaseModel):
 
     conference: CONFERENCE_NAMES = Field(
         description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC', 'NDSS'. See CONFERENCE_NAMES for the full list.",
+        examples=["OSDI"],
     )
     category: CATEGORY = Field(
         description="Research domain: 'systems' or 'security', determined by the conference.",
@@ -41,9 +42,11 @@ class Artifact(BaseModel):
         ge=2017,
         le=2030,
         description="Publication year (2017–2030), e.g. 2023.",
+        examples=[2023],
     )
     title: str = Field(
         description="Full paper title as it appears in the conference proceedings.",
+        examples=["Understanding and Detecting Software Upgrade Failures in Distributed Systems"],
     )
     badges: list[str] = Field(
         description=(
@@ -51,6 +54,7 @@ class Artifact(BaseModel):
             "Canonical lowercase values: 'available', 'functional', 'reproduced', 'reusable', 'replicated'. "
             "Some older data retains capitalized variants, e.g. 'Available', 'Functional'."
         ),
+        examples=[["available", "functional", "reproduced"]],
     )
     artifact_urls: list[str] = Field(
         description=(
@@ -58,22 +62,27 @@ class Artifact(BaseModel):
             "Zenodo DOIs, and other archives. "
             "Example: ['https://github.com/org/repo', 'https://doi.org/10.5281/zenodo.12345']."
         ),
+        examples=[["https://github.com/org/repo", "https://doi.org/10.5281/zenodo.12345"]],
     )
     doi: str = Field(
         default="",
         description="Canonical artifact DOI extracted from artifact_urls, e.g. '10.5281/zenodo.12345'. Empty string if none found.",
+        examples=["10.5281/zenodo.12345"],
     )
     paper_url: str | None = Field(
         default=None,
         description="DOI URL or direct link to the published paper, e.g. 'https://doi.org/10.1145/...'. Null if unavailable.",
+        examples=["https://doi.org/10.1145/3600006.3613152"],
     )
     appendix_url: str | None = Field(
         default=None,
         description="URL to supplementary materials or appendix. Null if unavailable.",
+        examples=["https://arxiv.org/abs/2301.12345"],
     )
     award: str | None = Field(
         default=None,
         description="Award designation such as 'Distinguished Artifact'. Null if no award.",
+        examples=["Distinguished Artifact"],
     )
 
     @field_validator("award", mode="before")

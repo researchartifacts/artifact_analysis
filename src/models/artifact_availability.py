@@ -11,9 +11,11 @@ from pydantic import BaseModel, Field
 class PlatformStats(BaseModel):
     """Accessibility stats for a single platform."""
 
-    total: int = Field(ge=0, description="Total number of artifact URLs checked on this platform.")
-    accessible: int = Field(ge=0, description="Number of URLs that returned HTTP 200 (accessible).")
-    pct: float = Field(ge=0, le=100, description="Accessibility percentage: (accessible / total) * 100.")
+    total: int = Field(ge=0, description="Total number of artifact URLs checked on this platform.", examples=[45])
+    accessible: int = Field(ge=0, description="Number of URLs that returned HTTP 200 (accessible).", examples=[True])
+    pct: float = Field(
+        ge=0, le=100, description="Accessibility percentage: (accessible / total) * 100.", examples=[87.5]
+    )
 
     model_config = {"extra": "forbid"}
 
@@ -22,12 +24,18 @@ class AvailabilitySummary(BaseModel):
     """Aggregate summary of artifact URL accessibility."""
 
     checked_at: str = Field(
-        description="UTC timestamp when the availability check was run, e.g. '2026-04-27 21:27:11 UTC'."
+        description="UTC timestamp when the availability check was run, e.g. '2026-04-27 21:27:11 UTC'.",
+        examples=["2026-04-01T12:00:00Z"],
     )
-    total_urls: int = Field(ge=0, description="Total number of artifact URLs checked across all platforms.")
-    accessible_urls: int = Field(ge=0, description="Number of URLs that were accessible (HTTP 200).")
+    total_urls: int = Field(
+        ge=0, description="Total number of artifact URLs checked across all platforms.", examples=[2831]
+    )
+    accessible_urls: int = Field(ge=0, description="Number of URLs that were accessible (HTTP 200).", examples=[2450])
     accessibility_pct: float = Field(
-        ge=0, le=100, description="Overall accessibility percentage: (accessible_urls / total_urls) * 100."
+        ge=0,
+        le=100,
+        description="Overall accessibility percentage: (accessible_urls / total_urls) * 100.",
+        examples=[86.7],
     )
     by_platform: dict[str, PlatformStats] = Field(
         description="Breakdown by hosting platform. Keys are platform names: 'GitHub', 'GitLab', 'Zenodo', 'Figshare', 'Bitbucket', 'DOI-other'."
@@ -52,16 +60,28 @@ class AvailabilitySummary(BaseModel):
 class AvailabilityRecord(BaseModel):
     """Accessibility check result for a single artifact URL."""
 
-    conference: str = Field(description="Conference abbreviation, e.g. 'ATC', 'USENIXSEC'.")
-    year: int = Field(description="Publication year, e.g. 2023.")
-    area: str = Field(description="Research area: 'systems' or 'security'.")
-    title: str = Field(description="Title of the paper whose artifact URL was checked.")
-    url_key: str = Field(description="URL field name from the source data, e.g. 'repository_url', 'artifact_url'.")
-    url: str = Field(description="The artifact URL that was checked, e.g. 'https://github.com/org/repo'.")
-    platform: str = Field(
-        description="Detected hosting platform: 'GitHub', 'GitLab', 'Zenodo', 'Figshare', 'Bitbucket', or 'DOI-other'."
+    conference: str = Field(description="Conference abbreviation, e.g. 'ATC', 'USENIXSEC'.", examples=["OSDI"])
+    year: int = Field(description="Publication year, e.g. 2023.", examples=[2023])
+    area: str = Field(description="Research area: 'systems' or 'security'.", examples=["systems"])
+    title: str = Field(
+        description="Title of the paper whose artifact URL was checked.",
+        examples=["Understanding and Detecting Software Upgrade Failures in Distributed Systems"],
     )
-    accessible: bool = Field(description="True if the URL returned HTTP 200 at check time, false otherwise.")
+    url_key: str = Field(
+        description="URL field name from the source data, e.g. 'repository_url', 'artifact_url'.",
+        examples=["repository_url"],
+    )
+    url: str = Field(
+        description="The artifact URL that was checked, e.g. 'https://github.com/org/repo'.",
+        examples=["https://github.com/org/repo"],
+    )
+    platform: str = Field(
+        description="Detected hosting platform: 'GitHub', 'GitLab', 'Zenodo', 'Figshare', 'Bitbucket', or 'DOI-other'.",
+        examples=["github.com"],
+    )
+    accessible: bool = Field(
+        description="True if the URL returned HTTP 200 at check time, false otherwise.", examples=[True]
+    )
 
     model_config = {"extra": "forbid"}
 

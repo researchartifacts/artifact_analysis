@@ -13,36 +13,50 @@ from pydantic import BaseModel, Field
 class SearchEntry(BaseModel):
     """Searchable artifact entry with paper metadata, badges, author names, and institutional affiliations."""
 
-    title: str = Field(description="Full paper title as it appears in the proceedings.")
-    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'NDSS', 'USENIXSEC'.")
+    title: str = Field(
+        description="Full paper title as it appears in the proceedings.",
+        examples=["Understanding and Detecting Software Upgrade Failures in Distributed Systems"],
+    )
+    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'NDSS', 'USENIXSEC'.", examples=["OSDI"])
     category: Literal["systems", "security"] = Field(description="Research domain: 'systems' or 'security'.")
-    year: int = Field(description="Publication year, e.g. 2023.")
+    year: int = Field(description="Publication year, e.g. 2023.", examples=[2023])
     badges: list[str] = Field(
         description=(
             "Artifact evaluation badges awarded by the AE committee. "
             "Canonical lowercase values: 'available', 'functional', 'reproduced', 'reusable', 'replicated'."
         ),
+        examples=[["available", "functional", "reproduced"]],
     )
     artifact_urls: list[str] = Field(
-        description="Artifact URLs (repos, archives, DOIs), e.g. ['https://github.com/org/repo', 'https://doi.org/10.5281/zenodo.12345']."
+        description="Artifact URLs (repos, archives, DOIs), e.g. ['https://github.com/org/repo', 'https://doi.org/10.5281/zenodo.12345'].",
+        examples=[["https://github.com/org/repo", "https://doi.org/10.5281/zenodo.12345"]],
     )
     doi_url: str = Field(
-        description="Paper DOI URL, e.g. 'https://doi.org/10.1145/...'. Empty string if not available."
+        description="Paper DOI URL, e.g. 'https://doi.org/10.1145/...'. Empty string if not available.",
+        examples=["https://doi.org/10.1145/3600006.3613152"],
     )
     authors: list[str] = Field(
-        description="Author names with disambiguation suffixes removed, e.g. ['Mathias Payer', 'Haibo Chen']."
+        description="Author names with disambiguation suffixes removed, e.g. ['Mathias Payer', 'Haibo Chen'].",
+        examples=[["Mathias Payer", "Haibo Chen"]],
     )
     affiliations: list[str] = Field(
-        description="Sorted unique institution affiliations of all authors, e.g. ['EPFL', 'MIT']."
+        description="Sorted unique institution affiliations of all authors, e.g. ['EPFL', 'MIT'].",
+        examples=[["EPFL", "MIT"]],
     )
     paper_url: str | None = Field(
-        default=None, description="Paper DOI URL or direct link to the paper. Null if not available."
+        default=None,
+        description="Paper DOI URL or direct link to the paper. Null if not available.",
+        examples=["https://doi.org/10.1145/3600006.3613152"],
     )
     appendix_url: str | None = Field(
-        default=None, description="URL to supplementary materials or appendix. Null if not available."
+        default=None,
+        description="URL to supplementary materials or appendix. Null if not available.",
+        examples=["https://arxiv.org/abs/2301.12345"],
     )
     award: str | None = Field(
-        default=None, description="Award designation such as 'Distinguished Artifact'. Null if no award."
+        default=None,
+        description="Award designation such as 'Distinguished Artifact'. Null if no award.",
+        examples=["Distinguished Artifact"],
     )
 
     model_config = {"extra": "forbid"}

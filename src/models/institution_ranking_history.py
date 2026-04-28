@@ -12,17 +12,30 @@ from pydantic import BaseModel, Field
 class InstitutionRankingSnapshot(BaseModel):
     """A single institution's ranking at a point in time."""
 
-    rank: int = Field(ge=1, description="Ranking position at this snapshot date (with ties).")
-    score: int = Field(ge=0, description="Combined score at this snapshot: artifact_score + citation_score + ae_score.")
-    as_: int = Field(alias="as", ge=0, description="Artifact score at this snapshot. Abbreviated 'as' in JSON output.")
-    aes: int = Field(ge=0, description="AE service score: (memberships × 3) + (chairs × 2).")
-    tp: int = Field(ge=0, description="Total papers at tracked conferences by authors at this institution.")
-    ta: int = Field(ge=0, description="Total artifacts produced by authors at this institution.")
-    ar: float = Field(ge=0, le=100, description="Artifact rate: (total_artifacts / total_papers) * 100.")
-    rr: float = Field(
-        ge=0, le=100, description="Reproducibility rate: percentage of artifacts with 'reproduced' badge."
+    rank: int = Field(ge=1, description="Ranking position at this snapshot date (with ties).", examples=[1])
+    score: int = Field(
+        ge=0, description="Combined score at this snapshot: artifact_score + citation_score + ae_score.", examples=[15]
     )
-    r: int = Field(ge=0, description="Number of unique researchers (authors) affiliated with this institution.")
+    as_: int = Field(
+        alias="as", ge=0, description="Artifact score at this snapshot. Abbreviated 'as' in JSON output.", examples=[9]
+    )
+    aes: int = Field(ge=0, description="AE service score: (memberships × 3) + (chairs × 2).", examples=[6])
+    tp: int = Field(
+        ge=0, description="Total papers at tracked conferences by authors at this institution.", examples=[42]
+    )
+    ta: int = Field(ge=0, description="Total artifacts produced by authors at this institution.", examples=[5])
+    ar: float = Field(
+        ge=0, le=100, description="Artifact rate: (total_artifacts / total_papers) * 100.", examples=[71.4]
+    )
+    rr: float = Field(
+        ge=0,
+        le=100,
+        description="Reproducibility rate: percentage of artifacts with 'reproduced' badge.",
+        examples=[66.7],
+    )
+    r: int = Field(
+        ge=0, description="Number of unique researchers (authors) affiliated with this institution.", examples=[15]
+    )
 
     model_config = {"extra": "forbid", "populate_by_name": True}
 
@@ -30,7 +43,7 @@ class InstitutionRankingSnapshot(BaseModel):
 class InstitutionRankingHistoryEntry(BaseModel):
     """Dated snapshot of all institution rankings, enabling rank-over-time analysis."""
 
-    date: str = Field(description="Snapshot date in 'YYYY-MM' format, e.g. '2026-04'.")
+    date: str = Field(description="Snapshot date in 'YYYY-MM' format, e.g. '2026-04'.", examples=["2025-01-15"])
     entries: dict[str, InstitutionRankingSnapshot] = Field(
         description="Normalized institution name → ranking snapshot. Keys are institution names."
     )

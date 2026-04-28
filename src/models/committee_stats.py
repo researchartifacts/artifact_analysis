@@ -12,8 +12,11 @@ from pydantic import BaseModel, Field
 class NameCount(BaseModel):
     """A simple name/count pair used for country, continent, and institution tallies."""
 
-    name: str = Field(description="Country, continent, or institution name, e.g. 'United States', 'Europe', 'MIT'.")
-    count: int = Field(ge=0, description="Number of AE committee members from this entity.")
+    name: str = Field(
+        description="Country, continent, or institution name, e.g. 'United States', 'Europe', 'MIT'.",
+        examples=["Mathias Payer"],
+    )
+    count: int = Field(ge=0, description="Number of AE committee members from this entity.", examples=[127])
 
     model_config = {"extra": "forbid"}
 
@@ -24,19 +27,27 @@ class CommitteeSummary(BaseModel):
     total_members: int = Field(
         ge=0,
         description="Total AE committee members across all conferences and years (includes duplicates for multi-year service).",
+        examples=[1250],
     )
     total_systems: int = Field(
-        ge=0, description="Committee members from systems conferences (ATC, EUROSYS, FAST, OSDI, SC, SOSP)."
+        ge=0,
+        description="Committee members from systems conferences (ATC, EUROSYS, FAST, OSDI, SC, SOSP).",
+        examples=[600],
     )
     total_security: int = Field(
         ge=0,
         description="Committee members from security conferences (ACSAC, CHES, NDSS, PETS, SYSTEX, USENIXSEC, WOOT).",
+        examples=[650],
     )
     total_countries: int = Field(
-        ge=0, description="Number of unique countries represented across all committees, e.g. 59."
+        ge=0,
+        description="Number of unique countries represented across all committees, e.g. 59.",
+        examples=[35],
     )
-    total_continents: int = Field(ge=0, description="Number of unique continents represented, e.g. 7.")
-    total_institutions: int = Field(ge=0, description="Number of unique institutions represented, e.g. 470.")
+    total_continents: int = Field(ge=0, description="Number of unique continents represented, e.g. 7.", examples=[6])
+    total_institutions: int = Field(
+        ge=0, description="Number of unique institutions represented, e.g. 470.", examples=[280]
+    )
 
     model_config = {"extra": "forbid"}
 
@@ -44,11 +55,13 @@ class CommitteeSummary(BaseModel):
 class CommitteeSize(BaseModel):
     """Committee size for a single conference-year."""
 
-    conference: str = Field(description="Conference abbreviation, e.g. 'ACSAC', 'OSDI'.")
-    year: int = Field(description="Calendar year, e.g. 2023.")
-    conf_year: str = Field(description="Combined lowercase conference-year key, e.g. 'acsac2017', 'osdi2023'.")
-    area: str = Field(description="Research area of this conference: 'systems' or 'security'.")
-    size: int = Field(ge=0, description="Number of AE committee members for this conference-year.")
+    conference: str = Field(description="Conference abbreviation, e.g. 'ACSAC', 'OSDI'.", examples=["osdi2023"])
+    year: int = Field(description="Calendar year, e.g. 2023.", examples=[2023])
+    conf_year: str = Field(
+        description="Combined lowercase conference-year key, e.g. 'acsac2017', 'osdi2023'.", examples=["osdi2023"]
+    )
+    area: str = Field(description="Research area of this conference: 'systems' or 'security'.", examples=["systems"])
+    size: int = Field(ge=0, description="Number of AE committee members for this conference-year.", examples=[25])
 
     model_config = {"extra": "forbid"}
 
@@ -56,10 +69,14 @@ class CommitteeSize(BaseModel):
 class FailedClassification(BaseModel):
     """A committee member whose institution could not be geolocated."""
 
-    conference: str = Field(description="Conference abbreviation, e.g. 'ATC', 'USENIXSEC'.")
-    name: str = Field(description="Full name of the committee member whose affiliation could not be resolved.")
+    conference: str = Field(description="Conference abbreviation, e.g. 'ATC', 'USENIXSEC'.", examples=["osdi2023"])
+    name: str = Field(
+        description="Full name of the committee member whose affiliation could not be resolved.",
+        examples=["Mathias Payer"],
+    )
     affiliation: str = Field(
-        description="Raw affiliation string that could not be geolocated or matched to an institution."
+        description="Raw affiliation string that could not be geolocated or matched to an institution.",
+        examples=["ETH Zurich"],
     )
 
     model_config = {"extra": "forbid"}
@@ -69,8 +86,8 @@ class SplitCounts(BaseModel):
     """Country/institution counts split by overall/systems/security."""
 
     overall: list[NameCount] = Field(description="Counts combining all areas (systems + security).")
-    systems: list[NameCount] = Field(description="Counts from systems conferences only.")
-    security: list[NameCount] = Field(description="Counts from security conferences only.")
+    systems: list[NameCount] = Field(description="Counts from systems conferences only.", examples=[75])
+    security: list[NameCount] = Field(description="Counts from security conferences only.", examples=[52])
 
     model_config = {"extra": "forbid"}
 

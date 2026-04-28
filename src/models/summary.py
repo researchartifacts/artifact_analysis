@@ -11,11 +11,15 @@ from pydantic import BaseModel, Field
 class Summary(BaseModel):
     """High-level summary: total artifact and conference counts, year range, and last-updated timestamp."""
 
-    schema_version: str = Field(description="Semantic version of the data schema bundle, e.g. '0.1.1'.")
-    total_artifacts: int = Field(
-        ge=0, description="Total number of evaluated artifacts across all conferences and years, e.g. 2831."
+    schema_version: str = Field(
+        description="Semantic version of the data schema bundle, e.g. '0.1.1'.", examples=["0.1.2"]
     )
-    total_conferences: int = Field(ge=0, description="Total number of tracked conferences, e.g. 13.")
+    total_artifacts: int = Field(
+        ge=0,
+        description="Total number of evaluated artifacts across all conferences and years, e.g. 2831.",
+        examples=[2831],
+    )
+    total_conferences: int = Field(ge=0, description="Total number of tracked conferences, e.g. 13.", examples=[13])
     systems_artifacts: int = Field(
         ge=0, description="Number of artifacts from systems conferences (ATC, EUROSYS, FAST, OSDI, SC, SOSP)."
     )
@@ -24,15 +28,39 @@ class Summary(BaseModel):
         description="Number of artifacts from security conferences (ACSAC, CHES, NDSS, PETS, SYSTEX, USENIXSEC, WOOT).",
     )
     conferences_list: list[str] = Field(
-        description="All tracked conference abbreviations, e.g. ['ACSAC', 'ATC', 'CHES', ..., 'WOOT']."
+        description="All tracked conference abbreviations, e.g. ['ACSAC', 'ATC', 'CHES', ..., 'WOOT'].",
+        examples=[
+            [
+                "ACSAC",
+                "ATC",
+                "CHES",
+                "EUROSYS",
+                "FAST",
+                "NDSS",
+                "OSDI",
+                "PETS",
+                "SC",
+                "SOSP",
+                "SYSTEX",
+                "USENIXSEC",
+                "WOOT",
+            ]
+        ],
     )
     systems_conferences: list[str] = Field(
-        description="Systems conference abbreviations, e.g. ['ATC', 'EUROSYS', 'FAST', 'OSDI', 'SC', 'SOSP']."
+        description="Systems conference abbreviations, e.g. ['ATC', 'EUROSYS', 'FAST', 'OSDI', 'SC', 'SOSP'].",
+        examples=[["ATC", "EUROSYS", "FAST", "OSDI", "SC", "SOSP"]],
     )
     security_conferences: list[str] = Field(
-        description="Security conference abbreviations, e.g. ['ACSAC', 'CHES', 'NDSS', 'PETS', 'SYSTEX', 'USENIXSEC', 'WOOT']."
+        description="Security conference abbreviations, e.g. ['ACSAC', 'CHES', 'NDSS', 'PETS', 'SYSTEX', 'USENIXSEC', 'WOOT'].",
+        examples=[["ACSAC", "CHES", "NDSS", "PETS", "SYSTEX", "USENIXSEC", "WOOT"]],
     )
-    year_range: str = Field(pattern=r"^\d{4}-\d{4}$", description="Range of years covered, e.g. '2017-2026'.")
-    last_updated: str = Field(description="ISO 8601 UTC timestamp of last data update, e.g. '2026-04-27 21:26:06 UTC'.")
+    year_range: str = Field(
+        pattern=r"^\d{4}-\d{4}$", description="Range of years covered, e.g. '2017-2026'.", examples=["2017-2026"]
+    )
+    last_updated: str = Field(
+        description="ISO 8601 UTC timestamp of last data update, e.g. '2026-04-27 21:26:06 UTC'.",
+        examples=["2026-04-27 21:26:09 UTC"],
+    )
 
     model_config = {"extra": "forbid"}

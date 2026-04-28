@@ -13,12 +13,16 @@ from pydantic import BaseModel, Field
 class YearBreakdown(BaseModel):
     """Per-year breakdown of artifact counts and badges."""
 
-    year: int = Field(description="Publication year, e.g. 2023.")
-    total: int = Field(ge=0, description="Total number of evaluated artifacts for this conference in this year.")
-    available: int = Field(ge=0, description="Number of artifacts that received the 'available' badge.")
-    functional: int = Field(ge=0, description="Number of artifacts that received the 'functional' badge.")
+    year: int = Field(description="Publication year, e.g. 2023.", examples=[2023])
+    total: int = Field(
+        ge=0, description="Total number of evaluated artifacts for this conference in this year.", examples=[45]
+    )
+    available: int = Field(ge=0, description="Number of artifacts that received the 'available' badge.", examples=[30])
+    functional: int = Field(
+        ge=0, description="Number of artifacts that received the 'functional' badge.", examples=[25]
+    )
     reproducible: int = Field(ge=0, description="Number of artifacts that received the 'reproduced' badge.")
-    reusable: int = Field(ge=0, description="Number of artifacts that received the 'reusable' badge.")
+    reusable: int = Field(ge=0, description="Number of artifacts that received the 'reusable' badge.", examples=[5])
 
     model_config = {"extra": "forbid"}
 
@@ -26,16 +30,22 @@ class YearBreakdown(BaseModel):
 class ConferenceEntry(BaseModel):
     """Artifact counts and badge breakdowns for a single conference across all tracked years."""
 
-    name: str = Field(description="Conference abbreviation, e.g. 'ACSAC', 'OSDI', 'USENIXSEC'.")
+    name: str = Field(
+        description="Conference abbreviation, e.g. 'ACSAC', 'OSDI', 'USENIXSEC'.", examples=["Mathias Payer"]
+    )
     category: Literal["systems", "security"] = Field(description="Research domain: 'systems' or 'security'.")
     venue_type: Literal["conference", "workshop"] = Field(
         description="Venue type: 'conference' for main conferences, 'workshop' for co-located workshops.",
+        examples=["conference"],
     )
     total_artifacts: int = Field(
-        ge=0, description="Total number of evaluated artifacts across all years for this conference."
+        ge=0,
+        description="Total number of evaluated artifacts across all years for this conference.",
+        examples=[127],
     )
     years: list[YearBreakdown] = Field(
-        description="Per-year breakdown of artifact counts and badge distributions. Ordered chronologically."
+        description="Per-year breakdown of artifact counts and badge distributions. Ordered chronologically.",
+        examples=[[2021, 2022, 2023]],
     )
 
     model_config = {"extra": "forbid"}

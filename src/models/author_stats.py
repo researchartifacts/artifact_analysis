@@ -14,20 +14,26 @@ from pydantic import BaseModel, Field
 class ArtifactPaper(BaseModel):
     """A paper that has an associated artifact evaluation."""
 
-    title: str = Field(description="Full paper title as it appears in the proceedings.")
-    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC'.")
-    year: int = Field(description="Publication year, e.g. 2023.")
+    title: str = Field(
+        description="Full paper title as it appears in the proceedings.",
+        examples=["Understanding and Detecting Software Upgrade Failures in Distributed Systems"],
+    )
+    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC'.", examples=["OSDI"])
+    year: int = Field(description="Publication year, e.g. 2023.", examples=[2023])
     badges: list[str] = Field(
         description=(
             "Artifact evaluation badges awarded by the AE committee. "
             "Canonical lowercase values: 'available', 'functional', 'reproduced', 'reusable', 'replicated'."
         ),
+        examples=[["available", "functional", "reproduced"]],
     )
     category: Literal["systems", "security"] = Field(
         description="Research domain: 'systems' or 'security', determined by the conference."
     )
     artifact_citations: int = Field(
-        ge=0, description="Number of times this artifact has been cited (via DOI tracking). 0 if not yet tracked."
+        ge=0,
+        description="Number of times this artifact has been cited (via DOI tracking). 0 if not yet tracked.",
+        examples=[3],
     )
 
     model_config = {"extra": "forbid"}
@@ -36,9 +42,12 @@ class ArtifactPaper(BaseModel):
 class PlainPaper(BaseModel):
     """A published paper without an artifact evaluation."""
 
-    title: str = Field(description="Full paper title as it appears in the proceedings.")
-    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC'.")
-    year: int = Field(description="Publication year, e.g. 2023.")
+    title: str = Field(
+        description="Full paper title as it appears in the proceedings.",
+        examples=["Understanding and Detecting Software Upgrade Failures in Distributed Systems"],
+    )
+    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC'.", examples=["OSDI"])
+    year: int = Field(description="Publication year, e.g. 2023.", examples=[2023])
 
     model_config = {"extra": "forbid"}
 
@@ -47,10 +56,12 @@ class AuthorCore(BaseModel):
     """Common author fields shared by per-author statistics and profile records."""
 
     name: str = Field(
-        description="Full name in DBLP format, e.g. 'Mathias Payer' or 'Jing Liu 0074' (with disambiguation suffix)."
+        description="Full name in DBLP format, e.g. 'Mathias Payer' or 'Jing Liu 0074' (with disambiguation suffix).",
+        examples=["Mathias Payer"],
     )
     affiliation: str = Field(
-        description="Normalized institution affiliation, e.g. 'EPFL', 'MIT'. Empty string if unknown."
+        description="Normalized institution affiliation, e.g. 'EPFL', 'MIT'. Empty string if unknown.",
+        examples=["ETH Zurich"],
     )
     papers: list[ArtifactPaper] = Field(
         default_factory=list,
@@ -61,25 +72,43 @@ class AuthorCore(BaseModel):
         description="Papers by this author at tracked conferences that do not have evaluated artifacts.",
     )
     conferences: list[str] = Field(
-        description="Conference abbreviations where author has published, e.g. ['OSDI', 'USENIXSEC']."
+        description="Conference abbreviations where author has published, e.g. ['OSDI', 'USENIXSEC'].",
+        examples=[["OSDI", "ATC", "USENIXSEC"]],
     )
-    years: list[int] = Field(description="Sorted list of years with activity, e.g. [2020, 2021, 2023].")
-    artifact_count: int = Field(ge=0, description="Total number of artifacts authored across all conferences.")
+    years: list[int] = Field(
+        description="Sorted list of years with activity, e.g. [2020, 2021, 2023].", examples=[[2021, 2022, 2023]]
+    )
+    artifact_count: int = Field(
+        ge=0, description="Total number of artifacts authored across all conferences.", examples=[5]
+    )
     total_papers: int = Field(
-        ge=0, description="Total papers published at tracked conferences (both with and without artifacts)."
+        ge=0,
+        description="Total papers published at tracked conferences (both with and without artifacts).",
+        examples=[42],
     )
     artifact_pct: float = Field(
-        ge=0, le=100, description="Percentage of papers with artifacts: (artifact_count / total_papers) * 100."
+        ge=0,
+        le=100,
+        description="Percentage of papers with artifacts: (artifact_count / total_papers) * 100.",
+        examples=[71.4],
     )
-    artifact_citations: int = Field(ge=0, description="Sum of citation counts across all this author's artifacts.")
+    artifact_citations: int = Field(
+        ge=0, description="Sum of citation counts across all this author's artifacts.", examples=[3]
+    )
     badges_available: int = Field(
-        ge=0, description="Total number of 'available' badges across all this author's artifacts."
+        ge=0,
+        description="Total number of 'available' badges across all this author's artifacts.",
+        examples=[12],
     )
     badges_functional: int = Field(
-        ge=0, description="Total number of 'functional' badges across all this author's artifacts."
+        ge=0,
+        description="Total number of 'functional' badges across all this author's artifacts.",
+        examples=[10],
     )
     badges_reproducible: int = Field(
-        ge=0, description="Total number of 'reproduced' badges across all this author's artifacts."
+        ge=0,
+        description="Total number of 'reproduced' badges across all this author's artifacts.",
+        examples=[8],
     )
     category: Literal["systems", "security", "both"] = Field(
         description="Research domain based on conferences published at: 'systems', 'security', or 'both'.",
@@ -88,6 +117,7 @@ class AuthorCore(BaseModel):
         default=None,
         ge=1,
         description="Stable integer ID referencing the canonical author_index. Null for authors not yet indexed.",
+        examples=[42],
     )
 
     model_config = {"extra": "forbid"}
@@ -97,7 +127,8 @@ class AuthorStats(AuthorCore):
     """Per-author artifact statistics including badge counts, paper breakdowns, and conference history."""
 
     display_name: str = Field(
-        description="Human-readable name without DBLP disambiguation suffix, e.g. 'Mathias Payer'."
+        description="Human-readable name without DBLP disambiguation suffix, e.g. 'Mathias Payer'.",
+        examples=["Mathias Payer"],
     )
     total_papers_by_conf: dict[str, int] = Field(
         description="Conference name → paper count, e.g. {'OSDI': 3, 'USENIXSEC': 5}.",
@@ -109,24 +140,32 @@ class AuthorStats(AuthorCore):
         ge=0,
         le=100,
         description="Percentage of artifacts with a 'reproduced' badge: (reproduced / artifact_count) * 100.",
+        examples=[66.7],
     )
     functional_pct: float = Field(
         ge=0,
         le=100,
         description="Percentage of artifacts with a 'functional' badge: (functional / artifact_count) * 100.",
+        examples=[83.3],
     )
     category: Literal["systems", "security", "both", "unknown"] = Field(  # type: ignore[assignment]
         description="Research domain: 'systems', 'security', 'both', or 'unknown' (if no publications yet).",
     )
-    year_range: str = Field(pattern=r"^\d{4}-\d{4}$", description="Activity range as 'YYYY-YYYY', e.g. '2019-2024'.")
-    recent_count: int = Field(ge=0, description="Number of papers published in the most recent 3 calendar years.")
+    year_range: str = Field(
+        pattern=r"^\d{4}-\d{4}$", description="Activity range as 'YYYY-YYYY', e.g. '2019-2024'.", examples=["2017-2026"]
+    )
+    recent_count: int = Field(
+        ge=0, description="Number of papers published in the most recent 3 calendar years.", examples=[3]
+    )
     paper_ids: list[int] = Field(
         default_factory=list,
         description="List of stable paper IDs (from paper_index) for this author's artifact papers.",
+        examples=[[1, 42, 137]],
     )
     papers_without_artifact_ids: list[int] = Field(
         default_factory=list,
         description="List of stable paper IDs (from paper_index) for this author's non-artifact papers.",
+        examples=[[5, 88]],
     )
 
     model_config = {"extra": "forbid"}

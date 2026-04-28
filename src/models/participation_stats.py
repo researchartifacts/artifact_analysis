@@ -11,34 +11,49 @@ from pydantic import BaseModel, Field
 class ConferenceYearStats(BaseModel):
     """Participation stats for a single conference-year."""
 
-    conference: str = Field(description="Conference abbreviation, e.g. 'ACSAC', 'OSDI', 'USENIXSEC'.")
-    year: int = Field(description="Calendar year, e.g. 2023.")
+    conference: str = Field(
+        description="Conference abbreviation, e.g. 'ACSAC', 'OSDI', 'USENIXSEC'.", examples=["OSDI"]
+    )
+    year: int = Field(description="Calendar year, e.g. 2023.", examples=[2023])
     category: str = Field(description="Research area category: 'systems' or 'security'.")
     venue_type: str = Field(
-        description="Venue type: 'conference' for main conferences, 'workshop' for co-located workshops."
+        description="Venue type: 'conference' for main conferences, 'workshop' for co-located workshops.",
+        examples=["conference"],
     )
     total_papers: int = Field(
-        ge=0, description="Total accepted papers in this conference-year (including those without artifacts)."
+        ge=0,
+        description="Total accepted papers in this conference-year (including those without artifacts).",
+        examples=[42],
     )
-    ae_papers: int = Field(ge=0, description="Number of papers that participated in the artifact evaluation process.")
+    ae_papers: int = Field(
+        ge=0, description="Number of papers that participated in the artifact evaluation process.", examples=[35]
+    )
     participation_pct: float = Field(
-        ge=0, le=100, description="AE participation rate: (ae_papers / total_papers) * 100."
+        ge=0,
+        le=100,
+        description="AE participation rate: (ae_papers / total_papers) * 100.",
+        examples=[85.0],
     )
-    available: int = Field(ge=0, description="Number of papers that received the 'available' badge.")
-    functional: int = Field(ge=0, description="Number of papers that received the 'functional' badge.")
-    reproduced: int = Field(ge=0, description="Number of papers that received the 'reproduced' badge.")
+    available: int = Field(ge=0, description="Number of papers that received the 'available' badge.", examples=[30])
+    functional: int = Field(ge=0, description="Number of papers that received the 'functional' badge.", examples=[25])
+    reproduced: int = Field(ge=0, description="Number of papers that received the 'reproduced' badge.", examples=[18])
     available_pct: float = Field(
-        ge=0, le=100, description="Percentage of total papers with 'available' badge: (available / total_papers) * 100."
+        ge=0,
+        le=100,
+        description="Percentage of total papers with 'available' badge: (available / total_papers) * 100.",
+        examples=[90.0],
     )
     functional_pct: float = Field(
         ge=0,
         le=100,
         description="Percentage of total papers with 'functional' badge: (functional / total_papers) * 100.",
+        examples=[83.3],
     )
     reproduced_pct: float = Field(
         ge=0,
         le=100,
         description="Percentage of total papers with 'reproduced' badge: (reproduced / total_papers) * 100.",
+        examples=[60.0],
     )
 
     model_config = {"extra": "forbid"}
@@ -47,13 +62,22 @@ class ConferenceYearStats(BaseModel):
 class AreaTrend(BaseModel):
     """Trend data for a research area over time."""
 
-    years: list[int] = Field(description="List of years in chronological order, e.g. [2017, 2018, ..., 2026].")
-    participation_pct: list[float] = Field(
-        description="AE participation rate per year (%), parallel to the years list."
+    years: list[int] = Field(
+        description="List of years in chronological order, e.g. [2017, 2018, ..., 2026].", examples=[[2021, 2022, 2023]]
     )
-    available_pct: list[float] = Field(description="Available badge rate per year (%), parallel to the years list.")
-    functional_pct: list[float] = Field(description="Functional badge rate per year (%), parallel to the years list.")
-    reproduced_pct: list[float] = Field(description="Reproduced badge rate per year (%), parallel to the years list.")
+    participation_pct: list[float] = Field(
+        description="AE participation rate per year (%), parallel to the years list.",
+        examples=[85.0],
+    )
+    available_pct: list[float] = Field(
+        description="Available badge rate per year (%), parallel to the years list.", examples=[90.0]
+    )
+    functional_pct: list[float] = Field(
+        description="Functional badge rate per year (%), parallel to the years list.", examples=[83.3]
+    )
+    reproduced_pct: list[float] = Field(
+        description="Reproduced badge rate per year (%), parallel to the years list.", examples=[60.0]
+    )
 
     model_config = {"extra": "forbid"}
 

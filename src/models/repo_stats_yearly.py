@@ -12,14 +12,20 @@ class YearlyRepoMetrics(BaseModel):
     """Aggregate GitHub metrics for a group of repositories in a given year."""
 
     github_repos: int = Field(
-        ge=0, description="Number of GitHub repositories with stats for this year/area combination."
+        ge=0,
+        description="Number of GitHub repositories with stats for this year/area combination.",
+        examples=[180],
     )
-    avg_stars: float = Field(ge=0, description="Mean GitHub star count across repositories in this group.")
-    avg_forks: float = Field(ge=0, description="Mean GitHub fork count across repositories in this group.")
-    min_stars: float = Field(ge=0, description="Minimum GitHub star count in this group.")
-    max_stars: float = Field(ge=0, description="Maximum GitHub star count in this group.")
-    min_forks: float = Field(ge=0, description="Minimum GitHub fork count in this group.")
-    max_forks: float = Field(ge=0, description="Maximum GitHub fork count in this group.")
+    avg_stars: float = Field(
+        ge=0, description="Mean GitHub star count across repositories in this group.", examples=[250.5]
+    )
+    avg_forks: float = Field(
+        ge=0, description="Mean GitHub fork count across repositories in this group.", examples=[65.3]
+    )
+    min_stars: float = Field(ge=0, description="Minimum GitHub star count in this group.", examples=[0.0])
+    max_stars: float = Field(ge=0, description="Maximum GitHub star count in this group.", examples=[5200])
+    min_forks: float = Field(ge=0, description="Minimum GitHub fork count in this group.", examples=[0.0])
+    max_forks: float = Field(ge=0, description="Maximum GitHub fork count in this group.", examples=[1300])
 
     model_config = {"extra": "forbid"}
 
@@ -27,13 +33,17 @@ class YearlyRepoMetrics(BaseModel):
 class RepoStatsYearly(BaseModel):
     """Yearly repository statistics split by area (all, systems, security) with aggregate GitHub metrics."""
 
-    year: int = Field(description="Publication year, e.g. 2023.")
+    year: int = Field(description="Publication year, e.g. 2023.", examples=[2023])
     all: YearlyRepoMetrics = Field(description="Combined GitHub metrics across all research areas for this year.")
     systems: YearlyRepoMetrics | None = Field(
-        default=None, description="Systems-only GitHub metrics. Null if no systems repositories exist for this year."
+        default=None,
+        description="Systems-only GitHub metrics. Null if no systems repositories exist for this year.",
+        examples=[75],
     )
     security: YearlyRepoMetrics | None = Field(
-        default=None, description="Security-only GitHub metrics. Null if no security repositories exist for this year."
+        default=None,
+        description="Security-only GitHub metrics. Null if no security repositories exist for this year.",
+        examples=[52],
     )
 
     model_config = {"extra": "forbid"}

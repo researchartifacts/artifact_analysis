@@ -17,40 +17,64 @@ from pydantic import BaseModel, Field
 class RepoStatsEntry(BaseModel):
     """GitHub/Zenodo repository metrics for a single artifact (stars, forks, views, downloads)."""
 
-    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC'.")
-    year: int = Field(description="Publication year, e.g. 2023.")
-    title: str = Field(description="Full paper title associated with this repository.")
-    url: str = Field(description="Repository or archive URL, e.g. 'https://github.com/org/repo'.")
+    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC'.", examples=["OSDI"])
+    year: int = Field(description="Publication year, e.g. 2023.", examples=[2023])
+    title: str = Field(
+        description="Full paper title associated with this repository.",
+        examples=["Understanding and Detecting Software Upgrade Failures in Distributed Systems"],
+    )
+    url: str = Field(
+        description="Repository or archive URL, e.g. 'https://github.com/org/repo'.",
+        examples=["https://github.com/org/repo"],
+    )
     source: Literal["github", "zenodo", "figshare"] = Field(
         description="Platform hosting the artifact: 'GitHub', 'GitLab', 'Zenodo', 'Bitbucket', etc.",
+        examples=["github"],
     )
     github_stars: int | None = Field(
-        default=None, ge=0, description="GitHub star count at time of collection. Null for non-GitHub platforms."
+        default=None,
+        ge=0,
+        description="GitHub star count at time of collection. Null for non-GitHub platforms.",
+        examples=[1250],
     )
     github_forks: int | None = Field(
-        default=None, ge=0, description="GitHub fork count at time of collection. Null for non-GitHub platforms."
+        default=None,
+        ge=0,
+        description="GitHub fork count at time of collection. Null for non-GitHub platforms.",
+        examples=[340],
     )
     zenodo_views: int | None = Field(
-        default=None, ge=0, description="Zenodo page view count. Null for non-Zenodo platforms."
+        default=None,
+        ge=0,
+        description="Zenodo page view count. Null for non-Zenodo platforms.",
+        examples=[5000],
     )
     zenodo_downloads: int | None = Field(
-        default=None, ge=0, description="Zenodo file download count. Null for non-Zenodo platforms."
+        default=None,
+        ge=0,
+        description="Zenodo file download count. Null for non-Zenodo platforms.",
+        examples=[2000],
     )
     description: str | None = Field(
         default=None,
         max_length=120,
         description="Repository description from the hosting platform, truncated to 120 characters. Null if not available.",
+        examples=["High-performance distributed key-value store"],
     )
     language: str | None = Field(
         default=None,
         description="Primary programming language as reported by the platform, e.g. 'Python', 'C++'. Null if not available.",
+        examples=["Python"],
     )
     name: str | None = Field(
-        default=None, description="Repository identifier, e.g. 'microsoft/nni'. Null for non-GitHub/GitLab platforms."
+        default=None,
+        description="Repository identifier, e.g. 'microsoft/nni'. Null for non-GitHub/GitLab platforms.",
+        examples=["Mathias Payer"],
     )
     pushed_at: str | None = Field(
         default=None,
         description="ISO 8601 timestamp of last push/update, e.g. '2024-07-15T10:30:00Z'. Null if not available.",
+        examples=["2025-03-15T10:30:00Z"],
     )
 
     model_config = {"extra": "forbid"}
@@ -62,42 +86,76 @@ class RepoStatsEntry(BaseModel):
 class TopRepo(BaseModel):
     """A top repository within a conference."""
 
-    name: str | None = Field(default=None, description="Repository identifier, e.g. 'microsoft/nni'. Null if unknown.")
+    name: str | None = Field(
+        default=None,
+        description="Repository identifier, e.g. 'microsoft/nni'. Null if unknown.",
+        examples=["Mathias Payer"],
+    )
     url: str | None = Field(
-        default=None, description="Repository URL, e.g. 'https://github.com/microsoft/nni'. Null if unknown."
+        default=None,
+        description="Repository URL, e.g. 'https://github.com/microsoft/nni'. Null if unknown.",
+        examples=["https://github.com/org/repo"],
     )
-    stars: int | None = Field(default=None, ge=0, description="GitHub star count. Null if not available.")
-    forks: int | None = Field(default=None, ge=0, description="GitHub fork count. Null if not available.")
+    stars: int | None = Field(
+        default=None, ge=0, description="GitHub star count. Null if not available.", examples=[1250]
+    )
+    forks: int | None = Field(
+        default=None, ge=0, description="GitHub fork count. Null if not available.", examples=[340]
+    )
     language: str | None = Field(
-        default=None, description="Primary programming language, e.g. 'Python'. Null if unknown."
+        default=None,
+        description="Primary programming language, e.g. 'Python'. Null if unknown.",
+        examples=["Python"],
     )
-    description: str | None = Field(default=None, description="Short repository description. Null if not set.")
+    description: str | None = Field(
+        default=None,
+        description="Short repository description. Null if not set.",
+        examples=["High-performance distributed key-value store"],
+    )
 
 
 class ConferenceYearStats(BaseModel):
     """Repository metrics for a single conference-year."""
 
-    year: int = Field(description="Publication year, e.g. 2023.")
-    github_repos: int = Field(ge=0, description="Number of GitHub repositories for this conference-year.")
-    total_stars: int = Field(ge=0, description="Sum of GitHub stars across all repos for this conference-year.")
-    total_forks: int = Field(ge=0, description="Sum of GitHub forks across all repos for this conference-year.")
-    avg_stars: float = Field(ge=0, description="Mean star count per repository for this conference-year.")
-    avg_forks: float = Field(ge=0, description="Mean fork count per repository for this conference-year.")
+    year: int = Field(description="Publication year, e.g. 2023.", examples=[2023])
+    github_repos: int = Field(
+        ge=0, description="Number of GitHub repositories for this conference-year.", examples=[180]
+    )
+    total_stars: int = Field(
+        ge=0, description="Sum of GitHub stars across all repos for this conference-year.", examples=[45000]
+    )
+    total_forks: int = Field(
+        ge=0, description="Sum of GitHub forks across all repos for this conference-year.", examples=[12000]
+    )
+    avg_stars: float = Field(
+        ge=0, description="Mean star count per repository for this conference-year.", examples=[250.5]
+    )
+    avg_forks: float = Field(
+        ge=0, description="Mean fork count per repository for this conference-year.", examples=[65.3]
+    )
 
 
 class ConferenceRepoStats(BaseModel):
     """Repository metrics grouped by conference."""
 
-    name: str = Field(description="Conference abbreviation, e.g. 'ACSAC', 'OSDI'.")
-    github_repos: int = Field(ge=0, description="Total GitHub repositories across all years for this conference.")
-    total_stars: int = Field(ge=0, description="Sum of GitHub stars across all repos for this conference.")
-    total_forks: int = Field(ge=0, description="Sum of GitHub forks across all repos for this conference.")
-    avg_stars: float = Field(ge=0, description="Mean star count per repository for this conference.")
-    avg_forks: float = Field(ge=0, description="Mean fork count per repository for this conference.")
-    max_stars: int = Field(ge=0, description="Maximum star count among all repos for this conference.")
-    max_forks: int = Field(ge=0, description="Maximum fork count among all repos for this conference.")
+    name: str = Field(description="Conference abbreviation, e.g. 'ACSAC', 'OSDI'.", examples=["Mathias Payer"])
+    github_repos: int = Field(
+        ge=0, description="Total GitHub repositories across all years for this conference.", examples=[180]
+    )
+    total_stars: int = Field(
+        ge=0, description="Sum of GitHub stars across all repos for this conference.", examples=[45000]
+    )
+    total_forks: int = Field(
+        ge=0, description="Sum of GitHub forks across all repos for this conference.", examples=[12000]
+    )
+    avg_stars: float = Field(ge=0, description="Mean star count per repository for this conference.", examples=[250.5])
+    avg_forks: float = Field(ge=0, description="Mean fork count per repository for this conference.", examples=[65.3])
+    max_stars: int = Field(ge=0, description="Maximum star count among all repos for this conference.", examples=[5200])
+    max_forks: int = Field(ge=0, description="Maximum fork count among all repos for this conference.", examples=[1300])
     years: list[ConferenceYearStats] = Field(
-        default_factory=list, description="Per-year repository metrics, ordered chronologically."
+        default_factory=list,
+        description="Per-year repository metrics, ordered chronologically.",
+        examples=[[2021, 2022, 2023]],
     )
     top_repos: list[TopRepo] = Field(
         default_factory=list, description="Highlighted repositories for this conference, sorted by stars descending."
@@ -109,19 +167,34 @@ class ConferenceRepoStats(BaseModel):
 class YearRepoStats(BaseModel):
     """Repository metrics grouped by year."""
 
-    year: int = Field(description="Publication year, e.g. 2023.")
-    github_repos: int = Field(ge=0, description="Number of GitHub repositories for this year across all conferences.")
-    total_stars: int = Field(ge=0, description="Sum of GitHub stars across all repos for this year.")
-    total_forks: int | None = Field(
-        default=None, ge=0, description="Sum of GitHub forks. Null if not tracked for this year."
+    year: int = Field(description="Publication year, e.g. 2023.", examples=[2023])
+    github_repos: int = Field(
+        ge=0, description="Number of GitHub repositories for this year across all conferences.", examples=[180]
     )
-    max_stars: int = Field(default=0, ge=0, description="Maximum star count among all repos for this year.")
-    max_forks: int = Field(default=0, ge=0, description="Maximum fork count among all repos for this year.")
+    total_stars: int = Field(ge=0, description="Sum of GitHub stars across all repos for this year.", examples=[45000])
+    total_forks: int | None = Field(
+        default=None,
+        ge=0,
+        description="Sum of GitHub forks. Null if not tracked for this year.",
+        examples=[12000],
+    )
+    max_stars: int = Field(
+        default=0, ge=0, description="Maximum star count among all repos for this year.", examples=[5200]
+    )
+    max_forks: int = Field(
+        default=0, ge=0, description="Maximum fork count among all repos for this year.", examples=[1300]
+    )
     avg_stars: float | None = Field(
-        default=None, ge=0, description="Mean star count per repository. Null if not computed."
+        default=None,
+        ge=0,
+        description="Mean star count per repository. Null if not computed.",
+        examples=[250.5],
     )
     avg_forks: float | None = Field(
-        default=None, ge=0, description="Mean fork count per repository. Null if not computed."
+        default=None,
+        ge=0,
+        description="Mean fork count per repository. Null if not computed.",
+        examples=[65.3],
     )
 
     model_config = {"extra": "forbid"}
@@ -130,18 +203,23 @@ class YearRepoStats(BaseModel):
 class OverallStats(BaseModel):
     """Global repository metrics."""
 
-    github_repos: int = Field(ge=0, description="Total GitHub repositories across all conferences, e.g. 1344.")
-    total_stars: int = Field(ge=0, description="Sum of GitHub stars across all repositories, e.g. 126724.")
-    total_forks: int = Field(ge=0, description="Sum of GitHub forks across all repositories.")
-    max_stars: int = Field(ge=0, description="Maximum star count among all repositories.")
-    max_forks: int = Field(ge=0, description="Maximum fork count among all repositories.")
-    zenodo_repos: int = Field(ge=0, description="Total Zenodo-hosted artifact records, e.g. 902.")
-    total_views: int = Field(ge=0, description="Sum of Zenodo page views across all records.")
-    total_downloads: int = Field(ge=0, description="Sum of Zenodo file downloads across all records.")
-    avg_stars: float = Field(ge=0, description="Mean GitHub star count per repository, e.g. 94.3.")
-    avg_forks: float = Field(ge=0, description="Mean GitHub fork count per repository, e.g. 12.3.")
+    github_repos: int = Field(
+        ge=0, description="Total GitHub repositories across all conferences, e.g. 1344.", examples=[180]
+    )
+    total_stars: int = Field(
+        ge=0, description="Sum of GitHub stars across all repositories, e.g. 126724.", examples=[45000]
+    )
+    total_forks: int = Field(ge=0, description="Sum of GitHub forks across all repositories.", examples=[12000])
+    max_stars: int = Field(ge=0, description="Maximum star count among all repositories.", examples=[5200])
+    max_forks: int = Field(ge=0, description="Maximum fork count among all repositories.", examples=[1300])
+    zenodo_repos: int = Field(ge=0, description="Total Zenodo-hosted artifact records, e.g. 902.", examples=[45])
+    total_views: int = Field(ge=0, description="Sum of Zenodo page views across all records.", examples=[85000])
+    total_downloads: int = Field(ge=0, description="Sum of Zenodo file downloads across all records.", examples=[32000])
+    avg_stars: float = Field(ge=0, description="Mean GitHub star count per repository, e.g. 94.3.", examples=[250.5])
+    avg_forks: float = Field(ge=0, description="Mean GitHub fork count per repository, e.g. 12.3.", examples=[65.3])
     last_updated: str = Field(
-        description="ISO 8601 UTC timestamp of when the stats were collected, e.g. '2026-04-27 21:26:09 UTC'."
+        description="ISO 8601 UTC timestamp of when the stats were collected, e.g. '2026-04-27 21:26:09 UTC'.",
+        examples=["2026-04-27 21:26:09 UTC"],
     )
 
     model_config = {"extra": "forbid"}
