@@ -336,6 +336,7 @@ class TestInstitutionRankingSnapshot:
 
 class TestAuthorProfile:
     def test_ae_only_profile(self):
+        """AE-only member: no papers, conferences coerced from tuples to strings."""
         p = AuthorProfile(
             name="Alice",
             affiliation="MIT",
@@ -360,12 +361,28 @@ class TestAuthorProfile:
             ae_years={"2023": 1},
         )
         assert p.ae_memberships == 1
+        # conferences coerced from tuples to unique strings
+        assert p.conferences == ["OSDI"]
+        # ae_conferences coerced to AEMembership objects
+        assert p.ae_conferences[0].conference == "OSDI"
+        assert p.ae_conferences[0].year == 2023
+        assert p.ae_conferences[0].role == "member"
 
     def test_author_only_profile(self):
+        """Author with papers, no AE service."""
         p = AuthorProfile(
             name="Bob",
             affiliation="Stanford",
-            papers=[{"title": "Paper", "conference": "OSDI", "year": 2023, "badges": ["available"], "category": "systems", "artifact_citations": 0}],
+            papers=[
+                {
+                    "title": "Paper",
+                    "conference": "OSDI",
+                    "year": 2023,
+                    "badges": ["available"],
+                    "category": "systems",
+                    "artifact_citations": 0,
+                }
+            ],
             conferences=["OSDI"],
             years=[2023],
             artifact_count=1,
@@ -385,6 +402,7 @@ class TestAuthorProfile:
         )
         assert p.ae_memberships == 0
         assert p.author_id == 5
+        assert p.papers[0].title == "Paper"
 
     def test_extra_field_rejected(self):
         with pytest.raises(ValidationError):
