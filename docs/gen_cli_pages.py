@@ -63,7 +63,9 @@ def _get_help(module_path: str) -> str:
     try:
         result = subprocess.run(
             [sys.executable, "-m", module_path, "--help"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         return result.stdout.strip() or result.stderr.strip()
     except Exception as e:
@@ -76,7 +78,7 @@ index_lines.append("Command-line interface reference for all pipeline scripts.\n
 
 # Pipeline order table
 pipeline_modules = [(m, n, c, s) for m, n, c, s in MODULES if s]
-pipeline_modules.sort(key=lambda x: (x[3].replace("b", ".1").replace("c", ".2")))
+pipeline_modules.sort(key=lambda x: x[3].replace("b", ".1").replace("c", ".2"))
 index_lines.append("## Pipeline Order\n\n")
 index_lines.append("| Step | Script | Category |\n|------|--------|----------|\n")
 for _mod, name, cat, step in pipeline_modules:
@@ -101,7 +103,7 @@ for mod, name, cat, step in MODULES:
     help_text = _get_help(mod)
     lines = [f"# {name}\n\n"]
     if step:
-        lines.append(f"!!! info \"Pipeline step {step}\"\n\n")
+        lines.append(f'!!! info "Pipeline step {step}"\n\n')
     lines.append(f"**Module:** `{mod}`  \n")
     lines.append(f"**Category:** {cat}\n\n")
     lines.append("## Usage\n\n```bash\n")

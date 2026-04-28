@@ -629,7 +629,10 @@ def generate_author_stats(dblp_file: str, data_dir: str, output_dir: str) -> Non
     # Paper -> authors mapping for citation attribution (intermediate, not deployed)
     build_dir = output_dir / "_build"
     build_dir.mkdir(parents=True, exist_ok=True)
-    save_json(build_dir / "paper_authors_map.json", [{k: v for k, v in p.items() if k != "normalized_title"} for p in papers_with_authors])
+    save_json(
+        build_dir / "paper_authors_map.json",
+        [{k: v for k, v in p.items() if k != "normalized_title"} for p in papers_with_authors],
+    )
 
     logger.info(f"Author data written to {output_dir} ({len(authors_list)} authors, {len(papers_with_authors)} papers)")
 
