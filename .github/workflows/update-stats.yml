@@ -20,8 +20,6 @@ permissions:
 jobs:
   update-statistics:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
     
     steps:
       - name: Checkout reprodb-pipeline repository
@@ -109,7 +107,7 @@ jobs:
             $REFRESH_FLAG || echo "⚠️ Repository stats generation skipped"
       
       - name: Download DBLP author analysis artifact (if available)
-        uses: dawidd6/action-download-artifact@v3
+        uses: dawidd6/action-download-artifact@v7
         with:
           workflow: dblp-author-analysis.yml
           workflow_conclusion: success
