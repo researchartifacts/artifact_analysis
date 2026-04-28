@@ -135,8 +135,7 @@ def create_category_timeline_chart(by_conference, category, output_path):
     ax.set_ylabel("Artifacts Evaluated", fontsize=12)
     title = "Systems" if category == "systems" else "Security"
     ax.set_title(f"{title} Artifacts by Conference", fontsize=14, fontweight="bold")
-    ax.legend(fontsize=9, loc="upper center", bbox_to_anchor=(0.5, 1.12),
-             ncol=min(len(labels), 4), framealpha=0.9)
+    ax.legend(fontsize=9, loc="upper center", bbox_to_anchor=(0.5, 1.12), ncol=min(len(labels), 4), framealpha=0.9)
     ax.grid(True, alpha=0.3)
     ax.set_xticks(years)
     fig.tight_layout()
@@ -159,8 +158,7 @@ def create_total_artifacts_chart(by_year, output_path):
     ax.set_xlabel("Year", fontsize=12)
     ax.set_ylabel("Number of Artifacts", fontsize=12)
     ax.set_title("Total Artifact Evaluations by Year", fontsize=14, fontweight="bold")
-    ax.legend(fontsize=10, loc="upper center", bbox_to_anchor=(0.5, 1.12),
-             ncol=3, framealpha=0.9)
+    ax.legend(fontsize=10, loc="upper center", bbox_to_anchor=(0.5, 1.12), ncol=3, framealpha=0.9)
     ax.grid(True, alpha=0.3)
     ax.set_xticks(years)
     fig.tight_layout()
@@ -201,8 +199,7 @@ def create_badge_distribution_chart(all_artifacts, output_path):
     ax.set_xlabel("Year", fontsize=12)
     ax.set_ylabel("Number Awarded", fontsize=12)
     ax.set_title("Artifact Badge Distribution Over Time", fontsize=14, fontweight="bold")
-    ax.legend(fontsize=10, loc="upper center", bbox_to_anchor=(0.5, 1.12),
-             ncol=4, framealpha=0.9)
+    ax.legend(fontsize=10, loc="upper center", bbox_to_anchor=(0.5, 1.12), ncol=4, framealpha=0.9)
     ax.grid(True, alpha=0.3)
     ax.set_xticks(years)
     fig.tight_layout()

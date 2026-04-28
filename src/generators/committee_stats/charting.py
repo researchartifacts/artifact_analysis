@@ -163,8 +163,7 @@ def _chart_committee_sizes(summary, path):
     ax.set_xlabel("Year")
     ax.set_ylabel("Committee Members")
     ax.set_title("AE Committee Sizes Over Time", fontweight="bold")
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.10),
-             ncol=3, framealpha=0.9)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.10), ncol=3, framealpha=0.9)
     ax.grid(True, alpha=0.3)
     ax.set_xticks(all_y)
     fig.tight_layout()
@@ -206,8 +205,7 @@ def _chart_continent_timeline(detail, path):
     ax.set_xlabel("Year")
     ax.set_ylabel("Committee Members")
     ax.set_title("AE Committee Members by Continent Over Time", fontweight="bold")
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.12),
-             ncol=4, fontsize=8, framealpha=0.9)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.12), ncol=4, fontsize=8, framealpha=0.9)
     ax.grid(axis="y", alpha=0.3)
     fig.tight_layout()
     fig.savefig(path, format="svg", bbox_inches="tight")
@@ -232,8 +230,7 @@ def _chart_institution_timeline(inst_timeline, path):
     ax.set_xlabel("Year")
     ax.set_ylabel("Unique Institutions")
     ax.set_title("Unique Institutions on AE Committees Over Time", fontweight="bold")
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.10),
-             ncol=3, framealpha=0.9)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.10), ncol=3, framealpha=0.9)
     ax.grid(True, alpha=0.3)
     ax.set_xticks(years)
     fig.tight_layout()

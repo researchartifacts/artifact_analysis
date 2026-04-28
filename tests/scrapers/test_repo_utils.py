@@ -327,9 +327,7 @@ class TestExtractGithubUrlsFromZenodo:
                 "description": "Code: https://github.com/hanshanley/tracking-takes.",
             }
         }
-        assert repo_utils._extract_github_urls_from_zenodo(record) == [
-            "https://github.com/hanshanley/tracking-takes"
-        ]
+        assert repo_utils._extract_github_urls_from_zenodo(record) == ["https://github.com/hanshanley/tracking-takes"]
 
     def test_extracts_from_notes(self):
         record = {
