@@ -178,6 +178,14 @@ STAGES: tuple[Stage, ...] = (
         optional=True,
         outputs=("_build/paper_citations.json", "_build/citation_history.json"),
     ),
+    Stage(
+        name="baseline_citations",
+        module="src.generators.generate_baseline_citations",
+        description="Collect citation counts for non-AE papers (baseline comparison)",
+        depends_on=("statistics", "dblp_extract"),
+        optional=True,
+        outputs=("_build/baseline_citations.json",),
+    ),
 )
 
 STAGE_MAP: dict[str, Stage] = {s.name: s for s in STAGES}

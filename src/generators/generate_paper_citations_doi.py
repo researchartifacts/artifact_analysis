@@ -230,6 +230,7 @@ def generate(data_dir: str) -> list[dict] | None:
             "conference": artifact.get("conference", ""),
             "year": artifact.get("year", 0),
             "category": artifact.get("category", ""),
+            "ae_paper": True,
             "paper_doi": doi,
             "openalex_id": openalex_id,
             "cited_by_count": cited_by,
