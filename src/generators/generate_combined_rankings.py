@@ -116,7 +116,9 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
 
         # Multiple DBLP authors share this normalised name — disambiguate
         raw_ae_confs = member_by_norm[norm].get("conferences", [])
-        ae_confs = set(c[0] if isinstance(c, list) else c for c in raw_ae_confs)
+        ae_confs = set(
+            c[0] if isinstance(c, list) else c["conference"] if isinstance(c, dict) else c for c in raw_ae_confs
+        )
         scored = []
         for a in group:
             overlap = len(set(a.get("conferences", [])) & ae_confs)
@@ -177,7 +179,9 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
         # Merge conferences
         a_confs = set(a.get("conferences", []))
         raw_m_confs = m.get("conferences", []) if m else []
-        m_confs = set(c[0] if isinstance(c, list) else c for c in raw_m_confs)
+        m_confs = set(
+            c[0] if isinstance(c, list) else c["conference"] if isinstance(c, dict) else c for c in raw_m_confs
+        )
 
         entry = _build_entry(
             name=a["name"],
@@ -216,7 +220,12 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
             artifact_pct=0,
             ae_memberships=m.get("total_memberships", 0),
             chair_count=m.get("chair_count", 0),
-            conferences=sorted(set(c[0] if isinstance(c, list) else c for c in m.get("conferences", []))),
+            conferences=sorted(
+                set(
+                    c[0] if isinstance(c, list) else c["conference"] if isinstance(c, dict) else c
+                    for c in m.get("conferences", [])
+                )
+            ),
             years=years,
             artifact_citations=0,
             badges_available=0,
@@ -562,20 +571,32 @@ def generate_combined_rankings(data_dir: str) -> None:
         # Filter AE members to this conference, recompute per-conf AE stats
         conf_ae_members = []
         for m in all_ae_members:
-            entries = [c for c in (m.get("conferences") or []) if isinstance(c, list) and c[0] == conf_upper]
+            entries = [
+                c
+                for c in (m.get("conferences") or [])
+                if (isinstance(c, list) and c[0] == conf_upper)
+                or (isinstance(c, dict) and c.get("conference") == conf_upper)
+            ]
             if not entries:
                 continue
+
+            def _conf_role(e):
+                return e[2] if isinstance(e, list) else e.get("role", "member")
+
+            def _conf_year(e):
+                return e[1] if isinstance(e, list) else e.get("year")
+
             conf_m = {
                 "name": m["name"],
                 "display_name": m.get("display_name", m["name"]),
                 "affiliation": m.get("affiliation", ""),
                 "total_memberships": len(entries),
-                "chair_count": sum(1 for e in entries if e[2] == "chair"),
+                "chair_count": sum(1 for e in entries if _conf_role(e) == "chair"),
                 "conferences": entries,
                 "years": {},
             }
             for e in entries:
-                yr = str(e[1])
+                yr = str(_conf_year(e))
                 conf_m["years"][yr] = conf_m["years"].get(yr, 0) + 1
             conf_ae_members.append(conf_m)
 
