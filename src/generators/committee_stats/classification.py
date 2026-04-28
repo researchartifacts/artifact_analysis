@@ -454,11 +454,11 @@ def _compute_member_stats(all_results: dict, conf_to_area: dict, classified: dic
             "chair_count": rec["chair_count"],
             "conferences": sorted(
                 [
-                    [c, y, rec["roles_by_conf"].get(cy, "member")]
+                    {"conference": c, "year": y, "role": rec["roles_by_conf"].get(cy, "member")}
                     for cy in rec["conference_years"]
                     for c, y in [_extract_conf_year(cy)]
                 ],
-                key=lambda x: (x[0], x[1] or 0),
+                key=lambda x: (x["conference"], x["year"] or 0),
             ),
             "area": rec["area"],
             "years": {str(y): rec["years_count"][y] for y in sorted(rec["years"])},
@@ -481,11 +481,11 @@ def _compute_member_stats(all_results: dict, conf_to_area: dict, classified: dic
             "chair_count": rec["sys_chair_count"],
             "conferences": sorted(
                 [
-                    [c, y, rec["roles_by_conf"].get(cy, "member")]
+                    {"conference": c, "year": y, "role": rec["roles_by_conf"].get(cy, "member")}
                     for cy in rec["sys_conference_years"]
                     for c, y in [_extract_conf_year(cy)]
                 ],
-                key=lambda x: (x[0], x[1] or 0),
+                key=lambda x: (x["conference"], x["year"] or 0),
             ),
             "area": rec["area"],
             "years": {str(y): rec["sys_years_count"][y] for y in sorted(rec["sys_years"])},
@@ -507,11 +507,11 @@ def _compute_member_stats(all_results: dict, conf_to_area: dict, classified: dic
             "chair_count": rec["sec_chair_count"],
             "conferences": sorted(
                 [
-                    [c, y, rec["roles_by_conf"].get(cy, "member")]
+                    {"conference": c, "year": y, "role": rec["roles_by_conf"].get(cy, "member")}
                     for cy in rec["sec_conference_years"]
                     for c, y in [_extract_conf_year(cy)]
                 ],
-                key=lambda x: (x[0], x[1] or 0),
+                key=lambda x: (x["conference"], x["year"] or 0),
             ),
             "area": rec["area"],
             "years": {str(y): rec["sec_years_count"][y] for y in sorted(rec["sec_years"])},
