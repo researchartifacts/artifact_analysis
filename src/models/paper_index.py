@@ -11,16 +11,29 @@ from pydantic import BaseModel, Field
 class Paper(BaseModel):
     """A paper published at a tracked conference, with artifact badges and citation data."""
 
-    id: int = Field(ge=1, description="Stable integer ID for this paper. Preserved across pipeline runs.")
-    title: str = Field(description="Original paper title as found in DBLP.")
-    conference: str = Field(description="Conference abbreviation.")
-    year: int | None = Field(default=None, ge=2017, le=2030, description="Publication year.")
-    category: str = Field(default="", description="Research domain category.")
-    badges: list[str] = Field(default_factory=list, description="Artifact evaluation badges for this paper.")
-    artifact_citations: int = Field(ge=0, default=0, description="Number of citations to this paper's artifact.")
+    id: int = Field(
+        ge=1, description="Stable integer ID (starts at 1). Assigned once and preserved across pipeline runs."
+    )
+    title: str = Field(description="Full paper title as found in DBLP proceedings.")
+    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC', 'NDSS'.")
+    year: int | None = Field(
+        default=None, ge=2017, le=2030, description="Publication year (2017–2030), e.g. 2023. Null if unknown."
+    )
+    category: str = Field(
+        default="", description="Research domain: 'systems' or 'security'. Empty string if not yet classified."
+    )
+    badges: list[str] = Field(
+        default_factory=list,
+        description="Artifact evaluation badges, e.g. ['Available', 'Functional', 'Reproduced']. Empty if no artifact.",
+    )
+    artifact_citations: int = Field(
+        ge=0,
+        default=0,
+        description="Number of citations to this paper's artifact DOI. 0 if not tracked or no artifact.",
+    )
     has_artifact: bool = Field(
         default=True,
-        description="Whether this paper has an associated artifact (false for papers_without_artifacts).",
+        description="True if this paper has an evaluated artifact, false for papers without artifacts.",
     )
 
     model_config = {"extra": "forbid"}

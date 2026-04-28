@@ -32,47 +32,48 @@ class Artifact(BaseModel):
     """A single research artifact associated with a conference paper."""
 
     conference: CONFERENCE_NAMES = Field(
-        description="Conference abbreviation where the paper was published.",
+        description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC', 'NDSS'. See CONFERENCE_NAMES for the full list.",
     )
     category: CATEGORY = Field(
-        description="Research domain category.",
+        description="Research domain: 'systems' or 'security', determined by the conference.",
     )
     year: int = Field(
         ge=2017,
         le=2030,
-        description="Publication year.",
+        description="Publication year (2017–2030), e.g. 2023.",
     )
     title: str = Field(
-        description="Paper title.",
+        description="Full paper title as it appears in the conference proceedings.",
     )
     badges: list[str] = Field(
         description=(
-            "Artifact evaluation badges. Canonical values: 'available', "
-            "'functional', 'reproduced', 'reusable', 'replicated'. "
-            "Some conferences use non-normalized variants."
+            "Artifact evaluation badges awarded by the AE committee. "
+            "Canonical lowercase values: 'available', 'functional', 'reproduced', 'reusable', 'replicated'. "
+            "Some older data retains capitalized variants, e.g. 'Available', 'Functional'."
         ),
     )
     artifact_urls: list[str] = Field(
         description=(
-            "All artifact-related URLs (repositories, archives, DOIs). "
-            "Canonical field replacing repository_url, artifact_url, and github_url."
+            "All artifact-related URLs for this paper. Includes GitHub/GitLab repos, "
+            "Zenodo DOIs, and other archives. "
+            "Example: ['https://github.com/org/repo', 'https://doi.org/10.5281/zenodo.12345']."
         ),
     )
     doi: str = Field(
         default="",
-        description="Canonical artifact DOI (e.g. '10.5281/zenodo.12345'). Extracted from artifact_urls.",
+        description="Canonical artifact DOI extracted from artifact_urls, e.g. '10.5281/zenodo.12345'. Empty string if none found.",
     )
     paper_url: str | None = Field(
         default=None,
-        description="DOI or direct link to the published paper.",
+        description="DOI URL or direct link to the published paper, e.g. 'https://doi.org/10.1145/...'. Null if unavailable.",
     )
     appendix_url: str | None = Field(
         default=None,
-        description="URL to supplementary materials or appendix.",
+        description="URL to supplementary materials or appendix. Null if unavailable.",
     )
     award: str | None = Field(
         default=None,
-        description="Award designation, if any (e.g., 'Distinguished Artifact').",
+        description="Award designation such as 'Distinguished Artifact'. Null if no award.",
     )
 
     @field_validator("award", mode="before")

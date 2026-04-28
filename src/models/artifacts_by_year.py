@@ -11,9 +11,14 @@ from pydantic import BaseModel, Field
 class ArtifactsByYear(BaseModel):
     """Total artifact count for a single year, split into systems and security conferences."""
 
-    year: int = Field(description="Publication year.")
-    count: int = Field(ge=0, description="Total artifacts for this year.")
-    systems: int = Field(ge=0, description="Artifacts from systems conferences.")
-    security: int = Field(ge=0, description="Artifacts from security conferences.")
+    year: int = Field(description="Publication year, e.g. 2023.")
+    count: int = Field(ge=0, description="Total evaluated artifacts across all conferences for this year.")
+    systems: int = Field(
+        ge=0, description="Number of artifacts from systems conferences (ATC, EUROSYS, FAST, OSDI, SC, SOSP)."
+    )
+    security: int = Field(
+        ge=0,
+        description="Number of artifacts from security conferences (ACSAC, CHES, NDSS, PETS, SYSTEX, USENIXSEC, WOOT).",
+    )
 
     model_config = {"extra": "forbid"}

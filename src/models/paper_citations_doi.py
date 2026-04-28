@@ -11,17 +11,32 @@ from pydantic import BaseModel, Field
 class PaperCitationDoi(BaseModel):
     """Paper citation counts looked up by DOI via OpenAlex and Semantic Scholar."""
 
-    title: str = Field(description="Paper title.")
-    conference: str = Field(description="Conference name.")
-    year: int = Field(description="Publication year.")
-    category: str = Field(default="", description="Research domain category.")
-    paper_doi: str = Field(default="", description="Paper DOI used for lookup.")
-    openalex_id: str = Field(default="", description="OpenAlex work ID (e.g. https://openalex.org/W…).")
-    cited_by_count: int | None = Field(
-        default=None, description="Best citation count (max of OpenAlex/Semantic Scholar)."
+    title: str = Field(description="Full paper title as it appears in the proceedings.")
+    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC'.")
+    year: int = Field(description="Publication year, e.g. 2023.")
+    category: str = Field(
+        default="", description="Research domain: 'systems' or 'security'. Empty string if not classified."
     )
-    citations_openalex: int | None = Field(default=None, description="Citation count from OpenAlex.")
-    citations_semantic_scholar: int | None = Field(default=None, description="Citation count from Semantic Scholar.")
-    source: str = Field(default="", description="Lookup method (openalex_doi, openalex_title).")
+    paper_doi: str = Field(
+        default="",
+        description="Paper DOI used for citation lookup, e.g. '10.1145/3600006.3613138'. Empty if not available.",
+    )
+    openalex_id: str = Field(
+        default="", description="OpenAlex work ID URL, e.g. 'https://openalex.org/W4388507842'. Empty if not found."
+    )
+    cited_by_count: int | None = Field(
+        default=None,
+        description="Best citation count: max(OpenAlex, Semantic Scholar). Null if neither source returned data.",
+    )
+    citations_openalex: int | None = Field(
+        default=None, description="Paper citation count from OpenAlex. Null if lookup failed or no data."
+    )
+    citations_semantic_scholar: int | None = Field(
+        default=None, description="Paper citation count from Semantic Scholar. Null if lookup failed or no data."
+    )
+    source: str = Field(
+        default="",
+        description="Method used for citation lookup: 'openalex_doi', 'openalex_title', etc. Empty if not looked up.",
+    )
 
     model_config = {"extra": "forbid"}

@@ -12,15 +12,17 @@ from pydantic import BaseModel, Field
 class RankingSnapshot(BaseModel):
     """A single author's ranking at a point in time."""
 
-    rank: int = Field(ge=1, description="Ranking position.")
-    score: int = Field(ge=0, description="Combined score.")
+    rank: int = Field(ge=1, description="Ranking position at this snapshot date (with ties).")
+    score: int = Field(ge=0, description="Combined score at this snapshot: artifact_score + citation_score + ae_score.")
     # Abbreviated field names match the JS frontend expectations.
-    as_: int = Field(alias="as", ge=0, description="Artifact score.")
-    aes: int = Field(ge=0, description="AE service score.")
-    tp: int = Field(ge=0, description="Total papers.")
-    ta: int = Field(ge=0, description="Total artifacts.")
-    ar: float = Field(ge=0, le=100, description="Artifact rate (%).")
-    rr: float = Field(ge=0, le=100, description="Reproducibility rate (%).")
+    as_: int = Field(alias="as", ge=0, description="Artifact score at this snapshot. Abbreviated 'as' in JSON output.")
+    aes: int = Field(ge=0, description="AE service score: (memberships × 3) + (chairs × 2).")
+    tp: int = Field(ge=0, description="Total papers at tracked conferences at this snapshot.")
+    ta: int = Field(ge=0, description="Total artifacts authored at this snapshot.")
+    ar: float = Field(ge=0, le=100, description="Artifact rate: (total_artifacts / total_papers) * 100.")
+    rr: float = Field(
+        ge=0, le=100, description="Reproducibility rate: percentage of artifacts with 'reproduced' badge."
+    )
 
     model_config = {"extra": "forbid", "populate_by_name": True}
 
@@ -28,7 +30,9 @@ class RankingSnapshot(BaseModel):
 class RankingHistoryEntry(BaseModel):
     """Dated snapshot of all author rankings, enabling rank-over-time analysis."""
 
-    date: str = Field(description="ISO date string (YYYY-MM-DD) of the snapshot.")
-    entries: dict[str, RankingSnapshot] = Field(description="Author name → ranking snapshot mapping.")
+    date: str = Field(description="Snapshot date in 'YYYY-MM' format, e.g. '2026-04'.")
+    entries: dict[str, RankingSnapshot] = Field(
+        description="Author name (DBLP format) → ranking snapshot. Keys include disambiguation suffixes."
+    )
 
     model_config = {"extra": "forbid"}

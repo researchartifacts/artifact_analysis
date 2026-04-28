@@ -11,9 +11,9 @@ from pydantic import BaseModel, Field
 class PlatformStats(BaseModel):
     """Accessibility stats for a single platform."""
 
-    total: int = Field(ge=0, description="Total URLs checked.")
-    accessible: int = Field(ge=0, description="URLs that were accessible.")
-    pct: float = Field(ge=0, le=100, description="Accessibility percentage.")
+    total: int = Field(ge=0, description="Total number of artifact URLs checked on this platform.")
+    accessible: int = Field(ge=0, description="Number of URLs that returned HTTP 200 (accessible).")
+    pct: float = Field(ge=0, le=100, description="Accessibility percentage: (accessible / total) * 100.")
 
     model_config = {"extra": "forbid"}
 
@@ -21,23 +21,29 @@ class PlatformStats(BaseModel):
 class AvailabilitySummary(BaseModel):
     """Aggregate summary of artifact URL accessibility."""
 
-    checked_at: str = Field(description="Timestamp of the check (UTC).")
-    total_urls: int = Field(ge=0, description="Total URLs checked.")
-    accessible_urls: int = Field(ge=0, description="URLs that were accessible.")
-    accessibility_pct: float = Field(ge=0, le=100, description="Overall accessibility percentage.")
-    by_platform: dict[str, PlatformStats] = Field(
-        description="Stats keyed by hosting platform domain (e.g. 'github.com', 'zenodo.org', 'figshare.com')."
+    checked_at: str = Field(
+        description="UTC timestamp when the availability check was run, e.g. '2026-04-27 21:27:11 UTC'."
     )
-    by_area: dict[str, PlatformStats] = Field(description="Stats keyed by research area ('systems' or 'security').")
-    by_year: dict[str, PlatformStats] = Field(description="Stats keyed by publication year as string (e.g. '2023').")
+    total_urls: int = Field(ge=0, description="Total number of artifact URLs checked across all platforms.")
+    accessible_urls: int = Field(ge=0, description="Number of URLs that were accessible (HTTP 200).")
+    accessibility_pct: float = Field(
+        ge=0, le=100, description="Overall accessibility percentage: (accessible_urls / total_urls) * 100."
+    )
+    by_platform: dict[str, PlatformStats] = Field(
+        description="Breakdown by hosting platform. Keys are platform names: 'GitHub', 'GitLab', 'Zenodo', 'Figshare', 'Bitbucket', 'DOI-other'."
+    )
+    by_area: dict[str, PlatformStats] = Field(description="Breakdown by research area. Keys: 'systems', 'security'.")
+    by_year: dict[str, PlatformStats] = Field(
+        description="Breakdown by publication year. Keys are year strings, e.g. '2020', '2023'."
+    )
     by_year_area: dict[str, dict[str, PlatformStats]] = Field(
-        description="Stats keyed by year (str), then by area ('systems'/'security')."
+        description="Nested breakdown: year string → area ('systems'/'security') → PlatformStats."
     )
     by_year_platform: dict[str, dict[str, PlatformStats]] = Field(
-        description="Stats keyed by year (str), then by platform domain."
+        description="Nested breakdown: year string → platform name → PlatformStats."
     )
     by_conference: dict[str, PlatformStats] = Field(
-        description="Stats keyed by conference abbreviation (e.g. 'OSDI', 'USENIXSEC')."
+        description="Breakdown by conference. Keys are abbreviations, e.g. 'OSDI', 'USENIXSEC', 'NDSS'."
     )
 
     model_config = {"extra": "forbid"}
@@ -46,14 +52,16 @@ class AvailabilitySummary(BaseModel):
 class AvailabilityRecord(BaseModel):
     """Accessibility check result for a single artifact URL."""
 
-    conference: str = Field(description="Conference name.")
-    year: int = Field(description="Publication year.")
-    area: str = Field(description="Research area.")
-    title: str = Field(description="Paper title.")
-    url_key: str = Field(description="Key indicating URL type (e.g. 'repository_url').")
-    url: str = Field(description="The artifact URL checked.")
-    platform: str = Field(description="Detected hosting platform.")
-    accessible: bool = Field(description="Whether the URL was accessible.")
+    conference: str = Field(description="Conference abbreviation, e.g. 'ATC', 'USENIXSEC'.")
+    year: int = Field(description="Publication year, e.g. 2023.")
+    area: str = Field(description="Research area: 'systems' or 'security'.")
+    title: str = Field(description="Title of the paper whose artifact URL was checked.")
+    url_key: str = Field(description="URL field name from the source data, e.g. 'repository_url', 'artifact_url'.")
+    url: str = Field(description="The artifact URL that was checked, e.g. 'https://github.com/org/repo'.")
+    platform: str = Field(
+        description="Detected hosting platform: 'GitHub', 'GitLab', 'Zenodo', 'Figshare', 'Bitbucket', or 'DOI-other'."
+    )
+    accessible: bool = Field(description="True if the URL returned HTTP 200 at check time, false otherwise.")
 
     model_config = {"extra": "forbid"}
 
@@ -61,7 +69,11 @@ class AvailabilityRecord(BaseModel):
 class ArtifactAvailability(BaseModel):
     """Artifact URL accessibility report: aggregate summary and per-URL check results."""
 
-    summary: AvailabilitySummary = Field(description="Aggregate accessibility summary.")
-    records: list[AvailabilityRecord] = Field(description="Per-URL check results.")
+    summary: AvailabilitySummary = Field(
+        description="Aggregate accessibility summary with breakdowns by platform, area, year, and conference."
+    )
+    records: list[AvailabilityRecord] = Field(
+        description="Individual check results, one record per artifact URL tested."
+    )
 
     model_config = {"extra": "forbid"}

@@ -11,19 +11,35 @@ from pydantic import BaseModel, Field
 class ConferenceYearStats(BaseModel):
     """Participation stats for a single conference-year."""
 
-    conference: str = Field(description="Conference name.")
-    year: int = Field(description="Year.")
-    category: str = Field(description="Paper category/track.")
-    venue_type: str = Field(description="Venue type: 'conference' or 'workshop'.")
-    total_papers: int = Field(ge=0, description="Total papers in this conference-year.")
-    ae_papers: int = Field(ge=0, description="Papers submitted to the AE process.")
-    participation_pct: float = Field(ge=0, le=100, description="AE participation rate (%).")
-    available: int = Field(ge=0, description="Papers with 'available' badge.")
-    functional: int = Field(ge=0, description="Papers with 'functional' badge.")
-    reproduced: int = Field(ge=0, description="Papers with 'reproduced' badge.")
-    available_pct: float = Field(ge=0, le=100, description="Available rate (%).")
-    functional_pct: float = Field(ge=0, le=100, description="Functional rate (%).")
-    reproduced_pct: float = Field(ge=0, le=100, description="Reproduced rate (%).")
+    conference: str = Field(description="Conference abbreviation, e.g. 'ACSAC', 'OSDI', 'USENIXSEC'.")
+    year: int = Field(description="Calendar year, e.g. 2023.")
+    category: str = Field(description="Research area category: 'systems' or 'security'.")
+    venue_type: str = Field(
+        description="Venue type: 'conference' for main conferences, 'workshop' for co-located workshops."
+    )
+    total_papers: int = Field(
+        ge=0, description="Total accepted papers in this conference-year (including those without artifacts)."
+    )
+    ae_papers: int = Field(ge=0, description="Number of papers that participated in the artifact evaluation process.")
+    participation_pct: float = Field(
+        ge=0, le=100, description="AE participation rate: (ae_papers / total_papers) * 100."
+    )
+    available: int = Field(ge=0, description="Number of papers that received the 'available' badge.")
+    functional: int = Field(ge=0, description="Number of papers that received the 'functional' badge.")
+    reproduced: int = Field(ge=0, description="Number of papers that received the 'reproduced' badge.")
+    available_pct: float = Field(
+        ge=0, le=100, description="Percentage of total papers with 'available' badge: (available / total_papers) * 100."
+    )
+    functional_pct: float = Field(
+        ge=0,
+        le=100,
+        description="Percentage of total papers with 'functional' badge: (functional / total_papers) * 100.",
+    )
+    reproduced_pct: float = Field(
+        ge=0,
+        le=100,
+        description="Percentage of total papers with 'reproduced' badge: (reproduced / total_papers) * 100.",
+    )
 
     model_config = {"extra": "forbid"}
 
@@ -31,11 +47,13 @@ class ConferenceYearStats(BaseModel):
 class AreaTrend(BaseModel):
     """Trend data for a research area over time."""
 
-    years: list[int] = Field(description="List of years in chronological order.")
-    participation_pct: list[float] = Field(description="Participation rate per year.")
-    available_pct: list[float] = Field(description="Available rate per year.")
-    functional_pct: list[float] = Field(description="Functional rate per year.")
-    reproduced_pct: list[float] = Field(description="Reproduced rate per year.")
+    years: list[int] = Field(description="List of years in chronological order, e.g. [2017, 2018, ..., 2026].")
+    participation_pct: list[float] = Field(
+        description="AE participation rate per year (%), parallel to the years list."
+    )
+    available_pct: list[float] = Field(description="Available badge rate per year (%), parallel to the years list.")
+    functional_pct: list[float] = Field(description="Functional badge rate per year (%), parallel to the years list.")
+    reproduced_pct: list[float] = Field(description="Reproduced badge rate per year (%), parallel to the years list.")
 
     model_config = {"extra": "forbid"}
 
@@ -43,7 +61,11 @@ class AreaTrend(BaseModel):
 class ParticipationStats(BaseModel):
     """Artifact evaluation participation rates per conference-year, with area-level trends over time."""
 
-    by_conference_year: list[ConferenceYearStats] = Field(description="Per-conference-year breakdown.")
-    by_area: dict[str, AreaTrend] = Field(description="Trend data keyed by area name ('security', 'systems').")
+    by_conference_year: list[ConferenceYearStats] = Field(
+        description="Per-conference-year breakdown with paper counts and badge statistics."
+    )
+    by_area: dict[str, AreaTrend] = Field(
+        description="Trend data keyed by area: 'security' and 'systems'. Each has parallel year/rate arrays."
+    )
 
     model_config = {"extra": "forbid"}

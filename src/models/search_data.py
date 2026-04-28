@@ -13,22 +13,36 @@ from pydantic import BaseModel, Field
 class SearchEntry(BaseModel):
     """Searchable artifact entry with paper metadata, badges, author names, and institutional affiliations."""
 
-    title: str = Field(description="Paper title.")
-    conference: str = Field(description="Conference abbreviation.")
-    category: Literal["systems", "security"] = Field(description="Research domain.")
-    year: int = Field(description="Publication year.")
+    title: str = Field(description="Full paper title as it appears in the proceedings.")
+    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'NDSS', 'USENIXSEC'.")
+    category: Literal["systems", "security"] = Field(description="Research domain: 'systems' or 'security'.")
+    year: int = Field(description="Publication year, e.g. 2023.")
     badges: list[str] = Field(
         description=(
-            "Artifact evaluation badges. Canonical values: 'available', "
-            "'functional', 'reproduced', 'reusable', 'replicated'."
+            "Artifact evaluation badges awarded by the AE committee. "
+            "Canonical lowercase values: 'available', 'functional', 'reproduced', 'reusable', 'replicated'."
         ),
     )
-    artifact_urls: list[str] = Field(description="All artifact-related URLs (repositories, archives, DOIs).")
-    doi_url: str = Field(description="Paper DOI URL. Empty string if not available.")
-    authors: list[str] = Field(description="Author names (DBLP disambiguation suffixes removed).")
-    affiliations: list[str] = Field(description="Sorted unique institution affiliations of all authors.")
-    paper_url: str | None = Field(default=None, description="Paper DOI or direct link.")
-    appendix_url: str | None = Field(default=None, description="Supplementary materials URL.")
-    award: str | None = Field(default=None, description="Award designation, if any.")
+    artifact_urls: list[str] = Field(
+        description="Artifact URLs (repos, archives, DOIs), e.g. ['https://github.com/org/repo', 'https://doi.org/10.5281/zenodo.12345']."
+    )
+    doi_url: str = Field(
+        description="Paper DOI URL, e.g. 'https://doi.org/10.1145/...'. Empty string if not available."
+    )
+    authors: list[str] = Field(
+        description="Author names with disambiguation suffixes removed, e.g. ['Mathias Payer', 'Haibo Chen']."
+    )
+    affiliations: list[str] = Field(
+        description="Sorted unique institution affiliations of all authors, e.g. ['EPFL', 'MIT']."
+    )
+    paper_url: str | None = Field(
+        default=None, description="Paper DOI URL or direct link to the paper. Null if not available."
+    )
+    appendix_url: str | None = Field(
+        default=None, description="URL to supplementary materials or appendix. Null if not available."
+    )
+    award: str | None = Field(
+        default=None, description="Award designation such as 'Distinguished Artifact'. Null if no award."
+    )
 
     model_config = {"extra": "forbid"}

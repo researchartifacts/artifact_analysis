@@ -14,21 +14,28 @@ from src.models.author_stats import AuthorCore
 class AuthorProfile(AuthorCore):
     """Unified author profile combining publication record, artifact metrics, and AE committee service."""
 
-    ae_memberships: int = Field(default=0, ge=0, description="Number of AE committee memberships.")
-    chair_count: int = Field(default=0, ge=0, description="Number of AE chair roles.")
+    ae_memberships: int = Field(
+        default=0, ge=0, description="Total number of AE committee memberships across all conferences and years."
+    )
+    chair_count: int = Field(default=0, ge=0, description="Number of times served as AE chair (versus regular member).")
     ae_conferences: list[AEMembership] = Field(
         default_factory=list,
-        description="AE committee memberships, one per conference-year served.",
+        description="AE committee memberships, one per conference-year served. Each entry has conference, year, role.",
     )
     ae_years: dict[str, int] = Field(
         default_factory=dict,
-        description="Year (as string, e.g. '2023') → number of AE memberships that year.",
+        description="Year (as string key, e.g. '2023') → number of AE memberships that year. Example: {'2023': 5, '2024': 3}.",
     )
-    combined_score: int = Field(ge=0, description="Total combined score.")
-    artifact_score: int = Field(ge=0, description="Points from artifacts.")
-    citation_score: int = Field(ge=0, description="Points from citations.")
-    ae_score: int = Field(ge=0, description="Points from AE service.")
-    rank: int | None = Field(default=None, ge=1, description="Ranking position.")
+    combined_score: int = Field(ge=0, description="Total combined score: artifact_score + citation_score + ae_score.")
+    artifact_score: int = Field(
+        ge=0,
+        description="Points from artifacts: each artifact scores 1 (available) + 1 (functional) + 1 (reproducible).",
+    )
+    citation_score: int = Field(ge=0, description="Points from artifact citations. Currently 0 for all authors.")
+    ae_score: int = Field(ge=0, description="Points from AE service: memberships * 3 + chairs * 2.")
+    rank: int | None = Field(
+        default=None, ge=1, description="Ranking position among all author profiles (with ties). Null if unranked."
+    )
 
     @field_validator("conferences", mode="before")
     @classmethod

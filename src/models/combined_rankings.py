@@ -12,43 +12,69 @@ from pydantic import BaseModel, Field
 class AuthorRanking(BaseModel):
     """Author ranking entry combining artifact contributions, citation impact, and AE committee service."""
 
-    rank: int = Field(ge=1, description="Ranking position (with ties).")
+    rank: int = Field(ge=1, description="Ranking position (with ties). Minimum combined_score of 3 to appear.")
     author_id: int | None = Field(
         default=None,
         ge=1,
-        description="Stable integer identifier referencing the canonical author_index.",
+        description="Stable integer ID referencing the canonical author_index. Null for authors not yet indexed.",
     )
-    name: str = Field(description="Full author name including DBLP disambiguation suffix.")
-    display_name: str = Field(description="Author name without DBLP disambiguation suffix.")
-    affiliation: str = Field(description="Raw affiliation string from DBLP.")
-    display_affiliation: str = Field(description="Normalized/cleaned institution name.")
-    artifact_count: int = Field(ge=0, description="Total number of artifacts authored.")
+    name: str = Field(description="Full author name including DBLP disambiguation suffix, e.g. 'Jing Liu 0074'.")
+    display_name: str = Field(description="Human-readable name without DBLP disambiguation suffix, e.g. 'Jing Liu'.")
+    affiliation: str = Field(
+        description="Raw affiliation string as returned from DBLP, e.g. 'EPFL, Lausanne, Switzerland'."
+    )
+    display_affiliation: str = Field(
+        description="Normalized institution name, e.g. 'EPFL', 'University of Illinois Urbana-Champaign'."
+    )
+    artifact_count: int = Field(ge=0, description="Total number of artifacts authored across all tracked conferences.")
     artifact_score: int = Field(
         ge=0,
-        description="Points from artifacts: each artifact scores 1 (available) + 1 (functional) + 1 (reproducible).",
+        description="Points from artifacts. Scoring: 1 pt (available) + 1 pt (functional) + 1 pt (reproduced) per artifact.",
     )
-    artifact_citations: int = Field(ge=0, description="Citation count for artifacts (currently 0).")
-    citation_score: int = Field(ge=0, description="Points from citations (currently 0).")
-    total_papers: int = Field(ge=0, description="Total papers published at tracked conferences (from DBLP).")
-    artifact_pct: float = Field(ge=0, le=100, description="Percentage of papers with artifacts.")
-    repro_pct: int = Field(ge=0, le=100, description="Percentage of artifacts with a reproducibility badge.")
-    ae_memberships: int = Field(ge=0, description="Number of AE committee memberships.")
-    chair_count: int = Field(ge=0, description="Number of AE chair roles.")
-    ae_score: int = Field(ge=0, description="Points from AE service: memberships * 3 + chairs * 2.")
+    artifact_citations: int = Field(
+        ge=0, description="Sum of artifact citation counts. Currently 0 for all authors (tracking in progress)."
+    )
+    citation_score: int = Field(
+        ge=0, description="Points from artifact citations. Currently 0 for all authors (tracking in progress)."
+    )
+    total_papers: int = Field(ge=0, description="Total papers published at tracked conferences, sourced from DBLP.")
+    artifact_pct: float = Field(
+        ge=0, le=100, description="Percentage of papers with artifacts: (artifact_count / total_papers) * 100."
+    )
+    repro_pct: int = Field(
+        ge=0,
+        le=100,
+        description="Percentage of artifacts with a 'reproduced' badge: (reproduced / artifact_count) * 100.",
+    )
+    ae_memberships: int = Field(
+        ge=0, description="Total number of AE committee memberships across all conferences and years."
+    )
+    chair_count: int = Field(ge=0, description="Number of times served as AE chair.")
+    ae_score: int = Field(ge=0, description="Points from AE service: (memberships × 3) + (chairs × 2).")
     ae_ratio: float | None = Field(
         default=None,
-        description="Artifact score / AE score ratio. Null if ae_score is 0.",
+        description="Artifact-to-AE score ratio (artifact_score / ae_score). Null if ae_score is 0.",
     )
     combined_score: int = Field(
         ge=3,
-        description="Total score: artifact_score + citation_score + ae_score. Minimum threshold of 3.",
+        description="Total score: artifact_score + citation_score + ae_score. Only authors with ≥3 appear.",
     )
-    badges_available: int = Field(ge=0, description="Count of 'available' badges.")
-    badges_functional: int = Field(ge=0, description="Count of 'functional' badges.")
-    badges_reproducible: int = Field(ge=0, description="Count of 'reproduced' badges.")
-    conferences: list[str] = Field(description="Conferences where the author has contributed.")
-    years: dict[str, int] = Field(description="Year-to-activity-count mapping.")
-    first_year: int | None = Field(default=None, description="Earliest year of activity.")
-    last_year: int | None = Field(default=None, description="Most recent year of activity.")
+    badges_available: int = Field(
+        ge=0, description="Total number of 'available' badges across this author's artifacts."
+    )
+    badges_functional: int = Field(
+        ge=0, description="Total number of 'functional' badges across this author's artifacts."
+    )
+    badges_reproducible: int = Field(
+        ge=0, description="Total number of 'reproduced' badges across this author's artifacts."
+    )
+    conferences: list[str] = Field(
+        description="Distinct conference abbreviations where author contributed, e.g. ['ATC', 'OSDI', 'USENIXSEC']."
+    )
+    years: dict[str, int] = Field(
+        description="Year (as string) → activity count for that year, e.g. {'2023': 5, '2024': 7}."
+    )
+    first_year: int | None = Field(default=None, description="Earliest year of activity, e.g. 2020. Null if unknown.")
+    last_year: int | None = Field(default=None, description="Most recent year of activity, e.g. 2026. Null if unknown.")
 
     model_config = {"extra": "forbid"}

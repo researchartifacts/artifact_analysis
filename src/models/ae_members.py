@@ -12,9 +12,9 @@ from pydantic import BaseModel, Field, field_validator
 class AEMembership(BaseModel):
     """A single AE committee membership record."""
 
-    conference: str = Field(description="Conference abbreviation (e.g. 'OSDI', 'USENIXSEC').")
-    year: int = Field(description="Year of service.")
-    role: str = Field(description="Role on the committee: 'chair' or 'member'.")
+    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC', 'NDSS'.")
+    year: int = Field(description="Calendar year of service, e.g. 2023.")
+    role: str = Field(description="Role on the committee. One of 'chair' or 'member'.")
 
     model_config = {"extra": "forbid"}
 
@@ -22,16 +22,26 @@ class AEMembership(BaseModel):
 class AEMember(BaseModel):
     """An Artifact Evaluation committee member with service history and institutional affiliation."""
 
-    name: str = Field(description="Full name of the AE member.")
-    display_name: str = Field(description="Display name (may differ from canonical name).")
-    affiliation: str = Field(description="Current institutional affiliation.")
-    total_memberships: int = Field(ge=0, description="Total number of AE committee memberships.")
-    chair_count: int = Field(ge=0, description="Number of times served as AE chair.")
-    conferences: list[AEMembership] = Field(description="AE committee memberships, one per conference-year served.")
-    years: dict[str, int] = Field(description="Year (as string, e.g. '2023') → number of memberships that year.")
-    area: str = Field(description="Research area: 'systems', 'security', or 'both'.")
-    first_year: int | None = Field(default=None, description="Earliest year of AE service.")
-    last_year: int | None = Field(default=None, description="Most recent year of AE service.")
+    name: str = Field(description="Full name, e.g. 'Mathias Payer'. May include DBLP disambiguation suffix.")
+    display_name: str = Field(description="Human-readable name without disambiguation suffix, e.g. 'Mathias Payer'.")
+    affiliation: str = Field(description="Current institutional affiliation, e.g. 'EPFL', 'MIT'.")
+    total_memberships: int = Field(
+        ge=0, description="Total number of AE committee memberships across all conferences and years."
+    )
+    chair_count: int = Field(ge=0, description="Number of conference-years served as AE chair (versus regular member).")
+    conferences: list[AEMembership] = Field(
+        description="List of AE committee memberships, one entry per conference-year served. Each has conference, year, role."
+    )
+    years: dict[str, int] = Field(
+        description="Year (as string key, e.g. '2023') → number of AE memberships that year. Example: {'2023': 5, '2024': 3}."
+    )
+    area: str = Field(
+        description="Research area based on conferences served: 'systems', 'security', or 'both' if spanning both."
+    )
+    first_year: int | None = Field(default=None, description="Earliest year of AE service, e.g. 2020. Null if unknown.")
+    last_year: int | None = Field(
+        default=None, description="Most recent year of AE service, e.g. 2026. Null if unknown."
+    )
 
     @field_validator("conferences", mode="before")
     @classmethod

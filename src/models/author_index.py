@@ -10,9 +10,9 @@ from pydantic import BaseModel, Field
 class AffiliationHistoryEntry(BaseModel):
     """A previous affiliation with date, tracking institution moves."""
 
-    affiliation: str = Field(description="Previous institution name.")
-    source: str = Field(description="Enrichment source that set this affiliation.")
-    date: str = Field(description="ISO 8601 date when this affiliation was recorded.")
+    affiliation: str = Field(description="Previous institution name, e.g. 'MIT', 'Google'.")
+    source: str = Field(description="Enrichment source that set this affiliation, e.g. 'dblp', 'openalex', 'manual'.")
+    date: str = Field(description="ISO 8601 date when this affiliation was recorded, e.g. '2025-01-15'.")
 
 
 class ExternalIds(BaseModel):
@@ -20,16 +20,16 @@ class ExternalIds(BaseModel):
 
     dblp_pid: str | None = Field(
         default=None,
-        description="DBLP person identifier (e.g., 'homepages/c/HaiboChen0001').",
+        description="DBLP person identifier, e.g. 'homepages/c/HaiboChen0001'. Used to link to DBLP author pages.",
     )
     orcid: str | None = Field(
         default=None,
         pattern=r"^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$",
-        description="ORCID identifier (e.g., '0000-0001-2345-6789').",
+        description="ORCID identifier, e.g. '0000-0001-2345-6789'. 16-digit hyphenated format.",
     )
     openalex_id: str | None = Field(
         default=None,
-        description="OpenAlex author ID (e.g., 'A1234567890').",
+        description="OpenAlex author ID, e.g. 'A1234567890'. Used for citation lookups.",
     )
 
     model_config = {"extra": "forbid"}
@@ -38,35 +38,42 @@ class ExternalIds(BaseModel):
 class AuthorIndexEntry(BaseModel):
     """Canonical author record: stable ID, name, affiliation, external identifiers, and enrichment history."""
 
-    id: int = Field(ge=1, description="Stable integer identifier. Assigned once, never reused or changed.")
+    id: int = Field(
+        ge=1,
+        description="Stable integer identifier (starts at 1). Assigned once and never reused or changed across pipeline runs.",
+    )
     name: str = Field(
         description=(
             "Full name in DBLP format. Includes disambiguation suffix "
             "when present (e.g., 'Haibo Chen 0001'). Unique across all authors."
         ),
     )
-    display_name: str = Field(description="Human-readable name without DBLP disambiguation suffix.")
-    affiliation: str = Field(description="Normalized institution affiliation. Empty string if unknown.")
+    display_name: str = Field(
+        description="Human-readable name without DBLP disambiguation suffix, e.g. 'Haibo Chen' (from 'Haibo Chen 0001')."
+    )
+    affiliation: str = Field(
+        description="Normalized institution affiliation, e.g. 'Shanghai Jiao Tong University'. Empty string if unknown."
+    )
     affiliation_source: Literal["csrankings", "dblp", "openalex", "crossref", "manual", ""] = Field(
         default="",
-        description="Which enrichment layer last set the affiliation.",
+        description="Which enrichment layer last set the affiliation: 'dblp', 'openalex', or 'manual'. Empty if never set.",
     )
     affiliation_updated: str = Field(
         default="",
         pattern=r"^(\d{4}-\d{2}-\d{2})?$",
-        description="ISO 8601 date when affiliation was last updated.",
+        description="ISO 8601 date when affiliation was last updated, e.g. '2026-04-07'. Empty string if never updated.",
     )
     affiliation_history: list[AffiliationHistoryEntry] = Field(
         default_factory=list,
-        description="Previous affiliations with dates, tracking institution moves.",
+        description="Previous affiliations with dates, tracking institution moves. Most recent first.",
     )
     external_ids: ExternalIds = Field(
         default_factory=ExternalIds,
-        description="Optional identifiers from external databases.",
+        description="Optional identifiers from external databases (DBLP, ORCID, OpenAlex). Empty dict if none known.",
     )
     category: Literal["systems", "security", "both"] = Field(
         default="systems",
-        description="Primary research area.",
+        description="Primary research area: 'systems', 'security', or 'both'. Based on conferences published at.",
     )
 
     model_config = {"extra": "forbid"}

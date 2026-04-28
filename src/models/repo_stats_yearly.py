@@ -11,13 +11,15 @@ from pydantic import BaseModel, Field
 class YearlyRepoMetrics(BaseModel):
     """Aggregate GitHub metrics for a group of repositories in a given year."""
 
-    github_repos: int = Field(ge=0, description="Number of repositories.")
-    avg_stars: float = Field(ge=0, description="Average star count.")
-    avg_forks: float = Field(ge=0, description="Average fork count.")
-    min_stars: float = Field(ge=0, description="Minimum star count.")
-    max_stars: float = Field(ge=0, description="Maximum star count.")
-    min_forks: float = Field(ge=0, description="Minimum fork count.")
-    max_forks: float = Field(ge=0, description="Maximum fork count.")
+    github_repos: int = Field(
+        ge=0, description="Number of GitHub repositories with stats for this year/area combination."
+    )
+    avg_stars: float = Field(ge=0, description="Mean GitHub star count across repositories in this group.")
+    avg_forks: float = Field(ge=0, description="Mean GitHub fork count across repositories in this group.")
+    min_stars: float = Field(ge=0, description="Minimum GitHub star count in this group.")
+    max_stars: float = Field(ge=0, description="Maximum GitHub star count in this group.")
+    min_forks: float = Field(ge=0, description="Minimum GitHub fork count in this group.")
+    max_forks: float = Field(ge=0, description="Maximum GitHub fork count in this group.")
 
     model_config = {"extra": "forbid"}
 
@@ -25,13 +27,13 @@ class YearlyRepoMetrics(BaseModel):
 class RepoStatsYearly(BaseModel):
     """Yearly repository statistics split by area (all, systems, security) with aggregate GitHub metrics."""
 
-    year: int = Field(description="Year.")
-    all: YearlyRepoMetrics = Field(description="Combined metrics across all areas.")
+    year: int = Field(description="Publication year, e.g. 2023.")
+    all: YearlyRepoMetrics = Field(description="Combined GitHub metrics across all research areas for this year.")
     systems: YearlyRepoMetrics | None = Field(
-        default=None, description="Systems-only metrics (absent if no systems data for this year)."
+        default=None, description="Systems-only GitHub metrics. Null if no systems repositories exist for this year."
     )
     security: YearlyRepoMetrics | None = Field(
-        default=None, description="Security-only metrics (absent if no security data for this year)."
+        default=None, description="Security-only GitHub metrics. Null if no security repositories exist for this year."
     )
 
     model_config = {"extra": "forbid"}

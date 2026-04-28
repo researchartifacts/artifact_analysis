@@ -11,19 +11,30 @@ from pydantic import BaseModel, Field
 class ArtifactCitation(BaseModel):
     """Citation counts for a single artifact DOI, aggregated from OpenAlex and Semantic Scholar."""
 
-    title: str = Field(description="Paper title.")
-    conference: str = Field(description="Conference name.")
-    year: int = Field(description="Publication year.")
-    doi: str = Field(default="", description="Artifact DOI (empty if not found).")
-    doi_source: str = Field(default="", description="Source of the DOI (e.g. 'zenodo').")
-    cited_by_count: int | None = Field(
-        default=None, description="Aggregate citation count (best of OpenAlex/Semantic Scholar)."
+    title: str = Field(description="Full paper title as it appears in the proceedings.")
+    conference: str = Field(description="Conference abbreviation, e.g. 'OSDI', 'USENIXSEC'.")
+    year: int = Field(description="Publication year, e.g. 2023.")
+    doi: str = Field(default="", description="Artifact DOI, e.g. '10.5281/zenodo.12345'. Empty string if not found.")
+    doi_source: str = Field(
+        default="", description="Source of the DOI, e.g. 'zenodo', 'figshare'. Empty string if not applicable."
     )
-    citations_openalex: int | None = Field(default=None, description="Citation count from OpenAlex.")
-    citations_semantic_scholar: int | None = Field(default=None, description="Citation count from Semantic Scholar.")
-    citing_dois_openalex: list[str] = Field(default_factory=list, description="DOIs of citing works from OpenAlex.")
+    cited_by_count: int | None = Field(
+        default=None,
+        description="Best citation count: max(OpenAlex, Semantic Scholar). Null if neither source returned data.",
+    )
+    citations_openalex: int | None = Field(
+        default=None, description="Citation count from OpenAlex. Null if lookup failed or no data."
+    )
+    citations_semantic_scholar: int | None = Field(
+        default=None, description="Citation count from Semantic Scholar. Null if lookup failed or no data."
+    )
+    citing_dois_openalex: list[str] = Field(
+        default_factory=list,
+        description="DOIs of papers citing this artifact, sourced from OpenAlex. Empty list if none.",
+    )
     citing_dois_semantic_scholar: list[str] = Field(
-        default_factory=list, description="DOIs of citing works from Semantic Scholar."
+        default_factory=list,
+        description="DOIs of papers citing this artifact, sourced from Semantic Scholar. Empty list if none.",
     )
 
     model_config = {"extra": "forbid"}

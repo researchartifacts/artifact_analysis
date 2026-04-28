@@ -12,18 +12,30 @@ from pydantic import BaseModel, Field
 class TopRepo(BaseModel):
     """Top-ranked artifact repository by GitHub stars, with paper metadata and activity info."""
 
-    title: str = Field(description="Paper title associated with this repository.")
-    url: str = Field(description="GitHub repository URL.")
-    year: int = Field(description="Publication year.")
-    stars: int = Field(ge=0, description="GitHub star count.")
-    forks: int = Field(ge=0, description="GitHub fork count.")
-    authors: str = Field(description="Comma-separated author names.")
-    github_org: str = Field(default="", description="GitHub organization or user.")
-    badges: str = Field(default="", description="Comma-separated badge names.")
-    last_active: str = Field(default="", description="Last activity date (YYYY-MM format).")
-    description: str = Field(default="", description="Repository description.")
-    language: str = Field(default="", description="Primary programming language.")
-    conference: str = Field(description="Conference where the artifact was published.")
-    area: str = Field(description="Research area: 'systems' or 'security'.")
+    title: str = Field(description="Paper title associated with this repository, as published in proceedings.")
+    url: str = Field(
+        description="GitHub repository URL, e.g. 'https://github.com/microsoft/nni/tree/retiarii_artifact'."
+    )
+    year: int = Field(description="Publication year, e.g. 2020.")
+    stars: int = Field(ge=0, description="GitHub star count at time of collection, e.g. 14340.")
+    forks: int = Field(ge=0, description="GitHub fork count at time of collection, e.g. 1852.")
+    authors: str = Field(
+        description="Comma-separated author names, e.g. 'Fan Yang 0024, Lidong Zhou, Mao Yang 0004 et al.'."
+    )
+    github_org: str = Field(
+        default="", description="GitHub organization or user who owns the repo, e.g. 'microsoft'. Empty if not parsed."
+    )
+    badges: str = Field(
+        default="", description="Comma-separated badge names, e.g. 'available,functional,reproduced'. Empty if none."
+    )
+    last_active: str = Field(
+        default="", description="Last activity date in YYYY-MM format, e.g. '2024-07'. Empty if unknown."
+    )
+    description: str = Field(default="", description="Repository description from GitHub. Empty if not set.")
+    language: str = Field(
+        default="", description="Primary programming language as reported by GitHub, e.g. 'Python'. Empty if unknown."
+    )
+    conference: str = Field(description="Conference where the artifact was published, e.g. 'OSDI', 'USENIXSEC'.")
+    area: str = Field(description="Research area: 'systems' or 'security', determined by the conference.")
 
     model_config = {"extra": "forbid"}
