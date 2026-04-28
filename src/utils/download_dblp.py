@@ -3,8 +3,8 @@
 
 Usage::
 
-    python -m scripts.download_dblp            # interactive
-    python -m scripts.download_dblp --auto     # non-interactive (CI)
+    python -m src.utils.download_dblp            # interactive
+    python -m src.utils.download_dblp --auto     # non-interactive (CI)
 
 Output: ``data/dblp/dblp.xml.gz``
 
@@ -150,7 +150,7 @@ def main() -> None:
     parser.add_argument("--auto", action="store_true", help="Non-interactive mode")
     args = parser.parse_args()
 
-    from src.utils.logging_config import setup_logging
+    from .logging_config import setup_logging
 
     setup_logging()
 

@@ -4,7 +4,7 @@ Three submodules:
 - :mod:`scraping` — fetch & clean committee data from sysartifacts/secartifacts
   with web/local fallbacks.
 - :mod:`classification` — country/continent/institution classification and
-  per-area aggregation, recurring-member rankings, institution timelines.
+  per-area aggregation, member rankings, institution timelines.
 - :mod:`charting` — matplotlib SVG chart generation.
 
 The :func:`generate_committee_data` function ties them together and is the
@@ -26,7 +26,7 @@ from .classification import (
     _aggregate_across_conferences,
     _build_yearly_series,
     _compute_institution_timeline,
-    _compute_recurring_members,
+    _compute_member_stats,
     _top_n,
     classify_committees,
     classify_member,
@@ -101,14 +101,14 @@ def generate_committee_data(conf_regex: str, output_dir):
     total_systems = sum(len(m) for cy, m in all_results.items() if conf_to_area.get(cy) == "systems")
     total_security = sum(len(m) for cy, m in all_results.items() if conf_to_area.get(cy) == "security")
 
-    # ── 3b. Recurring AE member rankings ─────────────────────────────────────
-    logger.info("  Computing recurring AE member rankings...")
-    all_members, sys_members, sec_members, recurring_summary = _compute_recurring_members(
+    # ── 3b. AE member rankings ────────────────────────────────────────────
+    logger.info("  Computing AE member rankings...")
+    all_members, sys_members, sec_members, member_summary = _compute_member_stats(
         all_results, conf_to_area, classified
     )
     logger.info(
-        f"    Found {recurring_summary['total_recurring']} recurring members "
-        f"({recurring_summary['total_chairs']} include chair roles)"
+        f"    Found {member_summary['total_members']} unique members "
+        f"({member_summary['total_chairs']} include chair roles)"
     )
 
     # ── 3c. Institution timeline ─────────────────────────────────────────────
@@ -126,10 +126,10 @@ def generate_committee_data(conf_regex: str, output_dir):
         "total_countries": len(country_all),
         "total_continents": len(continent_all),
         "total_institutions": len(inst_all),
-        "recurring_members": recurring_summary["total_recurring"],
-        "recurring_members_systems": recurring_summary["total_recurring_systems"],
-        "recurring_members_security": recurring_summary["total_recurring_security"],
-        "recurring_chairs": recurring_summary["total_chairs"],
+        "unique_members": member_summary["total_members"],
+        "unique_members_systems": member_summary["total_members_systems"],
+        "unique_members_security": member_summary["total_members_security"],
+        "recurring_chairs": member_summary["total_chairs"],
         "top_countries": [{"name": k, "count": v} for k, v in _top_n(country_all, 15)],
         "top_countries_systems": [{"name": k, "count": v} for k, v in _top_n(country_sys, 15)],
         "top_countries_security": [{"name": k, "count": v} for k, v in _top_n(country_sec, 15)],
@@ -221,10 +221,10 @@ def generate_committee_data(conf_regex: str, output_dir):
         f"{len(inst_all)} institutions"
     )
     logger.info(
-        f"  Recurring members: {recurring_summary['total_recurring']} "
-        f"(sys: {recurring_summary['total_recurring_systems']}, "
-        f"sec: {recurring_summary['total_recurring_security']}, "
-        f"chairs: {recurring_summary['total_chairs']})"
+        f"  Unique members: {member_summary['total_members']} "
+        f"(sys: {member_summary['total_members_systems']}, "
+        f"sec: {member_summary['total_members_security']}, "
+        f"chairs: {member_summary['total_chairs']})"
     )
 
     return detail_json

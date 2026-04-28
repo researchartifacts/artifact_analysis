@@ -24,6 +24,12 @@ class Stage:
     #: content-hash skip cache (see :mod:`src.cache`).  Paths are resolved
     #: relative to the pipeline ``output_dir`` unless absolute.
     inputs: tuple[str, ...] = ()
+    #: Maximum age (seconds) of a cached result before the stage must re-run,
+    #: even when input hashes have not changed.  ``None`` means the cache
+    #: never expires by time alone (content-hash only).  Useful for stages
+    #: that fetch live data (GitHub stats, citation counts) whose per-URL
+    #: caches have their own TTL.
+    ttl: int | None = None
 
 
 # ── Stage definitions ────────────────────────────────────────────────────────
@@ -57,7 +63,10 @@ STAGES: tuple[Stage, ...] = (
         optional=True,
         # Hits the GitHub API for every artifact — by far the slowest stage.
         # The cache lets re-runs without input changes finish in <1s.
+        # Per-URL disk caches expire after 30 days (CACHE_TTL_STATS), so
+        # the stage-level TTL matches to ensure fresh API data.
         inputs=("_data/all_results_cache.yml",),
+        ttl=30 * 86400,  # 30 days — re-run when per-URL caches expire
         outputs=(
             "_data/repo_stats.yml",
             "_build/repo_stats_detail.json",

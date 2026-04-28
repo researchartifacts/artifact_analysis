@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import os
+import time
+
 from src import cache
 from src.stages import Stage
 
@@ -70,4 +73,53 @@ def test_invalidate_forces_rerun(tmp_path):
     cache.mark_done(stage, tmp_path)
     assert cache.should_skip(stage, tmp_path) is True
     cache.invalidate(stage, tmp_path)
+    assert cache.should_skip(stage, tmp_path) is False
+
+
+def test_ttl_none_never_expires(tmp_path):
+    """Default ttl=None means the cache never expires by time alone."""
+    (tmp_path / "input.txt").write_text("data")
+    (tmp_path / "output.txt").write_text("result")
+    stage = _stage_for(tmp_path)
+    cache.mark_done(stage, tmp_path)
+    # Backdate the cache file by 365 days — still valid without TTL.
+    cf = cache._cache_file(stage, tmp_path)
+    old_time = time.time() - 365 * 86400
+    os.utime(cf, (old_time, old_time))
+    assert cache.should_skip(stage, tmp_path) is True
+
+
+def test_ttl_fresh_cache_skips(tmp_path):
+    """A cache entry younger than TTL allows skipping."""
+    (tmp_path / "input.txt").write_text("data")
+    (tmp_path / "output.txt").write_text("result")
+    stage = Stage(
+        name="dummy",
+        module="src.cache",
+        description="test",
+        inputs=("input.txt",),
+        outputs=("output.txt",),
+        ttl=3600,
+    )
+    cache.mark_done(stage, tmp_path)
+    assert cache.should_skip(stage, tmp_path) is True
+
+
+def test_ttl_expired_cache_reruns(tmp_path):
+    """A cache entry older than TTL forces a re-run."""
+    (tmp_path / "input.txt").write_text("data")
+    (tmp_path / "output.txt").write_text("result")
+    stage = Stage(
+        name="dummy",
+        module="src.cache",
+        description="test",
+        inputs=("input.txt",),
+        outputs=("output.txt",),
+        ttl=3600,
+    )
+    cache.mark_done(stage, tmp_path)
+    # Backdate the cache file beyond the 1-hour TTL.
+    cf = cache._cache_file(stage, tmp_path)
+    old_time = time.time() - 7200  # 2 hours ago
+    os.utime(cf, (old_time, old_time))
     assert cache.should_skip(stage, tmp_path) is False

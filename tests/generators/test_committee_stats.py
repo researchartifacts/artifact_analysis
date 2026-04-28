@@ -115,7 +115,7 @@ class TestTopN:
         assert classification._top_n({}, n=5) == []
 
 
-class TestComputeRecurringMembers:
+class TestComputeMemberStats:
     def _basic_inputs(self):
         all_results = {
             "sosp2023": [
@@ -138,7 +138,7 @@ class TestComputeRecurringMembers:
 
     def test_alice_appears_in_both_areas(self):
         all_results, conf_to_area = self._basic_inputs()
-        members, sys_m, sec_m, _ = classification._compute_recurring_members(all_results, conf_to_area, classified={})
+        members, sys_m, sec_m, _ = classification._compute_member_stats(all_results, conf_to_area, classified={})
         alice = next(m for m in members if m["name"].startswith("Alice"))
         # 2 systems + 1 security = 3 total memberships
         assert alice["total_memberships"] == 3
@@ -146,14 +146,14 @@ class TestComputeRecurringMembers:
 
     def test_chair_count_tracked(self):
         all_results, conf_to_area = self._basic_inputs()
-        members, sys_m, sec_m, _ = classification._compute_recurring_members(all_results, conf_to_area, classified={})
+        members, sys_m, sec_m, _ = classification._compute_member_stats(all_results, conf_to_area, classified={})
         bob = next(m for m in members if m["name"].startswith("Bob"))
         assert bob["chair_count"] == 1
         assert bob["area"] == "systems"
 
     def test_systems_only_subset(self):
         all_results, conf_to_area = self._basic_inputs()
-        _, sys_m, _, _ = classification._compute_recurring_members(all_results, conf_to_area, classified={})
+        _, sys_m, _, _ = classification._compute_member_stats(all_results, conf_to_area, classified={})
         names = {m["name"] for m in sys_m}
         # Both Alice and Bob have systems memberships
         assert any(n.startswith("Alice") for n in names)
@@ -161,7 +161,7 @@ class TestComputeRecurringMembers:
 
     def test_security_only_subset(self):
         all_results, conf_to_area = self._basic_inputs()
-        _, _, sec_m, _ = classification._compute_recurring_members(all_results, conf_to_area, classified={})
+        _, _, sec_m, _ = classification._compute_member_stats(all_results, conf_to_area, classified={})
         names = {m["name"] for m in sec_m}
         # Only Alice has security membership
         assert any(n.startswith("Alice") for n in names)
@@ -169,13 +169,13 @@ class TestComputeRecurringMembers:
 
     def test_skips_empty_names(self):
         all_results = {"sosp2023": [{"name": "", "affiliation": "MIT"}]}
-        members, _, _, _ = classification._compute_recurring_members(
+        members, _, _, _ = classification._compute_member_stats(
             all_results, {"sosp2023": "systems"}, classified={}
         )
         assert members == []
 
     def test_empty_input(self):
-        members, sys_m, sec_m, summary = classification._compute_recurring_members({}, {}, classified={})
+        members, sys_m, sec_m, summary = classification._compute_member_stats({}, {}, classified={})
         assert members == []
         assert sys_m == []
         assert sec_m == []

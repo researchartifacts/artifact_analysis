@@ -327,8 +327,8 @@ def _top_n(d: dict, n: int = 20) -> list:
     return sorted(d.items(), key=lambda x: x[1], reverse=True)[:n]
 
 
-def _compute_recurring_members(all_results: dict, conf_to_area: dict, classified: dict):
-    """Compute statistics for recurring AE committee members.
+def _compute_member_stats(all_results: dict, conf_to_area: dict, classified: dict):
+    """Compute statistics for all AE committee members.
 
     For each unique person (matched by normalized name), track:
     - Total memberships across all conference-years
@@ -522,9 +522,9 @@ def _compute_recurring_members(all_results: dict, conf_to_area: dict, classified
     security_members.sort(key=lambda x: (-x["total_memberships"], -x["chair_count"], x["name"]))
 
     summary = {
-        "total_recurring": len(members_list),
-        "total_recurring_systems": len(systems_members),
-        "total_recurring_security": len(security_members),
+        "total_members": len(members_list),
+        "total_members_systems": len(systems_members),
+        "total_members_security": len(security_members),
         "total_chairs": sum(1 for m in members_list if m["chair_count"] > 0),
         "max_memberships": max((m["total_memberships"] for m in members_list), default=0),
     }

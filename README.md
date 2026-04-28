@@ -44,7 +44,7 @@ The pipeline runs **14 steps** in sequence (see `src/orchestrator.py`):
 
 | # | Step | Key script |
 |---|------|-----------|
-| 1 | Download/refresh DBLP XML dump | `scripts/download_dblp.py` |
+| 1 | Download/refresh DBLP XML dump | `src/utils/download_dblp.py` |
 | 1b | Extract DBLP lookup data (papers, affiliations) | `src/utils/dblp_extract.py` |
 | 2 | Scrape artifact results from sysartifacts, secartifacts, USENIX | `generate_statistics.py` |
 | 3 | Collect GitHub repo metadata (stars, forks, languages) | `generate_repo_stats.py` |
@@ -177,7 +177,6 @@ output directory:
 reprodb-pipeline/
 ├── src/                       Source code (see above)
 ├── tests/                     pytest test suite
-├── scripts/                   Shell helpers (DBLP downloader)
 ├── docs/                      MkDocs documentation source
 ├── data/
 │   ├── dblp/                  DBLP XML database (~3 GB, downloaded)
@@ -204,7 +203,7 @@ The `.cache/` directory is gitignored and never committed.
 ## DBLP Data Policy
 
 All DBLP lookups use the **local XML dump** (`data/dblp/dblp.xml.gz`), never the
-HTTP API. `scripts/download_dblp.py` fetches the file; `src/utils/dblp_extract.py`
+HTTP API. `src/utils/download_dblp.py` fetches the file; `src/utils/dblp_extract.py`
 parses it into JSON lookup files consumed by downstream modules.
 
 ## Conferences Tracked

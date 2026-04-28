@@ -5,6 +5,9 @@ A stage is skipped when:
    successful run.
 2. The stage's module source file has the same SHA-256 as last time.
 3. Every declared output exists.
+4. If the stage declares a ``ttl`` (seconds), the cache entry must be
+   younger than that.  This forces periodic re-runs for stages that
+   fetch live data (e.g. GitHub stats) whose per-URL caches expire.
 
 Cache entries live in ``<output_dir>/_build/.cache/<stage>.hash`` as plain
 text — one ``key=value`` line each — so they survive cleanly across pipeline
@@ -20,6 +23,7 @@ import hashlib
 import importlib
 import importlib.util
 import logging
+import time
 from pathlib import Path
 
 from src.stages import Stage
@@ -84,12 +88,30 @@ def _cache_file(stage: Stage, output_dir: Path) -> Path:
 
 def should_skip(stage: Stage, output_dir: Path) -> bool:
     """Return True if a previous run with identical inputs already produced
-    every declared output file."""
+    every declared output file.
+
+    When the stage declares a ``ttl``, the cache entry must also be younger
+    than that many seconds — otherwise the stage re-runs even if inputs are
+    unchanged (so that live-data stages periodically refresh).
+    """
     if not stage.inputs:
         return False
     cache_file = _cache_file(stage, output_dir)
     if not cache_file.is_file():
         return False
+
+    # TTL check: if the cache entry is older than the stage's TTL, force re-run.
+    if stage.ttl is not None:
+        age = time.time() - cache_file.stat().st_mtime
+        if age >= stage.ttl:
+            logger.info(
+                "↻ %s: cache expired (%.1f days old, ttl=%.1f days)",
+                stage.name,
+                age / 86400,
+                stage.ttl / 86400,
+            )
+            return False
+
     key = compute_key(stage, output_dir)
     if key is None or cache_file.read_text().strip() != key:
         return False
