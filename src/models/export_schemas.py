@@ -110,11 +110,13 @@ def export_all(output_dir: str) -> list[str]:
 
         if is_array:
             title = schema.get("title", class_name)
-            description = schema.get("description", "")
-            # Use the class docstring if model description is empty
-            if not description and cls.__doc__:
-                description = cls.__doc__.strip().split("\n")[0]
-            final = _make_array_schema(schema, f"{title} Collection", description, schema_id)
+            item_description = schema.get("description", "")
+            # Use the class docstring first line if model description is empty
+            if not item_description and cls.__doc__:
+                item_description = cls.__doc__.strip().split("\n")[0]
+            # Collection description summarises the array; item description stays on the $def.
+            collection_description = f"Array of {title} records. Each element: {item_description}"
+            final = _make_array_schema(schema, f"{title} Collection", collection_description, schema_id)
         else:
             final = _make_object_schema(schema, schema_id)
 

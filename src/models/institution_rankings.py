@@ -29,7 +29,7 @@ class TopAuthor(BaseModel):
 
 
 class InstitutionRanking(BaseModel):
-    """Ranking entry for a single institution aggregating artifact and AE service metrics."""
+    """Institution ranking aggregating artifact production, citation impact, and AE committee service across affiliated authors."""
 
     affiliation: str = Field(description="Normalized institution name.")
     combined_score: int = Field(

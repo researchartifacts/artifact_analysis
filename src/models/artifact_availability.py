@@ -59,7 +59,7 @@ class AvailabilityRecord(BaseModel):
 
 
 class ArtifactAvailability(BaseModel):
-    """Top-level artifact availability output."""
+    """Artifact URL accessibility report: aggregate summary and per-URL check results."""
 
     summary: AvailabilitySummary = Field(description="Aggregate accessibility summary.")
     records: list[AvailabilityRecord] = Field(description="Per-URL check results.")

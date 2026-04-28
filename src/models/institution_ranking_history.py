@@ -26,7 +26,7 @@ class InstitutionRankingSnapshot(BaseModel):
 
 
 class InstitutionRankingHistoryEntry(BaseModel):
-    """A dated snapshot of all institution rankings."""
+    """Dated snapshot of all institution rankings, enabling rank-over-time analysis."""
 
     date: str = Field(description="ISO date string (YYYY-MM-DD) of the snapshot.")
     entries: dict[str, InstitutionRankingSnapshot] = Field(description="Institution name → ranking snapshot mapping.")

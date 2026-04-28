@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 
 class PaperCitationDoi(BaseModel):
-    """Citation data for a single paper looked up by DOI."""
+    """Paper citation counts looked up by DOI via OpenAlex and Semantic Scholar."""
 
     title: str = Field(description="Paper title.")
     conference: str = Field(description="Conference name.")

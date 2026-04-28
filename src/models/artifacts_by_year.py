@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 
 class ArtifactsByYear(BaseModel):
-    """Artifact count for a single year with systems/security breakdown."""
+    """Total artifact count for a single year, split into systems and security conferences."""
 
     year: int = Field(description="Publication year.")
     count: int = Field(ge=0, description="Total artifacts for this year.")

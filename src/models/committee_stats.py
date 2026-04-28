@@ -64,7 +64,7 @@ class SplitCounts(BaseModel):
 
 
 class CommitteeStats(BaseModel):
-    """Top-level committee statistics output."""
+    """AE committee geographic and institutional diversity: country, continent, and institution breakdowns."""
 
     summary: CommitteeSummary = Field(description="Aggregate summary.")
     by_country: SplitCounts = Field(description="Member counts by country.")

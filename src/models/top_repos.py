@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 
 class TopRepo(BaseModel):
-    """A top-ranked artifact repository by GitHub stars."""
+    """Top-ranked artifact repository by GitHub stars, with paper metadata and activity info."""
 
     title: str = Field(description="Paper title associated with this repository.")
     url: str = Field(description="GitHub repository URL.")

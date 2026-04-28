@@ -23,7 +23,7 @@ class YearlyRepoMetrics(BaseModel):
 
 
 class RepoStatsYearly(BaseModel):
-    """Repository statistics for a single year, split by area."""
+    """Yearly repository statistics split by area (all, systems, security) with aggregate GitHub metrics."""
 
     year: int = Field(description="Year.")
     all: YearlyRepoMetrics = Field(description="Combined metrics across all areas.")

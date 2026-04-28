@@ -9,10 +9,7 @@ from pydantic import BaseModel, Field
 
 
 class Summary(BaseModel):
-    """High-level summary statistics for the Jekyll site.
-
-    Written as ``summary.yml`` in ``_data/``.
-    """
+    """High-level summary: total artifact and conference counts, year range, and last-updated timestamp."""
 
     schema_version: str = Field(description="Semantic version of the data schema bundle.")
     total_artifacts: int = Field(ge=0, description="Total number of artifacts across all conferences.")

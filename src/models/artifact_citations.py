@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 
 class ArtifactCitation(BaseModel):
-    """Citation data for a single artifact DOI."""
+    """Citation counts for a single artifact DOI, aggregated from OpenAlex and Semantic Scholar."""
 
     title: str = Field(description="Paper title.")
     conference: str = Field(description="Conference name.")

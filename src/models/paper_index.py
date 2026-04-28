@@ -9,10 +9,7 @@ from pydantic import BaseModel, Field
 
 
 class Paper(BaseModel):
-    """A unique paper associated with tracked conferences.
-
-    Each paper is stored once in the index; authors reference papers by ID.
-    """
+    """A paper published at a tracked conference, with artifact badges and citation data."""
 
     id: int = Field(ge=1, description="Stable integer ID for this paper. Preserved across pipeline runs.")
     title: str = Field(description="Original paper title as found in DBLP.")

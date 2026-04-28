@@ -36,10 +36,7 @@ class ExternalIds(BaseModel):
 
 
 class AuthorIndexEntry(BaseModel):
-    """Canonical record for a single author.
-
-    Single source of truth for author metadata, updated by enrichment pipeline.
-    """
+    """Canonical author record: stable ID, name, affiliation, external identifiers, and enrichment history."""
 
     id: int = Field(ge=1, description="Stable integer identifier. Assigned once, never reused or changed.")
     name: str = Field(

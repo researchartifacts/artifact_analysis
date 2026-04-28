@@ -41,7 +41,7 @@ class AreaTrend(BaseModel):
 
 
 class ParticipationStats(BaseModel):
-    """Top-level participation statistics output."""
+    """Artifact evaluation participation rates per conference-year, with area-level trends over time."""
 
     by_conference_year: list[ConferenceYearStats] = Field(description="Per-conference-year breakdown.")
     by_area: dict[str, AreaTrend] = Field(description="Trend data keyed by area name ('security', 'systems').")

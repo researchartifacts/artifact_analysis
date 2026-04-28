@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 
 
 class RepoStatsEntry(BaseModel):
-    """Repository metrics for a single artifact."""
+    """GitHub/Zenodo repository metrics for a single artifact (stars, forks, views, downloads)."""
 
     conference: str = Field(description="Conference abbreviation.")
     year: int = Field(description="Publication year.")
@@ -116,10 +116,7 @@ class OverallStats(BaseModel):
 
 
 class RepoStatsSummary(BaseModel):
-    """Aggregated repository metrics for the Jekyll site.
-
-    Written as ``repo_stats.yml`` in ``_data/``.
-    """
+    """Aggregated repository metrics: overall stats, per-conference breakdowns, and yearly trends."""
 
     overall: OverallStats
     by_conference: list[ConferenceRepoStats]

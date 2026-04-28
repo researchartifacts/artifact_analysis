@@ -24,7 +24,7 @@ class YearBreakdown(BaseModel):
 
 
 class ConferenceEntry(BaseModel):
-    """Artifact counts and badge breakdowns for a single conference."""
+    """Artifact counts and badge breakdowns for a single conference across all tracked years."""
 
     name: str = Field(description="Conference abbreviation.")
     category: Literal["systems", "security"] = Field(description="Research domain.")

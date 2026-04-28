@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 
 class SearchEntry(BaseModel):
-    """A single searchable artifact entry with enriched author and affiliation data."""
+    """Searchable artifact entry with paper metadata, badges, author names, and institutional affiliations."""
 
     title: str = Field(description="Paper title.")
     conference: str = Field(description="Conference abbreviation.")

@@ -20,7 +20,7 @@ class AEMembership(BaseModel):
 
 
 class AEMember(BaseModel):
-    """An Artifact Evaluation committee member."""
+    """An Artifact Evaluation committee member with service history and institutional affiliation."""
 
     name: str = Field(description="Full name of the AE member.")
     display_name: str = Field(description="Display name (may differ from canonical name).")

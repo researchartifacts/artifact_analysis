@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 
 class AuthorRanking(BaseModel):
-    """Ranking entry for a single author combining artifact contributions and AE committee service."""
+    """Author ranking entry combining artifact contributions, citation impact, and AE committee service."""
 
     rank: int = Field(ge=1, description="Ranking position (with ties).")
     author_id: int | None = Field(
