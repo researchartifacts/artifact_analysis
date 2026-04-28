@@ -23,13 +23,13 @@ jobs:
     
     steps:
       - name: Checkout reprodb-pipeline repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: reprodb-pipeline
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Checkout reprodb.github.io repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ github.repository_owner }}/reprodb.github.io
           path: website
@@ -37,20 +37,20 @@ jobs:
           token: ${{ secrets.CROSS_REPO_TOKEN }}
       
       - name: Checkout reprodb-pipeline-results repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ github.repository_owner }}/reprodb-pipeline-results
           path: results_archive
           token: ${{ secrets.CROSS_REPO_TOKEN }}
       
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
           cache: 'pip'
       
       - name: Checkout data-schemas repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ github.repository_owner }}/data-schemas
           path: data-schemas
@@ -63,7 +63,7 @@ jobs:
           pip install jsonschema
 
       - name: Restore HTTP response cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: reprodb-pipeline/src/.cache
           key: scraper-cache-${{ hashFiles('reprodb-pipeline/requirements.txt') }}-week${{ github.run_number }}
