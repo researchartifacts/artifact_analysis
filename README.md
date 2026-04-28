@@ -33,37 +33,42 @@ python -m src.orchestrator --deploy   # writes directly to ../reprodb.github.io
 | `--deploy` | off | Shorthand for `--output_dir ../reprodb.github.io` |
 | `--conf_regex REGEX` | `.*20[12][0-9]` | Only process matching conferences |
 | `--http_proxy URL` | — | Route HTTP traffic through a proxy |
+| `--https_proxy URL` | — | Route HTTPS traffic through a proxy (auto-set from `--http_proxy`) |
 | `--save-results` | off | Snapshot results into `reprodb-pipeline-results` |
+| `--results_dir DIR` | `../reprodb-pipeline-results` | Where to save result snapshots |
 | `--push` | off | Push results snapshot to GitHub |
+| `--message TEXT` | — | Extra text for the results commit message |
+| `--max-workers N` | `4` | Max parallel stages per tier |
+| `--log-level LEVEL` | `info` | Set logging verbosity (`debug`, `info`, `warning`, `error`) |
+| `--log-format FMT` | `text` | Log output format: `text` (human) or `json` (structured) |
 
 ---
 
 ## What the Pipeline Does
 
-The pipeline runs **14 steps** in sequence (see `src/orchestrator.py`):
+The pipeline runs **15 stages** organised in dependency tiers (see `src/stages.py`):
 
-| # | Step | Key script |
-|---|------|-----------|
+| # | Stage | Key script |
+|---|-------|-----------|
 | 1 | Download/refresh DBLP XML dump | `src/utils/download_dblp.py` |
 | 1b | Extract DBLP lookup data (papers, affiliations) | `src/utils/dblp_extract.py` |
 | 2 | Scrape artifact results from sysartifacts, secartifacts, USENIX | `generate_statistics.py` |
 | 3 | Collect GitHub repo metadata (stars, forks, languages) | `generate_repo_stats.py` |
 | 3b | Check artifact URL liveness | `generate_artifact_availability.py` |
 | 3c | Compute AE participation rates against DBLP paper counts | `generate_participation_stats.py` |
-| 4 | *(disabled)* Artifact citation statistics via OpenAlex | `generate_artifact_citations.py` |
-| 5 | *(disabled)* Cited artifact lists | `generate_cited_artifacts_list.py` |
-| 6 | Match authors via DBLP, compute author metrics | `generate_author_stats.py` |
-| 7 | Split author data into per-area files | `generate_area_authors.py` |
-| 8 | Committee statistics | `generate_committee_stats.py` |
-| 9 | Combined multi-source rankings | `generate_combined_rankings.py` |
-| 10 | Institution-level rankings | `generate_institution_rankings.py` |
-| 11 | Detailed author profiles | `generate_author_profiles.py` |
-| 12 | Full-text search index | `generate_search_data.py` |
-| 13 | Ranking history snapshots | `generate_ranking_history.py` |
-| 14 | SVG chart generation | `generate_visualizations.py` |
+| 4 | Match authors via DBLP, compute author metrics | `generate_author_stats.py` |
+| 5 | Split author data into per-area files | `generate_area_authors.py` |
+| 6 | Committee statistics | `generate_committee_stats.py` |
+| 7 | Combined multi-source rankings | `generate_combined_rankings.py` |
+| 8 | Institution-level rankings | `generate_institution_rankings.py` |
+| 9 | Detailed author profiles | `generate_author_profiles.py` |
+| 10 | Full-text search index | `generate_search_data.py` |
+| 11 | Ranking history snapshots | `generate_ranking_history.py` |
+| 12 | SVG chart generation | `generate_visualizations.py` |
+| 13 | *(optional)* Paper citation counts via OpenAlex/Semantic Scholar | `generate_paper_citations_doi.py` |
 
-> Steps 4–5 are currently disabled because OpenAlex citation counts for artifact
-> DOIs were found to be unreliable (false positives / self-citations).
+> Stages 1b, 3b, 3c, and 13 are optional and will be skipped when their
+> prerequisites (e.g. DBLP file) are unavailable.
 
 ---
 
@@ -79,7 +84,7 @@ src/
 ```
 
 <details>
-<summary><strong>Generators</strong> (24 scripts)</summary>
+<summary><strong>Generators</strong> (19 scripts)</summary>
 
 | Script | Purpose |
 |--------|---------|
@@ -94,17 +99,12 @@ src/
 | `generate_combined_rankings.py` | Combined multi-source rankings |
 | `generate_institution_rankings.py` | Institution-level rankings |
 | `generate_author_profiles.py` | Detailed author profile data |
-| `generate_artifact_sources_table.py` | Artifact source tables |
-| `generate_artifact_sources_timeline.py` | Artifact source timelines |
 | `generate_cited_artifacts_list.py` | Cited artifact lists |
-| `generate_author_index.py` | Author name → ID lookup index |
 | `generate_paper_index.py` | Paper title → artifact ID index |
-| `generate_paper_citations.py` | Paper-level citation statistics |
+| `generate_paper_citations_doi.py` | Paper-level citation statistics |
 | `generate_search_data.py` | Full-text search data for website |
 | `generate_ranking_history.py` | Historical ranking snapshots |
 | `generate_artifact_availability.py` | Artifact URL liveness checks |
-| `analyze_retention.py` | Artifact retention over time |
-| `collect_repo_detail.py` | Detailed per-repo metadata |
 | `export_artifact_citations.py` | Citation data export |
 | `verify_artifact_citations.py` | Citation accuracy verification |
 
