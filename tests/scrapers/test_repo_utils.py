@@ -331,6 +331,39 @@ class TestExtractGithubUrlsFromZenodo:
             "https://github.com/hanshanley/tracking-takes"
         ]
 
+    def test_extracts_from_notes(self):
+        record = {
+            "metadata": {
+                "notes": "Source code: https://github.com/bob/tool",
+            }
+        }
+        assert repo_utils._extract_github_urls_from_zenodo(record) == ["https://github.com/bob/tool"]
+
+    def test_extracts_from_alternate_identifiers(self):
+        record = {
+            "metadata": {
+                "alternate_identifiers": [
+                    {"identifier": "https://github.com/carol/lib/tree/v2.0"},
+                ]
+            }
+        }
+        assert repo_utils._extract_github_urls_from_zenodo(record) == ["https://github.com/carol/lib"]
+
+    def test_deduplicates_across_all_fields(self):
+        record = {
+            "metadata": {
+                "related_identifiers": [
+                    {"identifier": "https://github.com/x/y/tree/v1"},
+                ],
+                "alternate_identifiers": [
+                    {"identifier": "https://github.com/x/y"},
+                ],
+                "description": "See https://github.com/x/y for code.",
+                "notes": "Also at https://github.com/x/y",
+            }
+        }
+        assert repo_utils._extract_github_urls_from_zenodo(record) == ["https://github.com/x/y"]
+
 
 # ── _extract_github_urls_from_figshare ───────────────────────────────────────
 
@@ -357,6 +390,19 @@ class TestExtractGithubUrlsFromFigshare:
     def test_empty_when_no_github(self):
         record = {"references": ["https://example.com"], "related_materials": []}
         assert repo_utils._extract_github_urls_from_figshare(record) == []
+
+    def test_extracts_from_description(self):
+        record = {
+            "description": '<p>Source: <a href="https://github.com/dave/proj">repo</a></p>',
+        }
+        assert repo_utils._extract_github_urls_from_figshare(record) == ["https://github.com/dave/proj"]
+
+    def test_description_deduplicates_with_references(self):
+        record = {
+            "references": ["https://github.com/dave/proj"],
+            "description": "See https://github.com/dave/proj for details.",
+        }
+        assert repo_utils._extract_github_urls_from_figshare(record) == ["https://github.com/dave/proj"]
 
 
 # ── download_file / _cached_get ──────────────────────────────────────────────

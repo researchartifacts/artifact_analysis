@@ -266,11 +266,10 @@ def _extract_github_urls_from_zenodo(record: dict) -> list[str]:
 
     Sources checked (in order):
 
-    1. ``metadata.related_identifiers`` – entries like
-       ``{"identifier": "https://github.com/user/repo/tree/v1.0",
-         "relation": "isSupplementTo", "scheme": "url"}``
-    2. ``metadata.description`` – free-text HTML/Markdown that may contain
-       inline GitHub links.
+    1. ``metadata.related_identifiers`` – structured links.
+    2. ``metadata.alternate_identifiers`` – alternate structured links.
+    3. ``metadata.description`` – free-text HTML/Markdown.
+    4. ``metadata.notes`` – free-text additional notes.
 
     Returns deduplicated base repo URLs (``https://github.com/owner/repo``).
     """
@@ -278,35 +277,52 @@ def _extract_github_urls_from_zenodo(record: dict) -> list[str]:
 
     urls: list[str] = []
     seen: set[str] = set()
-    for ri in record.get("metadata", {}).get("related_identifiers", []):
+    meta = record.get("metadata", {})
+
+    # 1. related_identifiers
+    for ri in meta.get("related_identifiers", []):
         ident = ri.get("identifier", "")
         if "github.com/" not in ident:
             continue
-        # Normalise to base repo URL: strip /tree/..., /blob/..., trailing slash
         base = _normalise_github_repo_url(ident)
         if base and base not in seen:
             seen.add(base)
             urls.append(base)
 
-    # Also scan the description for GitHub URLs
-    desc = record.get("metadata", {}).get("description", "")
-    for match in _re.findall(r"https?://github\.com/[^\s<\"'&;)]+", desc):
-        base = _normalise_github_repo_url(match.rstrip(".,;:)"))
+    # 2. alternate_identifiers
+    for ai in meta.get("alternate_identifiers", []):
+        ident = ai.get("identifier", "")
+        if "github.com/" not in ident:
+            continue
+        base = _normalise_github_repo_url(ident)
         if base and base not in seen:
             seen.add(base)
             urls.append(base)
+
+    # 3. description (free-text HTML)
+    for text in (meta.get("description", ""), meta.get("notes", "")):
+        for match in _re.findall(r"https?://github\.com/[^\s<\"'&;)]+", text):
+            base = _normalise_github_repo_url(match.rstrip(".,;:)"))
+            if base and base not in seen:
+                seen.add(base)
+                urls.append(base)
 
     return urls
 
 
 def _extract_github_urls_from_figshare(record: dict) -> list[str]:
-    """Extract GitHub repository URLs from Figshare references/related_materials.
+    """Extract GitHub repository URLs from Figshare article metadata.
 
-    Figshare articles may include GitHub links in ``references`` (list of URL
-    strings) or ``related_materials`` (list of dicts with ``identifier``).
+    Sources checked:
+
+    1. ``references`` – list of URL strings.
+    2. ``related_materials[].identifier`` – structured links.
+    3. ``description`` – free-text HTML/Markdown.
 
     Returns deduplicated base repo URLs.
     """
+    import re as _re
+
     raw_urls: list[str] = []
     for ref in record.get("references", []):
         if isinstance(ref, str):
@@ -325,6 +341,15 @@ def _extract_github_urls_from_figshare(record: dict) -> list[str]:
         if base and base not in seen:
             seen.add(base)
             urls.append(base)
+
+    # Also scan description for GitHub URLs
+    desc = record.get("description", "")
+    for match in _re.findall(r"https?://github\.com/[^\s<\"'&;)]+", desc):
+        base = _normalise_github_repo_url(match.rstrip(".,;:)"))
+        if base and base not in seen:
+            seen.add(base)
+            urls.append(base)
+
     return urls
 
 
