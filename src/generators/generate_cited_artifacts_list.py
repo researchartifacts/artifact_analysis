@@ -12,7 +12,7 @@ Outputs:
   assets/data/cited_artifacts_list.json - List of all cited artifacts with creator info
 
 Usage:
-  python generate_cited_artifacts_list.py --data_dir ../reprodb.github.io
+  python generate_cited_artifacts_list.py --data_dir ../reprodb.github.io/src
 """
 
 import argparse

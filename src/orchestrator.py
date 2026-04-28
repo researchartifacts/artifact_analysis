@@ -95,7 +95,7 @@ def _detect_github_token() -> None:
 
 def _seed_staging(cfg: PipelineConfig) -> None:
     """Copy existing website data into staging so incremental generators work."""
-    live_site = Path("../reprodb.github.io")
+    live_site = Path("../reprodb.github.io/src")
     if str(cfg.output_dir) != "output/staging" or not live_site.is_dir():
         return
     logger.info("Seeding staging directory from reprodb.github.io...")
@@ -337,7 +337,7 @@ def main() -> None:
     if args.output_dir:
         kwargs["output_dir"] = args.output_dir
     elif args.deploy:
-        kwargs["output_dir"] = "../reprodb.github.io"
+        kwargs["output_dir"] = "../reprodb.github.io/src"
         kwargs["deploy"] = True
     if args.conf_regex:
         kwargs["conf_regex"] = args.conf_regex

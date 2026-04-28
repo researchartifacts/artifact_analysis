@@ -11,7 +11,7 @@ Outputs:
   _data/combined_summary.yml
 
 Usage:
-  python generate_combined_rankings.py --data_dir ../reprodb.github.io
+  python generate_combined_rankings.py --data_dir ../reprodb.github.io/src
 """
 
 import argparse
@@ -653,7 +653,7 @@ def generate_combined_rankings(data_dir: str) -> None:
 
 def main():
     parser = argparse.ArgumentParser(description="Generate combined artifact-author + AE-member rankings")
-    parser.add_argument("--data_dir", type=str, default="../reprodb.github.io", help="Path to the website repo root")
+    parser.add_argument("--data_dir", type=str, default="../reprodb.github.io/src", help="Path to the website repo root")
     args = parser.parse_args()
     generate_combined_rankings(args.data_dir)
 

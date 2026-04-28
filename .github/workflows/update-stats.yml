@@ -73,9 +73,9 @@ jobs:
 
       - name: Create output directories
         run: |
-          mkdir -p website/_data
-          mkdir -p website/assets/data
-          mkdir -p website/assets/charts
+          mkdir -p website/src/_data
+          mkdir -p website/src/assets/data
+          mkdir -p website/src/assets/charts
       
       - name: Generate timestamp
         run: |
@@ -88,7 +88,7 @@ jobs:
           cd reprodb-pipeline
           python -m src.generators.generate_statistics \
             --conf_regex '.*20[12][0-9]' \
-            --output_dir ../website
+            --output_dir ../website/src
       
       - name: Generate repository statistics
         timeout-minutes: 120
@@ -103,7 +103,7 @@ jobs:
           cd reprodb-pipeline
           python -m src.generators.generate_repo_stats \
             --conf_regex '.*20[12][0-9]' \
-            --output_dir ../website \
+            --output_dir ../website/src \
             $REFRESH_FLAG || echo "⚠️ Repository stats generation skipped"
       
       - name: Download DBLP author analysis artifact (if available)
@@ -121,8 +121,8 @@ jobs:
         run: |
           if [ -d "dblp-results" ] && [ "$(ls -A dblp-results)" ]; then
             echo "Found DBLP analysis results, merging into website..."
-            cp -r dblp-results/_data/* website/_data/ 2>/dev/null || true
-            cp -r dblp-results/assets/data/* website/assets/data/ 2>/dev/null || true
+            cp -r dblp-results/_data/* website/src/_data/ 2>/dev/null || true
+            cp -r dblp-results/assets/data/* website/src/assets/data/ 2>/dev/null || true
             echo "DBLP results merged successfully"
           else
             echo "⚠️ No recent DBLP analysis results found (pipeline runs separately)"
@@ -131,64 +131,64 @@ jobs:
       - name: Generate per-area author data
         run: |
           cd reprodb-pipeline
-          python -m src.generators.generate_area_authors --data_dir ../website
+          python -m src.generators.generate_area_authors --data_dir ../website/src
       
       - name: Generate committee statistics
         run: |
           cd reprodb-pipeline
           python -m src.generators.generate_committee_stats \
             --conf_regex '.*20[12][0-9]' \
-            --output_dir ../website || echo "⚠️ Committee statistics failed"
+            --output_dir ../website/src || echo "⚠️ Committee statistics failed"
 
       - name: Generate combined rankings
         run: |
           cd reprodb-pipeline
-          python -m src.generators.generate_combined_rankings --data_dir ../website
+          python -m src.generators.generate_combined_rankings --data_dir ../website/src
       
       - name: Generate institution rankings
         run: |
           cd reprodb-pipeline
-          python -m src.generators.generate_institution_rankings --data_dir ../website
+          python -m src.generators.generate_institution_rankings --data_dir ../website/src
       
       - name: Generate author profiles
         run: |
           cd reprodb-pipeline
-          python -m src.generators.generate_author_profiles --data_dir ../website
+          python -m src.generators.generate_author_profiles --data_dir ../website/src
       
       - name: Generate search data
         run: |
           cd reprodb-pipeline
-          python -m src.generators.generate_search_data --data_dir ../website
+          python -m src.generators.generate_search_data --data_dir ../website/src
       
       - name: Update ranking history
         run: |
           cd reprodb-pipeline
-          python -m src.generators.generate_ranking_history --data_dir ../website
+          python -m src.generators.generate_ranking_history --data_dir ../website/src
 
       - name: Generate artifact availability
         run: |
           cd reprodb-pipeline
           python -m src.generators.generate_artifact_availability \
             --conf_regex '.*20[12][0-9]' \
-            --output_dir ../website || echo "⚠️ Artifact availability check failed"
+            --output_dir ../website/src || echo "⚠️ Artifact availability check failed"
 
       - name: Generate visualizations
         run: |
           cd reprodb-pipeline
-          python -m src.generators.generate_visualizations --data_dir ../website || echo "⚠️ Visualization generation failed"
+          python -m src.generators.generate_visualizations --data_dir ../website/src || echo "⚠️ Visualization generation failed"
 
       - name: Collect paper citation counts
         timeout-minutes: 60
         run: |
           cd reprodb-pipeline
-          python -m src.generators.generate_paper_citations_doi --data_dir ../website || echo "⚠️ Paper citation collection failed"
+          python -m src.generators.generate_paper_citations_doi --data_dir ../website/src || echo "⚠️ Paper citation collection failed"
 
       - name: Verify generated files
         run: |
           echo "Checking generated files..."
-          ls -lh website/_data/
-          ls -lh website/assets/data/ || true
-          ls -lh website/assets/charts/ || true
+          ls -lh website/src/_data/
+          ls -lh website/src/assets/data/ || true
+          ls -lh website/src/assets/charts/ || true
           echo "Files generated successfully!"
       
       - name: Validate output against JSON schemas
@@ -207,25 +207,25 @@ jobs:
           # are added.
           validations = [
               # Top-level / collection outputs
-              ('artifacts.schema.json',                'website/assets/data/artifacts.json'),
-              ('combined_rankings.schema.json',        'website/assets/data/combined_rankings.json'),
-              ('institution_rankings.schema.json',     'website/_data/institution_rankings.json'),
-              ('institution_ranking_history.schema.json', 'website/assets/data/institution_ranking_history.json'),
-              ('ranking_history.schema.json',          'website/assets/data/ranking_history.json'),
-              ('search_data.schema.json',              'website/assets/data/search_data.json'),
-              ('artifact_availability.schema.json',    'website/assets/data/artifact_availability.json'),
-              ('author_profiles.schema.json',          'website/assets/data/author_profiles.json'),
-              ('ae_members.schema.json',               'website/assets/data/ae_members.json'),
-              ('committee_stats.schema.json',          'website/assets/data/committee_stats.json'),
-              ('participation_stats.schema.json',      'website/assets/data/participation_stats.json'),
-              ('repo_stats.schema.json',               'website/assets/data/repo_stats.json'),
-              ('repo_stats_yearly.schema.json',        'website/assets/data/repo_stats_yearly.json'),
-              ('top_repos.schema.json',                'website/assets/data/top_repos.json'),
+              ('artifacts.schema.json',                'website/src/assets/data/artifacts.json'),
+              ('combined_rankings.schema.json',        'website/src/assets/data/combined_rankings.json'),
+              ('institution_rankings.schema.json',     'website/src/_data/institution_rankings.json'),
+              ('institution_ranking_history.schema.json', 'website/src/assets/data/institution_ranking_history.json'),
+              ('ranking_history.schema.json',          'website/src/assets/data/ranking_history.json'),
+              ('search_data.schema.json',              'website/src/assets/data/search_data.json'),
+              ('artifact_availability.schema.json',    'website/src/assets/data/artifact_availability.json'),
+              ('author_profiles.schema.json',          'website/src/assets/data/author_profiles.json'),
+              ('ae_members.schema.json',               'website/src/assets/data/ae_members.json'),
+              ('committee_stats.schema.json',          'website/src/assets/data/committee_stats.json'),
+              ('participation_stats.schema.json',      'website/src/assets/data/participation_stats.json'),
+              ('repo_stats.schema.json',               'website/src/assets/data/repo_stats.json'),
+              ('repo_stats_yearly.schema.json',        'website/src/assets/data/repo_stats_yearly.json'),
+              ('top_repos.schema.json',                'website/src/assets/data/top_repos.json'),
               # _data/ Liquid-consumed outputs
-              ('summary.schema.json',                  'website/_data/summary.yml'),
-              ('artifacts_by_conference.schema.json',  'website/_data/artifacts_by_conference.yml'),
-              ('artifacts_by_year.schema.json',        'website/_data/artifacts_by_year.yml'),
-              ('repo_stats_summary.schema.json',       'website/_data/repo_stats.yml'),
+              ('summary.schema.json',                  'website/src/_data/summary.yml'),
+              ('artifacts_by_conference.schema.json',  'website/src/_data/artifacts_by_conference.yml'),
+              ('artifacts_by_year.schema.json',        'website/src/_data/artifacts_by_year.yml'),
+              ('repo_stats_summary.schema.json',       'website/src/_data/repo_stats.yml'),
           ]
 
           import yaml
@@ -268,12 +268,12 @@ jobs:
           
           # Copy all website data (generated outputs) to archive
           mkdir -p output/website_data
-          cp -r ../website/_data output/website_data/ 2>/dev/null || true
-          cp -r ../website/assets output/website_data/ 2>/dev/null || true
-          cp -r ../website/_build output/website_data/ 2>/dev/null || true
+          cp -r ../website/src/_data output/website_data/ 2>/dev/null || true
+          cp -r ../website/src/assets output/website_data/ 2>/dev/null || true
+          cp -r ../website/src/_build output/website_data/ 2>/dev/null || true
           
           # Copy the scraped artifacts.json (pipeline input) to output root
-          cp ../website/assets/data/artifacts.json output/artifacts.json 2>/dev/null || true
+          cp ../website/src/assets/data/artifacts.json output/artifacts.json 2>/dev/null || true
           
           # Create run summary
           cat > output/RUN_SUMMARY.txt <<EOF
@@ -314,7 +314,7 @@ jobs:
           git config user.email "actions@github.com"
           
           # Add all generated files
-          git add _data/ assets/ _build/
+          git add src/_data/ src/assets/ src/_build/
           
           # Check if there are changes
           if git diff --staged --quiet; then

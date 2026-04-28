@@ -9,7 +9,7 @@ Writes:
 
 Usage::
 
-    python -m src.generators.generate_paper_citations_doi --data_dir ../reprodb.github.io
+    python -m src.generators.generate_paper_citations_doi --data_dir ../reprodb.github.io/src
 """
 
 from __future__ import annotations

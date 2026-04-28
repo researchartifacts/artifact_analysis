@@ -161,7 +161,7 @@ def main():
         website_path = Path(args.data_dir)
     else:
         base_path = Path(__file__).parent
-        website_path = base_path.parent.parent.parent / "reprodb.github.io"
+        website_path = base_path.parent.parent.parent / "reprodb.github.io" / "src"
     data_dir = website_path / "assets" / "data"
 
     # Process overall combined ranking

@@ -22,7 +22,7 @@ Only authors/institutions that appear in the current rankings are tracked.
 The "date" is year-month (YYYY-MM) to give monthly granularity.
 
 Usage:
-  python -m src.generators.generate_ranking_history --data_dir ../reprodb.github.io
+  python -m src.generators.generate_ranking_history --data_dir ../reprodb.github.io/src
 """
 
 import argparse
