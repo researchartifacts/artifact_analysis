@@ -8,6 +8,8 @@ on:
       - 'tests/**'
       - 'requirements-ci.txt'
       - 'pyproject.toml'
+      - 'requirements.txt'
+      - '.github/workflows/tests.yml'
   pull_request:
     branches: [main]
     paths:
@@ -15,6 +17,8 @@ on:
       - 'tests/**'
       - 'requirements-ci.txt'
       - 'pyproject.toml'
+      - 'requirements.txt'
+      - '.github/workflows/tests.yml'
 
 jobs:
   lint:
@@ -31,7 +35,7 @@ jobs:
           cache: 'pip'
 
       - name: Install linters
-        run: pip install ruff black mypy pydantic types-PyYAML types-requests
+        run: pip install ruff mypy pydantic types-PyYAML types-requests
 
       - name: Ruff check
         run: ruff check src/ tests/
@@ -50,7 +54,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10', '3.12']
-    
+
     steps:
       - uses: actions/checkout@v4
 
@@ -61,8 +65,7 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements-ci.txt
+        run: pip install -r requirements-ci.txt
 
       - name: Run tests with coverage
         run: |
@@ -86,9 +89,8 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements-ci.txt
+        run: pip install pip-audit -r requirements.txt
 
       - name: Audit dependencies
-        run: pip-audit -r requirements-ci.txt
+        run: pip-audit -r requirements.txt
         continue-on-error: true  # advisory — fix flagged CVEs as follow-up
