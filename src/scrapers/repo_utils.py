@@ -262,16 +262,20 @@ def _resolve_zenodo_doi(url: str) -> str | None:
 
 
 def _extract_github_urls_from_zenodo(record: dict) -> list[str]:
-    """Extract GitHub repository URLs from Zenodo related_identifiers.
+    """Extract GitHub repository URLs from Zenodo metadata.
 
-    When a Zenodo deposit is created via GitHub integration, the API response
-    includes ``metadata.related_identifiers`` with entries like::
+    Sources checked (in order):
 
-        {"identifier": "https://github.com/user/repo/tree/v1.0",
-         "relation": "isSupplementTo", "scheme": "url"}
+    1. ``metadata.related_identifiers`` – entries like
+       ``{"identifier": "https://github.com/user/repo/tree/v1.0",
+         "relation": "isSupplementTo", "scheme": "url"}``
+    2. ``metadata.description`` – free-text HTML/Markdown that may contain
+       inline GitHub links.
 
     Returns deduplicated base repo URLs (``https://github.com/owner/repo``).
     """
+    import re as _re
+
     urls: list[str] = []
     seen: set[str] = set()
     for ri in record.get("metadata", {}).get("related_identifiers", []):
@@ -283,6 +287,15 @@ def _extract_github_urls_from_zenodo(record: dict) -> list[str]:
         if base and base not in seen:
             seen.add(base)
             urls.append(base)
+
+    # Also scan the description for GitHub URLs
+    desc = record.get("metadata", {}).get("description", "")
+    for match in _re.findall(r"https?://github\.com/[^\s<\"'&;)]+", desc):
+        base = _normalise_github_repo_url(match.rstrip(".,;:)"))
+        if base and base not in seen:
+            seen.add(base)
+            urls.append(base)
+
     return urls
 
 

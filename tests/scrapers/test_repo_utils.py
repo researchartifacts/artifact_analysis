@@ -301,6 +301,36 @@ class TestExtractGithubUrlsFromZenodo:
     def test_empty_when_no_metadata(self):
         assert repo_utils._extract_github_urls_from_zenodo({}) == []
 
+    def test_extracts_from_description(self):
+        record = {
+            "metadata": {
+                "description": '<p>Code at <a href="https://github.com/alice/project">GitHub</a>.</p>',
+            }
+        }
+        assert repo_utils._extract_github_urls_from_zenodo(record) == ["https://github.com/alice/project"]
+
+    def test_description_deduplicates_with_related(self):
+        record = {
+            "metadata": {
+                "related_identifiers": [
+                    {"identifier": "https://github.com/alice/project/tree/v1"},
+                ],
+                "description": "See https://github.com/alice/project for code.",
+            }
+        }
+        # Should not duplicate the same repo
+        assert repo_utils._extract_github_urls_from_zenodo(record) == ["https://github.com/alice/project"]
+
+    def test_description_trailing_punctuation(self):
+        record = {
+            "metadata": {
+                "description": "Code: https://github.com/hanshanley/tracking-takes.",
+            }
+        }
+        assert repo_utils._extract_github_urls_from_zenodo(record) == [
+            "https://github.com/hanshanley/tracking-takes"
+        ]
+
 
 # ── _extract_github_urls_from_figshare ───────────────────────────────────────
 
