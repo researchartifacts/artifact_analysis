@@ -107,7 +107,7 @@ jobs:
             $REFRESH_FLAG || echo "⚠️ Repository stats generation skipped"
       
       - name: Download DBLP author analysis artifact (if available)
-        uses: dawidd6/action-download-artifact@v7
+        uses: dawidd6/action-download-artifact@v21
         with:
           workflow: dblp-author-analysis.yml
           workflow_conclusion: success
