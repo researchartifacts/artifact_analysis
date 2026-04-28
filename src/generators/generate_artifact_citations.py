@@ -7,7 +7,7 @@ Outputs:
   assets/data/artifact_citations_summary.json
 
 Usage:
-  python generate_artifact_citations.py --data_dir ../reprodb.github.io
+  python generate_artifact_citations.py --data_dir ../reprodb.github.io/src
 """
 
 import argparse

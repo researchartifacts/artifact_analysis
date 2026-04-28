@@ -6,7 +6,7 @@ Each unique paper gets a stable integer ID. Co-authored papers are stored
 once in the index and referenced by ID from each author entry.
 
 Usage:
-    python -m src.generators.generate_paper_index --data_dir ../reprodb.github.io
+    python -m src.generators.generate_paper_index --data_dir ../reprodb.github.io/src
 """
 
 import argparse

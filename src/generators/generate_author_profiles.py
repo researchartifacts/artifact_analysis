@@ -10,7 +10,7 @@ Output:
   suitable for client-side rendering of individual author profile pages.
 
 Usage:
-  python generate_author_profiles.py --data_dir ../reprodb.github.io
+  python generate_author_profiles.py --data_dir ../reprodb.github.io/src
 """
 
 import argparse

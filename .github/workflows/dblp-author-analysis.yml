@@ -69,22 +69,22 @@ jobs:
         run: |
           python -m src.generators.generate_author_stats \
             --dblp_file data/dblp/dblp.xml.gz \
-            --data_dir website \
-            --output_dir website
+            --data_dir website/src \
+            --output_dir website/src
 
       - name: "Build/update canonical author index"
         run: |
           python -m src.generators.generate_author_index \
-            --data_dir website
+            --data_dir website/src
       
       - name: "Enrichment layer 1: CSRankings (offline faculty match)"
         continue-on-error: true
         run: |
           echo "Enriching affiliations from CSRankings..."
           python -m src.enrichers.enrich_affiliations_csrankings \
-            --authors_file website/assets/data/authors.json \
-            --output website/assets/data/authors.json \
-            --data_dir website \
+            --authors_file website/src/assets/data/authors.json \
+            --output website/src/assets/data/authors.json \
+            --data_dir website/src \
             --verbose || {
             echo "⚠️ CSRankings enrichment failed"
             echo "Continuing with existing affiliations..."
@@ -95,9 +95,9 @@ jobs:
         run: |
           echo "Enriching affiliations from AE committee data..."
           python -m src.enrichers.enrich_affiliations_ae_members \
-            --authors_file website/assets/data/authors.json \
-            --output website/assets/data/authors.json \
-            --data_dir website \
+            --authors_file website/src/assets/data/authors.json \
+            --output website/src/assets/data/authors.json \
+            --data_dir website/src \
             --verbose || {
             echo "⚠️ AE-member enrichment failed"
             echo "Continuing with existing affiliations..."
@@ -116,9 +116,9 @@ jobs:
             echo "Full recheck mode: re-querying all authors (max $MAX_AUTHORS)"
           fi
           python -m src.enrichers.enrich_affiliations_openalex \
-            --authors_file website/_data/authors.yml \
-            --papers_file website/assets/data/paper_authors_map.json \
-            --data_dir website \
+            --authors_file website/src/_data/authors.yml \
+            --papers_file website/src/assets/data/paper_authors_map.json \
+            --data_dir website/src \
             --max_authors $MAX_AUTHORS \
             --verbose $RECHECK_FLAG || {
             echo "⚠️ OpenAlex enrichment did not complete"
@@ -129,7 +129,7 @@ jobs:
         run: |
           echo "Syncing author index with enriched data..."
           python -m src.generators.generate_author_index \
-            --data_dir website
+            --data_dir website/src
 
       - name: Check for enrichment changes
         id: check_changes
@@ -150,13 +150,13 @@ jobs:
         with:
           name: dblp-analysis-results
           path: |
-            website/_data/authors.yml
-            website/_data/author_summary.yml
-            website/_data/papers.json
-            website/assets/data/authors.json
-            website/assets/data/author_index.json
-            website/assets/data/paper_authors_map.json
-            website/assets/data/papers.json
+            website/src/_data/authors.yml
+            website/src/_data/author_summary.yml
+            website/src/_data/papers.json
+            website/src/assets/data/authors.json
+            website/src/assets/data/author_index.json
+            website/src/assets/data/paper_authors_map.json
+            website/src/assets/data/papers.json
           retention-days: 7
 
       - name: Trigger statistics update

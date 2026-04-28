@@ -13,7 +13,7 @@ artifact evaluation vs. those that did not, at the same conference/year.
 Usage::
 
     python -m src.generators.generate_baseline_citations \
-        --data_dir ../reprodb.github.io
+        --data_dir ../reprodb.github.io/src
 """
 
 from __future__ import annotations

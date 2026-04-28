@@ -33,7 +33,7 @@ def main() -> None:
         "--output_dir",
         type=str,
         default=None,
-        help="Output directory (website root, e.g. ../reprodb.github.io)",
+        help="Output directory (website root, e.g. ../reprodb.github.io/src)",
     )
     args = parser.parse_args()
 

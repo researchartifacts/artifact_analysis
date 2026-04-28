@@ -14,7 +14,7 @@ This is more reliable than OpenAlex title matching because:
 
 Usage:
     HTTP_PROXY=http://proxy-dmz.intel.com:912 HTTPS_PROXY=http://proxy-dmz.intel.com:912 \
-    python3 verify_artifact_citations.py --data_dir ../reprodb.github.io
+    python3 verify_artifact_citations.py --data_dir ../reprodb.github.io/src
 """
 
 import argparse
