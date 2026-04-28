@@ -261,6 +261,78 @@ def _resolve_zenodo_doi(url: str) -> str | None:
     return None
 
 
+def _extract_github_urls_from_zenodo(record: dict) -> list[str]:
+    """Extract GitHub repository URLs from Zenodo related_identifiers.
+
+    When a Zenodo deposit is created via GitHub integration, the API response
+    includes ``metadata.related_identifiers`` with entries like::
+
+        {"identifier": "https://github.com/user/repo/tree/v1.0",
+         "relation": "isSupplementTo", "scheme": "url"}
+
+    Returns deduplicated base repo URLs (``https://github.com/owner/repo``).
+    """
+    urls: list[str] = []
+    seen: set[str] = set()
+    for ri in record.get("metadata", {}).get("related_identifiers", []):
+        ident = ri.get("identifier", "")
+        if "github.com/" not in ident:
+            continue
+        # Normalise to base repo URL: strip /tree/..., /blob/..., trailing slash
+        base = _normalise_github_repo_url(ident)
+        if base and base not in seen:
+            seen.add(base)
+            urls.append(base)
+    return urls
+
+
+def _extract_github_urls_from_figshare(record: dict) -> list[str]:
+    """Extract GitHub repository URLs from Figshare references/related_materials.
+
+    Figshare articles may include GitHub links in ``references`` (list of URL
+    strings) or ``related_materials`` (list of dicts with ``identifier``).
+
+    Returns deduplicated base repo URLs.
+    """
+    raw_urls: list[str] = []
+    for ref in record.get("references", []):
+        if isinstance(ref, str):
+            raw_urls.append(ref)
+    for rm in record.get("related_materials", []):
+        ident = rm.get("identifier", "")
+        if isinstance(ident, str):
+            raw_urls.append(ident)
+
+    urls: list[str] = []
+    seen: set[str] = set()
+    for u in raw_urls:
+        if "github.com/" not in u:
+            continue
+        base = _normalise_github_repo_url(u)
+        if base and base not in seen:
+            seen.add(base)
+            urls.append(base)
+    return urls
+
+
+def _normalise_github_repo_url(url: str) -> str | None:
+    """Reduce a GitHub URL to ``https://github.com/owner/repo``.
+
+    Handles tree/blob suffixes, .git extensions, and query strings.
+    Returns *None* for URLs that don't look like a valid owner/repo path.
+    """
+    import re
+
+    url = url.split("?")[0].split("#")[0].rstrip("/")
+    # Strip .git suffix
+    if url.endswith(".git"):
+        url = url[:-4]
+    m = re.match(r"https?://github\.com/([^/]+)/([^/]+)", url)
+    if m:
+        return f"https://github.com/{m.group(1)}/{m.group(2)}"
+    return None
+
+
 def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
     """Fetch Zenodo record stats with caching and 429 retry."""
     cached = _read_cache(CACHE_DIR, url, ttl=ttl, namespace="zenodo_stats")
@@ -285,6 +357,10 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
                     "updated_at": record.get("updated", ""),
                     "created_at": record.get("created", ""),
                 }
+                # Extract linked GitHub URLs from related_identifiers
+                linked = _extract_github_urls_from_zenodo(record)
+                if linked:
+                    result["linked_github_urls"] = linked
                 break
             if resp.status_code == 429:
                 retry_after = int(resp.headers.get("Retry-After", 0))
@@ -323,6 +399,7 @@ def cached_figshare_stats(url, ttl=CACHE_TTL_STATS):
 
     views = downloads = -1
     updated = created = "NA"
+    linked: list[str] = []
     try:
         r = _session.get(
             f"https://stats.figshare.com/total/views/article/{article_id}", timeout=_session.default_timeout
@@ -339,6 +416,8 @@ def cached_figshare_stats(url, ttl=CACHE_TTL_STATS):
             d = r.json()
             updated = d.get("modified_date", "NA")
             created = d.get("created_date", "NA")
+            # Extract linked GitHub URLs from references/related_materials
+            linked = _extract_github_urls_from_figshare(d)
     except requests.RequestException as e:
         logger.error(f"  Figshare request error for {url}: {e}")
 
@@ -348,6 +427,8 @@ def cached_figshare_stats(url, ttl=CACHE_TTL_STATS):
         "updated_at": updated,
         "created_at": created,
     }
+    if linked:
+        result["linked_github_urls"] = linked
     _write_cache(CACHE_DIR, url, result, namespace="figshare_stats")
     return result
 

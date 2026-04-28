@@ -148,6 +148,39 @@ class TestCachedZenodoStats:
         assert stats["zenodo_views"] == 100
         assert stats["zenodo_downloads"] == 50
 
+    def test_extracts_linked_github_urls(self, mock_session):
+        mock_session.get.return_value = _fake_response(
+            200,
+            json_data={
+                "stats": {"unique_views": 10, "unique_downloads": 5},
+                "updated": "2024-06-01",
+                "created": "2024-01-01",
+                "metadata": {
+                    "related_identifiers": [
+                        {
+                            "identifier": "https://github.com/owner/repo/tree/v1.0",
+                            "relation": "isSupplementTo",
+                            "scheme": "url",
+                        },
+                    ]
+                },
+            },
+        )
+        stats = repo_utils.cached_zenodo_stats("https://zenodo.org/records/12345")
+        assert stats["linked_github_urls"] == ["https://github.com/owner/repo"]
+
+    def test_no_linked_github_urls_omits_key(self, mock_session):
+        mock_session.get.return_value = _fake_response(
+            200,
+            json_data={
+                "stats": {"unique_views": 1, "unique_downloads": 0},
+                "updated": "2024-06-01",
+                "created": "2024-01-01",
+            },
+        )
+        stats = repo_utils.cached_zenodo_stats("https://zenodo.org/records/99999")
+        assert "linked_github_urls" not in stats
+
     def test_unparseable_url_returns_none(self, mock_session):
         result = repo_utils.cached_zenodo_stats("https://zenodo.org/badge/latestdoi/123")
         assert result is None
@@ -168,6 +201,35 @@ class TestCachedFigshareStats:
         assert stats["figshare_views"] == 200
         assert stats["figshare_downloads"] == 80
 
+    def test_extracts_linked_github_urls(self, mock_session):
+        mock_session.get.side_effect = [
+            _fake_response(200, json_data={"totals": 10}),  # views
+            _fake_response(200, json_data={"totals": 5}),  # downloads
+            _fake_response(
+                200,
+                json_data={
+                    "modified_date": "2024-06-01",
+                    "created_date": "2024-01-01",
+                    "references": ["https://github.com/user/project"],
+                    "related_materials": [],
+                },
+            ),
+        ]
+        stats = repo_utils.cached_figshare_stats("https://figshare.com/articles/dataset/foo/999999")
+        assert stats["linked_github_urls"] == ["https://github.com/user/project"]
+
+    def test_no_linked_github_urls_omits_key(self, mock_session):
+        mock_session.get.side_effect = [
+            _fake_response(200, json_data={"totals": 10}),  # views
+            _fake_response(200, json_data={"totals": 5}),  # downloads
+            _fake_response(
+                200,
+                json_data={"modified_date": "2024-06-01", "created_date": "2024-01-01"},
+            ),
+        ]
+        stats = repo_utils.cached_figshare_stats("https://figshare.com/articles/dataset/foo/999999")
+        assert "linked_github_urls" not in stats
+
     def test_failure_returns_defaults(self, mock_session):
         import requests
 
@@ -175,6 +237,96 @@ class TestCachedFigshareStats:
         stats = repo_utils.cached_figshare_stats("https://figshare.com/articles/dataset/foo/999999")
         assert stats["figshare_views"] == -1
         assert stats["figshare_downloads"] == -1
+
+
+# ── _normalise_github_repo_url ───────────────────────────────────────────────
+
+
+class TestNormaliseGithubRepoUrl:
+    def test_strips_tree_suffix(self):
+        assert (
+            repo_utils._normalise_github_repo_url("https://github.com/owner/repo/tree/v1.0")
+            == "https://github.com/owner/repo"
+        )
+
+    def test_strips_blob_suffix(self):
+        assert (
+            repo_utils._normalise_github_repo_url("https://github.com/owner/repo/blob/main/README.md")
+            == "https://github.com/owner/repo"
+        )
+
+    def test_strips_dot_git(self):
+        assert (
+            repo_utils._normalise_github_repo_url("https://github.com/owner/repo.git")
+            == "https://github.com/owner/repo"
+        )
+
+    def test_plain_repo_url(self):
+        assert repo_utils._normalise_github_repo_url("https://github.com/owner/repo") == "https://github.com/owner/repo"
+
+    def test_returns_none_for_non_repo(self):
+        assert repo_utils._normalise_github_repo_url("https://github.com/owner") is None
+
+
+# ── _extract_github_urls_from_zenodo ─────────────────────────────────────────
+
+
+class TestExtractGithubUrlsFromZenodo:
+    def test_extracts_from_related_identifiers(self):
+        record = {
+            "metadata": {
+                "related_identifiers": [
+                    {"identifier": "https://github.com/user/repo/tree/v1.0", "relation": "isSupplementTo"},
+                    {"identifier": "https://doi.org/10.1234/foo", "relation": "cites"},
+                ]
+            }
+        }
+        assert repo_utils._extract_github_urls_from_zenodo(record) == ["https://github.com/user/repo"]
+
+    def test_deduplicates_urls(self):
+        record = {
+            "metadata": {
+                "related_identifiers": [
+                    {"identifier": "https://github.com/u/r/tree/v1"},
+                    {"identifier": "https://github.com/u/r/tree/v2"},
+                ]
+            }
+        }
+        assert repo_utils._extract_github_urls_from_zenodo(record) == ["https://github.com/u/r"]
+
+    def test_empty_when_no_github(self):
+        record = {"metadata": {"related_identifiers": [{"identifier": "https://doi.org/10.1234/foo"}]}}
+        assert repo_utils._extract_github_urls_from_zenodo(record) == []
+
+    def test_empty_when_no_metadata(self):
+        assert repo_utils._extract_github_urls_from_zenodo({}) == []
+
+
+# ── _extract_github_urls_from_figshare ───────────────────────────────────────
+
+
+class TestExtractGithubUrlsFromFigshare:
+    def test_extracts_from_references(self):
+        record = {"references": ["https://github.com/user/project"]}
+        assert repo_utils._extract_github_urls_from_figshare(record) == ["https://github.com/user/project"]
+
+    def test_extracts_from_related_materials(self):
+        record = {
+            "references": [],
+            "related_materials": [{"identifier": "https://github.com/a/b", "relation": "References"}],
+        }
+        assert repo_utils._extract_github_urls_from_figshare(record) == ["https://github.com/a/b"]
+
+    def test_deduplicates_across_both(self):
+        record = {
+            "references": ["https://github.com/a/b"],
+            "related_materials": [{"identifier": "https://github.com/a/b"}],
+        }
+        assert repo_utils._extract_github_urls_from_figshare(record) == ["https://github.com/a/b"]
+
+    def test_empty_when_no_github(self):
+        record = {"references": ["https://example.com"], "related_materials": []}
+        assert repo_utils._extract_github_urls_from_figshare(record) == []
 
 
 # ── download_file / _cached_get ──────────────────────────────────────────────

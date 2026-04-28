@@ -17,11 +17,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
+from ..models.repo_stats import RepoStatsEntry
 from ..scrapers.parse_results_md import get_ae_results
 from ..utils.collect_artifact_stats import figshare_stats, github_stats, zenodo_stats
 from ..utils.conference import conf_area as _conf_area
 from ..utils.conference import parse_conf_year as extract_conference_name
-from ..utils.io import load_json, load_yaml, save_json, save_yaml
+from ..utils.io import load_json, load_validated_json, load_yaml, resolve_data_path, save_json, save_yaml
 from ..utils.test_artifact_repositories import check_artifact_exists
 
 logger = logging.getLogger(__name__)
@@ -131,6 +132,8 @@ def collect_stats_for_results(results, url_keys=None):
 
     all_stats = []
     stats_collected = 0
+    # Track discovered GitHub URLs from Zenodo/Figshare linked_github_urls
+    discovered_github: list[tuple[str, str, int, str]] = []  # (url, conf, year, title)
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
         pending = {pool.submit(_fetch_stats, url): (url, conf, yr, title) for url, conf, yr, title in fetch_tasks}
         for i, future in enumerate(as_completed(pending), 1):
@@ -147,8 +150,37 @@ def collect_stats_for_results(results, url_keys=None):
                 }
                 entry.update(stats)
                 all_stats.append(entry)
+                # Collect any linked GitHub URLs discovered from Zenodo/Figshare
+                for gh_url in stats.get("linked_github_urls", []):
+                    if gh_url not in seen_urls:
+                        seen_urls.add(gh_url)
+                        discovered_github.append((gh_url, conf_name, year, title))
             if i % 100 == 0 or i == len(fetch_tasks):
                 logger.info(f"  Progress: {i}/{len(fetch_tasks)} URLs fetched, {stats_collected} stats collected")
+
+    # Second pass: fetch GitHub stats for repos discovered via Zenodo/Figshare links
+    if discovered_github:
+        logger.info(
+            f"  Discovered {len(discovered_github)} additional GitHub repos from Zenodo/Figshare linked_github_urls"
+        )
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            pending2 = {
+                pool.submit(_fetch_stats, url): (url, conf, yr, title) for url, conf, yr, title in discovered_github
+            }
+            for future in as_completed(pending2):
+                url, conf_name, year, title = pending2[future]
+                stats, source = future.result()
+                if stats:
+                    stats_collected += 1
+                    entry = {
+                        "conference": conf_name,
+                        "year": year,
+                        "title": title,
+                        "url": url,
+                        "source": source,
+                    }
+                    entry.update(stats)
+                    all_stats.append(entry)
 
     return all_stats
 
@@ -370,30 +402,11 @@ def main():
     existing_stats = []
     existing_urls = set()
     if not args.refresh and args.output_dir:
-        build_dir = Path(args.output_dir) / "_build"
-        detail_path = build_dir / "repo_stats_detail.json"
-        # Fall back to legacy location for backward compatibility
-        if not detail_path.exists():
-            detail_path = Path(args.output_dir) / "assets" / "data" / "repo_stats_detail.json"
+        detail_path = resolve_data_path(Path(args.output_dir), "repo_stats_detail.json")
         if detail_path.exists():
-            raw_existing = load_json(detail_path)
-            # Normalize existing entries to the format collect_stats_for_results produces
-            for entry in raw_existing:
-                if "source" not in entry:
-                    url_lower = (entry.get("url", "") or "").lower()
-                    if "github" in url_lower:
-                        entry["source"] = "github"
-                    elif "zenodo" in url_lower:
-                        entry["source"] = "zenodo"
-                    elif "figshare" in url_lower:
-                        entry["source"] = "figshare"
-                    else:
-                        entry["source"] = "github"  # detail JSON is GitHub-only
-                if "github_stars" not in entry and "stars" in entry:
-                    entry["github_stars"] = entry["stars"]
-                if "github_forks" not in entry and "forks" in entry:
-                    entry["github_forks"] = entry["forks"]
-            existing_stats = raw_existing
+            validated = load_validated_json(detail_path, RepoStatsEntry, default=[])
+            # Convert back to dicts for downstream merging with new stats
+            existing_stats = [e.model_dump() if hasattr(e, "model_dump") else e for e in validated]
             existing_urls = {s.get("url", "").rstrip("/") for s in existing_stats}
             logger.info(f"Loaded {len(existing_stats)} existing repo stats ({len(existing_urls)} unique URLs)")
 
@@ -531,12 +544,7 @@ def main():
         # Append a dated snapshot for each fetched artifact so we can track
         # stars/forks/views/downloads over time across monthly runs.
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        history_load_path = build_dir / "repo_stats_history.json"
-        # Fall back to legacy location for loading existing history
-        if not history_load_path.exists():
-            legacy_history = assets_dir / "repo_stats_history.json"
-            if legacy_history.exists():
-                history_load_path = legacy_history
+        history_load_path = resolve_data_path(Path(args.output_dir), "repo_stats_history.json")
         # Always write to _build/
         history_write_path = build_dir / "repo_stats_history.json"
 
