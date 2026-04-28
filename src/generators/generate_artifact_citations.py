@@ -11,25 +11,24 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
 import re
-import time
-import urllib.parse
-import urllib.request
 from pathlib import Path
 
+from src.utils.citation_apis import (
+    best_citation_count,
+    create_session,
+    extract_doi,
+    fetch_json_urllib,
+    is_artifact_doi,
+    openalex_lookup_with_retry,
+    s2_lookup_with_retry,
+    s2_reachable,
+)
 from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
-DOI_REGEX = re.compile(r"10\.[0-9]{4,9}/[-._;()/:A-Za-z0-9]+")
-# Only accept DOIs from artifact repositories (Zenodo, Figshare)
-# Reject paper DOIs from publishers (ACM, IEEE, Springer, etc.)
-ALLOWED_ARTIFACT_DOI_PREFIXES = (
-    "10.5281/zenodo.",  # Zenodo
-    "10.6084/m9.figshare.",  # Figshare
-)
 
 
 def log(msg: str) -> None:
@@ -61,30 +60,6 @@ def load_local_env_file(file_path: str) -> None:
         log(f"Warning: could not load local env file {file_path}: {type(e).__name__}: {e}")
 
 
-def is_artifact_doi(doi: str) -> bool:
-    """Check if DOI is from an artifact repository (not a paper publisher)."""
-    if not doi:
-        return False
-    return doi.lower().startswith(ALLOWED_ARTIFACT_DOI_PREFIXES)
-
-
-def extract_doi(url) -> str:
-    if not url or not isinstance(url, str):
-        return ""
-
-    # Try direct DOI regex first
-    match = DOI_REGEX.search(url)
-    if match:
-        return match.group(0).rstrip(".,);").lower()
-
-    # Try converting Zenodo record URL to DOI format: https://zenodo.org/records/<id> -> 10.5281/zenodo.<id>
-    m = re.search(r"zenodo\.org/(?:record|records)/(\d+)", url, re.I)
-    if m:
-        return f"10.5281/zenodo.{m.group(1)}".lower()
-
-    return ""
-
-
 def extract_zenodo_record_id(url) -> str:
     if not url or not isinstance(url, str):
         return ""
@@ -97,203 +72,25 @@ def extract_zenodo_record_id(url) -> str:
     return ""
 
 
-def fetch_json(url: str, timeout: int = 20) -> dict:
-    return fetch_json_with_headers(url, timeout=timeout, headers=None)
-
-
-def fetch_json_with_headers(url: str, timeout: int = 20, headers: dict | None = None) -> dict:
-    req_headers = {"User-Agent": "reprodb-citations/0.1"}
-    if headers:
-        req_headers.update(headers)
-    req = urllib.request.Request(url, headers=req_headers)
-    started = time.time()
-    log(f"[HTTP] GET {short_url(url)}")
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            payload = json.loads(resp.read().decode("utf-8", "ignore"))
-            elapsed = time.time() - started
-            log(f"[HTTP] OK  {short_url(url)} ({elapsed:.1f}s)")
-            return payload
-    except Exception as e:
-        elapsed = time.time() - started
-        log(f"[HTTP] ERR {short_url(url)} ({elapsed:.1f}s): {type(e).__name__}: {e}")
-        raise
-
-
 def fetch_zenodo_doi(record_id: str, cache: dict) -> str:
-    """
-    Get DOI for a Zenodo record.
+    """Get DOI for a Zenodo record.
+
     Always returns the Zenodo DOI (10.5281/zenodo.{record_id}) to ensure we get
     artifact citations, not paper citations from DOIs that authors may have linked.
     """
     if record_id in cache:
         return cache[record_id]
 
-    # Construct Zenodo DOI directly from record ID
-    # This ensures we always get artifact citations, not paper citations
     doi = f"10.5281/zenodo.{record_id}".lower()
 
-    # Verify the record exists by checking the API
     url = f"https://zenodo.org/api/records/{record_id}"
     try:
-        fetch_json(url, timeout=30)
-        # Record exists, use the constructed Zenodo DOI
+        fetch_json_urllib(url, timeout=30)
         cache[record_id] = doi
         return doi
     except Exception:
-        # Record doesn't exist or API error
         cache[record_id] = ""
         return ""
-
-
-def normalize_doi(value: str) -> str:
-    if not value:
-        return ""
-    if value.lower().startswith("https://doi.org/"):
-        value = value[len("https://doi.org/") :]
-    if value.lower().startswith("http://doi.org/"):
-        value = value[len("http://doi.org/") :]
-    match = DOI_REGEX.search(value)
-    if match:
-        return match.group(0).rstrip(".,);").lower()
-    return ""
-
-
-def fetch_openalex_citations(doi: str, cache: dict, fetch_citing_dois: bool) -> dict:
-    if doi in cache:
-        return cache[doi]
-    url = "https://api.openalex.org/works/https://doi.org/" + urllib.parse.quote(doi, safe="")
-    last_err = ""
-    for attempt in range(4):
-        log(f"[OpenAlex] DOI {doi} (attempt {attempt + 1}/4)")
-        try:
-            payload = fetch_json(url, timeout=25)
-            cited = payload.get("cited_by_count")
-            cited_val = cited if isinstance(cited, int) else None
-            citing_dois: list[str] = []
-
-            # Construct citing works URL from OpenAlex ID if we need citing DOIs
-            if fetch_citing_dois and cited_val and cited_val > 0:
-                openalex_id = payload.get("id", "")
-                if openalex_id:
-                    # Extract work ID from full URL (e.g., https://openalex.org/W12345 -> W12345)
-                    work_id = openalex_id.split("/")[-1] if "/" in openalex_id else openalex_id
-                    citing_works_url = f"https://api.openalex.org/works?filter=cites:{work_id}"
-                    citing_dois = fetch_openalex_citing_dois(citing_works_url)
-
-            cache[doi] = {
-                "count": cited_val,
-                "citing_dois": citing_dois,
-                "error": "",
-            }
-            log(f"[OpenAlex] DOI {doi} -> cited_by_count={cited_val}")
-            return cache[doi]
-        except Exception as e:
-            last_err = f"{type(e).__name__}: {e}"
-            log(f"[OpenAlex] retrying DOI {doi} after error: {last_err}")
-            time.sleep(0.6 * (attempt + 1))
-    cache[doi] = {"count": None, "citing_dois": [], "error": last_err}
-    log(f"[OpenAlex] DOI {doi} failed after 4 attempts")
-    return cache[doi]
-
-
-def fetch_openalex_citing_dois(base_url: str) -> list[str]:
-    """
-    Fetch all citing DOIs from OpenAlex using the filter API.
-    base_url should be like: https://api.openalex.org/works?filter=cites:W12345
-    """
-    citing_dois = set()
-    cursor = "*"
-    while True:
-        url = f"{base_url}&per_page=200&cursor={urllib.parse.quote(cursor, safe='')}"
-        payload = fetch_json(url, timeout=25)
-        for work in payload.get("results", []) or []:
-            doi_val = work.get("doi") or (work.get("ids", {}) or {}).get("doi") or ""
-            norm = normalize_doi(doi_val)
-            if norm:
-                citing_dois.add(norm)
-        cursor = (payload.get("meta", {}) or {}).get("next_cursor")
-        if not cursor:
-            break
-        time.sleep(0.2)
-    return sorted(citing_dois)
-
-
-def fetch_semantic_scholar_citations(doi: str, cache: dict, fetch_citing_dois: bool) -> dict:
-    if doi in cache:
-        return cache[doi]
-
-    headers = {}
-    api_key = os.environ.get("SEMANTIC_SCHOLAR_API_KEY", "").strip()
-    if api_key:
-        headers["x-api-key"] = api_key
-
-    paper_id = "DOI:" + doi
-    base_url = "https://api.semanticscholar.org/graph/v1/paper/" + urllib.parse.quote(paper_id, safe="")
-    last_err = ""
-    request_timeout = int(os.environ.get("SEMANTIC_SCHOLAR_TIMEOUT", "8"))
-    max_attempts = int(os.environ.get("SEMANTIC_SCHOLAR_MAX_ATTEMPTS", "2"))
-    for attempt in range(max_attempts):
-        log(f"[SemanticScholar] DOI {doi} (attempt {attempt + 1}/{max_attempts})")
-        try:
-            payload = fetch_json_with_headers(
-                base_url + "?fields=citationCount", timeout=request_timeout, headers=headers
-            )
-            cited = payload.get("citationCount")
-            cited_val = cited if isinstance(cited, int) else None
-            citing_dois: list[str] = []
-            if fetch_citing_dois:
-                citing_dois = fetch_semantic_scholar_citing_dois(base_url, headers)
-            cache[doi] = {
-                "count": cited_val,
-                "citing_dois": citing_dois,
-                "error": "",
-            }
-            log(f"[SemanticScholar] DOI {doi} -> citationCount={cited_val}")
-            return cache[doi]
-        except Exception as e:
-            last_err = f"{type(e).__name__}: {e}"
-            if attempt + 1 < max_attempts:
-                log(f"[SemanticScholar] retrying DOI {doi} after error: {last_err}")
-            time.sleep(0.6 * (attempt + 1))
-    cache[doi] = {"count": None, "citing_dois": [], "error": last_err}
-    log(f"[SemanticScholar] DOI {doi} failed after {max_attempts} attempts")
-    return cache[doi]
-
-
-def semantic_scholar_reachable() -> bool:
-    check_url = "https://api.semanticscholar.org/graph/v1/paper/DOI%3A10.1038%2Fnature12373?fields=paperId"
-    timeout = int(os.environ.get("SEMANTIC_SCHOLAR_PREFLIGHT_TIMEOUT", "3"))
-    try:
-        fetch_json_with_headers(check_url, timeout=timeout, headers=None)
-        return True
-    except Exception as e:
-        log(f"[SemanticScholar] preflight failed: {type(e).__name__}: {e}")
-        return False
-
-
-def fetch_semantic_scholar_citing_dois(base_url: str, headers: dict) -> list[str]:
-    citing_dois = set()
-    offset = 0
-    page_size = 100
-    while True:
-        url = f"{base_url}/citations?fields=externalIds&limit={page_size}&offset={offset}"
-        payload = fetch_json_with_headers(url, timeout=25, headers=headers)
-        for entry in payload.get("data", []) or []:
-            ext_ids = (entry.get("citingPaper", {}) or {}).get("externalIds", {}) or {}
-            doi_val = ext_ids.get("DOI", "")
-            norm = normalize_doi(doi_val)
-            if norm:
-                citing_dois.add(norm)
-        next_offset = payload.get("next")
-        if next_offset is None:
-            if len(payload.get("data", []) or []) < page_size:
-                break
-            offset += page_size
-        else:
-            offset = next_offset
-        time.sleep(0.2)
-    return sorted(citing_dois)
 
 
 def generate(data_dir: str) -> None:
@@ -319,8 +116,9 @@ def generate(data_dir: str) -> None:
     logger.info(f"✓ Loaded {len(artifacts)} artifacts")
 
     zenodo_cache = {}
-    openalex_cache = {}
-    semantic_scholar_cache = {}
+    openalex_cache: dict[str, dict] = {}
+    semantic_scholar_cache: dict[str, dict] = {}
+    session = create_session()
     fetch_citing_dois = os.environ.get("FETCH_CITING_DOIS", "1").strip() != "0"
 
     logger.info(f"Processing {len(artifacts)} artifacts...")
@@ -338,7 +136,7 @@ def generate(data_dir: str) -> None:
         log("[SemanticScholar] disabled via DISABLE_SEMANTIC_SCHOLAR=1")
     else:
         log("[SemanticScholar] running connectivity preflight...")
-        if not semantic_scholar_reachable():
+        if not s2_reachable():
             semantic_disabled = True
             log("[SemanticScholar] disabled for this run due to connectivity failure")
 
@@ -395,7 +193,11 @@ def generate(data_dir: str) -> None:
             openalex_citing_dois: list[str] = []
             semantic_citing_dois: list[str] = []
             if doi:
-                openalex_entry = fetch_openalex_citations(doi, openalex_cache, fetch_citing_dois)
+                if doi in openalex_cache:
+                    openalex_entry = openalex_cache[doi]
+                else:
+                    openalex_entry = openalex_lookup_with_retry(doi, session, fetch_citing_dois=fetch_citing_dois)
+                    openalex_cache[doi] = openalex_entry
                 if semantic_disabled:
                     semantic_entry = {
                         "count": None,
@@ -403,7 +205,11 @@ def generate(data_dir: str) -> None:
                         "error": "disabled_after_connect_failures",
                     }
                 else:
-                    semantic_entry = fetch_semantic_scholar_citations(doi, semantic_scholar_cache, fetch_citing_dois)
+                    if doi in semantic_scholar_cache:
+                        semantic_entry = semantic_scholar_cache[doi]
+                    else:
+                        semantic_entry = s2_lookup_with_retry(doi, session, fetch_citing_dois=fetch_citing_dois)
+                        semantic_scholar_cache[doi] = semantic_entry
                 openalex_count = openalex_entry.get("count")
                 semantic_count = semantic_entry.get("count")
                 openalex_citing_dois = openalex_entry.get("citing_dois", [])
@@ -419,8 +225,7 @@ def generate(data_dir: str) -> None:
                             "[SemanticScholar] disabled for this run after 5 timeout failures (network/connectivity issue)"
                         )
 
-                counts = [c for c in [openalex_count, semantic_count] if isinstance(c, int)]
-                cited_by = max(counts) if counts else None
+                cited_by = best_citation_count(openalex_count, semantic_count)
                 seen_doi.add(doi)
 
             entries.append(

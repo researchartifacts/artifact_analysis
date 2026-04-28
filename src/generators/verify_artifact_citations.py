@@ -27,33 +27,17 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from src.utils.citation_apis import ARTIFACT_DOI_PREFIXES, fetch_json_urllib, is_artifact_doi
 from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
-# Artifact DOI prefixes we recognise
-ARTIFACT_DOI_PREFIXES = ("10.5281/zenodo.", "10.6084/m9.figshare.")
-
-
-def fetch_json(url: str, timeout: int = 20, headers: dict = None) -> dict:
-    hdrs = {"User-Agent": "reprodb-verify/0.1 (mailto:reprodb@example.com)"}
-    if headers:
-        hdrs.update(headers)
-    req = urllib.request.Request(url, headers=hdrs)
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read())
-
-
-def is_artifact_doi(doi: str) -> bool:
-    """Check if a DOI is a known artifact repository DOI."""
-    doi_lower = doi.lower()
-    return any(doi_lower.startswith(p) for p in ARTIFACT_DOI_PREFIXES)
 
 
 def fetch_crossref_references(doi: str) -> list[dict] | None:
     """Fetch the reference list for a DOI from Crossref."""
     url = "https://api.crossref.org/works/" + urllib.parse.quote(doi, safe="")
     try:
-        data = fetch_json(url, timeout=30)
+        data = fetch_json_urllib(url, timeout=30)
         return data.get("message", {}).get("reference", [])
     except Exception as e:
         logger.info(f"      [WARN] Crossref lookup failed for {doi}: {e}")
@@ -105,11 +89,7 @@ def fetch_zenodo_authors(record_id: str) -> list[str]:
     """Fetch author names from Zenodo API."""
     url = f"https://zenodo.org/api/records/{record_id}"
     try:
-        # Follow redirects (some records redirect to a newer version)
-        req = urllib.request.Request(url, headers={"User-Agent": "reprodb-verify/0.1"})
-        resp = urllib.request.urlopen(req, timeout=20)
-        # Handle redirects manually if needed
-        data = json.loads(resp.read())
+        data = fetch_json_urllib(url, timeout=20)
         creators = data.get("metadata", {}).get("creators", [])
         return [c.get("name", "") for c in creators if c.get("name")]
     except Exception as e:
@@ -121,7 +101,7 @@ def fetch_figshare_authors(doi: str) -> list[str]:
     """Fetch author names from Figshare via Crossref (Figshare API is complex)."""
     url = "https://api.crossref.org/works/" + urllib.parse.quote(doi, safe="")
     try:
-        data = fetch_json(url, timeout=20)
+        data = fetch_json_urllib(url, timeout=20)
         authors = data.get("message", {}).get("author", [])
         return [f"{a.get('family', '')} {a.get('given', '')}".strip() for a in authors]
     except Exception:
@@ -132,7 +112,7 @@ def fetch_crossref_authors(doi: str) -> list[str]:
     """Fetch author names from Crossref for a citing paper."""
     url = "https://api.crossref.org/works/" + urllib.parse.quote(doi, safe="")
     try:
-        data = fetch_json(url, timeout=20)
+        data = fetch_json_urllib(url, timeout=20)
         authors = data.get("message", {}).get("author", [])
         return [f"{a.get('family', '')} {a.get('given', '')}".strip() for a in authors]
     except Exception:
@@ -197,7 +177,7 @@ def verify_citations(data_dir: str, output_file: str = None) -> None:
     logger.info("Testing Crossref connectivity...")
     try:
         test_url = "https://api.crossref.org/works?rows=0"
-        fetch_json(test_url, timeout=10)
+        fetch_json_urllib(test_url, timeout=10)
         logger.info("  Crossref API reachable ✓")
     except Exception as e:
         logger.info(f"  [ERROR] Crossref API unreachable: {e}")

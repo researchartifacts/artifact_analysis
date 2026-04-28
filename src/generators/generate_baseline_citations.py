@@ -24,21 +24,20 @@ import os
 import time
 from pathlib import Path
 
-import requests
-
-from src.generators.generate_paper_citations_doi import (
-    _OPENALEX_DELAY,
-    _S2_DELAY,
-    _S2_MAX_TIMEOUT_FAILURES,
-    CACHE_DIR,
-    CACHE_TTL,
-    USER_AGENT,
-    _cache_key,
-    _openalex_lookup,
-    _openalex_title_search,
-    _s2_lookup,
-)
 from src.utils.cache import _MISSING, read_cache, write_cache
+from src.utils.citation_apis import (
+    CITATION_CACHE_DIR,
+    CITATION_CACHE_TTL,
+    OPENALEX_DELAY,
+    S2_DELAY,
+    S2_MAX_TIMEOUT_FAILURES,
+    best_citation_count,
+    cache_key,
+    create_session,
+    openalex_lookup,
+    openalex_title_search,
+    s2_lookup,
+)
 from src.utils.conference import conf_area, normalize_title
 from src.utils.dblp_extract import load_papers_by_venue
 from src.utils.io import load_json, save_json
@@ -142,8 +141,7 @@ def generate(data_dir: str) -> list[dict] | None:
     logger.info("%d unique non-AE papers after dedup", len(unique))
 
     # Fetch citations
-    session = requests.Session()
-    session.headers["User-Agent"] = USER_AGENT
+    session = create_session()
 
     s2_disabled = os.environ.get("DISABLE_SEMANTIC_SCHOLAR", "").strip() == "1"
     s2_timeout_failures = 0
@@ -158,8 +156,8 @@ def generate(data_dir: str) -> list[dict] | None:
         doi = paper.get("doi", "")
 
         # Cache key uses baseline namespace to avoid collision with AE cache
-        cache_k = _cache_key(doi) if doi else _cache_key(norm)
-        cached = read_cache(CACHE_DIR, cache_k, CACHE_TTL, BASELINE_CACHE_NS)
+        cache_k = cache_key(doi) if doi else cache_key(norm)
+        cached = read_cache(CITATION_CACHE_DIR, cache_k, CITATION_CACHE_TTL, BASELINE_CACHE_NS)
         if cached is not _MISSING:
             entries.append(cached)
             cached_count += 1
@@ -172,19 +170,19 @@ def generate(data_dir: str) -> list[dict] | None:
         openalex_id = ""
 
         if doi:
-            time.sleep(_OPENALEX_DELAY)
-            oa = _openalex_lookup(doi, session)
+            time.sleep(OPENALEX_DELAY)
+            oa = openalex_lookup(doi, session)
             if oa:
                 openalex_count = oa["cited_by_count"]
                 openalex_id = oa["openalex_id"]
                 source = "openalex_doi"
 
             if not s2_disabled:
-                time.sleep(_S2_DELAY)
-                s2_count = _s2_lookup(doi, session)
-                if s2_count is None and s2_timeout_failures < _S2_MAX_TIMEOUT_FAILURES:
+                time.sleep(S2_DELAY)
+                s2_count = s2_lookup(doi, session)
+                if s2_count is None and s2_timeout_failures < S2_MAX_TIMEOUT_FAILURES:
                     s2_timeout_failures += 1
-                    if s2_timeout_failures >= _S2_MAX_TIMEOUT_FAILURES:
+                    if s2_timeout_failures >= S2_MAX_TIMEOUT_FAILURES:
                         logger.warning(
                             "Disabling Semantic Scholar after %d timeout failures",
                             s2_timeout_failures,
@@ -192,16 +190,14 @@ def generate(data_dir: str) -> list[dict] | None:
                         s2_disabled = True
         else:
             # No DOI — fall back to OpenAlex title search
-            time.sleep(_OPENALEX_DELAY)
-            oa = _openalex_title_search(title, session)
+            time.sleep(OPENALEX_DELAY)
+            oa = openalex_title_search(title, session)
             if oa:
                 openalex_count = oa["cited_by_count"]
                 openalex_id = oa["openalex_id"]
                 source = "openalex_title"
 
-        # Best count
-        counts = [c for c in (openalex_count, s2_count) if isinstance(c, int)]
-        cited_by = max(counts) if counts else None
+        cited_by = best_citation_count(openalex_count, s2_count)
 
         entry = {
             "title": title,
@@ -217,7 +213,7 @@ def generate(data_dir: str) -> list[dict] | None:
             "source": source,
         }
         entries.append(entry)
-        write_cache(CACHE_DIR, cache_k, entry, BASELINE_CACHE_NS)
+        write_cache(CITATION_CACHE_DIR, cache_k, entry, BASELINE_CACHE_NS)
         fetched_count += 1
 
         if (i + 1) % 100 == 0:

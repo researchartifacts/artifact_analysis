@@ -19,124 +19,44 @@ import hashlib
 import logging
 import os
 import time
-import urllib.parse
 from datetime import datetime, timezone
 from pathlib import Path
 
-import requests
-
-from src.utils.cache import _MISSING, CACHE_ROOT, SECONDS_PER_DAY, read_cache, write_cache
+from src.utils.cache import _MISSING, read_cache, write_cache
+from src.utils.citation_apis import (
+    CITATION_CACHE_DIR,
+    CITATION_CACHE_TTL,
+    OPENALEX_DELAY,
+    S2_DELAY,
+    S2_MAX_TIMEOUT_FAILURES,
+    best_citation_count,
+    cache_key,
+    create_session,
+    extract_paper_doi,
+    openalex_lookup,
+    openalex_title_search,
+    s2_lookup,
+)
 from src.utils.conference import conf_area, normalize_title
 from src.utils.io import load_json, save_json
 
 logger = logging.getLogger(__name__)
 
-# ── Configuration ────────────────────────────────────────────────────────────
-
-CACHE_DIR = str(CACHE_ROOT / "paper_citations_doi")
+# ── Backward-compatible aliases ──────────────────────────────────────────────
+# These names were previously defined here and are imported by tests and
+# generate_baseline_citations.  Keep thin re-exports so existing call-sites
+# continue to work while new code imports from ``src.utils.citation_apis``.
+CACHE_DIR = CITATION_CACHE_DIR
 CACHE_NS = "openalex"
-CACHE_TTL = 30 * SECONDS_PER_DAY  # 30 days
-
-OPENALEX_BASE = "https://api.openalex.org"
-S2_BASE = "https://api.semanticscholar.org/graph/v1"
-USER_AGENT = "ReproDB-Pipeline/1.0 (https://github.com/reprodb/reprodb-pipeline; mailto:reprodb@example.com)"
-
-# Rate-limiting
-_OPENALEX_DELAY = 0.12  # seconds between OpenAlex calls
-_S2_DELAY = 0.12  # seconds between Semantic Scholar calls
-_S2_MAX_TIMEOUT_FAILURES = 5  # disable S2 after this many timeouts
-
-# ── DOI extraction ───────────────────────────────────────────────────────────
-
-_DOI_PREFIXES_STRIP = ("https://doi.org/", "http://doi.org/")
-
-
-def _extract_paper_doi(paper_url: str | None) -> str:
-    """Extract a bare DOI from a paper_url value. Returns ``""`` if none found."""
-    if not paper_url:
-        return ""
-    doi = paper_url.strip()
-    for prefix in _DOI_PREFIXES_STRIP:
-        if doi.lower().startswith(prefix):
-            doi = doi[len(prefix) :]
-            break
-    # Validate it looks like a DOI
-    if doi.startswith("10.") and "/" in doi:
-        return doi.rstrip(".,);")
-    return ""
-
-
-def _cache_key(doi: str) -> str:
-    return hashlib.sha256(doi.lower().encode()).hexdigest()
-
-
-# ── API callers ──────────────────────────────────────────────────────────────
-
-
-def _openalex_lookup(doi: str, session: requests.Session) -> dict | None:
-    """Query OpenAlex for paper by DOI. Returns ``{cited_by_count, openalex_id}`` or None."""
-    url = f"{OPENALEX_BASE}/works/https://doi.org/{urllib.parse.quote(doi, safe='')}"
-    try:
-        resp = session.get(url, timeout=20)
-        if resp.status_code == 404:
-            return None
-        resp.raise_for_status()
-        data = resp.json()
-        return {
-            "cited_by_count": data.get("cited_by_count"),
-            "openalex_id": data.get("id", ""),
-            "title": data.get("title", ""),
-        }
-    except (requests.RequestException, ValueError):
-        return None
-
-
-def _openalex_title_search(title: str, session: requests.Session) -> dict | None:
-    """Fall back to OpenAlex title search when DOI is unavailable."""
-    norm = normalize_title(title)
-    if not norm or len(norm) < 10:
-        return None
-    url = f"{OPENALEX_BASE}/works?filter=title.search:{urllib.parse.quote(norm)}&per_page=3"
-    try:
-        resp = session.get(url, timeout=20)
-        resp.raise_for_status()
-        results = resp.json().get("results", [])
-    except (requests.RequestException, ValueError):
-        return None
-
-    # Pick the best match via Jaccard similarity
-    query_words = set(norm.split())
-    for work in results:
-        work_title = normalize_title(work.get("title", ""))
-        work_words = set(work_title.split())
-        if not query_words or not work_words:
-            continue
-        jaccard = len(query_words & work_words) / len(query_words | work_words)
-        if jaccard >= 0.6:
-            return {
-                "cited_by_count": work.get("cited_by_count"),
-                "openalex_id": work.get("id", ""),
-                "title": work.get("title", ""),
-            }
-    return None
-
-
-def _s2_lookup(doi: str, session: requests.Session, *, timeout: int = 8) -> int | None:
-    """Query Semantic Scholar for citation count by DOI."""
-    url = f"{S2_BASE}/paper/DOI:{urllib.parse.quote(doi, safe='')}?fields=citationCount"
-    headers = {}
-    api_key = os.environ.get("SEMANTIC_SCHOLAR_API_KEY", "").strip()
-    if api_key:
-        headers["x-api-key"] = api_key
-    try:
-        resp = session.get(url, timeout=timeout, headers=headers)
-        if resp.status_code == 404:
-            return None
-        resp.raise_for_status()
-        count = resp.json().get("citationCount")
-        return count if isinstance(count, int) else None
-    except (requests.RequestException, ValueError):
-        return None
+CACHE_TTL = CITATION_CACHE_TTL
+_OPENALEX_DELAY = OPENALEX_DELAY
+_S2_DELAY = S2_DELAY
+_S2_MAX_TIMEOUT_FAILURES = S2_MAX_TIMEOUT_FAILURES
+_extract_paper_doi = extract_paper_doi
+_cache_key = cache_key
+_openalex_lookup = openalex_lookup
+_openalex_title_search = openalex_title_search
+_s2_lookup = s2_lookup
 
 
 # ── Main generator ───────────────────────────────────────────────────────────
@@ -167,8 +87,7 @@ def generate(data_dir: str) -> list[dict] | None:
             unique.append(a)
     logger.info("%d unique papers to process", len(unique))
 
-    session = requests.Session()
-    session.headers["User-Agent"] = USER_AGENT
+    session = create_session()
 
     s2_disabled = os.environ.get("DISABLE_SEMANTIC_SCHOLAR", "").strip() == "1"
     s2_timeout_failures = 0
@@ -221,9 +140,7 @@ def generate(data_dir: str) -> list[dict] | None:
                 openalex_id = oa["openalex_id"]
                 source = "openalex_title"
 
-        # Best count
-        counts = [c for c in (openalex_count, s2_count) if isinstance(c, int)]
-        cited_by = max(counts) if counts else None
+        cited_by = best_citation_count(openalex_count, s2_count)
 
         entry = {
             "title": title,
