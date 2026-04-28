@@ -12,17 +12,18 @@ import os
 from datetime import datetime
 from typing import Optional
 
+from src.utils.io import resolve_data_path
+
 
 def load_author_index(data_dir: str) -> tuple[list, dict[str, dict]]:
     """Load ``author_index.json`` and return (entries, name→entry dict).
 
     ``data_dir`` is the website repo root (contains ``_build/`` and ``assets/data/``).
     """
-    path = os.path.join(data_dir, "_build", "author_index.json")
-    # Fall back to legacy location for backward compatibility
-    if not os.path.exists(path):
-        path = os.path.join(data_dir, "assets", "data", "author_index.json")
-    if not os.path.exists(path):
+    from pathlib import Path
+
+    path = resolve_data_path(Path(data_dir), "author_index.json")
+    if not path.exists():
         return [], {}
     with open(path, "r", encoding="utf-8") as f:
         entries = json.load(f)

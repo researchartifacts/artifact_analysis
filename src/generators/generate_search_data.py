@@ -6,7 +6,7 @@ import logging
 import re
 from pathlib import Path
 
-from src.utils.io import load_json, save_validated_json
+from src.utils.io import load_json, resolve_data_path, save_validated_json
 
 from ..models.search_data import SearchEntry
 
@@ -24,11 +24,7 @@ def generate_search_data(data_dir: str) -> list:
     artifacts = load_json(assets_data / "artifacts.json")
 
     # paper_authors_map is an intermediate file in _build/
-    build_dir = Path(data_dir) / "_build"
-    pa_path = build_dir / "paper_authors_map.json"
-    # Fall back to legacy location for backward compatibility
-    if not pa_path.exists():
-        pa_path = assets_data / "paper_authors_map.json"
+    pa_path = resolve_data_path(Path(data_dir), "paper_authors_map.json")
     paper_authors = []
     if pa_path.exists():
         paper_authors = load_json(pa_path)

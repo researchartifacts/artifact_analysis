@@ -110,3 +110,53 @@ def save_yaml(path: str | Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as fh:
         yaml.dump(data, fh, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+
+# ── Data-path resolution ────────────────────────────────────────────────────
+
+
+def resolve_data_path(data_dir: str | Path, filename: str) -> Path:
+    """Return ``_build/{filename}`` if it exists, else ``assets/data/{filename}``.
+
+    Many generators write intermediate files to ``_build/`` but older pipeline
+    runs stored them under ``assets/data/``.  This helper centralises the
+    fallback logic so individual generators don't need to duplicate it.
+    """
+    data_dir = Path(data_dir)
+    build_path = data_dir / "_build" / filename
+    if build_path.exists():
+        return build_path
+    return data_dir / "assets" / "data" / filename
+
+
+# ── Validated loading ────────────────────────────────────────────────────────
+
+
+def load_validated_json(
+    path: str | Path,
+    model: type[BaseModel],
+    *,
+    default: Any = None,
+) -> Any:
+    """Load a JSON file and validate/migrate each record through a Pydantic model.
+
+    Old field names are automatically mapped via ``@model_validator(mode="before")``
+    or ``validation_alias`` defined on the model.  For list data, each item is
+    validated individually; for dict/object data, the whole payload is validated
+    as a single model instance.
+
+    Returns *default* when the file is missing or unparseable (same behaviour
+    as :func:`load_json`).
+    """
+    raw = load_json(path, default=default)
+    if raw is default:
+        return default
+    try:
+        if isinstance(raw, list):
+            adapter = TypeAdapter(list[model])  # type: ignore[valid-type]
+        else:
+            adapter = TypeAdapter(model)
+        return adapter.validate_python(raw)
+    except Exception:
+        logger.warning("Validation failed for %s, returning raw data", path, exc_info=True)
+        return raw

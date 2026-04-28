@@ -16,6 +16,7 @@ import os
 import re
 from pathlib import Path
 
+from src.utils.artifact_urls import get_artifact_urls
 from src.utils.citation_apis import (
     best_citation_count,
     create_session,
@@ -145,10 +146,7 @@ def generate(data_dir: str) -> None:
         if not title:
             continue
         try:
-            urls = artifact.get("artifact_urls", [])
-            if not urls:
-                # Legacy fallback
-                urls = [artifact.get("artifact_url", ""), artifact.get("repository_url", "")]
+            urls = get_artifact_urls(artifact)
 
             doi = ""
             source = ""
