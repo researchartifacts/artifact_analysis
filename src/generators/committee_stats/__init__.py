@@ -103,9 +103,7 @@ def generate_committee_data(conf_regex: str, output_dir):
 
     # ── 3b. AE member rankings ────────────────────────────────────────────
     logger.info("  Computing AE member rankings...")
-    all_members, sys_members, sec_members, member_summary = _compute_member_stats(
-        all_results, conf_to_area, classified
-    )
+    all_members, sys_members, sec_members, member_summary = _compute_member_stats(all_results, conf_to_area, classified)
     logger.info(
         f"    Found {member_summary['total_members']} unique members "
         f"({member_summary['total_chairs']} include chair roles)"

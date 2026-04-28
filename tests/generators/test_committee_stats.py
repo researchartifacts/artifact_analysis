@@ -169,9 +169,7 @@ class TestComputeMemberStats:
 
     def test_skips_empty_names(self):
         all_results = {"sosp2023": [{"name": "", "affiliation": "MIT"}]}
-        members, _, _, _ = classification._compute_member_stats(
-            all_results, {"sosp2023": "systems"}, classified={}
-        )
+        members, _, _, _ = classification._compute_member_stats(all_results, {"sosp2023": "systems"}, classified={})
         assert members == []
 
     def test_empty_input(self):
