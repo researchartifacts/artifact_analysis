@@ -74,9 +74,12 @@ def _merge_rankings(authors: list, ae_members: list) -> list:
             existing["total_memberships"] = existing.get("total_memberships", 0) + m.get("total_memberships", 0)
             existing["chair_count"] = existing.get("chair_count", 0) + m.get("chair_count", 0)
             # Merge conferences (union)
-            seen = {tuple(c) if isinstance(c, list) else c for c in existing.get("conferences", [])}
+            seen = {
+                tuple(sorted(c.items())) if isinstance(c, dict) else tuple(c) if isinstance(c, list) else c
+                for c in existing.get("conferences", [])
+            }
             for c in m.get("conferences", []):
-                key = tuple(c) if isinstance(c, list) else c
+                key = tuple(sorted(c.items())) if isinstance(c, dict) else tuple(c) if isinstance(c, list) else c
                 if key not in seen:
                     existing.setdefault("conferences", []).append(c)
                     seen.add(key)
