@@ -123,7 +123,8 @@ def fetch_json_urllib(url: str, *, timeout: int = 20, headers: dict | None = Non
         req_headers.update(headers)
     req = urllib.request.Request(url, headers=req_headers)
     with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
-        return json.loads(resp.read().decode("utf-8", "ignore"))
+        data: dict = json.loads(resp.read().decode("utf-8", "ignore"))
+        return data
 
 
 # ── OpenAlex helpers ─────────────────────────────────────────────────────────
@@ -219,8 +220,8 @@ def openalex_title_search(title: str, session: requests.Session) -> dict | None:
 def openalex_fetch_citing_dois(base_url: str, session: requests.Session) -> list[str]:
     """Paginate through OpenAlex citing-works and collect DOIs."""
     citing_dois: set[str] = set()
-    cursor = "*"
-    while True:
+    cursor: str | None = "*"
+    while cursor:
         url = f"{base_url}&per_page=200&cursor={urllib.parse.quote(cursor, safe='')}"
         try:
             resp = session.get(url, timeout=25)
