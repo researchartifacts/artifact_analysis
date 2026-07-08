@@ -176,9 +176,7 @@ class TestCachedZenodoStats:
                 "stats": {"unique_views": 10, "unique_downloads": 5},
                 "updated": "2024-06-01",
                 "created": "2024-01-01",
-                "metadata": {
-                    "custom": {"code:codeRepository": "https://github.com/zju-muslab/AudioHijack"}
-                },
+                "metadata": {"custom": {"code:codeRepository": "https://github.com/zju-muslab/AudioHijack"}},
             },
         )
         stats = repo_utils.cached_zenodo_stats("https://zenodo.org/records/19309781")
