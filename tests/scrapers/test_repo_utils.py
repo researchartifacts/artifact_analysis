@@ -169,6 +169,21 @@ class TestCachedZenodoStats:
         stats = repo_utils.cached_zenodo_stats("https://zenodo.org/records/12345")
         assert stats["linked_github_urls"] == ["https://github.com/owner/repo"]
 
+    def test_extracts_linked_github_urls_from_custom_field(self, mock_session):
+        mock_session.get.return_value = _fake_response(
+            200,
+            json_data={
+                "stats": {"unique_views": 10, "unique_downloads": 5},
+                "updated": "2024-06-01",
+                "created": "2024-01-01",
+                "metadata": {
+                    "custom": {"code:codeRepository": "https://github.com/zju-muslab/AudioHijack"}
+                },
+            },
+        )
+        stats = repo_utils.cached_zenodo_stats("https://zenodo.org/records/19309781")
+        assert stats["linked_github_urls"] == ["https://github.com/zju-muslab/AudioHijack"]
+
     def test_no_linked_github_urls_stores_empty_list(self, mock_session):
         mock_session.get.return_value = _fake_response(
             200,
@@ -243,6 +258,12 @@ class TestCachedFigshareStats:
 
 
 class TestNormaliseGithubRepoUrl:
+    def test_normalises_ssh_clone_url(self):
+        assert (
+            repo_utils._normalise_github_repo_url("git@github.com:zju-muslab/AudioHijack.git")
+            == "https://github.com/zju-muslab/AudioHijack"
+        )
+
     def test_strips_tree_suffix(self):
         assert (
             repo_utils._normalise_github_repo_url("https://github.com/owner/repo/tree/v1.0")
@@ -301,41 +322,48 @@ class TestExtractGithubUrlsFromZenodo:
     def test_empty_when_no_metadata(self):
         assert repo_utils._extract_github_urls_from_zenodo({}) == []
 
-    def test_extracts_from_description(self):
+    def test_extracts_from_custom(self):
         record = {
             "metadata": {
-                "description": '<p>Code at <a href="https://github.com/alice/project">GitHub</a>.</p>',
+                "custom": {
+                    "code:codeRepository": "https://github.com/alice/project",
+                },
             }
         }
         assert repo_utils._extract_github_urls_from_zenodo(record) == ["https://github.com/alice/project"]
 
-    def test_description_deduplicates_with_related(self):
+    def test_custom_deduplicates_with_related(self):
         record = {
             "metadata": {
                 "related_identifiers": [
                     {"identifier": "https://github.com/alice/project/tree/v1"},
                 ],
-                "description": "See https://github.com/alice/project for code.",
+                "custom": {"code:codeRepository": "https://github.com/alice/project"},
             }
         }
         # Should not duplicate the same repo
         assert repo_utils._extract_github_urls_from_zenodo(record) == ["https://github.com/alice/project"]
 
-    def test_description_trailing_punctuation(self):
+    def test_extracts_from_custom_fields(self):
         record = {
             "metadata": {
-                "description": "Code: https://github.com/hanshanley/tracking-takes.",
+                "custom_fields": {
+                    "code:codeRepository": "https://github.com/hanshanley/tracking-takes",
+                },
             }
         }
         assert repo_utils._extract_github_urls_from_zenodo(record) == ["https://github.com/hanshanley/tracking-takes"]
 
-    def test_extracts_from_notes(self):
+    def test_ignores_non_github_custom_fields(self):
         record = {
             "metadata": {
-                "notes": "Source code: https://github.com/bob/tool",
+                "custom": {
+                    "dwc:scientificName": "not a repo",
+                    "code:buildInstructions": "see README",
+                },
             }
         }
-        assert repo_utils._extract_github_urls_from_zenodo(record) == ["https://github.com/bob/tool"]
+        assert repo_utils._extract_github_urls_from_zenodo(record) == []
 
     def test_extracts_from_alternate_identifiers(self):
         record = {
@@ -356,8 +384,7 @@ class TestExtractGithubUrlsFromZenodo:
                 "alternate_identifiers": [
                     {"identifier": "https://github.com/x/y"},
                 ],
-                "description": "See https://github.com/x/y for code.",
-                "notes": "Also at https://github.com/x/y",
+                "custom": {"code:codeRepository": "https://github.com/x/y"},
             }
         }
         assert repo_utils._extract_github_urls_from_zenodo(record) == ["https://github.com/x/y"]

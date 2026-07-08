@@ -1,5 +1,6 @@
 """Tests for generate_statistics — pure helper functions."""
 
+from src.generators.output import generate_statistics as generate_statistics_module
 from src.generators.output.generate_statistics import (
     _build_artifact_entry,
     _collect_artifact_urls,
@@ -106,6 +107,45 @@ class TestCollectArtifactUrls:
     def test_skips_empty_strings(self):
         art = {"repository_url": "", "artifact_url": ""}
         assert _collect_artifact_urls(art) == []
+
+    def test_includes_linked_github_urls_from_zenodo(self, monkeypatch):
+        monkeypatch.setattr(
+            generate_statistics_module,
+            "cached_zenodo_stats",
+            lambda url: {
+                "linked_github_urls": [
+                    "https://github.com/zju-muslab/AudioHijack",
+                    "https://github.com/facebookresearch/fairseq",
+                ]
+            },
+        )
+        monkeypatch.setattr(generate_statistics_module, "cached_figshare_stats", lambda url: {})
+
+        art = {"artifact_url": "https://zenodo.org/records/19309781"}
+
+        assert _collect_artifact_urls(art) == [
+            "https://zenodo.org/records/19309781",
+            "https://github.com/zju-muslab/AudioHijack",
+            "https://github.com/facebookresearch/fairseq",
+        ]
+
+    def test_deduplicates_discovered_repo_urls(self, monkeypatch):
+        monkeypatch.setattr(
+            generate_statistics_module,
+            "cached_zenodo_stats",
+            lambda url: {"linked_github_urls": ["https://github.com/zju-muslab/AudioHijack"]},
+        )
+        monkeypatch.setattr(generate_statistics_module, "cached_figshare_stats", lambda url: {})
+
+        art = {
+            "repository_url": "https://github.com/zju-muslab/AudioHijack",
+            "artifact_url": "https://zenodo.org/records/19309781",
+        }
+
+        assert _collect_artifact_urls(art) == [
+            "https://github.com/zju-muslab/AudioHijack",
+            "https://zenodo.org/records/19309781",
+        ]
 
 
 class TestBuildArtifactEntry:

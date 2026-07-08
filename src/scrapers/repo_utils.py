@@ -269,13 +269,10 @@ def _extract_github_urls_from_zenodo(record: dict) -> list[str]:
 
     1. ``metadata.related_identifiers`` – structured links.
     2. ``metadata.alternate_identifiers`` – alternate structured links.
-    3. ``metadata.description`` – free-text HTML/Markdown.
-    4. ``metadata.notes`` – free-text additional notes.
+    3. ``metadata.custom`` / ``metadata.custom_fields`` – structured custom fields.
 
     Returns deduplicated base repo URLs (``https://github.com/owner/repo``).
     """
-    import re as _re
-
     urls: list[str] = []
     seen: set[str] = set()
     meta = record.get("metadata", {})
@@ -283,7 +280,7 @@ def _extract_github_urls_from_zenodo(record: dict) -> list[str]:
     # 1. related_identifiers
     for ri in meta.get("related_identifiers", []):
         ident = ri.get("identifier", "")
-        if "github.com/" not in ident:
+        if "github.com" not in ident:
             continue
         base = _normalise_github_repo_url(ident)
         if base and base not in seen:
@@ -293,17 +290,22 @@ def _extract_github_urls_from_zenodo(record: dict) -> list[str]:
     # 2. alternate_identifiers
     for ai in meta.get("alternate_identifiers", []):
         ident = ai.get("identifier", "")
-        if "github.com/" not in ident:
+        if "github.com" not in ident:
             continue
         base = _normalise_github_repo_url(ident)
         if base and base not in seen:
             seen.add(base)
             urls.append(base)
 
-    # 3. description (free-text HTML)
-    for text in (meta.get("description", ""), meta.get("notes", "")):
-        for match in _re.findall(r"https?://github\.com/[^\s<\"'&;)]+", text):
-            base = _normalise_github_repo_url(match.rstrip(".,;:)"))
+    # 3. structured custom fields
+    for custom_key in ("custom", "custom_fields"):
+        custom = meta.get(custom_key, {})
+        if not isinstance(custom, dict):
+            continue
+        for value in custom.values():
+            if not isinstance(value, str) or "github.com" not in value:
+                continue
+            base = _normalise_github_repo_url(value)
             if base and base not in seen:
                 seen.add(base)
                 urls.append(base)
@@ -357,12 +359,19 @@ def _extract_github_urls_from_figshare(record: dict) -> list[str]:
 def _normalise_github_repo_url(url: str) -> str | None:
     """Reduce a GitHub URL to ``https://github.com/owner/repo``.
 
-    Handles tree/blob suffixes, .git extensions, and query strings.
+    Handles tree/blob suffixes, .git extensions, query strings, and SSH clone
+    URLs like ``git@github.com:owner/repo.git``.
     Returns *None* for URLs that don't look like a valid owner/repo path.
     """
     import re
 
     url = url.split("?")[0].split("#")[0].rstrip("/")
+    ssh_match = re.match(r"git@github\.com:([^/]+)/([^/]+)", url)
+    if ssh_match:
+        repo = ssh_match.group(2)
+        if repo.endswith(".git"):
+            repo = repo[:-4]
+        return f"https://github.com/{ssh_match.group(1)}/{repo}"
     # Strip .git suffix
     if url.endswith(".git"):
         url = url[:-4]
@@ -377,9 +386,12 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
     cached = _read_cache(CACHE_DIR, url, ttl=ttl, namespace="zenodo_stats")
     if cached is not _MISSING:
         # Stale entries cached before linked_github_urls extraction was
-        # added lack the key entirely.  Force a re-fetch so we discover
-        # GitHub repos linked from Zenodo metadata.
-        if isinstance(cached, dict) and "linked_github_urls" not in cached:
+        # added, or before SSH clone URLs were parsed, lack the current
+        # extraction marker. Force a re-fetch so we discover GitHub repos
+        # linked from Zenodo metadata consistently.
+        if isinstance(cached, dict) and (
+            "linked_github_urls" not in cached or cached.get("linked_github_urls_version", 0) < 3
+        ):
             pass  # fall through to re-fetch
         else:
             return cached
@@ -406,6 +418,7 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
                 # Always store the key (even empty) so the cache can
                 # distinguish "checked, no links" from "never checked".
                 result["linked_github_urls"] = _extract_github_urls_from_zenodo(record)
+                result["linked_github_urls_version"] = 3
                 break
             if resp.status_code == 429:
                 retry_after = int(resp.headers.get("Retry-After", 0))

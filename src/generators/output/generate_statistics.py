@@ -26,7 +26,7 @@ from src.scrapers.acm_scrape import (
     to_pipeline_format as acm_to_pipeline_format,
 )
 from src.scrapers.parse_results_md import get_ae_results
-from src.scrapers.repo_utils import get_conferences_from_prefix
+from src.scrapers.repo_utils import cached_figshare_stats, cached_zenodo_stats, get_conferences_from_prefix
 from src.scrapers.usenix_scrape import scrape_conference_year, to_pipeline_format
 from src.utils.io.io import save_validated_json, save_yaml
 from src.utils.normalization.conference import CONF_DISPLAY_NAMES, ensure_conference_pages
@@ -181,6 +181,20 @@ def _collect_artifact_urls(artifact: dict) -> list[str]:
         extra_url = artifact.get(url_key, "")
         if extra_url:
             urls.append(extra_url)
+
+    # Zenodo/Figshare records can link to the actual code repository in their
+    # own metadata. Fold those discovered repos into artifact_urls so search and
+    # other downstream exports see the same canonical artifact locations as
+    # repo_stats.
+    for source_url in list(urls):
+        stats = None
+        if "zenodo" in source_url:
+            stats = cached_zenodo_stats(source_url)
+        elif "figshare" in source_url:
+            stats = cached_figshare_stats(source_url)
+        if isinstance(stats, dict):
+            urls.extend(stats.get("linked_github_urls", []))
+
     # Deduplicate while preserving order
     seen: set[str] = set()
     deduped: list[str] = []
