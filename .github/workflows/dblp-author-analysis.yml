@@ -183,7 +183,7 @@ jobs:
 
       - name: Trigger statistics update
         if: steps.check_changes.outputs.changed == 'true' && github.repository_owner == 'ReproDB'
-        run: gh workflow run update-stats.yml
+        run: gh workflow run update-stats.yml -R ${{ github.repository_owner }}/reprodb.github.io
         env:
           GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
       
