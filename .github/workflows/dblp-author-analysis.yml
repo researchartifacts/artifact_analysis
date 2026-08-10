@@ -15,6 +15,10 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   author-analysis:
     runs-on: ubuntu-latest
@@ -183,9 +187,9 @@ jobs:
 
       - name: Trigger statistics update
         if: steps.check_changes.outputs.changed == 'true' && github.repository_owner == 'ReproDB'
-        run: gh workflow run update-stats.yml -R ${{ github.repository_owner }}/reprodb.github.io
+        run: gh workflow run update-stats.yml -R ${{ github.repository_owner }}/reprodb-pipeline
         env:
-          GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Summary
         run: |
