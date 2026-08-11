@@ -8,9 +8,11 @@ timelines.
 
 from __future__ import annotations
 
+import csv
 import json
 import logging
 from collections import defaultdict
+from io import StringIO
 from pathlib import Path
 
 import country_converter as coco
@@ -29,12 +31,60 @@ from src.utils.normalization.conference import (
 from src.utils.normalization.conference import (
     parse_conf_year as _extract_conf_year,
 )
+from src.utils.normalization.country import iso2_to_country_name
 
 logger = logging.getLogger(__name__)
+
+_CSRANKINGS_INSTITUTIONS_URL = "https://raw.githubusercontent.com/emeryberger/CSrankings/gh-pages/institutions.csv"
+
+# Tokens with low discriminative value for institution matching.
+_FUZZY_STOPWORDS = {
+    "the",
+    "of",
+    "for",
+    "and",
+    "at",
+    "in",
+    "university",
+    "universita",
+    "universitat",
+    "universite",
+    "institute",
+    "institut",
+    "college",
+    "school",
+    "technology",
+    "technological",
+}
 
 # ── Country → Continent mapping (via country_converter) ──────────────────────
 
 _CC = coco.CountryConverter()
+
+
+def _load_csrankings_institutions() -> list[dict[str, str]]:
+    """Load CSRankings institutions as {name, country} rows."""
+    content = download_file(_CSRANKINGS_INSTITUTIONS_URL)
+    rows: list[dict[str, str]] = []
+    reader = csv.DictReader(StringIO(content))
+    for row in reader:
+        name = (row.get("institution") or "").strip()
+        code = (row.get("countryabbrv") or "").strip()
+        if not name or not code:
+            continue
+        country_name = iso2_to_country_name(code)
+        if not country_name:
+            continue
+        rows.append({"name": name, "country": country_name})
+    return rows
+
+
+def _distinctive_tokens(text: str) -> set[str]:
+    """Return normalized distinctive tokens used to validate fuzzy matches."""
+    import re as _re
+
+    tokens = {_t for _t in _re.findall(r"[a-z0-9]+", text.lower()) if _t and _t not in _FUZZY_STOPWORDS}
+    return tokens
 
 
 def _country_to_continent(country: str) -> str | None:
@@ -68,6 +118,13 @@ def _build_university_index() -> dict:
     overrides_path = Path(__file__).resolve().parents[2] / "data" / "institution_overrides.yml"
     overrides: dict[str, str] = load_yaml(overrides_path)
     university_info.extend({"name": name, "country": country} for name, country in overrides.items())
+
+    # Add deterministic institution-country mappings from CSRankings.
+    # This aligns country resolution with CSRankings where names overlap.
+    try:
+        university_info.extend(_load_csrankings_institutions())
+    except Exception as exc:
+        logger.warning("Could not load CSRankings institutions for classification: %s", exc)
 
     name_index: dict = {}
     for uni in university_info:
@@ -111,7 +168,13 @@ def classify_member(affiliation, prefix_tree, name_index):
     # Fall back to fuzzy matching
     best_match = None
     best_ratio = 0
+    aff_tokens = _distinctive_tokens(aff_lower)
     for name, uni in name_index.items():
+        # Avoid fuzzy matches on low-signal aliases/tokens; require at least one
+        # distinctive token overlap so "graz" cannot map to "arak".
+        cand_tokens = _distinctive_tokens(name)
+        if aff_tokens and cand_tokens and not (aff_tokens & cand_tokens):
+            continue
         ratio = fuzz.ratio(name, aff_lower)
         if ratio > best_ratio:
             best_ratio = ratio

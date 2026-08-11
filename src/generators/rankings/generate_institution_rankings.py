@@ -9,46 +9,20 @@ import logging
 from collections import defaultdict
 from pathlib import Path
 
-import pycountry
-
 from src.models.institutions.institution_rankings import InstitutionRanking
 from src.utils.io.io import load_json, save_validated_json
 from src.utils.normalization.affiliation import normalize_affiliation as _normalize_affiliation
+from src.utils.normalization.country import country_name_to_iso2, iso2_to_country_name
 
 logger = logging.getLogger(__name__)
 
-# ── Country classification ────────────────────────────────────────────────────
-
-# pycountry edge cases (common names that don't match ISO official names)
-_COUNTRY_NAME_OVERRIDES: dict[str, str] = {
-    "Russia": "RU",
-    "South Korea": "KR",
-    "North Korea": "KP",
-    "Taiwan": "TW",
-    "Hong Kong": "HK",
-    "Macau": "MO",
-    "Iran": "IR",
-    "Syria": "SY",
-    "Venezuela": "VE",
-    "Bolivia": "BO",
-    "Tanzania": "TZ",
-    "Vietnam": "VN",
-}
-
 
 def _country_to_iso(country_name: str) -> str | None:
-    """Convert country name to ISO 3166-1 alpha-2 code using pycountry."""
-    if not country_name:
-        return None
-    # Check overrides first
-    code = _COUNTRY_NAME_OVERRIDES.get(country_name)
-    if code:
-        return code
-    try:
-        return pycountry.countries.lookup(country_name).alpha_2
-    except LookupError:
+    """Convert country name to ISO 3166-1 alpha-2 code."""
+    code = country_name_to_iso2(country_name)
+    if not code:
         logger.debug(f"Could not resolve country name to ISO code: {country_name}")
-        return None
+    return code
 
 
 def _build_classifier():
@@ -72,10 +46,7 @@ def _classify_country(affiliation: str, prefix_tree, name_index) -> tuple[str | 
     # Check manual overrides first (handles corrections and known institutions)
     code = _KNOWN_INSTITUTION_CODES.get(affiliation)
     if code:
-        try:
-            name = pycountry.countries.get(alpha_2=code).name
-        except (LookupError, AttributeError):
-            name = None
+        name = iso2_to_country_name(code)
         return name, code
 
     # Use university database + fuzzy matching

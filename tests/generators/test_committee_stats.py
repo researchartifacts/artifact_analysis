@@ -75,6 +75,23 @@ class TestClassifyMember:
         assert country is None
         assert inst is None
 
+    def test_fuzzy_rejects_no_distinctive_token_overlap(self):
+        from pytrie import Trie
+
+        # Regression guard: "graz" should not resolve to an unrelated
+        # "... university of technology" entry from a different country.
+        name_index = {
+            "arak university of technology": {
+                "name": "Arak University of Technology",
+                "country": "Iran",
+            }
+        }
+        prefix_tree = Trie(**name_index)
+
+        country, inst = classification.classify_member("graz university of technology", prefix_tree, name_index)
+        assert country is None
+        assert inst is None
+
 
 class TestAggregateAcrossConferences:
     def test_basic_split(self):
