@@ -333,6 +333,11 @@ jobs:
           if errors:
               sys.exit(1)
           "
+
+      - name: Initialize summary metadata
+        run: |
+          echo "WEBSITE_COMMIT=no changes" >> $GITHUB_ENV
+          echo "RESULTS_ARCHIVE_COMMIT=no changes" >> $GITHUB_ENV
       
       - name: Push to results archive
         if: github.repository_owner == 'ReproDB'
@@ -379,6 +384,8 @@ jobs:
           else
             git commit -m "Archive pipeline run from ${{ env.RUN_TIMESTAMP }}"
             git push
+            ARCHIVE_COMMIT=$(git rev-parse --short HEAD)
+            echo "RESULTS_ARCHIVE_COMMIT=$ARCHIVE_COMMIT" >> $GITHUB_ENV
             echo "Archive pushed successfully"
           fi
       
@@ -399,6 +406,8 @@ jobs:
             git commit -m "Update statistics from pipeline run ${{ env.RUN_TIMESTAMP }}"
             git pull --rebase origin main
             git push origin main
+            WEBSITE_COMMIT=$(git rev-parse --short HEAD)
+            echo "WEBSITE_COMMIT=$WEBSITE_COMMIT" >> $GITHUB_ENV
             echo "Changes pushed to main branch successfully"
           fi
       
@@ -415,13 +424,13 @@ jobs:
           echo "✅ Per-area author data generated" >> $GITHUB_STEP_SUMMARY
           echo "✅ Ranked data compiled" >> $GITHUB_STEP_SUMMARY
           echo "✅ Results archived to reprodb-pipeline-results" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Debug branch updated" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Website data update attempted" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Repositories Updated" >> $GITHUB_STEP_SUMMARY
-          echo "- 📦 reprodb-pipeline-results: Timestamped archive" >> $GITHUB_STEP_SUMMARY
-          echo "- 🌐 reprodb.github.io (debug branch): Website data" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 reprodb-pipeline-results: Timestamped archive (commit: ${{ env.RESULTS_ARCHIVE_COMMIT }})" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌐 reprodb.github.io (main): Website data (commit: ${{ env.WEBSITE_COMMIT }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔍 Review changes in [debug branch](https://github.com/${{ github.repository_owner }}/reprodb.github.io/tree/debug)" >> $GITHUB_STEP_SUMMARY
-          echo "- ✔️ Test website rendering at debug branch deploy preview" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔍 Review changes on [main branch](https://github.com/${{ github.repository_owner }}/reprodb.github.io/tree/main)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✔️ Test website rendering after deployment" >> $GITHUB_STEP_SUMMARY
           echo "- 📊 View archived data in [reprodb-pipeline-results](https://github.com/${{ github.repository_owner }}/reprodb-pipeline-results)" >> $GITHUB_STEP_SUMMARY
