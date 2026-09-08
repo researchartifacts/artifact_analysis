@@ -154,3 +154,40 @@ class TestYamlArtifactUrlNormalization:
             "https://gitlab.com/example/repo",
         ]
         assert normalized["artifact_url"] == "https://github.com/example/repo"
+
+    def test_resolves_base_urls_and_extra_urls(self):
+        artifact = {
+            "title": "Example",
+            "artifact_url": "10.5281/zenodo.123",
+            "artifact_extra_urls": ["https://github.com/example/repo"],
+            "paper_url": "10.1145/1234.5678",
+        }
+
+        normalized = _normalize_yaml_artifact_urls(
+            artifact,
+            {"artifact_base_url": "https://doi.org/", "paper_base_url": "https://doi.org/"},
+        )
+
+        assert normalized["artifact_url"] == "https://doi.org/10.5281/zenodo.123"
+        assert normalized["artifact_urls"] == [
+            "https://doi.org/10.5281/zenodo.123",
+            "https://github.com/example/repo",
+        ]
+        assert normalized["paper_url"] == "https://doi.org/10.1145/1234.5678"
+
+    def test_ignores_missing_artifact_placeholder(self):
+        normalized = _normalize_yaml_artifact_urls({"artifact_url": "MISSING"})
+
+        assert "artifact_url" not in normalized
+        assert "artifact_urls" not in normalized
+
+    def test_preserves_legacy_sec_artifacts_fields(self):
+        artifact = {
+            "github_url": "https://github.com/example/repo",
+            "doi": "10.1145/1234.5678",
+            "additional_urls": ["https://example.com/archive"],
+        }
+
+        normalized = _normalize_yaml_artifact_urls(artifact)
+
+        assert normalized == artifact

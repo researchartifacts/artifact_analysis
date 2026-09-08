@@ -12,6 +12,7 @@ Public API:
 import argparse
 import logging
 import re
+from urllib.parse import urljoin
 
 import requests
 import yaml
@@ -37,7 +38,7 @@ def _extract_http_urls(raw: str) -> list[str]:
     return [u.rstrip(").,;>") for u in urls]
 
 
-def _normalize_yaml_artifact_urls(artifact: dict) -> dict:
+def _normalize_yaml_artifact_urls(artifact: dict, base_urls: dict[str, str] | None = None) -> dict:
     """Normalize URL fields in one artifact dict.
 
     Ensures malformed space-separated URL scalars are represented as canonical
@@ -47,6 +48,18 @@ def _normalize_yaml_artifact_urls(artifact: dict) -> dict:
         return artifact
 
     out = dict(artifact)
+    base_urls = base_urls or {}
+
+    for field, base_key in (("paper_url", "paper_base_url"), ("artifact_url", "artifact_base_url")):
+        value = out.get(field)
+        if isinstance(value, str):
+            value = value.strip()
+            if value.upper() in {"MISSING", "N/A", "NAN"}:
+                out.pop(field, None)
+            elif value and not value.startswith(("http://", "https://")) and base_urls.get(base_key):
+                out[field] = urljoin(base_urls[base_key], value)
+
+    extra_urls = out.pop("artifact_extra_urls", [])
 
     # Start with any existing list-style URLs.
     canonical_urls: list[str] = []
@@ -61,6 +74,11 @@ def _normalize_yaml_artifact_urls(artifact: dict) -> dict:
     if isinstance(legacy, str):
         canonical_urls.extend(_extract_http_urls(legacy))
 
+    if isinstance(extra_urls, list):
+        for item in extra_urls:
+            if isinstance(item, str):
+                canonical_urls.extend(_extract_http_urls(item))
+
     # Deduplicate while preserving order.
     deduped: list[str] = []
     seen: set[str] = set()
@@ -72,6 +90,8 @@ def _normalize_yaml_artifact_urls(artifact: dict) -> dict:
     if deduped:
         out["artifact_urls"] = deduped
         out["artifact_url"] = deduped[0]
+    else:
+        out.pop("artifact_urls", None)
 
     return out
 
@@ -278,7 +298,12 @@ def get_ae_results(conference_regex, prefix):
                 if parsed_content and "artifacts" in parsed_content:
                     artifacts = parsed_content["artifacts"]
                     if isinstance(artifacts, list):
-                        artifacts = [_normalize_yaml_artifact_urls(a) for a in artifacts]
+                        base_urls = {
+                            key: parsed_content.get(key, "")
+                            for key in ("paper_base_url", "artifact_base_url")
+                            if isinstance(parsed_content.get(key), str)
+                        }
+                        artifacts = [_normalize_yaml_artifact_urls(a, base_urls) for a in artifacts]
                     parsed_results[conf_year] = artifacts
                     logger.info(f"  {conf_year}: parsed {len(parsed_content['artifacts'])} artifacts (YAML)")
                     continue
